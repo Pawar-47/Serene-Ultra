@@ -443,3 +443,9 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Foam is restricted to top-facing water near the top of the block, blended into water albedo before lighting, and attenuates the SSR contribution.
 - Added `WATER_FOAM_STRENGTH` to the Quality menu and sliders. The validator checks the depth reconstruction, surface gating and reflection attenuation path.
 - This is a low-cost approximation, not full Unbound foam parity. Runtime/visual calibration, caustics and complete underwater response remain outstanding.
+
+
+## Foam source-review correction — 2026-11-23
+- Reviewed the first foam implementation and rejected its world-Y/block-height gate because it was not a robust signal for sloped shorelines and could invert depending on vertical offset.
+- Replaced it with a shallow-water mask derived from the already reconstructed opaque-view thickness: `1 - smoothstep(0.035, 0.42, waterThickness)`, gated to top-facing water and valid opaque depth.
+- This reuses the existing Iris `depthtex1` reconstruction and adds no extra texture fetch. It remains an initial approximation; runtime calibration and foam breakup remain outstanding.
