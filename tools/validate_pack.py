@@ -100,7 +100,7 @@ if props_path.is_file():
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
 
 # Iris shader constants are GLSL declarations, not shaders.properties keys.
-all_glsl = "\\n".join(sources.values())
+all_glsl = "\n".join(sources.values())
 for declaration in (
     "const bool shadowHardwareFiltering = true;",
     "const float shadowIntervalSize = 2.0;",
