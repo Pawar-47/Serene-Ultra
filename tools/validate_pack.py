@@ -367,19 +367,23 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
               "texture(gtexture", "texture(lightmap", "depthtex1", "calculateWaterThickness",
               "uniform sampler2D colortex4", "texture(colortex4", "WATER_REFRACTION_STRENGTH",
-              "WATER_REFLECTION_STRENGTH", "waterReflectionMix", "WATER_FOG_MULT", "uniform float alphaTestRef",
+              "WATER_REFLECTION_STRENGTH", "WATER_REFLECTION_QUALITY", "sampleWaterScreenReflection(",
+              "WATER_FOG_MULT", "uniform float alphaTestRef",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
               "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)",
               "gl_FragCoord.xy / vec2(textureSize(depthtex1, 0))",
-              "refractedSceneSample.a > 0.5", "sqrt(max(translucentAlbedo.a, 0.0))",
+              "refractedScene.a >= 0.5", "sqrt(max(translucentAlbedo.a, 0.0))",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
 
 for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
-              "uniform mat4 gbufferModelView", "WATER_REFLECTION_QUALITY",
+              "uniform mat4 gbufferProjectionInverse", "WATER_REFLECTION_QUALITY",
               "sampleWaterScreenReflection(", "texelFetch(depthtex2, depthPixel, 0)",
-              "texelFetch(colortex4, scenePixel, 0)", "waterReflectionLinear = mix("):
+              "texelFetch(colortex4, reflectionPixel, 0)",
+              "float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0)",
+              "float reflectionWeight = min(fresnel * 2.5, 0.85)",
+              "* reflectionConfidence * WATER_REFLECTION_STRENGTH;"):
     if token not in water:
         errors.append(f"Water screen-space reflection path is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
