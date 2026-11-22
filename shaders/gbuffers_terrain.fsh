@@ -64,6 +64,7 @@ void main() {
     // Preserve the vanilla lightmap's RGB tint (including warm block light
     // and skylight color) plus a separate sky-light factor for direct sun.
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
+    outLightmapData = vec4(vanillaLight, skyLight);
     outColor = albedo;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
     vec3 surfaceNormal = normalize(vPlayerNormal);
