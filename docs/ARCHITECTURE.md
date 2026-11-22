@@ -81,3 +81,6 @@ The deferred pass reconstructs opaque world positions from `depthtex2` and compa
 - Terrain/entity/hand/shadow fragment shaders now use the Iris `gtexture` atlas sampler instead of naming a sampler `texture`, which Iris warns against in modern GLSL.
 - Legacy `texture2D()` calls were replaced with `texture()`.
 - Terrain/entity G-buffers normalize transformed sky-light coordinates using the Iris tutorial's documented range correction before storing the direct-light mask.
+
+## Dimension-aware lighting
+Deferred celestial lighting now uses Iris `hasSkylight` to avoid applying the Overworld sun/moon cycle in dimensions without skylight. The pack enables `endFlashShadows=true` and uses Iris `endFlashIntensity` when the End flash is the active shadow source. Shadow sampling is skipped when no direct-light contribution is possible.
