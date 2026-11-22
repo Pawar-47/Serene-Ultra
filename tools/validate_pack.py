@@ -98,6 +98,8 @@ if props_path.is_file():
         errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
+    if "endFlashShadows=true" not in props:
+        errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
 
 # Iris shader constants are GLSL declarations, not shaders.properties keys.
 all_glsl = "\n".join(sources.values())
@@ -178,6 +180,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D depthtex0", "sampler2D depthtex2", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
+              "uniform bool hasSkylight", "uniform float endFlashIntensity", "celestialGate",
               "sampleContactAO", "AO_STRENGTH", "AO_RADIUS",
               "sin(sunAngle * 6.28318530718)",
               "smoothstep(0.0, 0.30, solarElevation)"):
