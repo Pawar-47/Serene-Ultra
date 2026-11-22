@@ -162,3 +162,10 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added `blend.gbuffers_spidereyes.colortex2=off` and structural validation for the mask.
 
 - Refined validator reporting so `gbuffers_entities_translucent` and `gbuffers_block_translucent` are only reported as missing when `separateEntityDraws=true`; that Iris option remains intentionally disabled due the current docs warning. Translucent entity compatibility remains a runtime test item.
+
+## Dedicated water forward path — 2026-11-23
+- Added `gbuffers_water.vsh/.fsh` as a dedicated post-deferred forward renderer.
+- It uses Iris `gtexture`, transformed lightmap coordinates, player-space position/normal, `shadowtex0`, `shadowModelView` and `shadowProjection`.
+- It reuses the dimension-aware sun/moon/End-flash gate and shadow sampling, outputs only `colortex0`, and uses the existing source-alpha blending directive.
+- Added validator checks for its forward-only output, lightmap and shadow contracts.
+- This removes reliance on the unlit `gbuffers_terrain` fallback for water. Refraction, Fresnel/reflections, absorption/depth tint, wave normals, rain ripples and reference Ultra parity are still pending.
