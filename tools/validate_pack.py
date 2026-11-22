@@ -121,8 +121,8 @@ if props_path.is_file():
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
         errors.append("Weather must remain a post-deferred color-only path without depth writes")
-    if "alphaTest.gbuffers_water=" in props:
-        errors.append("Do not override Iris' recommended gbuffers_water alphaTestRef")
+    if "alphaTest.gbuffers_water=GREATER 0.0001" not in props:
+        errors.append("Translucent water must use the reference-matched low alphaTestRef")
     if "WATER_FOG_MULT" not in props:
         errors.append("Water depth-opacity control must be exposed in the Quality menu")
     if "WEATHER_TEX_OPACITY" not in props:
