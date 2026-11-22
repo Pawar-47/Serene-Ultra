@@ -207,3 +207,21 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 ## Expanded Iris geometry coverage audit — 2026-11-23
 - Extended the validator's fallback inventory to include damaged blocks, beacon beams, armor glint, clouds, skybasic/skytextured, lightning, lines, textured-lit and textured fallback programs.
 - The remaining special geometry is now visible as non-failing CI warnings with documented Iris fallback destinations; it is not silently treated as feature-complete.
+
+## Verified continuation checkpoint — 2026-11-23
+
+- Current main HEAD at checkpoint: d21c8861cd56ba819c16261432a05c441b91452c.
+- CI run 45064958176 passed all stages: GLSL compile, vertex/fragment program linking, and structural Iris-contract validation.
+- Dedicated post-deferred programs now exist for water, weather and hand-water. Opaque/translucent particle programs are dedicated; spider eyes have an emissive path that invalidates deferred normal data and still applies fog.
+- Deferred and forward passes use Iris fog uniforms; water/weather/hand-water/translucent particles apply fog in their forward programs.
+- Existing code corrections include Iris gtexture sampler naming, alphaTestRef, entityColor, lightmap UV normalization, depthtex0/depthtex2 masking, shadow constants, shadow-distance culling, dimension/End-flash lighting, and linear-space lightmap/tint/fog operations.
+- The validator tracks the broader Iris gbuffers fallback table. Remaining special paths include armor glint, beacon beams, clouds, skybasic/skytextured, lightning, line, damaged-block and other fallback programs. Translucent entity/block-entity split programs remain conditional and disabled while Iris warns about separateEntityDraws.
+- The supplied Complementary Reimagined and Vanilla-stock inventories remain the source-reference baseline. This continuation has not claimed a fresh byte-for-byte/line-by-line archive comparison; reference-dependent advanced water/material decisions must still be traced against those archives before finalizing.
+- CI passing proves standalone GLSL compile/link and structural checks only. Minecraft 26.3 + Iris loading, visual correctness, feature parity and Intel HD 5500 performance remain unverified.
+- No release is ready or being declared.
+
+### Next work
+1. Continue special geometry paths in order of visual impact, beginning with emissive/additive overlays (armor glint, beacon beam, lightning) and clouds/sky, validating each program and its fallback against Iris docs before editing.
+2. Cross-reference the supplied Complementary water, fog, shadow and material implementations and the Vanilla-stock inputs before advanced water/reflection/material algorithms.
+3. Implement wet surfaces/puddles, material classification, emissive/colored lighting, improved AO, reflections, volumetrics and anti-aliasing without removing Ultra features.
+4. Keep CI green after each coherent change; then perform actual Iris runtime and target-hardware tests.
