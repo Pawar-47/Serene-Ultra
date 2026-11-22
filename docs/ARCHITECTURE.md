@@ -76,3 +76,8 @@ The pipeline now writes deferred-lit opaque output directly to logical colortex0
 
 ### Deferred depth-mask refinement
 The deferred pass reconstructs opaque world positions from `depthtex2` and compares it against `depthtex0` before shading. This prevents a hand or transparent fragment already present in scene color from being shaded using the opaque surface behind it.
+
+## Atlas and lightmap contract corrections — 2026-11-23
+- Terrain/entity/hand/shadow fragment shaders now use the Iris `gtexture` atlas sampler instead of naming a sampler `texture`, which Iris warns against in modern GLSL.
+- Legacy `texture2D()` calls were replaced with `texture()`.
+- Terrain/entity G-buffers normalize transformed sky-light coordinates using the Iris tutorial's documented range correction before storing the direct-light mask.
