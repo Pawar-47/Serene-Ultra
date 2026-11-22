@@ -65,5 +65,9 @@ void main() {
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5); // Valid lit-texture fallback, zero smoothness
-    outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
+    float defaultReflectance = 0.0;
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    defaultReflectance = 0.04;
+#endif
+    outEmissionData = vec4(emissionStrength / 5.0, defaultReflectance, 1.0, 0.0);
 }
