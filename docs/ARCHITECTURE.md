@@ -53,3 +53,10 @@ This AO is a deliberately bounded first implementation, not a final GTAO-quality
 - GitHub Actions installs glslang-tools and compiles every .vsh/.fsh stage as a standalone GLSL stage; this catches shader-language errors but does not replace Iris/Minecraft runtime testing.
 
 This remains an early rendering foundation, not Ultra parity. Advanced colored light, indirect illumination, shadow softness/bias calibration, material classification, translucency, atmosphere and post effects remain incomplete and require Iris runtime testing.
+
+
+## Iris is the execution contract
+Serene Ultra is loaded by Iris. The shaderpack's program filenames, opaque/deferred/translucent order, gbuffers fallbacks, blending, color/depth attachment behavior, flips and settings must follow Iris documentation and be verified in Iris itself. Vanilla-stock source establishes Minecraft-native behavior and inputs; it does not define the Iris shaderpack file layout or pass execution. Complementary Reimagined is a working Iris implementation reference and should be traced at source level alongside stock code when choosing feature algorithms.
+
+### Iris pipeline audit finding
+The current pack has no dedicated `gbuffers_water`, `gbuffers_weather` or `gbuffers_hand_water` programs. Iris documents these as post-deferred translucent programs, with fallbacks to terrain/textured-lit/hand programs. Serene's composite then copies the deferred opaque result from colortex3 back to colortex0. This combination creates a likely overwrite hazard for post-deferred translucent geometry. Do not treat water, weather or hand-water as supported until explicit handling and Iris runtime tests resolve it. The source-level analysis and next steps are tracked in [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md).
