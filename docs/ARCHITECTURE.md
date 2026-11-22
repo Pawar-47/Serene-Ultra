@@ -90,3 +90,6 @@ Deferred celestial lighting now uses Iris `hasSkylight` to avoid applying the Ov
 
 ## Weather rendering path
 `gbuffers_weather` is now a dedicated post-deferred forward pass. It uses Iris atlas and lightmap sampling, applies the provided fog parameters, writes only scene color and relies on source-alpha blending. `rain.depth=false` keeps weather out of the depth snapshots. Volumetric weather and wetness interaction remain future work.
+
+## Iris fog pipeline
+Opaque world surfaces receive Iris fog in deferred using the documented `fogColor`, `fogStart`, `fogEnd`, `fogDensity`, `fogMode` and `fogShape` uniforms. Post-deferred water, weather and translucent particles apply the same fog model in their forward fragment programs. Fog blending is performed in linearized color space.
