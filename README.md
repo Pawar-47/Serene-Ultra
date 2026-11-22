@@ -68,3 +68,5 @@ Test after Iris runtime loading:
 The optional particle-material path now handles water splash, modded rain/snow, underwater particles, campfire smoke and emissive ender/redstone/lava effects using Complementary's reference heuristics and Iris runtime uniforms.
 
 A compact emissive material channel is now integrated: terrain block IDs feed an RGBA8 `colortex3` buffer, deferred adds emission outside AO/shadow attenuation, and lava receives forward self-emission. Full PBR emission maps and bloom remain future work.
+
+Dedicated Iris programs now cover leash/debug overlays (`gbuffers_basic`), block-breaking cracks (`gbuffers_damagedblock`) and block entities/sign text (`gbuffers_block`). Sign text is fogged and bypasses deferred lighting; portal/gateway IDs have a separate emissive value. Runtime visual verification remains outstanding.
