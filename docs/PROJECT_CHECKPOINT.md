@@ -601,3 +601,10 @@ The shared Iris tangent-space normal-map decoder now also applies to clear glass
 ## LabPBR normal-map channel correction — 2026-11-23
 
 A deeper check against the shaderLABS LabPBR 1.3 specification found that the blue channel of a LabPBR normal map stores ambient occlusion, not the normal's Z component. The shared translucent normal decoder now reconstructs Z as `sqrt(max(1 - dot(xy, xy), 0))` from the red/green XY channels, flips Y for LabPBR's DirectX convention, and keeps RGB decoding for oldPBR. This prevents AO data from corrupting the normal direction on modern PBR resource packs.
+
+
+## Terrain oldPBR/LabPBR checkpoint — 2026-11-23
+- Added Iris `specular` atlas sampling to `gbuffers_terrain.fsh`. Smoothness is decoded from red for both oldPBR and LabPBR. oldPBR green/blue decode metalness/emission; LabPBR green decodes dielectric F0 or metal code (230–255), and alpha decodes emission with 255 treated as no emission.
+- `colortex3` is now RG8: red stores normalized emission, green stores reflectance/metalness. Deferred uses this value for dielectric F0 or albedo-coloured metal F0, and the smoothness-gated specular lobe now uses material colour.
+- Slime/honey block-ID smoothness remains as a fallback when resource-pack PBR maps are absent. The new resource-pack path does not add another render target.
+- CI now compiles the LabPBR macro branches for terrain, water and deferred in addition to the default branch. Runtime checks with actual oldPBR and LabPBR resource packs remain pending.
