@@ -53,13 +53,13 @@ Dedicated Iris sky-basic, sky-textured and textured-fallback programs now handle
 
 Line geometry now has a dedicated Iris program that keeps selection/debug outlines crisp, fogs ordinary lines and bypasses deferred terrain lighting.
 
-Translucent particles now receive forward celestial lighting, vanilla lightmap response, Iris fog and a single hardware-filtered shadow lookup. Specialized emissive and smoke/water particle effects remain pending.
+Translucent particles now receive forward celestial lighting, vanilla lightmap response, Iris fog, a single hardware-filtered shadow lookup and Complementary-guided water/rain/snow/smoke/emission effects. Opaque particles also write their emissive strength into the R8 G-buffer channel.
 
 
-The separate entity-translucency feature remains disabled due to the current Iris compatibility warning. Forward shader pairs are retained but inactive; CI enforces the safe configuration.
+The separate entity-translucency route is enabled with `separateEntityDraws=true` and the optional `ENTITY_TRANSLUCENT` feature query, following the current Iris ordering and feature-flag documentation. Dedicated forward programs are active; runtime sorting/blending checks remain outstanding.
 
 Test after Iris runtime loading:
-- Enable/disable `ENTITY_TRANSLUCENT` support and verify translucent mobs/items remain sorted and correctly blended after deferred.
+- Verify Iris reports `IRIS_FEATURE_ENTITY_TRANSLUCENT` and that translucent mobs/items use the post-deferred forward pass; test the documented fallback behavior on Iris versions without the feature.
 - Verify translucent block entities (glass-like block entities, signs/containers where applicable) use the dedicated forward pass without corrupting colortex0.
 - Check entity hurt tint (`entityColor`) on translucent entities.
 - Compare water splash, Physics-mod rain/snow, underwater particles, campfire smoke, Ender/Crying Obsidian/Redstone and lava particles against Complementary Reimagined; test both default and changed `WEATHER_TEX_OPACITY`.
