@@ -12,6 +12,7 @@ REQUIRED = (
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
     "shadow.vsh", "shadow.fsh",
+    "deferred.vsh", "deferred.fsh",
     "composite.vsh", "composite.fsh",
     "final.vsh", "final.fsh",
     "lang/en_us.lang",
@@ -55,6 +56,8 @@ if props_path.is_file():
             errors.append(f"Missing menu configuration: {screen}")
     if "SHADOW_ALPHA_CUTOFF" not in props:
         errors.append("Shadow alpha cutoff is not exposed in the Quality menu")
+    if "shadowHardwareFiltering=true" not in props:
+        errors.append("Deferred shadow comparison sampling requires shadowHardwareFiltering=true")
 
 final = sources.get("final.fsh", "")
 for option in ("RED_GAIN", "GREEN_GAIN", "BLUE_GAIN", "GAMMA", "EXPOSURE",
@@ -79,6 +82,14 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
     for output in ("outColor", "outLightmapData", "outEncodedNormal"):
         if output not in source:
             errors.append(f"{name} is missing G-buffer output {output}")
+
+deferred = sources.get("deferred.fsh", "")
+for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex1",
+              "sampler2D colortex2", "sampler2D depthtex0",
+              "sampler2DShadow shadowtex0", "gbufferProjectionInverse",
+              "shadowModelView", "shadowProjection", "sampleShadow"):
+    if token not in deferred:
+        errors.append(f"Deferred lighting is missing required component: {token}")
 
 brief = ROOT / "PROJECT_BRIEF.md"
 if not brief.is_file():
