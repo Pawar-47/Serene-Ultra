@@ -145,3 +145,8 @@ The depth-opacity calculation follows the same thickness/exponential form used b
 Dedicated paths now exist for armor glint, beacon beams and lightning. Each writes color and clears the deferred-normal validity mask so overlays are not shaded using the opaque surface beneath them. Armor-glint color blending remains under Minecraft/Iris' active render state. Beacon beams and lightning receive Iris fog. Runtime depth/blend validation remains pending.
 
 Reference refinement: retained `alphaTest.gbuffers_water=GREATER 0.0001` (matching Complementary Reimagined), used Iris `alphaTestRef` in the shader, applied the reference `sqrt(alpha)` water shaping, and switched to exact-pixel `texelFetch` for opaque depth.
+
+## Weather/cloud feature update — 2026-11-23
+- Weather: reference-style rain/snow texture classification and alpha multipliers; adjustable `WEATHER_TEX_OPACITY`; Iris `alphaTestRef`; powdered-snow camera suppression; optional wind motion using Iris `rainStrength` and `eyeBrightnessSmooth`.
+- Vanilla clouds: dedicated forward pass preserves vanilla texture/vertex lighting, applies Iris fog, hides clouds underwater/in fluids, and clears the deferred normal-validity mask.
+- Custom cloud layers, volumetric clouds, cloud shadows and cloud reflections remain pending.
