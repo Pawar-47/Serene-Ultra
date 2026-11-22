@@ -241,3 +241,12 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - CI run 45065219372 passed GLSL compilation, vertex/fragment linking for every program pair, and structural Iris-contract validation.
 - Final audit refinements in this checkpoint: shadow cutout uses max(Iris alphaTestRef, SHADOW_ALPHA_CUTOFF); translucent particles retain fractional alpha and discard only near-zero alpha; stale water-fallback comments and unused water auxiliary blend directives were removed.
 - No runtime, visual parity or Intel HD 5500 performance claims are made.
+
+## Reference-guided water material checkpoint — 2026-11-23
+- Added `shaders/block.properties` stable material IDs and Iris `mc_Entity` handling in `gbuffers_water.vsh`.
+- Water/water-cauldron are isolated from other translucent terrain; only these materials receive depth-dependent alpha attenuation.
+- Uses `depthtex1`, which Iris documents as excluding transparent geometry and becoming valid by deferred; the post-deferred `gbuffers_water` stage can safely sample it.
+- Reconstructs underlying opaque view position with `gbufferProjectionInverse` and applies the reference water-depth opacity curve.
+- Added `WATER_FOG_MULT` control with Complementary's 25–900% range and Iris alphaTestRef support.
+- CI run 45065527686 passed GLSL compilation, stage linking and structural validation before the final slider-range refinement; the final refinement has a separate run pending.
+- Still pending: water normals/waves, Fresnel/reflections, refraction, foam/caustics, underwater response, and runtime/visual parity.
