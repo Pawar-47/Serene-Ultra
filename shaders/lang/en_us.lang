@@ -51,4 +51,4 @@ option.WATER_REFLECTION_QUALITY.comment = Controls the number of screen-space re
 option.WATER_REFRACTION_STRENGTH = Water Refraction
 option.WATER_REFRACTION_STRENGTH.comment = Controls half-resolution screen-space refraction through water. Set to 0 to disable distortion.
 option.WATER_REFLECTION_STRENGTH = Water Fresnel Reflection
-option.WATER_REFLECTION_STRENGTH.comment = Controls grazing-angle sky reflection and sun/moon highlights on water.
+option.WATER_REFLECTION_STRENGTH.comment = Controls the strength of valid screen-space water reflections at grazing angles.
