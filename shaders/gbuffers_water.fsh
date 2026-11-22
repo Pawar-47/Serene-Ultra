@@ -12,12 +12,19 @@ uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
+uniform vec3 fogColor;
+uniform float fogStart;
+uniform float fogEnd;
+uniform float fogDensity;
+uniform int fogMode;
+uniform int fogShape;
 
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vPlayerNormal;
 in vec3 vPlayerPosition;
+in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
@@ -45,6 +52,20 @@ float sampleWaterShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5,  0.5), shadowPosition.z));
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5,  0.5), shadowPosition.z));
     return visibility * 0.25;
+}
+
+float calculateWaterFog(float distanceToCamera) {
+    if (fogMode == 9729) {
+        return clamp((distanceToCamera - fogStart) / max(fogEnd - fogStart, 0.0001), 0.0, 1.0);
+    }
+    if (fogMode == 2048) {
+        return clamp(1.0 - exp(-fogDensity * distanceToCamera), 0.0, 1.0);
+    }
+    if (fogMode == 2049) {
+        float densityDistance = fogDensity * distanceToCamera;
+        return clamp(1.0 - exp(-densityDistance * densityDistance), 0.0, 1.0);
+    }
+    return 0.0;
 }
 
 void main() {
@@ -89,6 +110,10 @@ void main() {
 
     vec3 albedoLinear = pow(max(waterAlbedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
+    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogFactor = calculateWaterFog(fogDistance);
+    vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
+    litLinear = mix(litLinear, fogColorLinear, fogFactor);
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
 
     outColor = vec4(litColor, waterAlbedo.a);
