@@ -1,11 +1,10 @@
 #version 330 compatibility
 
 uniform sampler2D gtexture;
+uniform float alphaTestRef;
 uniform int renderStage;
 uniform int isEyeInWater;
-uniform int moonPhase;
 uniform float rainStrength;
-uniform float sunAngle;
 uniform bool hasSkylight;
 uniform vec3 sunPosition;
 uniform vec3 moonPosition;
@@ -21,7 +20,7 @@ layout(location = 1) out vec4 outDeferredValidity;
 
 void main() {
     vec4 skyTexture = texture(gtexture, vTexCoord) * vVertexColor;
-    if (skyTexture.a <= 0.0001) discard;
+    if (skyTexture.a < alphaTestRef) discard;
 
     vec3 colorLinear = pow(max(skyTexture.rgb, vec3(0.0)), vec3(2.2));
     vec3 upVector = normalize(gbufferModelView[1].xyz);
