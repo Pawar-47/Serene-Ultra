@@ -17,14 +17,6 @@ in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vViewPosition;
 
-#if WEATHER_TEX_OPACITY == 100
-const float rainTexOpacity = 0.25;
-const float snowTexOpacity = 0.5;
-#else
-const float rainTexOpacity = pow(0.25, 100.0 / WEATHER_TEX_OPACITY);
-const float snowTexOpacity = pow(0.5, 100.0 / WEATHER_TEX_OPACITY);
-#endif
-
 /* RENDERTARGETS: 0 */
 
 #define WEATHER_TEX_OPACITY 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Weather particle opacity
@@ -47,6 +39,13 @@ float calculateWeatherFog(float distanceToCamera) {
 void main() {
     vec4 weatherColor = texture(gtexture, vTexCoord) * vVertexColor;
     if (weatherColor.a < max(0.1, alphaTestRef) || isEyeInWater == 3) discard;
+    float rainTexOpacity = 0.25;
+    float snowTexOpacity = 0.5;
+    #if WEATHER_TEX_OPACITY != 100
+        float opacityExponent = 100.0 / WEATHER_TEX_OPACITY;
+        rainTexOpacity = pow(0.25, opacityExponent);
+        snowTexOpacity = pow(0.5, opacityExponent);
+    #endif
     if (weatherColor.r + weatherColor.g < 1.5) weatherColor.a *= rainTexOpacity;
     else weatherColor.a *= snowTexOpacity;
 
