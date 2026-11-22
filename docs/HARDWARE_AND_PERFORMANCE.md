@@ -42,3 +42,7 @@ The shader now sets Iris' `shadowDistanceRenderMul` to 1.0, enabling geometry cu
 
 ### Translucent shadow transmission cost
 The water/glass shadow system enables Iris `shadowTranslucent` and stores RGBA8 transmission in `shadowcolor0` at shadow-map resolution. Deferred retains four PCF taps and adds a center opaque/translucent comparison plus a conditional shadow-color fetch. This preserves colored shadows and water caustics without a second PCF kernel, but adds shadow-pass geometry and memory/bandwidth. The RGBA8 attachment is approximately 16 MiB at 2048². Profile tuning and runtime measurement on Intel HD 5500 are required; do not infer FPS from GLSL compile success.
+
+
+### Resource-pack water normal-map cost
+The water normal-map path performs one `normals` atlas lookup only for top-facing water fragments when `WATER_NORMAL_MAP_STRENGTH` is enabled. Iris supplies a neutral normal when no `_n` texture exists, so packs without PBR normal maps retain the analytic wave normal. Measure the cost on Intel HD 5500 with representative PBR resource packs.
