@@ -21,7 +21,7 @@ A conventional GLSL Iris shaderpack with a compact, auditable pipeline. The arch
 Opaque/cutout terrain and entity passes write three attachments using Iris' RENDERTARGETS mapping:
 - colortex0: unmodified sampled albedo multiplied by vertex color.
 - colortex1: sampled vanilla lightmap RGB in RGB and sky-light coordinate in alpha.
-- colortex2: normalized player/world-aligned normal encoded from [-1, 1] into [0, 1], with alpha set to one for covered geometry.
+- colortex2: normalized player/world-aligned normal encoded from [-1, 1] into [0, 1]. Alpha 0 marks pixels invalid for deferred surface lighting; alpha 0.5 marks valid zero-smoothness geometry; values above 0.5 pack material smoothness in the remaining range.
 
 The terrain/entity vertex stages transform normals from view space back into player-aligned space using Iris' gbufferModelViewInverse. Their fragment stages sample the vanilla lightmap so the later deferred pass can retain its warm block-light and colored skylight response. The first-person hand path writes only colortex0; it is deliberately not treated as world geometry by the current deferred-data contract.
 
