@@ -62,10 +62,13 @@ Next audit pass must extract the actual Ultra profile values and enumerate every
 
 ## Latest implementation note
 
-The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB plus sky-light factor in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. Deferred reads those buffers and depth, then writes lit output to colortex3. Composite transfers colortex3 back to colortex0, avoiding read/write feedback in the deferred stage. The deferred pass includes directional celestial lighting, four hardware-filtered shadow comparison taps and eight-neighbor contact AO that attenuates ambient only. The hand and sky remain unchanged by deferred world lighting. These paths are initial implementations only; visual parity and runtime stability remain unverified.
+The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB plus sky-light factor in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. Deferred reads those buffers and depth, then writes lit output to logical colortex0 through Iris' main/alternate buffer flip. Post-deferred translucent geometry blends into that lit scene, and composite performs a colortex0 pass-through with its own flip to preserve the accumulated result. The deferred pass includes directional celestial lighting, four hardware-filtered shadow comparison taps and eight-neighbor contact AO that attenuates ambient only. The hand and sky remain unchanged by deferred world lighting. These paths are initial implementations only; visual parity and runtime stability remain unverified.
 
 
 ## Iris program coverage audit (2026-11-23)
 The current source contains terrain, entities, hand and shadow programs, but it does not yet explicitly implement the Iris post-deferred programs `gbuffers_water`, `gbuffers_weather` or `gbuffers_hand_water`. Iris documents these as translucent-stage programs executed after deferred; absent files use fallback programs. Because Serene currently copies colortex3 back to colortex0 in composite, this requires a dedicated attachment/blending design and runtime validation before water/weather/hand-water can be marked supported. See [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md).
 
 Do not equate Iris fallback coverage with correct feature implementation. The matrix must track both the native geometry category and the actual Iris program that receives it.
+
+## Post-deferred scene preservation correction
+The old colortex3-to-colortex0 copy-back has been removed. Deferred and composite now use Iris-supported same-logical-attachment read/write with their default main/alternate flips explicitly enabled. Water, weather and hand-water have explicit source-alpha blend rules on colortex0. This addresses the source-level overwrite risk but is not runtime verification or a substitute for dedicated forward-lit water and material implementations.
