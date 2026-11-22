@@ -170,3 +170,7 @@ The water pass now applies a dedicated Unbound-inspired base tint only to the wa
 
 ## Water foam milestone — 2026-11-23
 The water pass now reconstructs the opaque scene position behind water using Iris `depthtex1` and `gbufferProjectionInverse`, transforms it to player space with `gbufferModelViewInverse`, and estimates the vertical intersection with the water surface. Foam is restricted to top-facing water near the top of the block, blended into the water albedo before lighting, and reduces SSR contribution in foamy pixels. `WATER_FOAM_STRENGTH` is exposed as a Quality-menu slider. This is a low-cost shoreline approximation; visual calibration, caustics and the full Unbound foam response remain outstanding.
+
+
+### Foam calculation correction — 2026-11-23
+The first implementation used a world-Y difference and a block-height gate. Source review showed this was not a robust shoreline signal: it could miss sloped shorelines and depended on the sign of the vertical offset. It was replaced with a shallow-water mask derived from the already reconstructed opaque-view thickness: `1.0 - smoothstep(0.035, 0.42, waterThickness)`, restricted to top-facing water. This avoids another texture sample and reuses the existing depth reconstruction. It remains a simple screen-space foam approximation; foam breakup, wave interaction and visual tuning against Unbound are still pending.
