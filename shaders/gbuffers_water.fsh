@@ -149,6 +149,9 @@ void main() {
 
     vec3 albedoLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
+    // Lava shares the post-deferred fluid pass but retains its self-emission.
+    float lavaEmission = (vMaterialId == 32118) ? 0.9 : 0.0;
+    litLinear += albedoLinear * lavaEmission;
     float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
     float fogFactor = calculateTranslucentFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
