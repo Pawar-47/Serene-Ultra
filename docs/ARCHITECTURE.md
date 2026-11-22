@@ -108,3 +108,5 @@ The `gbuffers_water` vertex stage consumes Iris `mc_Entity` and passes the mater
 
 ## Special geometry overlay handling
 Armor glint, beacon beams and lightning are rendered in dedicated Iris gbuffers programs before deferred. Their forward fragment paths write scene color and clear the colortex2 deferred-validity mask, preventing the opaque normal beneath an overlay from being reused. Armor glint keeps the game-managed blend state; beacon beams and lightning apply Iris fog. Lightning's separate depth path is provided by `gbuffers_basic` according to Iris' program documentation.
+
+The current water baseline additionally matches the Complementary reference's low alpha-test threshold and square-root water alpha shaping. Opaque depth is read using an exact-pixel `texelFetch` from `depthtex1`, avoiding filtering and normalized UV calculations.
