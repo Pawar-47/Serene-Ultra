@@ -11,11 +11,14 @@ out vec3 vPlayerNormal;
 out vec3 vPlayerPosition;
 out vec3 vViewPosition;
 out vec3 vViewNormal;
+out vec3 vPlayerTangent;
+flat out float vTangentHandedness;
 flat out int vMaterialId;
 flat out float vFluidRenderType;
 
 in vec2 mc_Entity;
 in vec2 mc_midTexCoord;
+in vec4 at_tangent;
 
 void main() {
     gl_Position = ftransform();
@@ -36,4 +39,7 @@ void main() {
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vViewNormal = viewNormal;
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
+    vec3 viewTangent = normalize(gl_NormalMatrix * normalize(at_tangent.xyz));
+    vPlayerTangent = normalize(mat3(gbufferModelViewInverse) * viewTangent);
+    vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0;
 }
