@@ -92,3 +92,10 @@ Do not mark these as fully validated until Iris/Minecraft runtime checks are per
 | Block/entity atlas | `gtexture` sampler | Resource-pack atlas and modded texture checks |
 | GLSL sampling | `texture()` function | Target Iris compiler/runtime check |
 | Sky light coordinate | Iris transformed-coordinate normalization before storing G-buffer mask | Compare light levels across time/weather/dimensions |
+
+
+## Particle coverage update — 2026-11-23
+The two particle programs are now implemented:
+- Opaque `gbuffers_particles` writes the three G-buffer attachments for deferred lighting.
+- Translucent `gbuffers_particles_translucent` is a post-deferred forward path with vanilla lightmap response and explicit alpha blending.
+This replaces the earlier 'missing particle programs' entry. Material-specific particle behavior and runtime parity still require testing.
