@@ -245,3 +245,7 @@ Water foam is driven by the already reconstructed opaque-view thickness (`deptht
 
 ## Translucent ice feature update — 2026-11-23
 Ice/frosted ice now has a dedicated Iris material ID and shares the Fresnel SSR path with glass, with a distinct reflection scale. Water-only depth/refraction/foam remain isolated to the water ID. Ice-specific roughness, thickness and visual calibration remain pending.
+
+
+## Glossy terrain material update — 2026-11-23
+Iris IDs now classify slime and honey blocks in the terrain G-buffer. Smoothness is packed into the existing normal attachment alpha (validity remains distinguishable), and deferred adds a low-cost sun/moon specular highlight only for classified smooth materials. `MATERIAL_SPECULAR_STRENGTH` is adjustable. Broader PBR material classification, normal/roughness maps and runtime visual calibration remain pending.
