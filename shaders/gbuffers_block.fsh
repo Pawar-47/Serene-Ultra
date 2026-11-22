@@ -68,5 +68,5 @@ void main() {
     outColor = albedo;
     outLightmapData = vec4(vanillaLight, skyLight);
     outEncodedNormal = vec4(normalize(vPlayerNormal) * 0.5 + 0.5, signText ? 0.0 : 1.0);
-    outEmissionData = vec4(albedo.rgb, emissionStrength / 5.0);
+    outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
 }
