@@ -69,3 +69,11 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Latest repository HEAD after this audit: `26d5aafb525029b31739f56e70ea5625571e0304`.
 - Latest CI run on that exact HEAD: `45060856038`, conclusion `success`; both standalone GLSL compilation and structural validation completed successfully.
 - Structural validation now rejects gbuffers shaders that declare sampler reads from Iris-forbidden colortex0–3 and prints a non-failing warning while the dedicated post-deferred water/weather/hand-water programs remain absent.
+
+
+## Lighting correction — 2026-11-23
+- Reviewed the live deferred lighting source and found its former day/night expression `1.0 - smoothstep(0.45, 0.55, sunAngle)` inconsistent with Iris' documented cycle (0=dawn, 0.25=noon, 0.5=sunset, 0.75=midnight): it treated dawn as full daylight and had a discontinuity at the cycle wrap.
+- Replaced it with `solarElevation = sin(sunAngle * 2π)` and `smoothstep(0.0, 0.30, solarElevation)`. This produces a continuous daylight envelope: zero at dawn/sunset, peak at noon and zero through night.
+- Extended the structural validator to require the cyclic expression and reject the previous incorrect formula.
+- This is an Iris-contract source correction. It has not yet been validated in Minecraft/Iris or compared against the actual supplied archive contents.
+- Translucent water/weather/hand-water path remains unresolved and is still the next major pipeline task; do not add speculative fallback shaders until the exact reference source and Iris attachment behavior can be traced.
