@@ -23,7 +23,7 @@ in vec2 vTexCoord;
 
 // Screen-space contact occlusion controls. AO attenuates ambient light only;
 // direct sun/moon lighting and emissive/block-light contribution are retained.
-#define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00] Contact occlusion strength
+#define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.65 0.70 0.80 0.90 1.00] Contact occlusion strength
 #define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
 
 // Deferred is a composite-style pass: it reads the main colortex0 image and
