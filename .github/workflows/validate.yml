@@ -58,7 +58,7 @@ jobs:
 
           {
             head -n 1 shaders/gbuffers_line.fsh
-            printf '#define MC_RENDER_STAGE_OUTLINE 7\n#define MC_RENDER_STAGE_DEBUG 8\n'
+            printf '%s\n' '#define MC_RENDER_STAGE_OUTLINE 7' '#define MC_RENDER_STAGE_DEBUG 8'
             tail -n +2 shaders/gbuffers_line.fsh
           } > "$tmpdir/line.frag"
 
