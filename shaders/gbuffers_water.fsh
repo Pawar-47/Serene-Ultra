@@ -11,6 +11,8 @@ uniform float alphaTestRef;
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2DShadow shadowtex0;
+uniform sampler2DShadow shadowtex1;
+uniform sampler2D shadowcolor0;
 
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
@@ -160,7 +162,7 @@ vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
     return baseColor;
 }
 
-float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
+vec3 sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
     vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
     vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
 
@@ -173,7 +175,7 @@ float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirect
     if (shadowPosition.x <= 0.0 || shadowPosition.x >= 1.0 ||
         shadowPosition.y <= 0.0 || shadowPosition.y >= 1.0 ||
         shadowPosition.z <= 0.0 || shadowPosition.z >= 1.0) {
-        return 1.0;
+        return vec3(1.0);
     }
 
     vec2 texel = 1.0 / vec2(textureSize(shadowtex0, 0));
@@ -182,7 +184,19 @@ float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirect
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5, -0.5), shadowPosition.z));
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5,  0.5), shadowPosition.z));
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5,  0.5), shadowPosition.z));
-    return visibility * 0.25;
+    visibility *= 0.25;
+
+    float centerShadow0 = texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
+    float centerShadow1 = texture(shadowtex1, vec3(shadowPosition.xy, shadowPosition.z));
+    if (centerShadow1 > centerShadow0 + 0.5) {
+        vec4 casterColor = texture(shadowcolor0, shadowPosition.xy);
+        vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a);
+        return clamp(
+            mix(vec3(visibility), translucentTransmission, 1.0 - visibility),
+            vec3(0.0), vec3(1.0)
+        );
+    }
+    return vec3(clamp(visibility, 0.0, 1.0));
 }
 
 vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
@@ -359,7 +373,7 @@ void main() {
         : (hasSkylight ? skyLight : 0.0);
 
     bool cameraUnderwater = (isEyeInWater == 1);
-    float shadow = 1.0;
+    vec3 shadow = vec3(1.0);
     if (nDotL > 0.001 && celestialGate > 0.001 && !(isWater && cameraUnderwater) && !isPortal) {
         shadow = sampleTranslucentShadow(vPlayerPosition, shadowNormal, worldLightDirection);
     }
