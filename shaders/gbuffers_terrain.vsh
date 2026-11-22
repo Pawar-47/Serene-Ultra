@@ -22,9 +22,6 @@ void main() {
     vVertexColor = gl_Color;
     vMaterialId = int(mc_Entity.x + 0.5);
 
-    // Eye-player-space position plus Iris' split camera position yields stable world coordinates.
-    vec3 viewPosition = (gl_ModelViewMatrix * gl_Vertex).xyz;
-    vPlayerPosition = mat3(gbufferModelViewInverse) * viewPosition;
 
     // Store normals in player/world-aligned space so later deferred passes
     // can compare them consistently with world-space light directions.
