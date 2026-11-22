@@ -183,3 +183,10 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Used `fogShape` to choose spherical or cylindrical distance.
 - Fog color is converted to linear space and blended before re-encoding to avoid mixing encoded colors.
 - Extended structural validation for the fog contracts. Hand-water remains on the hand fallback and needs a dedicated path.
+
+## Dedicated hand-water path — 2026-11-23
+- Added `gbuffers_hand_water.vsh/.fsh` as a post-deferred forward color-only program.
+- It samples `gtexture` and `lightmap`, applies the Iris fog uniforms, and writes only colortex0.
+- It uses the existing source-alpha blend directive and does not sample colortex0–3.
+- Extended structural validation to require the dedicated hand-water pair and forward output contract.
+- Runtime verification and dynamic held-item illumination remain pending.
