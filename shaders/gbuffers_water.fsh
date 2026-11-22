@@ -310,21 +310,14 @@ void main() {
             * (WATER_FOG_MULT * 0.01);
         waterFog = clamp(1.0 - exp(-waterThickness * 0.075), 0.0, 1.0);
 
-        // Unbound-inspired shoreline foam: compare the opaque surface behind
-        // water with the water plane in player space. Restrict it to top-facing
-        // water near the upper part of its block to avoid foam on waterfalls.
+        // Unbound-inspired shallow-water foam. Reconstructed view-space
+        // thickness is the stable signal for a nearby opaque intersection;
+        // avoid a world-Y test, which misses sloped shorelines and depends on
+        // the sign of the opaque surface's vertical offset.
         if (WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999 &&
             abs(vPlayerNormal.y) > 0.99) {
-            vec3 opaquePlayerPosition =
-                (gbufferModelViewInverse * vec4(opaqueViewPosition, 1.0)).xyz;
-            float verticalDepth = opaquePlayerPosition.y - vPlayerPosition.y;
-            float foamThreshold = 0.06;
-            float heightFoam = pow(
-                clamp((foamThreshold + verticalDepth) / foamThreshold, 0.0, 1.0),
-                2.0
-            );
-            float surfaceGate = clamp((fract((vPlayerPosition + cameraPosition).y) - 0.7) * 10.0, 0.0, 1.0);
-            waterFoam = heightFoam * (0.4 + 0.25 * skyLight) * surfaceGate;
+            float shallowFoam = 1.0 - smoothstep(0.035, 0.42, waterThickness);
+            waterFoam = shallowFoam * (0.4 + 0.25 * skyLight);
             waterFoam = clamp(waterFoam * (WATER_FOAM_STRENGTH * 0.01), 0.0, 1.0);
         }
 
