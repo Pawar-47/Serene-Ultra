@@ -8,7 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SHADERS = ROOT / "shaders"
 REQUIRED = (
-    "shaders.properties",
+    "shaders.properties", "block.properties",
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
@@ -118,6 +118,10 @@ if props_path.is_file():
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
         errors.append("Weather must remain a post-deferred color-only path without depth writes")
+    if "alphaTest.gbuffers_water=GREATER 0.0001" not in props:
+        errors.append("Translucent terrain must use the Iris water alpha-test reference")
+    if "WATER_FOG_MULT" not in props:
+        errors.append("Water depth-opacity control must be exposed in the Quality menu")
 
 # These two Iris additional programs are only activated by separateEntityDraws.
 # Keep them out of the missing-program warning while that option is intentionally
@@ -212,12 +216,21 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
     if token not in hand_water:
         errors.append(f"Hand-water shader is missing forward component: {token}")
 water = sources.get("gbuffers_water.fsh", "")
+water_vertex = sources.get("gbuffers_water.vsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleTranslucentShadow",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
-              "texture(gtexture", "texture(lightmap", "outColor = vec4(litColor, translucentAlbedo.a)"):
+              "texture(gtexture", "texture(lightmap", "depthtex1", "calculateWaterThickness",
+              "WATER_FOG_MULT", "vMaterialId == 32000", "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
-        errors.append(f"Forward water shader is missing Iris-compatible component: {token}")
+        errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
+for token in ("in vec2 mc_Entity", "vMaterialId = int(mc_Entity.x + 0.5)", "vFluidRenderType = mc_Entity.y"):
+    if token not in water_vertex:
+        errors.append(f"Translucent-terrain vertex stage is missing Iris material attribute: {token}")
+block_props = (SHADERS / "block.properties").read_text(encoding="utf-8") if (SHADERS / "block.properties").is_file() else ""
+for token in ("block.32000=minecraft:water", "block.32001=minecraft:water_cauldron"):
+    if token not in block_props:
+        errors.append(f"Missing stable Iris block material mapping: {token}")
 spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
 if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0.0)" not in spidereyes:
     errors.append("Spider-eye pass must preserve emissive pixels from deferred lighting")
