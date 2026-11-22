@@ -136,3 +136,6 @@ The translucent-particle path uses Complementary Reimagined's material-color heu
 
 ## Particle material path
 The translucent particle path has an optional Complementary-guided material classifier for water splashes, physics rain/snow, underwater particles, campfire smoke and emissive ender/redstone/lava particles. It uses Iris `noisetex` for water-particle dithering and runtime skylight/rain uniforms for weather gating. Emission is added after surface lighting and avoids a shadow lookup. Opaque particle classification remains future work.
+
+## Emissive material buffer
+Opaque G-buffer programs write a dedicated RGBA8 emissive target in `colortex3`. Terrain classification uses Iris `mc_Entity` and `block.properties` IDs; deferred adds tinted emission after AO/direct lighting and before fog. Lava is emitted directly in the post-deferred fluid pass. The target is read-only during deferred and does not participate in scene-color flips. Full material/emission maps and bloom are not yet implemented.
