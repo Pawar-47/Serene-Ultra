@@ -74,6 +74,7 @@ float calculateWaterThickness() {
     // depthtex1 clears to 1.0. Reconstruct that far-plane sample with the
     // inverse projection instead of using Iris' "far" uniform, which is
     // render distance in blocks rather than the projection far plane.
+    vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
     vec3 opaqueNdc = vec3(screenUV, opaqueDepth) * 2.0 - 1.0;
     vec3 opaqueViewPosition = projectAndDivide(gbufferProjectionInverse, opaqueNdc);
     float opaqueDistance = length(opaqueViewPosition);
