@@ -47,3 +47,8 @@ option.PARTICLE_MATERIAL_FEATURES.comment = Detects water, rain, snow, smoke and
 
 option.WATER_REFLECTION_QUALITY = Water Reflections
 option.WATER_REFLECTION_QUALITY.comment = Controls the number of screen-space reflection steps for water. Higher values improve hit coverage at additional GPU cost.
+
+option.WATER_REFRACTION_STRENGTH = Water Refraction
+option.WATER_REFRACTION_STRENGTH.comment = Controls half-resolution screen-space refraction through water. Set to 0 to disable distortion.
+option.WATER_REFLECTION_STRENGTH = Water Fresnel Reflection
+option.WATER_REFLECTION_STRENGTH.comment = Controls grazing-angle sky reflection and sun/moon highlights on water.
