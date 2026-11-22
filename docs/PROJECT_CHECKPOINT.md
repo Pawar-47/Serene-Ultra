@@ -322,3 +322,12 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Particle atlas-size guard uses the Complementary 1.20+ threshold (1100 px), preventing classification against the block atlas. Water-splash dither uses Iris `noisetex`; rain/snow opacity shares the `WEATHER_TEX_OPACITY` option and only activates when Iris reports skylight plus active rain.
 - Ender/Crying Obsidian/Redstone particles suppress lightmap and celestial lighting while retaining their additive emission; emissive particles skip shadow-map lookup.
 - Source-level and GLSL/structural CI checks are not a substitute for in-game validation of translucent sorting, particles or FPS.
+
+## Particle material implementation — 2026-11-23
+- Added optional `PARTICLE_MATERIAL_FEATURES` (default enabled) to `gbuffers_particles_translucent.fsh`.
+- Ported Complementary's water-splash, physics rain/snow, underwater-particle, campfire-smoke, ender/crying-obsidian/redstone and lava-particle heuristics.
+- Used Iris `noisetex` with `textureSize` and `texelFetch` for the water-particle dither lookup.
+- Replaced the unsupported assumption that `OVERWORLD` is a globally defined macro with runtime `hasSkylight && rainStrength` gating. Complementary defines `OVERWORLD` in its own dimension wrapper; the base Iris program does not.
+- Emissive particles add light after ambient/direct shading and skip shadow sampling for lower cost.
+- The feature is exposed in the Quality menu and shares `WEATHER_TEX_OPACITY` with the weather path.
+- Current coverage is the translucent particle program; opaque particle material emission and additional modded-particle types remain to audit.
