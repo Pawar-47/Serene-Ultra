@@ -323,10 +323,24 @@ for token in ("uniform sampler2D specular", "texture(specular, vTexCoord)",
 for token in ("flat in int vMaterialId", "emissionStrength", "materialAO", "materialSurfaceData", "outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData)"):
     if token not in terrain_fragment:
         errors.append(f"Terrain G-buffer is missing emissive material output: {token}")
+for token in ("in vec3 vPlayerPosition", "uniform sampler2D noisetex",
+              "uniform ivec3 cameraPositionInt", "uniform vec3 cameraPositionFract",
+              "uniform float frameTimeCounter", "uniform float wetness", "uniform float rainStrength",
+              "#define RAIN_PUDDLE_STRENGTH 70", "puddleLightFactor", "puddleNormalFactor",
+              "puddleForm", "materialPorosity", "puddleMask", "puddleSmoothness",
+              "vMaterialId == 10009 || vMaterialId == 10011 || vMaterialId == 10129 || vMaterialId == 10137"):
+    if token not in terrain_fragment:
+        errors.append(f"Terrain rain-puddle path is missing component: {token}")
+for token in ("out vec3 vPlayerPosition", "vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz"):
+    if token not in terrain_vertex:
+        errors.append(f"Terrain vertex stage is missing stable player-space position: {token}")
+
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
 for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_block",
               "block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
-              "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal"):
+              "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal",
+              "block.10009=leaves:waterlogged=false", "block.10011=leaves:waterlogged=true",
+              "block.10129=farmland:moisture=0", "block.10137=farmland:moisture=7"):
     if token not in block_properties:
         errors.append(f"Missing emissive/block-entity ID mapping: {token}")
 if "minecraft:flowing_lava" in block_properties:
