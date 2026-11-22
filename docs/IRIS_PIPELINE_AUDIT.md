@@ -232,3 +232,6 @@ Iris documents `gbuffers_hand_water` as post-deferred first-person translucent g
 
 ## Linear-space color correction — 2026-11-23
 Iris' fog guide explicitly converts fog and sampled colors to linear space before lighting. Applied that same documented color-space discipline to the custom first-person hand lightmap multiplication and entityColor tint blend: decode sampled/vertex colors, perform the multiplication or tint blend in linear space, then re-encode for the current G-buffer representation. The deferred, water, weather and translucent-particle paths already perform lighting/fog in linear space. Exact buffer color-space assumptions still need comparison against the supplied stock/reference shader sources and in-game validation.
+
+## Emissive-eye fog correction — 2026-11-23
+The dedicated `gbuffers_spidereyes` path now also applies Iris fog using view-space distance and the documented fog uniforms. It still clears deferred-validity alpha so eye pixels remain emissive, but distant eyes now fade consistently with the rest of the scene.
