@@ -92,8 +92,29 @@ if props_path.is_file():
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
-    if "shadowHardwareFiltering=true" not in props:
-        errors.append("Deferred shadow comparison sampling requires shadowHardwareFiltering=true")
+    if "separateAo=false" not in props:
+        errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
+    if "particles.ordering=mixed" not in props:
+        errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
+
+# Iris shader constants are GLSL declarations, not shaders.properties keys.
+all_glsl = "\\n".join(sources.values())
+for declaration in (
+    "const bool shadowHardwareFiltering = true;",
+    "const float shadowIntervalSize = 2.0;",
+):
+    if declaration not in all_glsl:
+        errors.append(f"Missing Iris GLSL constant declaration: {declaration}")
+if "shadowHardwareFiltering=" in props or "shadowIntervalSize=" in props:
+    errors.append("Iris GLSL constants must not be declared as shaders.properties directives")
+
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh"):
+    source = sources.get(name, "")
+    if "uniform float alphaTestRef" not in source or "albedo.a < alphaTestRef" not in source:
+        errors.append(f"{name} must use Iris alphaTestRef for alpha discard")
+entities = sources.get("gbuffers_entities.fsh", "")
+if "uniform vec4 entityColor" not in entities or "mix(albedo.rgb, entityColor.rgb, entityColor.a)" not in entities:
+    errors.append("Entity shader must apply Iris entityColor tint using its alpha blend factor")
 
 final = sources.get("final.fsh", "")
 for option in ("RED_GAIN", "GREEN_GAIN", "BLUE_GAIN", "GAMMA", "EXPOSURE",
@@ -120,11 +141,13 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
             errors.append(f"{name} is missing G-buffer output {output}")
     if "uniform sampler2D lightmap" not in source or "texture2D(lightmap" not in source:
         errors.append(f"{name} must capture the vanilla colored lightmap")
+    if "uniform float alphaTestRef" not in source or "albedo.a < alphaTestRef" not in source:
+        errors.append(f"{name} must use Iris alphaTestRef instead of a hardcoded alpha cutoff")
 
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2",
-              "sampler2D depthtex0", "sampler2DShadow shadowtex0",
+              "sampler2D depthtex2", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
               "sampleContactAO", "AO_STRENGTH", "AO_RADIUS",
@@ -132,6 +155,8 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "smoothstep(0.0, 0.30, solarElevation)"):
     if token not in deferred:
         errors.append(f"Deferred lighting is missing required component: {token}")
+if "depthtex0" in deferred:
+    errors.append("Deferred world reconstruction must use depthtex2 to exclude transparent and hand geometry")
 if "1.0 - smoothstep(0.45, 0.55, sunAngle)" in deferred:
     errors.append("Deferred day/night curve incorrectly treats Iris sunrise as full daylight")
 # Numerically guard the documented Iris sunAngle cycle: dawn=0, noon=0.25,
