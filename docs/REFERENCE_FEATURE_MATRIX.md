@@ -172,3 +172,6 @@ Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` ma
 
 ## Translucent particles — 2026-11-23
 `gbuffers_particles_translucent` now forward-lights post-deferred particles using player-space normals/positions, vanilla lightmap, day/night/End-flash direct light, one hardware-filtered shadow comparison and Iris fog. The one-tap shadow path is the low-cost baseline for integrated graphics. Particle-specific emission and smoke/water material heuristics remain pending.
+
+## Entity translucent gate — 2026-11-23
+`separateEntityDraws=false` is explicitly retained because current Iris documentation warns the feature is broken in newer versions. Dedicated translucent entity/block shader pairs remain in the repository but are inactive until the Iris feature is verified. The validator rejects accidental activation.
