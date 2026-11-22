@@ -2,6 +2,14 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform sampler2DShadow shadowtex0;
+uniform mat4 shadowModelView;
+uniform mat4 shadowProjection;
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 shadowLightPosition;
+uniform float sunAngle;
+uniform bool hasSkylight;
+uniform float endFlashIntensity;
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -13,6 +21,8 @@ in vec2 vTexCoord;
 in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vViewPosition;
+in vec3 vPlayerPosition;
+in vec3 vPlayerNormal;
 
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
@@ -29,6 +39,22 @@ float calculateParticleFog(float distanceToCamera) {
         return clamp(1.0 - exp(-densityDistance * densityDistance), 0.0, 1.0);
     }
     return 0.0;
+}
+
+float sampleParticleShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
+    vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
+    vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
+    float normalLight = max(dot(normal, lightDirection), 0.0);
+    float depthBias = mix(0.0022, 0.00065, normalLight);
+    shadowClipPosition.z -= depthBias;
+    vec3 shadowNdc = shadowClipPosition.xyz / shadowClipPosition.w;
+    vec3 shadowPosition = shadowNdc * 0.5 + 0.5;
+    if (shadowPosition.x <= 0.0 || shadowPosition.x >= 1.0 ||
+        shadowPosition.y <= 0.0 || shadowPosition.y >= 1.0 ||
+        shadowPosition.z <= 0.0 || shadowPosition.z >= 1.0) {
+        return 1.0;
+    }
+    return texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
 }
 
 void main() {
