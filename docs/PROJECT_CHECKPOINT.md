@@ -491,3 +491,10 @@ vec3 viewDirectionPlayer = normalize(mat3(gbufferModelViewInverse) * normalize(-
 This transforms a direction without applying matrix translation. Iris documents `gbufferModelViewInverse` as view-to-player space and `gbufferModelView` as player-to-view space. The validator now guards this expression.
 
 The latest CI run at this checkpoint is `45075658130` for commit `d42ab0940fd54ca2228c0e664802bfe72f283307`; it was queued when recorded. Do not mark it passed until its final job conclusion is checked. The previous run `45075562637` compiled and linked all shader programs but failed structural validation on two stale expectations: the validator did not recognize the textured-lit fallback's zero-default emission scalar and still expected the old block-entity smoothness alpha value. The current validator source now checks the revised encoding; confirm this with the new CI run.
+
+
+## Water absorption checkpoint — 2026-11-23
+- Added Beer-Lambert absorption to the valid water-refraction path. The existing opaque scene sample is linearized, attenuated by per-channel `exp(-coefficient * waterThickness)`, and blended toward the same water tint used by the surface.
+- Red attenuation is strongest, green intermediate, blue weakest, producing depth-dependent blue tint. No additional sampler or render target was added.
+- Added `WATER_ABSORPTION_STRENGTH` to the Quality menu and slider list; validator requires the coefficient, transmission and tint-mix path.
+- This is an initial physical approximation. Compare coefficient strength and colour against Unbound in actual Minecraft scenes; runtime/visual parity is not claimed.
