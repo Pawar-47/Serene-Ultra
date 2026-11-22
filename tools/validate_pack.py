@@ -156,8 +156,8 @@ if props_path.is_file():
     deferred_format_source = sources.get("deferred.fsh", "")
     if "const int colortex2Format = RGBA8;" not in deferred_format_source:
         errors.append("Iris colortex2 normal/smoothness target must use normalized RGBA8 to preserve bandwidth on low-end GPUs")
-    if "const int colortex3Format = R8;" not in deferred_format_source:
-        errors.append("Iris colortex3 emission target must declare R8 using the documented GLSL buffer-format directive")
+    if "const int colortex3Format = RG8;" not in deferred_format_source:
+        errors.append("Iris colortex3 material target must declare RG8 using the documented GLSL buffer-format directive")
     if "format.colortex2=" in props or "format.colortex3=" in props or "colortex3Format=" in props:
         errors.append("Buffer formats must use Iris GLSL const directives, not shaders.properties key/value syntax")
     if "particles.ordering=mixed" not in props:
@@ -315,7 +315,12 @@ for token in ("in vec2 mc_Entity", "flat out int vMaterialId", "vMaterialId = in
     if token not in terrain_vertex:
         errors.append(f"Terrain vertex stage is missing Iris mc_Entity material classification: {token}")
 terrain_fragment = sources.get("gbuffers_terrain.fsh", "")
-for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0)"):
+for token in ("uniform sampler2D specular", "texture(specular, vTexCoord)",
+              "MC_TEXTURE_FORMAT_LAB_PBR", "pbrSpecular.r", "pbrSpecular.g",
+              "pbrSpecular.a", "pbrSpecular.b", "materialSmoothness"):
+    if token not in terrain_fragment:
+        errors.append(f"Terrain PBR specular/emissive decode is missing component: {token}")
+for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, 0.0, 1.0)"):
     if token not in terrain_fragment:
         errors.append(f"Terrain G-buffer is missing emissive material output: {token}")
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
@@ -689,7 +694,7 @@ for token in ("materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0)"
               "MATERIAL_SPECULAR_STRENGTH", "float specularPower = mix(12.0, 96.0, materialSmoothness)",
               "normalize(mat3(gbufferModelViewInverse) * normalize(-viewPosition))",
               "halfVectorLengthSquared > 0.000001", "inversesqrt(halfVectorLengthSquared)",
-              "litLinear += celestialColor * shadow * specularStrength"):
+              "litLinear += celestialColor * shadow * specularColor * specularStrength"):
     if token not in deferred:
         errors.append(f"Deferred material specular path is missing component: {token}")
 
