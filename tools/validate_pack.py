@@ -115,6 +115,9 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh
     source = sources.get(name, "")
     if "uniform float alphaTestRef" not in source or "albedo.a < alphaTestRef" not in source:
         errors.append(f"{name} must use Iris alphaTestRef for alpha discard")
+hand_fragment = sources.get("gbuffers_hand.fsh", "")
+if "uniform sampler2D lightmap" not in hand_fragment or "texture(lightmap" not in hand_fragment:
+    errors.append("Hand shader must preserve the vanilla lightmap response")
 entities = sources.get("gbuffers_entities.fsh", "")
 if "uniform vec4 entityColor" not in entities or "mix(albedo.rgb, entityColor.rgb, entityColor.a)" not in entities:
     errors.append("Entity shader must apply Iris entityColor tint using its alpha blend factor")
