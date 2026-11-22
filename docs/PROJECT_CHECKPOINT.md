@@ -306,12 +306,12 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - `gbuffers_particles_translucent.vsh` now passes player-space position and normal using Iris `gbufferModelViewInverse`.
 - The fragment path samples the vanilla lightmap, computes the active celestial source, applies one hardware-filtered `shadowtex0` comparison and Iris fog.
 - One shadow comparison is intentional to limit bandwidth/ALU cost on Intel HD 5500; this is a source-level performance choice, not measured FPS.
-- Particle-specific emissive classification, campfire smoke, underwater particles and material-specific water/rain/snow effects remain pending.
+- Particle-specific emissive classification, campfire smoke, underwater particles and water/rain/snow material heuristics are now implemented in opaque/translucent particle paths; visual parity remains pending.
 
 ## Iris compatibility correction — 2026-11-23
 - Rechecked the current Iris ordering documentation: it explicitly documents `separateEntityDraws=true` for post-deferred translucent entities and block entities. The prior decision to disable it was incorrect and has been reversed.
 - Added `iris.features.optional=ENTITY_TRANSLUCENT` to query Iris support for the translucent entity program.
-- Retained the forward `gbuffers_entities_translucent` and `gbuffers_block_translucent` source pairs, but they are inactive until a fixed Iris version is runtime-verified.
+- The dedicated forward `gbuffers_entities_translucent` and `gbuffers_block_translucent` pairs are active through `separateEntityDraws=true`; runtime sorting and blend behavior still need testing.
 - Validator now requires `separateEntityDraws=true`, the optional feature query and both dedicated forward program pairs.
 - CI run [45068091455](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45068091455) passed GLSL compile, macro-branch compile, vertex/fragment linking and structural validation.
 
@@ -360,4 +360,4 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Added the documented format declarations to `deferred.fsh`; validator now checks the source directives and rejects the invalid properties syntax.
 - Corrected the opaque-particle atlas-size validator to match the actual explicit float conversion around `textureSize`.
 - Iris noisetex documentation confirms a generated square RGB8 noise texture (default 256×256); the translucent-particle dither path uses its runtime size and `texelFetch`, so it does not assume a fixed resolution.
-- Latest validation run for the corrected source tree is being checked; do not treat older runs as validation of this commit.
+- Latest completed CI before the lit-fallback additions passed GLSL compilation, macro-branch compilation, program linking and structural validation; the new lit-fallback and option-synchronization commits are awaiting their own run.
