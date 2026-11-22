@@ -562,3 +562,10 @@ Iris documents `at_tangent` as available in `gbuffers_*.vsh`, and `normals` as t
 - Deferred retains four `shadowtex0` PCF taps, then performs a center `shadowtex0`/`shadowtex1` comparison and samples `shadowcolor0` only when a translucent blocker is detected. RGB transmission affects direct and specular lighting.
 - Added `blend.shadow.shadowcolor0=off` and `flip.shadow.shadowcolor0=false` to preserve the shadow pass's output for deferred.
 - This adds an RGBA8 shadow-color attachment and an extra translucent shadow render; measure cost on Intel HD 5500. No in-game visual validation is claimed.
+
+
+## Stable projected caustics and colored translucent shadows — 2026-11-23
+
+The shadow pass reconstructs stable world coordinates from Iris' split integer/fractional camera uniforms and shadow-view-to-player transform, then wraps them to a 256-block period. Three animated caustic interference bands use integer-lattice spatial frequencies and integer cycle counts over Iris' 3600-second timer, preventing both camera-wrap and timer-wrap seams. `WATER_CAUSTICS_SCALE` uses quarter-step values that preserve the 256-block period; `WATER_CAUSTICS_STRENGTH=0` returns neutral caustic modulation.
+
+The shadow color target is RGBA8 because it now carries RGB transmission and alpha for water, clear/stained/tinted glass, ice and portals. Deferred combines the existing four-tap `shadowtex0` PCF with the opaque-only `shadowtex1` comparison, and only samples `shadowcolor0` when a translucent blocker is detected. The resulting RGB transmission attenuates both direct diffuse and material specular light. This is source-validated only; the extra translucent shadow render and RGBA8 target need performance and visual checks on Intel HD 5500.
