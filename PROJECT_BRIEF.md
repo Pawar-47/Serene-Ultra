@@ -59,3 +59,7 @@ Provide independent red, green and blue channel adjustments, gamma, exposure, co
 
 ## User instruction continuity
 Every new user instruction must be incorporated into this brief and the relevant implementation/docs. At the end of each work session, update this brief and the project checkpoint with completed work, in-progress work, validation status, blockers and next actions. The final response must summarize the current project state and retain the user's cumulative requirements.
+
+
+## Iris execution-environment clarification (2026-11-23)
+Serene Ultra is compiled and loaded as an **Iris shaderpack**. Iris—not the Vanilla-stock shader directory—defines the actual shaderpack execution contract: recognized program filenames, pass ordering, fallback gbuffers programs, render-target mapping/flipping, blending, shader options and Iris-specific capabilities. Minecraft 26.3 Vanilla-stock is used to understand the native engine pipeline and the data/behavior exposed to shaders; it is not to be treated as the pack's execution skeleton. Complementary Reimagined is a functioning Iris shaderpack and therefore provides especially valuable file-by-file implementation guidance. For uncertain features, inspect the actual Complementary implementation, the relevant stock source and the applicable Iris contract together before changing code. See [docs/IRIS_PIPELINE_AUDIT.md](docs/IRIS_PIPELINE_AUDIT.md).
