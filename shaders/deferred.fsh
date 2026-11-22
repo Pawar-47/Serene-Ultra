@@ -45,11 +45,8 @@ in vec2 vTexCoord;
 // Deferred is a composite-style pass: it reads the main colortex0 image and
 // writes the alternate image. Iris flips the pair after this pass, so the
 // lit opaque scene becomes the main image for subsequent translucent gbuffers.
-/* RENDERTARGETS: 0,4 */
+/* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
-// Opaque/sky color snapshot for the post-deferred water reflection pass.
-// Alpha is a validity mask that excludes hand/transparent pixels.
-layout(location = 1) out vec4 outOpaqueReflectionScene;
 
 vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
     vec4 homogeneous = projectionMatrix * vec4(position, 1.0);
@@ -158,8 +155,6 @@ void main() {
         abs(sceneDepth - opaqueWorldDepth) > 0.000001 ||
         normalData.a < 0.5) {
         outColor = scene;
-        float reflectionSceneValid = (abs(sceneDepth - opaqueWorldDepth) <= 0.000001) ? 1.0 : 0.0;
-        outOpaqueReflectionScene = vec4(scene.rgb, reflectionSceneValid);
         return;
     }
 
@@ -230,5 +225,4 @@ void main() {
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
 
     outColor = vec4(litColor, scene.a);
-    outOpaqueReflectionScene = vec4(litColor, 1.0);
 }
