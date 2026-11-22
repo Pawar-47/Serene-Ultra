@@ -112,3 +112,6 @@ option.PBR_REFLECTION_STRENGTH = PBR Reflection Strength
 option.PBR_REFLECTION_STRENGTH.comment = Fresnel-weighted screen-space and sky/horizon reflections on glossy opaque materials.
 option.PBR_REFLECTION_QUALITY = PBR Reflection Quality
 option.PBR_REFLECTION_QUALITY.comment = Screen-space reflection ray steps. Zero keeps the low-cost environment fallback.
+
+option.RAIN_PUDDLE_STRENGTH = Rain Puddle Strength
+option.RAIN_PUDDLE_STRENGTH.comment = Controls lightweight rain puddles on sky-exposed upward-facing terrain. LabPBR porosity reduces pooling, while leaves and farmland are excluded. Uses no 3D voxel map or extra render target.
