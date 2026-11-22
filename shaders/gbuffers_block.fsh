@@ -69,6 +69,6 @@ void main() {
     outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
-    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 1.0);
+    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5); // Sign text invalid; other block entities non-specular
     outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
 }
