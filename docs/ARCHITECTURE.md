@@ -21,12 +21,14 @@ Opaque/cutout terrain and entity passes write three attachments using Iris' REND
 
 The terrain/entity vertex stages transform normals from view space back into player-aligned space using Iris' gbufferModelViewInverse. Their fragment stages sample the vanilla lightmap so the later deferred pass can retain its warm block-light and colored skylight response. The first-person hand path writes only colortex0; it is deliberately not treated as world geometry by the current deferred-data contract.
 
-## Deferred lighting stage
-The deferred fragment pass reconstructs player-space position from depth using Iris projection/model-view inverse matrices. It decodes the G-buffer normal and sampled lightmap, transforms Iris' shadowLightPosition into player space, projects the surface into the shadow map, applies a slope-aware depth bias, and evaluates four hardware-filtered shadow comparison taps.
+## Deferred lighting and attachment flow
+The deferred fragment pass reads the G-buffer color, lightmap, normal and depth inputs. It reconstructs player-space position, transforms the surface into shadow space, applies slope-aware depth bias and evaluates four hardware-filtered shadow comparison taps.
 
-The initial lighting model uses the sampled vanilla lightmap RGB as its ambient/block-light foundation, adds a separate day/night-adjusted direct celestial diffuse term, and preserves the sky-light coordinate to gate direct light. Sky pixels and fragments without world-normal data are passed through unchanged. This is an initial functional lighting model, not a claim of reference visual parity; light balance, shadow stability, dimension behavior and performance require in-game comparison.
+**Important attachment rule:** deferred must not sample and write the same color attachment in one pass. It now reads the original scene from colortex0 and writes the lit result to colortex3 (RENDERTARGETS: 3). The following composite pass samples colortex3 and writes the result to colortex0. This avoids a framebuffer read/write feedback loop and keeps the final pass input stable.
 
-The composite pass remains an identity copy. This keeps later post-processing stages separate from geometry lighting.
+The lighting model uses sampled vanilla lightmap RGB as its ambient/block-light foundation, adds a day/night-adjusted direct celestial diffuse term and gates direct light with the sky-light coordinate. Eight depth-neighbor samples provide a first screen-space contact-occlusion approximation. AO attenuates ambient light only, preserving direct celestial and emissive contributions. Sky pixels and fragments without world-normal data pass through unchanged.
+
+This AO is a deliberately bounded first implementation, not a final GTAO-quality solution. Radius, bias, edge behavior, camera motion stability and performance need scene-based calibration. It must be compared with the actual Minecraft 26.3 stock shader source before its interfaces and behavior are treated as verified.
 
 ## Performance architecture
 - Share common functions and constants rather than duplicate calculations.
@@ -41,7 +43,8 @@ The composite pass remains an identity copy. This keeps later post-processing st
 - Texture-aware alpha-tested shadow casters.
 - Deferred position reconstruction, direct celestial lighting and four-tap hardware-filtered shadow comparisons.
 - Vanilla lightmap RGB preservation for colored ambient/block-light response.
-- Explicit Iris render-target mappings and data-buffer blending rules.
-- Structural CI checks for G-buffer attachments, alpha-tested shadows and deferred-lighting dependencies.
+- Separate deferred output attachment and composite copy-back to avoid same-attachment feedback.
+- Eight-tap screen-space contact AO with adjustable strength and radius.
+- Structural CI checks for G-buffer attachments, alpha-tested shadows, deferred attachment separation and AO controls.
 
-This remains an early rendering foundation, not Ultra parity. AO, advanced colored light, indirect illumination, shadow softness/bias calibration, material classification, translucency, atmosphere and post effects remain incomplete and require Iris runtime testing.
+This remains an early rendering foundation, not Ultra parity. Advanced colored light, indirect illumination, shadow softness/bias calibration, material classification, translucency, atmosphere and post effects remain incomplete and require Iris runtime testing.
