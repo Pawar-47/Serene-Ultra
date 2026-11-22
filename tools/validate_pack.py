@@ -54,8 +54,9 @@ if props_path.is_file():
     for screen in ("screen = <profile>", "screen.QUALITY =", "screen.COLOR ="):
         if screen not in props:
             errors.append(f"Missing menu configuration: {screen}")
-    if "SHADOW_ALPHA_CUTOFF" not in props:
-        errors.append("Shadow alpha cutoff is not exposed in the Quality menu")
+    for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
+        if option not in props:
+            errors.append(f"{option} is not exposed in the Quality menu")
     if "shadowHardwareFiltering=true" not in props:
         errors.append("Deferred shadow comparison sampling requires shadowHardwareFiltering=true")
 
@@ -86,13 +87,24 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
         errors.append(f"{name} must capture the vanilla colored lightmap")
 
 deferred = sources.get("deferred.fsh", "")
-for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex1",
-              "sampler2D colortex2", "sampler2D depthtex0",
-              "sampler2DShadow shadowtex0", "gbufferProjectionInverse",
-              "shadowModelView", "shadowProjection", "sampleShadow",
-              "vanillaAmbient", "lightData.a"):
+for token in ("/* RENDERTARGETS: 3 */", "sampler2D colortex0",
+              "sampler2D colortex1", "sampler2D colortex2",
+              "sampler2D depthtex0", "sampler2DShadow shadowtex0",
+              "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
+              "sampleShadow", "vanillaAmbient", "lightData.a",
+              "sampleContactAO", "AO_STRENGTH", "AO_RADIUS"):
     if token not in deferred:
         errors.append(f"Deferred lighting is missing required component: {token}")
+if "outColor = scene;" not in deferred or "outColor = vec4(litColor, scene.a);" not in deferred:
+    errors.append("Deferred pass must preserve uncovered pixels and output shaded pixels")
+
+composite = sources.get("composite.fsh", "")
+if "uniform sampler2D colortex3" not in composite:
+    errors.append("Composite must read deferred output from colortex3")
+if "/* RENDERTARGETS: 0 */" not in composite:
+    errors.append("Composite must write the final scene back to colortex0")
+if "texture(colortex3" not in composite and "texture2D(colortex3" not in composite:
+    errors.append("Composite does not sample the deferred output")
 
 brief = ROOT / "PROJECT_BRIEF.md"
 if not brief.is_file():
