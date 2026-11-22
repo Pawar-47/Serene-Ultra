@@ -30,8 +30,9 @@ Provide independent red, green and blue channel adjustments, gamma, exposure, co
 ## Rendering implementation status
 - The shadow vertex stage forwards base texture coordinates and vertex alpha; the shadow fragment stage discards transparent texels using a user-adjustable alpha cutoff.
 - Terrain and entity G-buffer passes capture base albedo, lightmap coordinates and encoded player-aligned normals into colortex0, colortex1 and colortex2.
-- The first-person hand path remains color-only. The composite stage intentionally copies the scene unchanged until the deferred lighting model is ready.
-- These are foundations, not full Ultra parity. Filtered shadow sampling, depth bias, direct-light integration, material classification and runtime validation remain required.
+- The deferred pass reconstructs player-space position, computes a day/night celestial diffuse term, and applies four hardware-filtered shadow comparison taps with a slope-aware depth bias.
+- The first-person hand and sky are passed through unchanged by deferred world lighting. The composite pass remains an identity copy.
+- This is an early lighting implementation, not reference parity. Ambient/block-light balance, colored light, AO, indirect light, shadow stability, dimension behavior, material classification and runtime validation remain required.
 - Do not mark a rendering subsystem complete based only on structural source checks.
 
 ## Quality and engineering
