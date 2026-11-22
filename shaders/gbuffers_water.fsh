@@ -3,7 +3,10 @@
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2D depthtex1;
+uniform sampler2D depthtex2;
+uniform sampler2D colortex4;
 uniform float alphaTestRef;
+uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2DShadow shadowtex0;
 
@@ -28,12 +31,14 @@ in vec4 vVertexColor;
 in vec3 vPlayerNormal;
 in vec3 vPlayerPosition;
 in vec3 vViewPosition;
+in vec3 vViewNormal;
 flat in int vMaterialId;
 flat in float vFluidRenderType;
 
 /* RENDERTARGETS: 0 */
 
 #define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
+#define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
 layout(location = 0) out vec4 outColor;
 
 float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
@@ -79,6 +84,72 @@ float calculateWaterThickness() {
     float opaqueDistance = length(opaqueViewPosition);
     return max(opaqueDistance - length(vViewPosition), 0.0);
 }
+
+
+#if WATER_REFLECTION_QUALITY > 0
+// The deferred pass writes a separate opaque/sky color snapshot to colortex4.
+// depthtex2 excludes both translucent geometry and first-person hand geometry,
+// so this forward pass never samples colortex0 while writing to it.
+vec3 sampleWaterScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
+    const float maxDistance = 24.0;
+    float stepLength = maxDistance / float(WATER_REFLECTION_QUALITY);
+    vec3 incidentDirection = normalize(viewPosition);
+    vec3 reflectionDirection = normalize(reflect(incidentDirection, viewNormal));
+    vec3 rayOrigin = viewPosition + viewNormal * 0.06 + reflectionDirection * 0.03;
+
+    vec3 reflectionColor = vec3(0.0);
+    hitConfidence = 0.0;
+
+    for (int i = 0; i < WATER_REFLECTION_QUALITY; ++i) {
+        float travelDistance = (float(i) + 1.0) * stepLength;
+        vec3 rayPosition = rayOrigin + reflectionDirection * travelDistance;
+        vec4 clipPosition = gbufferProjection * vec4(rayPosition, 1.0);
+        if (clipPosition.w <= 0.0001) break;
+
+        vec3 rayNdc = clipPosition.xyz / clipPosition.w;
+        vec2 sampleUV = rayNdc.xy * 0.5 + 0.5;
+        if (sampleUV.x <= 0.001 || sampleUV.x >= 0.999 ||
+            sampleUV.y <= 0.001 || sampleUV.y >= 0.999) {
+            break;
+        }
+
+        ivec2 samplePixel = ivec2(sampleUV * vec2(textureSize(depthtex2, 0)));
+        float sceneDepth = texelFetch(depthtex2, samplePixel, 0).r;
+        vec4 sceneSample = texelFetch(colortex4, samplePixel, 0);
+
+        // Alpha zero marks pixels where the deferred scene snapshot contained
+        // first-person hand or transparent overlays rather than opaque/sky color.
+        if (sceneSample.a < 0.5) continue;
+
+        vec2 edgeDistance = min(sampleUV, vec2(1.0) - sampleUV);
+        float edgeFade = smoothstep(0.0, 0.08, min(edgeDistance.x, edgeDistance.y));
+        float distanceFade = 1.0 - smoothstep(16.0, maxDistance, travelDistance);
+
+        // A clear depth sample is the sky; its color is already present in the
+        // deferred snapshot and is a valid reflection source.
+        if (sceneDepth >= 0.999999) {
+            reflectionColor = sceneSample.rgb;
+            hitConfidence = edgeFade * distanceFade;
+            return reflectionColor;
+        }
+
+        vec3 sceneNdc = vec3(sampleUV, sceneDepth) * 2.0 - 1.0;
+        vec3 sceneViewPosition = projectAndDivide(gbufferProjectionInverse, sceneNdc);
+        float depthDelta = rayPosition.z - sceneViewPosition.z;
+
+        // View-space Z is negative in front of the camera. A negative delta
+        // means the reflection ray has crossed behind the opaque depth surface.
+        if (depthDelta <= 0.0 && depthDelta > -stepLength * 0.75) {
+            float depthConfidence = 1.0 - smoothstep(0.0, stepLength * 0.75, abs(depthDelta));
+            reflectionColor = sceneSample.rgb;
+            hitConfidence = edgeFade * distanceFade * depthConfidence;
+            return reflectionColor;
+        }
+    }
+
+    return reflectionColor;
+}
+#endif
 
 float calculateTranslucentFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -157,6 +228,23 @@ void main() {
     float fogFactor = calculateTranslucentFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     litLinear = mix(litLinear, fogColorLinear, fogFactor);
+
+    // Fresnel-weighted screen-space reflection is applied only to water, not
+    // stained glass, lava, portals or other translucent terrain.
+    #if WATER_REFLECTION_QUALITY > 0
+    if (isWater) {
+        vec3 viewNormal = normalize(vViewNormal);
+        if (dot(normalize(vViewPosition), viewNormal) > 0.0) viewNormal = -viewNormal;
+        float nDotV = clamp(dot(viewNormal, normalize(-vViewPosition)), 0.0, 1.0);
+        float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
+        float reflectionConfidence = 0.0;
+        vec3 reflectionColor = sampleWaterScreenReflection(vViewPosition, viewNormal, reflectionConfidence);
+        vec3 reflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
+        float reflectionWeight = min(fresnel * 2.5, 0.85) * reflectionConfidence;
+        litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
+    }
+    #endif
+
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
 
     outColor = vec4(litColor, translucentAlbedo.a);
