@@ -225,3 +225,5 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 2. Cross-reference the supplied Complementary water, fog, shadow and material implementations and the Vanilla-stock inputs before advanced water/reflection/material algorithms.
 3. Implement wet surfaces/puddles, material classification, emissive/colored lighting, improved AO, reflections, volumetrics and anti-aliasing without removing Ultra features.
 4. Keep CI green after each coherent change; then perform actual Iris runtime and target-hardware tests.
+
+- Shadow caster alpha testing now uses the stricter of Iris `alphaTestRef` and the Serene `SHADOW_ALPHA_CUTOFF` option; validator enforces both.
