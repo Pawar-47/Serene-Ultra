@@ -106,6 +106,7 @@ void main() {
         emissionStrength = 1.25;
     }
 
+    outLightmapData = vec4(vanillaLight, skyLight);
     outColor = albedo;
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
