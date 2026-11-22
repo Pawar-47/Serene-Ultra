@@ -35,3 +35,10 @@
 ## Performance
 Capture repeatable runs at fixed resolution and settings. Record average FPS, 1% low, frame-time distribution and scene conditions. Never compare different scenes or settings as if they were controlled tests.
 undefined
+
+Additional runtime checks:
+- Verify leash and debug chunk-border overlays are fogged correctly and do not receive deferred surface lighting.
+- Break blocks in sunlight, shade, caves and different resource packs; check crack texture alpha and that cracks inherit the underlying block lighting.
+- Check all sign types (standing, wall and hanging) for correct text brightness, color and fog at distance.
+- Check End portal and End gateway surfaces for the intended emissive contribution and ensure the mapping does not affect unrelated block entities.
+- Verify opaque block entities still receive normal/lightmap/shadow/AO and translucent block entities use `gbuffers_block_translucent` after deferred.
