@@ -122,6 +122,8 @@ if props_path.is_file():
         errors.append("Translucent terrain must use the Iris water alpha-test reference")
     if "WATER_FOG_MULT" not in props:
         errors.append("Water depth-opacity control must be exposed in the Quality menu")
+    if "WEATHER_TEX_OPACITY" not in props:
+        errors.append("Weather particle opacity control must be exposed in the Quality menu")
 
 # These two Iris additional programs are only activated by separateEntityDraws.
 # Keep them out of the missing-program warning while that option is intentionally
@@ -209,6 +211,7 @@ weather = sources.get("gbuffers_weather.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape",
               "uniform int isEyeInWater", "uniform float alphaTestRef",
+              "WEATHER_TEX_OPACITY", "rainTexOpacity", "snowTexOpacity",
               "weatherColor.a < max(0.1, alphaTestRef)", "isEyeInWater == 3"):
     if token not in weather:
         errors.append(f"Forward weather shader is missing Iris fog/light component: {token}")
