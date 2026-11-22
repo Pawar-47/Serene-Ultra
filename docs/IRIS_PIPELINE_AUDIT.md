@@ -229,3 +229,6 @@ The current code had no shared Iris fog implementation in the deferred world pas
 
 ## Dedicated hand-water forward path — 2026-11-23
 Iris documents `gbuffers_hand_water` as post-deferred first-person translucent geometry, falling back to `gbuffers_hand`. Added a dedicated color-only forward pair. It uses `gtexture`, transformed lightmap coordinates, view-space distance and Iris fog uniforms; it writes only colortex0 and uses the existing source-alpha blend directive. It does not sample colortex0–3. This removes reliance on the ordinary hand fallback for this stage. Dynamic held-item illumination and in-game first-person water verification remain outstanding.
+
+## Linear-space color correction — 2026-11-23
+Iris' fog guide explicitly converts fog and sampled colors to linear space before lighting. Applied that same documented color-space discipline to the custom first-person hand lightmap multiplication and entityColor tint blend: decode sampled/vertex colors, perform the multiplication or tint blend in linear space, then re-encode for the current G-buffer representation. The deferred, water, weather and translucent-particle paths already perform lighting/fog in linear space. Exact buffer color-space assumptions still need comparison against the supplied stock/reference shader sources and in-game validation.
