@@ -331,3 +331,7 @@ Iris' image-format documentation confirms `R8` is a supported normalized render-
 - Corrected over-escaped validator regular expressions so duplicate uniform declarations and forbidden G-buffer sampling are actually detected.
 - CI run [45072296773](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45072296773) passed vertex/fragment compilation, Iris render-stage macro compilation, program linking and structural validation. The only program-coverage notices are the intentional Iris fallbacks `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` → `gbuffers_terrain`.
 - This is an Iris contract/source audit, not an in-game runtime, visual-parity or performance result.
+
+
+## Translucent-particle noise sampling re-aligned — 2026-11-23
+The current Iris NoiseTex reference documents `noisetex` as a generated RGB8 square noise texture (256×256 by default), sampled with the normal sampler interface. The Complementary Reimagined `shaders/program/gbuffers_textured.glsl` reference samples its blue channel using `texture2DLod(noisetex, gl_FragCoord.xy / 128.0, 0.0).b`. Serene's post-deferred particle path previously used integer `texelFetch` modulo the texture dimensions, which changed the screen-space noise tile frequency and did not match the known-good reference. It now uses the same normalized-coordinate, explicit-LOD sampling form. The structural validator checks that exact expression. This is a source-level alignment; the visual dither pattern still needs in-game review.
