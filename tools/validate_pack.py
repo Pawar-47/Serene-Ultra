@@ -207,6 +207,9 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
 
+weather_vertex = sources.get("gbuffers_weather.vsh", "")
+if "#define WAVING_RAIN" not in weather_vertex or "eyeBrightnessSmooth" not in weather_vertex or "rainStrength" not in weather_vertex:
+    errors.append("Weather vertex path must implement the Iris-aware waving rain/snow option")
 weather = sources.get("gbuffers_weather.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape",
