@@ -289,3 +289,9 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - The textured fallback preserves atlas/vertex color and applies Iris fog without sampling forbidden G-buffer color attachments.
 - Added CI compilation of Iris render-stage macro branches using injected GLSL preprocessor defines.
 - Current checks are source/GLSL/structural only; sky gradient, twilight, celestial tint and weather transitions still need in-game visual calibration.
+
+## Line geometry update — 2026-11-23
+- Added `gbuffers_line.vsh/.fsh` for Iris line geometry.
+- Uses `MC_RENDER_STAGE_OUTLINE` and `MC_RENDER_STAGE_DEBUG` to keep selection/debug lines crisp while fogging ordinary line geometry.
+- Writes color plus zero colortex2 validity; per-buffer mask blending is disabled, color blend state remains game-managed.
+- Added CI compilation of Iris render-stage macro branches for sky and line programs.
