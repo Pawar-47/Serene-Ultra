@@ -217,7 +217,7 @@ void main() {
     // Smoothness is packed into colortex2 alpha without another G-buffer.
     // Only explicitly classified glossy materials pay for the specular term.
     if (materialSmoothness > 0.01 && MATERIAL_SPECULAR_STRENGTH > 0) {
-        vec3 viewDirectionPlayer = normalize(-playerPosition);
+        vec3 viewDirectionPlayer = normalize(mat3(gbufferModelViewInverse) * normalize(-viewPosition));
         vec3 halfDirection = normalize(worldLightDirection + viewDirectionPlayer);
         float specularPower = mix(12.0, 96.0, materialSmoothness);
         float specularShape = pow(max(dot(normal, halfDirection), 0.0), specularPower);
