@@ -508,3 +508,11 @@ The latest CI run at this checkpoint is `45075658130` for commit `d42ab0940fd54c
 - The reflection fallback adds no extra texture fetches. It uses the existing reflection direction and two Iris colour uniforms. It remains an approximate sky/horizon environment, not a cubemap or world-space reflection system.
 - The validator now checks the fallback path and no longer expects reflection confidence to be multiplied into the reflection weight; confidence selects between environment and screen-space reflection instead.
 - Runtime appearance, water absorption calibration, glass/ice tint and Intel HD 5500 performance remain unverified.
+
+
+## Atlas-safe nether portal checkpoint — 2026-11-23
+- Verified Iris `mc_midTexCoord` documentation: it provides the current quad's texture-region center and is valid in `gbuffers_*.vsh`.
+- `gbuffers_water.vsh` now forwards transformed per-quad midpoint and half extents. The fragment stage uses four animated portal taps, clamped to the current sprite bounds with a one-texel inset, avoiding atlas bleeding.
+- Portal emission is derived from the pre-tint texture signal; warm nonlinear colour tint is applied afterward.
+- Added `PORTAL_DISTORTION_STRENGTH` to the Quality menu and slider list. Structural validation checks the Iris attribute, UV bounds and sample path.
+- This is a four-tap low-cost approximation, not full Unbound portal raymarch/edge treatment. Runtime atlas, alpha and performance checks remain pending.
