@@ -200,3 +200,6 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Hand-water uses Iris gtexture/lightmap and fog.
 - All use explicit source-alpha blending and do not sample colortex0–3 from gbuffers programs.
 - Advanced water effects, volumetric weather, dynamic held-item illumination, special geometry and runtime/visual parity remain outstanding.
+
+
+- Added Iris fog to the emissive spider-eyes program while retaining its colortex2 deferred-validity mask.
