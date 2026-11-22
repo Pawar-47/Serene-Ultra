@@ -30,3 +30,6 @@ The supplied working shader is used only as a visual/feature reference. Its sour
 
 
 Iris fog is now applied to deferred opaque surfaces and the dedicated forward water, weather and translucent-particle paths using the documented fog uniforms and modes. This remains source-level implementation pending in-game fog calibration.
+
+
+Dedicated forward paths now exist for water, weather and first-person hand-water, replacing all three Iris fallbacks for the post-deferred translucent stage. These are baseline paths; advanced water effects and runtime/visual validation remain pending.
