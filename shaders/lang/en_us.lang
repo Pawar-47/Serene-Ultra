@@ -45,8 +45,8 @@ option.WAVING_RAIN.comment = Adds subtle wind-driven motion to falling rain and 
 option.PARTICLE_MATERIAL_FEATURES = Particle material effects
 option.PARTICLE_MATERIAL_FEATURES.comment = Detects water, rain, snow, smoke and emissive particle textures.
 
-option.WATER_REFLECTION_QUALITY = Water Reflections
-option.WATER_REFLECTION_QUALITY.comment = Controls the number of screen-space reflection steps for water. Higher values improve hit coverage at additional GPU cost.
+option.WATER_REFLECTION_QUALITY = Water / Glass Reflection Quality
+option.WATER_REFLECTION_QUALITY.comment = Controls screen-space reflection steps for water and glass. Higher values improve hit coverage at additional GPU cost.
 
 option.WATER_REFRACTION_STRENGTH = Water Refraction
 option.WATER_REFRACTION_STRENGTH.comment = Controls half-resolution screen-space refraction through water. Set to 0 to disable distortion.
