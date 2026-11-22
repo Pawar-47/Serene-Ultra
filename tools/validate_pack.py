@@ -129,7 +129,7 @@ if props_path.is_file():
         errors.append("Translucent water must use the reference-matched low alphaTestRef")
     if "WATER_FOG_MULT" not in props:
         errors.append("Water depth-opacity control must be exposed in the Quality menu")
-    for program in ("gbuffers_beaconbeam", "gbuffers_clouds", "gbuffers_spidereyes"):
+    for program in ("gbuffers_beaconbeam", "gbuffers_clouds", "gbuffers_spidereyes", "gbuffers_skytextured"):
         if f"alphaTest.{program}=GREATER 0.0001" not in props:
             errors.append(f"{program} must use the low alpha threshold from the reference shader")
     for program in ("gbuffers_armor_glint", "gbuffers_beaconbeam", "gbuffers_lightning", "gbuffers_clouds", "gbuffers_spidereyes"):
