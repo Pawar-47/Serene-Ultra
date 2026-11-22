@@ -68,7 +68,7 @@ vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
 
 float calculateWaterThickness() {
     // depthtex1 is full-resolution; fetch the exact current pixel without
-    // filtering or normalized-coordinate arithmetic.
+    // filtering, then normalize only for inverse-projection reconstruction.
     float opaqueDepth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
     // depthtex1 clears to 1.0. Reconstruct that far-plane sample with the
     // inverse projection instead of using Iris' "far" uniform, which is
