@@ -137,8 +137,8 @@ void main() {
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
 
     // Iris mc_Entity.y identifies fluid geometry; block.properties supplies
-    // stable IDs so water-only attenuation never affects glass or portals.
-    bool isWater = (vMaterialId == 32000 && vFluidRenderType > 0.5) || vMaterialId == 32001;
+    // stable IDs so water-only attenuation never affects glass, lava or portals.
+    bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
     if (isWater) {
         // Match the reference shader's baseline water alpha shaping.
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0));
