@@ -56,7 +56,7 @@ vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
     return homogeneous.xyz / homogeneous.w;
 }
 
-float sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
+vec3 sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
     vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
     vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
 
@@ -70,7 +70,7 @@ float sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
     if (shadowPosition.x <= 0.0 || shadowPosition.x >= 1.0 ||
         shadowPosition.y <= 0.0 || shadowPosition.y >= 1.0 ||
         shadowPosition.z <= 0.0 || shadowPosition.z >= 1.0) {
-        return 1.0;
+        return vec3(1.0);
     }
 
     // Four hardware-filtered comparison taps provide a wider soft edge
@@ -89,11 +89,16 @@ float sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
     float centerShadow0 = texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
     float centerShadow1 = texture(shadowtex1, vec3(shadowPosition.xy, shadowPosition.z));
     if (centerShadow1 > centerShadow0 + 0.5) {
-        float waterTransmission = texture(shadowcolor0, shadowPosition.xy).r;
-        float translucentVisibility = waterTransmission * centerShadow1;
-        visibility = mix(visibility, translucentVisibility, 1.0 - visibility);
+        vec4 casterColor = texture(shadowcolor0, shadowPosition.xy);
+        vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a);
+        vec3 opaqueVisibility = vec3(visibility);
+        vec3 translucentVisibility = translucentTransmission * centerShadow1;
+        return clamp(
+            mix(opaqueVisibility, translucentVisibility, 1.0 - visibility),
+            vec3(0.0), vec3(1.0)
+        );
     }
-    return clamp(visibility, 0.0, 1.0);
+    return vec3(clamp(visibility, 0.0, 1.0));
 }
 
 float calculateFogFactor(float distanceToCamera) {
@@ -242,8 +247,8 @@ void main() {
             float specularShape = pow(max(dot(normal, halfDirection), 0.0), specularPower);
             float specularStrength = specularShape * materialSmoothness
                 * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18
-                * nDotL * shadow * celestialGate * celestialIntensity;
-            litLinear += celestialColor * specularStrength;
+                * nDotL * celestialGate * celestialIntensity;
+            litLinear += celestialColor * shadow * specularStrength;
         }
     }
 
