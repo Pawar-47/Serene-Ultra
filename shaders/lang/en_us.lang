@@ -82,3 +82,6 @@ option.WATER_ABSORPTION_STRENGTH.comment = Controls depth-dependent Beer-Lambert
 
 option.PORTAL_DISTORTION_STRENGTH = Nether Portal Distortion
 option.PORTAL_DISTORTION_STRENGTH.comment = Controls the four-tap animated portal texture distortion. Samples are clamped to the current atlas sprite to prevent texture bleeding.
+
+option.WATER_WAVE_SCALE = Water Wave Scale
+option.WATER_WAVE_SCALE.comment = Controls the spatial frequency of the three animated wave bands. Higher values create shorter, more frequent waves.
