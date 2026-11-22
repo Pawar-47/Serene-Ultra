@@ -511,6 +511,8 @@ for token in ("uniform sampler2D normals;", "calculateTranslucentNormalMap", "no
               "calculateTranslucentNormalMap(normal, GLASS_NORMAL_MAP_STRENGTH)",
               "else if (isClearGlass || isStainedGlass || isTintedGlass || isIce)",
               "textureLod(normals, vTexCoord, 0.0)", "MC_TEXTURE_FORMAT_LAB_PBR",
+              "vec4 normalTexel = textureLod(normals, vTexCoord, 0.0)",
+              "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
               "tangentNormal.y = -tangentNormal.y", "cross(tangent, geometricNormal)",
               "vPlayerTangent", "vTangentHandedness", "at_tangent.w < 0.0 ? -1.0 : 1.0"):
     if token not in water and token not in water_vertex:
