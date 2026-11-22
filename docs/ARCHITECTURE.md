@@ -46,5 +46,6 @@ This AO is a deliberately bounded first implementation, not a final GTAO-quality
 - Separate deferred output attachment and composite copy-back to avoid same-attachment feedback.
 - Eight-tap screen-space contact AO with adjustable strength and radius.
 - Structural CI checks for G-buffer attachments, alpha-tested shadows, deferred attachment separation and AO controls.
+- GitHub Actions installs glslang-tools and compiles every .vsh/.fsh stage as a standalone GLSL stage; this catches shader-language errors but does not replace Iris/Minecraft runtime testing.
 
 This remains an early rendering foundation, not Ultra parity. Advanced colored light, indirect illumination, shadow softness/bias calibration, material classification, translucency, atmosphere and post effects remain incomplete and require Iris runtime testing.
