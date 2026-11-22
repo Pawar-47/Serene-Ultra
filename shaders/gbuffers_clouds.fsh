@@ -2,7 +2,6 @@
 
 uniform sampler2D gtexture;
 uniform float alphaTestRef;
-uniform float alphaTestRef;
 uniform int isEyeInWater;
 uniform vec3 fogColor;
 uniform float fogStart;
