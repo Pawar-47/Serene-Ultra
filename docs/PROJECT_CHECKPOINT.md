@@ -250,3 +250,11 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added `WATER_FOG_MULT` control with Complementary's 25–900% range and Iris alphaTestRef support.
 - CI run 45065527686 passed GLSL compilation, stage linking and structural validation before the final slider-range refinement; the final refinement has a separate run pending.
 - Still pending: water normals/waves, Fresnel/reflections, refraction, foam/caustics, underwater response, and runtime/visual parity.
+
+## Latest correction — water material and depth handling (2026-11-23)
+- Confirmed from Iris docs: `gbuffers_water` handles all translucent terrain; `mc_Entity` is valid in its vertex shader; `.x` is `block.properties` ID and `.y` is fluid render type.
+- Added stable water-only ID 32000 and gated fluid effects on both ID and `mc_Entity.y > 0.5`.
+- Corrected depth thickness reconstruction to use `depthtex1` plus `gbufferProjectionInverse`, including clear depth 1.0. Removed incorrect use of Iris `far` as projection far plane (it is render distance).
+- Removed the `alphaTest.gbuffers_water=GREATER 0.0001` override; the shader now uses Iris-provided `alphaTestRef` directly.
+- Matched the reference shader's depth-difference exponential water opacity formula and retained a `WATER_FOG_MULT` control.
+- Still pending: reference-guided water Fresnel/reflections/refraction/waves/normals/foam/absorption and in-game validation.
