@@ -14,6 +14,8 @@ flat out float vTangentHandedness;
 flat out int vMaterialId;
 
 void main() {
+    vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
+    vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
     gl_Position = ftransform();
     vTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     vLightmapCoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
