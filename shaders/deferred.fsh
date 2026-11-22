@@ -3,7 +3,7 @@
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
-uniform sampler2D depthtex0;
+uniform sampler2D depthtex2;
 uniform sampler2DShadow shadowtex0;
 
 uniform mat4 gbufferProjectionInverse;
@@ -13,6 +13,10 @@ uniform mat4 shadowProjection;
 
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
+
+// Iris shader constants belong in GLSL, not shaders.properties.
+const bool shadowHardwareFiltering = true;
+const float shadowIntervalSize = 2.0;
 
 in vec2 vTexCoord;
 
@@ -68,7 +72,7 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
         vec2(-1.0,  1.0), vec2(-1.0,  0.0)
     );
 
-    vec2 texelSize = 1.0 / vec2(textureSize(depthtex0, 0));
+    vec2 texelSize = 1.0 / vec2(textureSize(depthtex2, 0));
     float occlusion = 0.0;
     float validSamples = 0.0;
 
@@ -79,7 +83,7 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
             continue;
         }
 
-        float sampleDepth = texture(depthtex0, sampleUV).r;
+        float sampleDepth = texture(depthtex2, sampleUV).r;
         if (sampleDepth >= 0.999999) {
             continue;
         }
@@ -108,11 +112,11 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
 
 void main() {
     vec4 scene = texture(colortex0, vTexCoord);
-    float depth = texture(depthtex0, vTexCoord).r;
+    float depth = texture(depthtex2, vTexCoord).r;
     vec4 normalData = texture(colortex2, vTexCoord);
 
-    // Sky and first-person hand do not have world G-buffer normals. Preserve
-    // them exactly rather than applying world lighting to undefined data.
+    // depthtex2 excludes translucent and first-person hand geometry, so this
+    // pass only reconstructs world surfaces with matching opaque G-buffer data.
     if (depth >= 0.999999 || normalData.a < 0.5) {
         outColor = scene;
         return;
