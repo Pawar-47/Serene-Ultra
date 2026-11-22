@@ -231,6 +231,8 @@ void main() {
     // Decode sampled sRGB albedo for lighting, then encode it again for the
     // existing color-grading/final pass. This keeps the output contract intact.
     vec3 albedoLinear = pow(max(scene.rgb, vec3(0.0)), vec3(2.2));
+    vec4 emissionData = texture(colortex3, vTexCoord);
+    float materialReflectance = clamp(emissionData.g, 0.0, 1.0);
     vec3 litLinear = albedoLinear * (ambient + direct);
 
     // Smoothness is packed into colortex2 alpha without another G-buffer.
@@ -248,13 +250,19 @@ void main() {
             float specularStrength = specularShape * materialSmoothness
                 * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18
                 * nDotL * celestialGate * celestialIntensity;
-            litLinear += celestialColor * shadow * specularStrength;
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            vec3 specularColor = (materialReflectance > 0.5)
+                ? albedoLinear
+                : vec3(materialReflectance);
+#else
+            vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
+#endif
+            litLinear += celestialColor * shadow * specularColor * specularStrength;
         }
     }
 
     // Emission is stored separately from albedo/lightmap/normal so it is not
     // attenuated by contact AO or the celestial shadow term.
-    vec4 emissionData = texture(colortex3, vTexCoord);
     litLinear += albedoLinear * (emissionData.r * 5.0);
 
     float fogDistance = (fogShape == 1) ? length(viewPosition.xz) : length(viewPosition);
