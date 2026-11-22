@@ -107,3 +107,8 @@ option.OPAQUE_NORMAL_MAP_STRENGTH = Opaque Normal Map Strength
 option.OPAQUE_NORMAL_MAP_STRENGTH.comment = Applies resource-pack PBR normal maps to terrain, entities and block entities. Neutral when no normal map is supplied.
 option.PBR_AO_STRENGTH = LabPBR Material AO Strength
 option.PBR_AO_STRENGTH.comment = Uses the LabPBR normal-map blue channel to attenuate indirect and block lighting. Neutral with oldPBR or missing AO data.
+
+option.PBR_REFLECTION_STRENGTH = PBR Reflection Strength
+option.PBR_REFLECTION_STRENGTH.comment = Fresnel-weighted screen-space and sky/horizon reflections on glossy opaque materials.
+option.PBR_REFLECTION_QUALITY = PBR Reflection Quality
+option.PBR_REFLECTION_QUALITY.comment = Screen-space reflection ray steps. Zero keeps the low-cost environment fallback.
