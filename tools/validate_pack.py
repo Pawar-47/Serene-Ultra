@@ -14,6 +14,7 @@ REQUIRED = (
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
     "gbuffers_particles.vsh", "gbuffers_particles.fsh",
     "gbuffers_particles_translucent.vsh", "gbuffers_particles_translucent.fsh",
+    "gbuffers_spidereyes.vsh", "gbuffers_spidereyes.fsh",
     "shadow.vsh", "shadow.fsh",
     "deferred.vsh", "deferred.fsh",
     "composite.vsh", "composite.fsh",
@@ -62,6 +63,7 @@ IRIS_PROGRAM_FALLBACKS = {
     "gbuffers_block_translucent": "gbuffers_block",
     "gbuffers_particles": "gbuffers_textured_lit",
     "gbuffers_particles_translucent": "gbuffers_particles",
+    "gbuffers_spidereyes": "gbuffers_textured",
     "gbuffers_terrain_solid": "gbuffers_terrain",
     "gbuffers_terrain_cutout": "gbuffers_terrain",
 }
@@ -113,9 +115,10 @@ if "shadowHardwareFiltering=" in props or "shadowIntervalSize=" in props:
     errors.append("Iris GLSL constants must not be declared as shaders.properties directives")
 
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
-             "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh"):
+             "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh",
+             "gbuffers_spidereyes.fsh"):
     source = sources.get(name, "")
-    alpha_test_uses_ref = ("albedo.a < alphaTestRef" in source or "particle.a < alphaTestRef" in source)
+    alpha_test_uses_ref = ("albedo.a < alphaTestRef" in source or "particle.a < alphaTestRef" in source or "emissiveColor.a < alphaTestRef" in source)
     if "uniform float alphaTestRef" not in source or not alpha_test_uses_ref:
         errors.append(f"{name} must use Iris alphaTestRef for alpha discard")
 hand_fragment = sources.get("gbuffers_hand.fsh", "")
@@ -143,7 +146,8 @@ for path in SHADERS.rglob("*.fsh"):
     if re.search(r"\buniform\s+sampler\w*\s+texture\b", source):
         errors.append(f"{path.relative_to(ROOT)}: reserved texture sampler alias; use Iris gtexture or another valid sampler name")
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
-             "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh"):
+             "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh",
+             "gbuffers_spidereyes.fsh"):
     source = sources.get(name, "")
     if "uniform sampler2D gtexture" not in source or "texture(gtexture" not in source:
         errors.append(f"{name} must sample the Iris block/entity atlas through gtexture")
@@ -173,6 +177,9 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
 
+spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
+if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0.0)" not in spidereyes:
+    errors.append("Spider-eye pass must preserve emissive pixels from deferred lighting")
 particles = sources.get("gbuffers_particles.fsh", "")
 if "/* RENDERTARGETS: 0,1,2 */" not in particles:
     errors.append("Opaque particles must write color, lightmap and normal G-buffer attachments")
@@ -234,6 +241,7 @@ for directive in (
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_particles_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_spidereyes.colortex2=off",
 ):
     if directive not in props:
         errors.append(f"Missing Iris translucent-scene pipeline directive: {directive}")
