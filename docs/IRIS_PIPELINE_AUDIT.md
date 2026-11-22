@@ -101,3 +101,23 @@ Do not patch this by guesswork. Before implementing the fix:
 - Water/weather/hand-water ordering hazard: source-level risk identified; runtime confirmation pending.
 - Complementary and Vanilla-stock file-by-file cross-check for this specific issue: pending; do not claim it has been completed.
 - Visual parity and Intel HD 5500 frame-time measurements: not yet performed.
+
+
+## Coordinate-space and sampler cross-check
+
+The current terrain/entity normal conversion follows Iris' documented convention:
+- `gl_NormalMatrix * gl_Normal` converts the model normal into view space.
+- `mat3(gbufferModelViewInverse) * viewNormal` converts it into player-aligned space.
+- In deferred, transforming the stored player-aligned normal back to view space with `transpose(mat3(gbufferModelViewInverse))` is consistent with the inverse-transpose normal transform for the view rotation.
+
+The current deferred position/shadow transform sequence also follows the documented Iris workflow:
+1. Reconstruct view position with `gbufferProjectionInverse`.
+2. Convert view position to player space with `gbufferModelViewInverse`.
+3. Convert player position to shadow view with `shadowModelView`.
+4. Project with `shadowProjection`, divide by W and remap NDC to shadow texture coordinates.
+
+Iris documents `shadowLightPosition` as the highest celestial body's **view-space position vector**, with length 100. The current code normalizes it and converts it to player-aligned space through `mat3(gbufferModelViewInverse)` before taking the normal dot product. This matches the documented coordinate-space contract. Iris also documents `sunAngle` as 0=sunrise, 0.25=noon, 0.5=sunset and 0.75=midnight; any day/night curve must use that cycle rather than assume 0.5 is midnight.
+
+Iris' colortex contract explicitly prohibits sampling colortex0–3 from gbuffers programs (they may be render targets). New geometry shaders must not sample those attachments. Deferred/composite passes may use the documented main/alternate buffer flipping behavior.
+
+These checks verify the current code against Iris' documented contracts only. The Vanilla-stock archive still needs to be inspected for the corresponding Minecraft-native attributes/lightmap behavior, and Complementary's actual source must still be traced for visual/algorithmic comparison.
