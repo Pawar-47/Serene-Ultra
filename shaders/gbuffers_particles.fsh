@@ -9,6 +9,8 @@ in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vPlayerNormal;
 
+#define PARTICLE_MATERIAL_FEATURES // Detect emissive particle textures
+
 /* RENDERTARGETS: 0,1,2,3 */
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outLightmapData;
@@ -27,5 +29,5 @@ void main() {
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 1.0);
-    outEmissionData = vec4(0.0);
+    outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
 }
