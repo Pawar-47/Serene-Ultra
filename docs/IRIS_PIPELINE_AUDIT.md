@@ -127,3 +127,14 @@ These checks verify the current code against Iris' documented contracts only. Th
 The structural validator now rejects gbuffers shader files that declare sampler reads from colortex0–3, matching Iris' documented restriction. It also reports missing dedicated `gbuffers_water`, `gbuffers_weather` and `gbuffers_hand_water` fragment programs as a visible non-failing warning while their implementations remain pending. This keeps the current baseline green without disguising the missing coverage.
 
 The validator change and README update passed CI on HEAD `26d5aafb525029b31739f56e70ea5625571e0304` (run `45060856038`). This remains structural + standalone GLSL validation only, not Iris runtime validation.
+
+
+## Additional lighting audit — 2026-11-23
+The current deferred shader previously used `1.0 - smoothstep(0.45, 0.55, sunAngle)` as its daylight factor. This is inconsistent with Iris' documented sunAngle cycle: 0=dawn, 0.25=noon, 0.5=sunset, 0.75=midnight. The expression made dawn fully bright and failed to produce a continuous dawn transition across the cycle boundary. It has been replaced with a cyclic solar-elevation calculation:
+
+```glsl
+float solarElevation = sin(sunAngle * 6.28318530718);
+float dayFactor = smoothstep(0.0, 0.30, solarElevation);
+```
+
+This uses the positive half of the solar cycle for daylight and smoothly attenuates near the horizon. The change is guarded by structural validation. It is not a runtime or visual-parity result; the actual supplied Vanilla-stock and Complementary archive files still require direct inspection before the dual-reference audit can be marked complete.
