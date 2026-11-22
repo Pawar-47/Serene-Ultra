@@ -186,3 +186,6 @@ Important distinction: Iris fallback routing prevents some geometry from simply 
 - Removed an unused terrain view-position varying to avoid unnecessary vertex output/interpolation.
 - Iris' lightmap guide notes that transformed lightmap coordinates are approximately [0.033, 0.97], not exact [0,1]. Terrain/entity G-buffers now normalize the sky coordinate with `lmcoord.y / (30.0 / 32.0) - (1.0 / 32.0)` before storing it as the direct-celestial-light mask. The original transformed coordinate remains the sampler coordinate for the vanilla lightmap texture.
 - The validator now rejects the reserved sampler alias and requires the Iris `gtexture` sampler and normalized sky coordinate.
+
+## Shadow-distance culling correction — 2026-11-23
+Iris documents that `shadowDistance` scales the shadow projection but does not cull geometry beyond that range by default. Added `const float shadowDistanceRenderMul = 1.0;` to `shadow.vsh`, which enables Iris' documented shadow-distance culling. This avoids submitting shadow casters outside the configured profile distance and is especially relevant to the Intel HD 5500 target. The validator now requires this constant. Confirm culling boundaries and shadow stability in Iris runtime.
