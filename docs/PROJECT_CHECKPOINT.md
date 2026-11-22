@@ -18,6 +18,7 @@ The Vanilla-stock archive contains 89 shader source files (42 fragment, 30 verte
 - AO attenuates ambient lighting only; direct celestial light is left intact.
 - Added AO_STRENGTH and AO_RADIUS controls to the Quality menu and all five profile presets.
 - Expanded structural validation to enforce separate deferred/composite attachments and the AO controls.
+- Added a CI stage that installs glslang-tools and compiles every .vsh/.fsh shader stage; this is stronger than structural checks but still not an Iris runtime test.
 - Updated architecture, feature matrix, living project brief and checkpoint.
 
 ## Current profiles
