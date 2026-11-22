@@ -452,7 +452,7 @@ void main() {
         float glassNdotV = clamp(dot(glassViewNormal, normalize(-vViewPosition)), 0.0, 1.0);
         float glassFresnel = 0.02 + 0.98 * pow(1.0 - glassNdotV, 5.0);
         float glassReflectionConfidence = 0.0;
-        vec3 glassReflectionColor = sampleWaterScreenReflection(
+        vec3 glassReflectionColor = sampleTranslucentScreenReflection(
             vViewPosition, glassViewNormal, glassReflectionConfidence
         );
         vec3 glassReflectionLinear = pow(max(glassReflectionColor, vec3(0.0)), vec3(2.2));
@@ -485,7 +485,7 @@ void main() {
         float nDotV = clamp(dot(reflectionViewNormal, normalize(-vViewPosition)), 0.0, 1.0);
         float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
         float reflectionConfidence = 0.0;
-        vec3 reflectionColor = sampleWaterScreenReflection(
+        vec3 reflectionColor = sampleTranslucentScreenReflection(
             vViewPosition, reflectionViewNormal, reflectionConfidence
         );
         vec3 reflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
