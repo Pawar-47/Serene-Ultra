@@ -218,13 +218,19 @@ void main() {
     // Only explicitly classified glossy materials pay for the specular term.
     if (materialSmoothness > 0.01 && MATERIAL_SPECULAR_STRENGTH > 0) {
         vec3 viewDirectionPlayer = normalize(mat3(gbufferModelViewInverse) * normalize(-viewPosition));
-        vec3 halfDirection = normalize(worldLightDirection + viewDirectionPlayer);
-        float specularPower = mix(12.0, 96.0, materialSmoothness);
-        float specularShape = pow(max(dot(normal, halfDirection), 0.0), specularPower);
-        float specularStrength = specularShape * materialSmoothness
-            * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18
-            * nDotL * shadow * celestialGate * celestialIntensity;
-        litLinear += celestialColor * specularStrength;
+        vec3 halfVector = worldLightDirection + viewDirectionPlayer;
+        float halfVectorLengthSquared = dot(halfVector, halfVector);
+        // Opposing view/light directions can produce a zero-length half-vector.
+        // Skip the specular lobe rather than normalizing a zero vector.
+        if (halfVectorLengthSquared > 0.000001) {
+            vec3 halfDirection = halfVector * inversesqrt(halfVectorLengthSquared);
+            float specularPower = mix(12.0, 96.0, materialSmoothness);
+            float specularShape = pow(max(dot(normal, halfDirection), 0.0), specularPower);
+            float specularStrength = specularShape * materialSmoothness
+                * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18
+                * nDotL * shadow * celestialGate * celestialIntensity;
+            litLinear += celestialColor * specularStrength;
+        }
     }
 
     // Emission is stored separately from albedo/lightmap/normal so it is not
