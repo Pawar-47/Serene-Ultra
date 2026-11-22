@@ -28,8 +28,10 @@ Provide a clean, multi-screen Iris settings menu with readable category names, m
 Provide independent red, green and blue channel adjustments, gamma, exposure, contrast, saturation and tone-mapping controls. Keep neutral defaults visually neutral. HDR-style output labels must not falsely claim true display HDR support.
 
 ## Rendering implementation status
-- A GLSL 330-compatible shadow alpha-test path is implemented: shadow vertices forward texture UVs and vertex alpha; the fragment stage discards transparent texels using a user-adjustable cutoff.
-- This is not full shadow parity. Filtered shadow sampling, depth bias, direct-light integration, and runtime validation are still required.
+- The shadow vertex stage forwards base texture coordinates and vertex alpha; the shadow fragment stage discards transparent texels using a user-adjustable alpha cutoff.
+- Terrain and entity G-buffer passes capture base albedo, lightmap coordinates and encoded player-aligned normals into colortex0, colortex1 and colortex2.
+- The first-person hand path remains color-only. The composite stage intentionally copies the scene unchanged until the deferred lighting model is ready.
+- These are foundations, not full Ultra parity. Filtered shadow sampling, depth bias, direct-light integration, material classification and runtime validation remain required.
 - Do not mark a rendering subsystem complete based only on structural source checks.
 
 ## Quality and engineering
