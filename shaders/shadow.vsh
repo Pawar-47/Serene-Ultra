@@ -24,6 +24,7 @@ void main() {
     vec4 shadowViewPosition = gl_ModelViewMatrix * gl_Vertex;
     vShadowPlayerPosition = (shadowModelViewInverse * shadowViewPosition).xyz;
     vShadowMaterialId = int(mc_Entity.x + 0.5);
+    if (vShadowMaterialId == 10049) vShadowMaterialId = 32001; // Water cauldron
     vShadowFluidRenderType = mc_Entity.y;
     gl_Position = ftransform();
 }
