@@ -66,3 +66,6 @@ Serene Ultra is compiled and loaded as an **Iris shaderpack**. Iris—not the Va
 
 ## Iris translucent pipeline correction (2026-11-23)
 The renderer now uses Iris composite-style buffer flipping for the scene-color attachment: deferred reads the G-buffer scene and writes its lit result to logical colortex0 using flip.deferred.colortex0=true; post-deferred water/weather/hand-water blend into the newly current scene; composite preserves it with a colortex0 pass-through and flip.composite.colortex0=true. Explicit source-alpha blend directives are configured for those three translucent program names. This is an Iris contract-based source change, not yet runtime-validated. Dedicated water lighting/reflections and full reference parity remain outstanding.
+
+## Iris source audit corrections — 2026-11-23
+Existing code is being audited against Iris' published contracts before new effects are added. The latest corrections move shadow sampler/update settings into GLSL constants, disable `separateAo` to preserve material alpha, use `alphaTestRef`, apply `entityColor`, reconstruct opaque world depth from `depthtex2`, and explicitly set `particles.ordering=mixed`. See `docs/IRIS_PIPELINE_AUDIT.md`.
