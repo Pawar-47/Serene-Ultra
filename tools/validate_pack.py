@@ -131,7 +131,7 @@ if "uniform sampler2D gtexture" not in shadow_fragment or "texture(gtexture" not
     errors.append("Shadow pass must use Iris gtexture and discard transparent texels")
 for path in SHADERS.rglob("*.fsh"):
     source = path.read_text(encoding="utf-8")
-    if re.search(r"\\buniform\\s+sampler\\w*\\s+texture\\b", source):
+    if re.search(r"\buniform\s+sampler\w*\s+texture\b", source):
         errors.append(f"{path.relative_to(ROOT)}: reserved texture sampler alias; use Iris gtexture or another valid sampler name")
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh"):
     source = sources.get(name, "")
@@ -147,7 +147,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
     for output in ("outColor", "outLightmapData", "outEncodedNormal"):
         if output not in source:
             errors.append(f"{name} is missing G-buffer output {output}")
-    if "uniform sampler2D lightmap" not in source or "texture2D(lightmap" not in source:
+    if "uniform sampler2D lightmap" not in source or "texture(lightmap" not in source:
         errors.append(f"{name} must capture the vanilla colored lightmap")
     if "uniform float alphaTestRef" not in source or "albedo.a < alphaTestRef" not in source:
         errors.append(f"{name} must use Iris alphaTestRef instead of a hardcoded alpha cutoff")
