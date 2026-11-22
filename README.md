@@ -35,3 +35,5 @@ Iris fog is now applied to deferred opaque surfaces and the dedicated forward wa
 Dedicated forward paths now exist for water, weather and first-person hand-water, replacing all three Iris fallbacks for the post-deferred translucent stage. These are baseline paths; advanced water effects and runtime/visual validation remain pending.
 
 The `gbuffers_water` program handles all translucent terrain (including water and stained glass), so the current implementation is described as a generic forward-lit translucent-surface baseline rather than a complete water renderer.
+
+Water material handling now distinguishes water/water-cauldron from other translucent terrain using Iris `mc_Entity` and `block.properties`, and applies depth-dependent opacity from `depthtex1`. Advanced water effects and runtime validation remain pending.
