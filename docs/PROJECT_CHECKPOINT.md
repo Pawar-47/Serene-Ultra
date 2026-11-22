@@ -142,3 +142,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added explicit per-program blending configuration and expanded `tools/validate_pack.py` to require both particle program pairs and their output contracts.
 - Corrected the `AO_STRENGTH` option values to include the 0.65 profile default.
 - This closes the missing Iris particle program paths at source level; it does not establish Complementary Ultra parity or runtime validation.
+
+## First-person hand lightmap correction — 2026-11-23
+- Added transformed lightmap UVs to `gbuffers_hand.vsh` using Iris `gl_TextureMatrix[1] * gl_MultiTexCoord1`.
+- Added `lightmap` sampling to `gbuffers_hand.fsh`, restoring the vanilla colored lightmap response that the Iris `gbuffers_textured_lit` fallback provides.
+- Validator now requires hand lightmap sampling.
+- Iris `heldBlockLightValue` and `heldBlockLightValue2` dynamic held-item lighting is not yet implemented.
