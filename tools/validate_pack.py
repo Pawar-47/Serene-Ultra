@@ -157,8 +157,10 @@ if props_path.is_file():
         errors.append("Buffer formats must use Iris GLSL const directives, not shaders.properties key/value syntax")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
-    if "size.buffer.colortex4=0.5 0.5" not in props or "flip.deferred1.colortex4=true" not in props:
-        errors.append("Water refraction requires a half-resolution colortex4 written/flipped by deferred1 before translucent gbuffers")
+    if ("size.buffer.colortex4=0.5 0.5" not in props
+        or "flip.deferred1.colortex0=false" not in props
+        or "flip.deferred1.colortex4=true" not in props):
+        errors.append("Water refraction requires half-resolution colortex4, a deferred1 output flip, and no flip of its read-only colortex0 source")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
