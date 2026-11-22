@@ -385,3 +385,7 @@ Added `block.32004` for Minecraft ice/frosted ice using the documented `block.pr
 
 ## G-buffer smoothness packing — 2026-11-23
 The `colortex2` normal attachment now packs both deferred validity and a scalar smoothness value in alpha without adding another attachment. Alpha 0 is invalid (sky/overlay/sign text); 0.5 is valid non-smooth geometry; 0.5–1.0 encodes smoothness. The deferred validity test remains `normalData.a < 0.5`, so existing overlay masks remain deterministic. Terrain assigns smoothness only to the Iris `mc_Entity.x` IDs for slime and honey; entities, block entities, and lit particles use the valid zero-smoothness value. Deferred decodes the value and computes a specular half-vector only when smoothness is nonzero. This is an internal pack-owned G-buffer contract, not an Iris-provided alpha semantic.
+
+
+## Beer-Lambert absorption path — 2026-11-23
+The water pass applies absorption only after a valid refraction sample has passed the existing `depthtex1`/`colortex4` scene-copy checks. It operates on linearized scene colour and uses reconstructed `waterThickness` to compute per-channel exponential transmission. The tint comes from the same water material colour used for the surface, avoiding an independent hardcoded colour path. No new sampler or render target is introduced. The strength is a shader option; runtime colour/performance calibration remains required.
