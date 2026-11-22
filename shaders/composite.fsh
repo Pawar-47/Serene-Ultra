@@ -4,6 +4,7 @@ uniform sampler2D colortex0;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
 uniform sampler2D colortex4;
+uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 
 uniform mat4 gbufferProjection;
@@ -111,7 +112,10 @@ void main() {
     }
 
     float depth = texelFetch(depthtex2, pixel, 0).r;
-    if (depth >= 0.999999) {
+    float currentDepthAll = texelFetch(depthtex0, pixel, 0).r;
+    // The composite pass runs after translucent gbuffers. Skip pixels where
+    // water, glass, particles or the first-person hand overlay an opaque surface.
+    if (abs(currentDepthAll - depth) > 0.000001 || depth >= 0.999999) {
         outColor = sceneColor;
         return;
     }
