@@ -228,7 +228,7 @@ for token in ("in vec2 mc_Entity", "flat out int vMaterialId", "vMaterialId = in
     if token not in terrain_vertex:
         errors.append(f"Terrain vertex stage is missing Iris mc_Entity material classification: {token}")
 terrain_fragment = sources.get("gbuffers_terrain.fsh", "")
-for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = vec4(albedo.rgb, emissionStrength / 5.0)"):
+for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0)"):
     if token not in terrain_fragment:
         errors.append(f"Terrain G-buffer is missing emissive material output: {token}")
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
@@ -400,7 +400,7 @@ if "texture(lightmap" not in translucent_particles:
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2", "sampler2D colortex3",
-              "texture(colortex3, vTexCoord)", "emissionData.a * 5.0",
+              "texture(colortex3, vTexCoord)", "emissionData.r * 5.0", "colortex3Format=R8",
               "sampler2D depthtex0", "sampler2D depthtex2", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
