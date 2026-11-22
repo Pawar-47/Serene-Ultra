@@ -4,7 +4,6 @@ uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2D depthtex1;
 uniform float alphaTestRef;
-uniform float far;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2DShadow shadowtex0;
 
@@ -69,14 +68,12 @@ vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
 
 float calculateWaterThickness(vec2 screenUV) {
     float opaqueDepth = texture(depthtex1, screenUV).r;
-    float opaqueDistance = far;
-
-    if (opaqueDepth < 0.999999) {
-        vec3 opaqueNdc = vec3(screenUV, opaqueDepth) * 2.0 - 1.0;
-        vec3 opaqueViewPosition = projectAndDivide(gbufferProjectionInverse, opaqueNdc);
-        opaqueDistance = length(opaqueViewPosition);
-    }
-
+    // depthtex1 clears to 1.0. Reconstruct that far-plane sample with the
+    // inverse projection instead of using Iris' "far" uniform, which is
+    // render distance in blocks rather than the projection far plane.
+    vec3 opaqueNdc = vec3(screenUV, opaqueDepth) * 2.0 - 1.0;
+    vec3 opaqueViewPosition = projectAndDivide(gbufferProjectionInverse, opaqueNdc);
+    float opaqueDistance = length(opaqueViewPosition);
     return max(opaqueDistance - length(vViewPosition), 0.0);
 }
 
@@ -138,8 +135,7 @@ void main() {
 
     // Iris mc_Entity.y identifies fluid geometry; block.properties supplies
     // stable IDs so water-only attenuation never affects glass or portals.
-    bool isWater = (vMaterialId == 32000 || vMaterialId == 32001) &&
-                   (vFluidRenderType > 0.5 || vMaterialId == 32001);
+    bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
     if (isWater) {
         vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
         float thickness = calculateWaterThickness(screenUV) * (WATER_FOG_MULT * 0.01);
