@@ -5,6 +5,7 @@ uniform sampler2D lightmap;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 uniform sampler2D colortex4;
+uniform sampler2D noisetex;
 uniform float alphaTestRef;
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
@@ -46,6 +47,8 @@ flat in float vFluidRenderType;
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
+#define WATER_COLOR_STRENGTH 100 // [0 25 50 75 100] Unbound-style water base tint blend
+#define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
 layout(location = 0) out vec4 outColor;
 
 // Three analytic wave bands provide stable multi-scale surface normals without
@@ -79,6 +82,24 @@ vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 playerPosition) {
     vec3 waveNormal = normalize(vec3(-slope.x * strength, faceSign, -slope.y * strength));
     return normalize(mix(geometricNormal, waveNormal,
                          clamp(WATER_WAVE_STRENGTH * 0.01, 0.0, 1.0)));
+}
+
+// Unbound-style water base colour: retain biome influence, but move the
+// surface away from the flat vanilla atlas tint. A single Iris noise lookup
+// adds slow, low-amplitude colour variation without a second custom texture.
+vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 absoluteWorldPosition) {
+    vec3 biomeTint = sqrt(max(vertexColor, vec3(0.0))) * vec3(1.0, 0.85, 0.8);
+    vec3 waterTint = mix(vec3(0.43, 0.60, 0.80), biomeTint, 0.5);
+    vec3 baseColor = 0.375 * waterTint;
+
+    if (WATER_NOISE_COLOR_STRENGTH > 0) {
+        vec2 noiseUV = absoluteWorldPosition.xz * 0.008
+                     + vec2(frameTimeCounter * 0.0005, -frameTimeCounter * 0.0003);
+        float noise = textureLod(noisetex, noiseUV, 0.0).g - 0.5;
+        baseColor *= 1.0 + noise * 0.25 * (WATER_NOISE_COLOR_STRENGTH * 0.01);
+    }
+
+    return baseColor;
 }
 
 float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
@@ -329,6 +350,16 @@ void main() {
                 }
             }
         }
+    }
+
+    if (isWater) {
+        vec3 absoluteWorldPosition = vPlayerPosition + cameraPosition;
+        vec3 unboundWaterColor = calculateWaterBaseColor(vVertexColor.rgb, absoluteWorldPosition);
+        translucentAlbedo.rgb = mix(
+            translucentAlbedo.rgb,
+            unboundWaterColor,
+            clamp(WATER_COLOR_STRENGTH * 0.01, 0.0, 1.0)
+        );
     }
 
     vec3 albedoLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
