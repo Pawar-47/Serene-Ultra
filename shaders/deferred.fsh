@@ -283,7 +283,7 @@ void main() {
     // Decode the SSS range here; porosity remains packed for later wet-surface work.
     float materialSSS = 0.0;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
-    float materialSurfaceCode = floor(emissionData.b * 255.0 + 0.5);
+    float materialSurfaceCode = floor(emissionData.a * 255.0 + 0.5);
     if (materialSurfaceCode >= 65.0) {
         materialSSS = clamp((materialSurfaceCode - 65.0) / 190.0, 0.0, 1.0);
     }
