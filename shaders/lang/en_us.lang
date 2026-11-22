@@ -4,6 +4,8 @@ screen.QUALITY = Quality & Profiles
 screen.COLOR = Color & HDR Controls
 
 option.SHADOW_ALPHA_CUTOFF = Shadow Alpha Cutoff
+option.AO_STRENGTH = Contact AO Strength
+option.AO_RADIUS = Contact AO Radius
 option.RED_GAIN = Red Channel
 option.GREEN_GAIN = Green Channel
 option.BLUE_GAIN = Blue Channel
@@ -14,6 +16,8 @@ option.SATURATION = Saturation
 option.HDR_LOOK = HDR Tone Mapping
 
 option.SHADOW_ALPHA_CUTOFF.comment = Controls which transparent texels are removed from shadow casters. Lower values preserve finer foliage detail.
+option.AO_STRENGTH.comment = Controls local screen-space contact shading. AO affects ambient light only.
+option.AO_RADIUS.comment = Sets the view-space radius used to detect nearby occluding surfaces. Larger values affect broader contact regions.
 option.RED_GAIN.comment = Adjust the red channel independently. 1.00 is neutral.
 option.GREEN_GAIN.comment = Adjust the green channel independently. 1.00 is neutral.
 option.BLUE_GAIN.comment = Adjust the blue channel independently. 1.00 is neutral.
