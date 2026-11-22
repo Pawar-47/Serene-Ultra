@@ -274,3 +274,9 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Weather uses Iris `alphaTestRef`, discards when `isEyeInWater==3` (powdered snow), and has optional `WAVING_RAIN` vertex motion driven by `rainStrength`, `eyeBrightnessSmooth` and `frameTimeCounter`.
 - Added dedicated `gbuffers_clouds`; it preserves vanilla cloud texture/vertex color, applies Iris fog, discards while the camera is in fluid, and bypasses deferred lighting via colortex2 validity mask.
 - These are baseline paths, not custom cloud/volumetric parity. Runtime depth, blend and visual behavior remains pending.
+
+## Sky and textured fallback checkpoint — 2026-11-23
+- Added `gbuffers_textured` to handle unlit texture fallback geometry with Iris alphaTestRef/fog and deferred-normal bypass.
+- Added `gbuffers_skytextured`; uses `renderStage` macros for sun/moon, dims by rain and underwater state, and preserves other sky textures.
+- Added `gbuffers_skybasic`; uses `skyColor`/`fogColor`, render-stage macros for sky/sunset/stars/void, and reconstructs direction only for sky/sunset fragments.
+- These are lightweight baseline sky paths, not Complementary's full atmospheric scattering, stars or volumetric clouds. Textured particle lighting remains incomplete.
