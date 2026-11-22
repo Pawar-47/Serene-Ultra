@@ -41,3 +41,6 @@ option.WEATHER_TEX_OPACITY.comment = Adjusts the opacity of vanilla rain and sno
 
 option.WAVING_RAIN = Waving rain and snow
 option.WAVING_RAIN.comment = Adds subtle wind-driven motion to falling rain and snow.
+
+option.PARTICLE_MATERIAL_FEATURES = Particle material effects
+option.PARTICLE_MATERIAL_FEATURES.comment = Detects water, rain, snow, smoke and emissive particle textures.
