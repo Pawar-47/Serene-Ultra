@@ -111,3 +111,12 @@ Dedicated `gbuffers_water` now replaces the terrain fallback. It forward-shades 
 
 ## Weather program update — 2026-11-23
 Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-shades rain/snow using the Iris lightmap and fog uniforms, writes only colortex0, and retains source-alpha blending. `rain.depth=false` keeps it out of scene depth. Volumetric rain/snow, wind-aware streaks, wetness interaction and reference parity remain pending.
+
+## Fog coverage update — 2026-11-23
+| Program path | Fog implementation | Status |
+|---|---|---|
+| Opaque terrain/entities/particles | Deferred Iris fog using fogColor/start/end/density/mode/shape | Implemented at source level |
+| Water | Forward Iris fog in `gbuffers_water` | Implemented at source level |
+| Weather | Forward Iris fog in `gbuffers_weather` | Implemented at source level |
+| Translucent particles | Forward Iris fog in `gbuffers_particles_translucent` | Implemented at source level |
+| Hand-water | Current hand fallback; no dedicated fog treatment | Pending |
