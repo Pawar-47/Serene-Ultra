@@ -149,9 +149,11 @@ void main() {
     float dayFactor = (hasSkylight && !endFlashActive)
         ? smoothstep(0.0, 0.30, solarElevation)
         : 0.0;
-    float celestialGate = endFlashActive
-        ? clamp(endFlashIntensity, 0.0, 1.0)
-        : (hasSkylight ? skyLight : 0.0);
+    float celestialGate = suppressLightmap
+        ? 0.0
+        : (endFlashActive
+            ? clamp(endFlashIntensity, 0.0, 1.0)
+            : (hasSkylight ? skyLight : 0.0));
 
     float shadow = 1.0;
     if (emission <= 0.001 && nDotL > 0.001 && celestialGate > 0.001) {
