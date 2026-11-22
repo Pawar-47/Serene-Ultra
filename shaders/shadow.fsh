@@ -1,6 +1,6 @@
 #version 330 compatibility
 
-uniform sampler2D texture;
+uniform sampler2D gtexture;
 
 in vec2 vShadowTexCoord;
 in vec4 vShadowVertexColor;
@@ -10,7 +10,7 @@ in vec4 vShadowVertexColor;
 #define SHADOW_ALPHA_CUTOFF 0.10 // [0.05 0.10 0.15 0.20 0.25 0.30 0.40 0.50] Alpha threshold for shadow casters
 
 void main() {
-    float materialAlpha = texture2D(texture, vShadowTexCoord).a * vShadowVertexColor.a;
+    float materialAlpha = texture(gtexture, vShadowTexCoord).a * vShadowVertexColor.a;
     if (materialAlpha < SHADOW_ALPHA_CUTOFF) {
         discard;
     }
