@@ -470,3 +470,11 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Added `block.32004` for ice/frosted ice, following the r5.10 shared Complementary material ID map and Iris `block.properties`/`mc_Entity` contract.
 - Ice is classified separately from water and now uses the shared screen-space Fresnel reflection helper with its own reflection scale. It does not receive water refraction, depth opacity or foam.
 - Added the ID and branch to structural validation. Ice-specific roughness, thickness, tint and in-game calibration remain outstanding.
+
+
+## Glossy terrain material checkpoint — 2026-11-23
+- Added Iris IDs for slime and honey blocks based on the shared r5.10 material classification.
+- Packed a smoothness scalar into `colortex2.a`: 0 remains invalid for deferred, 0.5 is valid non-smooth geometry, and 0.5–1.0 encodes smoothness. This avoids another render target/attachment.
+- Updated terrain, entity, block-entity, particle and lit-texture G-buffer writers to use the new validity encoding. Sign text and dedicated overlays remain invalid for deferred surface lighting.
+- Deferred decodes smoothness and computes a specular half-vector only for nonzero-smoothness materials. Added `MATERIAL_SPECULAR_STRENGTH` to the Quality menu and slider list.
+- Structural validation checks the block IDs, G-buffer encoding and deferred specular path. Full GLSL/CI and runtime verification are still required.
