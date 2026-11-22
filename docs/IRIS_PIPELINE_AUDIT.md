@@ -254,3 +254,6 @@ The validator now inventories the documented Iris fallback chain for the remaini
 | `gbuffers_textured` | World border/unlit particles | `gbuffers_basic` | Fallback chain |
 
 `gbuffers_entities_translucent` and `gbuffers_block_translucent` remain conditional on `separateEntityDraws=true`; that option stays disabled due Iris' current warning. This inventory is driven by the official Iris fallback table and the validator now reports missing dedicated vertex/fragment pairs with their immediate fallback.
+
+## Shadow cutout threshold correction — 2026-11-23
+The shadow fragment shader now combines Iris' per-program `alphaTestRef` with the Serene user-controlled `SHADOW_ALPHA_CUTOFF` using the stricter threshold. This preserves Iris' render-layer cutout behavior while retaining the pack's adjustable shadow cutout control.
