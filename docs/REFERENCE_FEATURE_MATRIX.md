@@ -72,3 +72,16 @@ Do not equate Iris fallback coverage with correct feature implementation. The ma
 
 ## Post-deferred scene preservation correction
 The old colortex3-to-colortex0 copy-back has been removed. Deferred and composite now use Iris-supported same-logical-attachment read/write with their default main/alternate flips explicitly enabled. Water, weather and hand-water have explicit source-alpha blend rules on colortex0. This addresses the source-level overwrite risk but is not runtime verification or a substitute for dedicated forward-lit water and material implementations.
+
+## Iris contract correction status — 2026-11-23
+| Area | Corrected source contract | Remaining validation |
+|---|---|---|
+| Shadow filtering | GLSL `const bool shadowHardwareFiltering = true` | Iris runtime sampler binding and visual PCF |
+| Shadow update interval | GLSL `const float shadowIntervalSize = 2.0` | Runtime update cadence |
+| Vertex AO alpha | `separateAo=false` to preserve material alpha | Revisit only when AO has a separate G-buffer channel |
+| Cutout alpha | `alphaTestRef` uniform in terrain/entities/hand | Runtime cutout edge checks |
+| Entity tint | `entityColor` RGB mixed by its alpha | Damage/team/potion tint checks |
+| Deferred depth | `depthtex2` excludes transparent and hand geometry | Verify all target-version depth stages in game |
+| Particle ordering | `particles.ordering=mixed` | Dedicated particle programs and visual order checks |
+
+Do not mark these as fully validated until Iris/Minecraft runtime checks are performed.
