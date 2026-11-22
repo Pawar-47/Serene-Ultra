@@ -145,10 +145,15 @@ void main() {
     // Iris sunAngle: 0=dawn, 0.25=noon, 0.5=sunset, 0.75=midnight.
     // Celestial lighting is only used in dimensions with skylight.
     float solarElevation = sin(sunAngle * 6.28318530718);
-    float dayFactor = hasSkylight ? smoothstep(0.0, 0.30, solarElevation) : 0.0;
+    bool endFlashActive = endFlashIntensity > 0.001;
+    float dayFactor = (hasSkylight && !endFlashActive)
+        ? smoothstep(0.0, 0.30, solarElevation)
+        : 0.0;
     // Iris can redirect shadowLightPosition to the End flash when enabled.
     // Nether has neither skylight nor an End flash, so its direct term is zero.
-    float celestialGate = hasSkylight ? skyLight : clamp(endFlashIntensity, 0.0, 1.0);
+    float celestialGate = endFlashActive
+        ? clamp(endFlashIntensity, 0.0, 1.0)
+        : (hasSkylight ? skyLight : 0.0);
     float shadow = 1.0;
     if (nDotL > 0.001 && celestialGate > 0.001) {
         shadow = sampleShadow(playerPosition, normal, worldLightDirection);
@@ -164,10 +169,14 @@ void main() {
     float contactAO = sampleContactAO(viewPosition, viewNormal);
     ambient *= contactAO;
 
-    vec3 celestialColor = hasSkylight
-        ? mix(vec3(0.36, 0.44, 0.68), vec3(1.0, 0.94, 0.82), dayFactor)
-        : vec3(1.0);
-    float celestialIntensity = hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.70;
+    vec3 celestialColor = endFlashActive
+        ? vec3(1.0)
+        : (hasSkylight
+            ? mix(vec3(0.36, 0.44, 0.68), vec3(1.0, 0.94, 0.82), dayFactor)
+            : vec3(1.0));
+    float celestialIntensity = endFlashActive
+        ? 0.70
+        : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
 
     // Decode sampled sRGB albedo for lighting, then encode it again for the
