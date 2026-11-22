@@ -1,6 +1,7 @@
 #version 330 compatibility
 
 uniform sampler2D texture;
+uniform sampler2D lightmap;
 
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
@@ -16,7 +17,8 @@ void main() {
     vec4 albedo = texture2D(texture, vTexCoord) * vVertexColor;
     if (albedo.a < 0.1) discard;
 
+    vec3 vanillaLight = texture2D(lightmap, vLightmapCoord).rgb;
     outColor = albedo;
-    outLightmapData = vec4(vLightmapCoord, 0.0, 1.0);
+    outLightmapData = vec4(vanillaLight, vLightmapCoord.y);
     outEncodedNormal = vec4(normalize(vPlayerNormal) * 0.5 + 0.5, 1.0);
 }
