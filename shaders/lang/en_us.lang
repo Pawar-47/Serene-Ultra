@@ -32,3 +32,6 @@ value.HDR_LOOK.1 = HDR
 value.HDR_LOOK.2 = Ultra HDR
 
 profile.comment = Ultra-Light: lower shadow cost while retaining effects. Smooth: balanced shadow quality. Ultra: full shadow-distance target. HDR: Ultra with HDR-style tone mapping. Ultra-HDR: stronger highlight compression and HDR-style presentation. All profiles retain the complete planned feature set.
+
+option.WATER_FOG_MULT = Water depth opacity
+option.WATER_FOG_MULT.comment = Controls how quickly water becomes opaque with depth.
