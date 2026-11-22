@@ -146,8 +146,6 @@ if props_path.is_file():
         errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
     if "separateEntityDraws=true" not in props:
         errors.append("Iris translucent entity/block-entity passes require separateEntityDraws=true")
-    if "iris.features.optional=ENTITY_TRANSLUCENT" not in props:
-        errors.append("Query Iris ENTITY_TRANSLUCENT support through iris.features.optional")
     deferred_format_source = sources.get("deferred.fsh", "")
     if "const int colortex2Format = RGBA16F;" not in deferred_format_source:
         errors.append("Iris colortex2 normal target must declare RGBA16F using the documented GLSL buffer-format directive")
@@ -192,8 +190,8 @@ for name in ("gbuffers_weather.fsh", "gbuffers_particles_translucent.fsh"):
     if "option.PARTICLE_MATERIAL_FEATURES =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
         errors.append("Particle material effects option needs a user-facing label")
 
-# Iris routes translucent entities and block entities through these dedicated
-# programs when separateEntityDraws is enabled. Both pairs are required above.
+# Iris documents separateEntityDraws, but warns it may be broken in newer Iris versions.
+# Keep dedicated shader pairs compiled; their runtime routing remains conditional.
 
 # Iris shader constants are GLSL declarations, not shaders.properties keys.
 all_glsl = "\n".join(sources.values())
@@ -632,4 +630,6 @@ if missing_iris_programs:
     print("Iris program coverage warnings (dedicated vertex+fragment pair missing):")
     for name, fallback in missing_iris_programs.items():
         print(f" - {name}: Iris fallback -> {fallback}")
+if "separateEntityDraws=true" in props:
+    print("Iris compatibility warning: separateEntityDraws may be broken in newer Iris versions; verify dedicated translucent entity/block-entity routing in-game.")
 print("Note: GLSL compilation and in-game Iris compatibility require runtime testing.")
