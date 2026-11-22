@@ -234,3 +234,10 @@ A first shoreline foam approximation now uses Iris opaque depth reconstruction t
 
 ## Foam implementation correction — 2026-11-23
 Water foam is driven by the already reconstructed opaque-view thickness (`depthtex1` plus inverse projection), restricted to top-facing water. The earlier world-Y/block-height approximation was discarded because it was not robust for sloped shorelines. Runtime appearance and threshold calibration remain pending.
+
+
+## Glass and portal material coverage — 2026-11-23
+- Clear glass and panes, all stained-glass colours and panes, tinted glass, and nether portal now have dedicated Iris `block.properties` IDs.
+- Clear/stained/tinted glass receive material-scaled Fresnel SSR from the existing opaque scene snapshot.
+- Nether portal receives warm nonlinear colour treatment and self-emission.
+- Full Unbound portal distortion/edge effect, glass absorption/connected-glass treatment, and visual/runtime validation remain outstanding.
