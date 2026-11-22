@@ -77,6 +77,12 @@ option.PORTAL_EMISSION_STRENGTH.comment = Controls the self-emission of nether p
 option.MATERIAL_SPECULAR_STRENGTH = Material Specular Strength
 option.MATERIAL_SPECULAR_STRENGTH.comment = Controls deferred highlights for oldPBR/LabPBR terrain materials and classified smooth blocks such as slime and honey.
 
+option.MATERIAL_AO_STRENGTH = Material AO Strength
+option.MATERIAL_AO_STRENGTH.comment = Applies LabPBR material ambient occlusion to indirect light only; oldPBR and packs without AO maps remain neutral.
+
+option.MATERIAL_SSS_STRENGTH = Subsurface Scattering Strength
+option.MATERIAL_SSS_STRENGTH.comment = Adds a low-cost backlighting approximation from LabPBR's subsurface channel. LabPBR porosity values remain reserved for wet-surface response.
+
 option.WATER_ABSORPTION_STRENGTH = Water Absorption
 option.WATER_ABSORPTION_STRENGTH.comment = Controls depth-dependent Beer-Lambert colour absorption in refracted water. Higher values attenuate red and green light more strongly, producing deeper blue water.
 
