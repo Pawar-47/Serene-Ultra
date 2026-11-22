@@ -186,3 +186,6 @@ Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANS
 
 ## Particle material effects — 2026-11-23
 `PARTICLE_MATERIAL_FEATURES` now ports the key Complementary heuristics into the Iris translucent particle path: water splashes, physics rain/snow opacity, underwater particle suppression, campfire smoke softening, and emissive ender/redstone/lava particles. It uses Iris `noisetex` via `textureSize`/`texelFetch`, and rain/snow detection is gated by runtime `hasSkylight` and `rainStrength` rather than a dimension macro unavailable in the base program. Opaque particle material classification remains pending.
+
+## Emissive materials — 2026-11-23
+A compact `colortex3` RGBA8 emission buffer is now written by opaque G-buffer programs. Terrain uses Iris `mc_Entity` plus `block.properties` IDs to classify luminous blocks; deferred adds their tinted emission after AO/direct lighting and before fog. Lava gets a forward emission term in `gbuffers_water`. Entity and opaque-particle paths currently initialize emission to zero; richer entity/particle material maps and bloom remain pending.
