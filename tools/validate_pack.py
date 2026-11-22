@@ -481,7 +481,7 @@ if "vec3 reflectionViewNormal = viewNormal;" not in water:
 if "out vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
     errors.append("Water vertex stage must output the Iris view-space normal used by Fresnel reflection")
 water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
-                 "WATER_WAVE_STRENGTH", "WATER_WAVE_SPEED", "WATER_WAVE_SCALE", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH")
+                 "WATER_WAVE_STRENGTH", "WATER_WAVE_SPEED", "WATER_WAVE_SCALE", "WATER_CAUSTICS_STRENGTH", "WATER_CAUSTICS_SCALE", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH")
 lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
 for option in water_options:
     if option not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
@@ -601,7 +601,31 @@ if "if (!gl_FrontFacing) normal = -normal;" not in translucent_particles:
 if "if (!gl_FrontFacing) {" not in water or "normal = -normal;" not in water or "viewNormal = -viewNormal;" not in water:
     errors.append("Translucent terrain must flip both player-space and view-space back-face normals before forward lighting")
 
+shadow_vertex = (SHADERS / "shadow.vsh").read_text(encoding="utf-8")
+shadow_fragment = sources.get("shadow.fsh", "")
+for token in ("uniform mat4 shadowModelViewInverse", "in vec2 mc_Entity",
+              "vShadowPlayerPosition = (shadowModelViewInverse * shadowViewPosition).xyz",
+              "vShadowMaterialId = int(mc_Entity.x + 0.5)"):
+    if token not in shadow_vertex:
+        errors.append(f"Iris shadow material/position interface is missing component: {token}")
+for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = R8",
+              "uniform vec3 cameraPosition", "uniform float frameTimeCounter",
+              "vShadowMaterialId == 32000", "calculateWaterCaustics",
+              "outShadowColor = vec4(calculateWaterCaustics(absoluteWorldPosition), 1.0, 1.0, 1.0)"):
+    if token not in shadow_fragment:
+        errors.append(f"Iris shadowcolor water caustics path is missing component: {token}")
+for token in ("shadowTranslucent=true", "blend.shadow.shadowcolor0=off", "flip.shadow.shadowcolor0=false"):
+    if token not in props:
+        errors.append(f"Iris translucent shadowcolor configuration is missing: {token}")
+
 deferred = sources.get("deferred.fsh", "")
+for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
+              "float centerShadow0 = texture(shadowtex0", "float centerShadow1 = texture(shadowtex1",
+              "float waterTransmission = texture(shadowcolor0, shadowPosition.xy).r",
+              "visibility = mix(visibility, translucentVisibility, 1.0 - visibility)"):
+    if token not in deferred:
+        errors.append(f"Deferred translucent shadow transmission is missing component: {token}")
+
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2", "sampler2D colortex3",
               "texture(colortex3, vTexCoord)", "emissionData.r * 5.0",
