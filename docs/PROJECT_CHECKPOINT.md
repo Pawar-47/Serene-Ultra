@@ -624,3 +624,10 @@ The opaque terrain, entity and block-entity vertex/fragment pairs now pass Iris'
 This adds one normal-atlas lookup per opaque G-buffer fragment when enabled, with no extra render target or additional full-resolution buffer. Iris' neutral fallback normal leaves geometry unchanged without resource-pack `_n` maps. Runtime validation with real LabPBR/oldPBR packs and Intel HD 5500 performance remain outstanding.
 
 Normal-atlas sampling uses implicit-derivative `texture(normals, vTexCoord)` rather than forcing mip level 0. This follows the working Complementary reference's implicit `texture2D(normals, ...)` sampling and lets the atlas select appropriate mip levels at distance, reducing aliasing and avoiding unnecessary full-resolution sampling. Iris documents the neutral `_n`-map fallback and the `at_tangent` handedness convention. CI's LabPBR matrix now includes terrain, water, entities, block entities and deferred; the expanded matrix still needs a green run after the tangent-interface cleanup.
+
+
+## GGX direct specular — 2026-11-23
+
+Replaced the earlier Blinn-Phong highlight with a compact GGX microfacet direct-specular term, guided by the pinned Unbound `ggx.glsl` reference. The implementation uses the PBR smoothness map, a roughness floor for stable low-end rendering, GGX normal distribution, Schlick-Smith geometry, Schlick Fresnel with decoded oldPBR/LabPBR reflectance, and the existing colored shadow/direct-celestial radiance. A branch skips the BRDF on non-glossy pixels and when no direct celestial light is present; a soft peak compression controls extreme highlights on Intel HD 5500.
+
+This is direct-light GGX only. Full energy-conserving metal diffuse, image-based/environment specular, area-light sun approximation and runtime visual calibration remain outstanding.
