@@ -62,11 +62,11 @@ float sampleParticleShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection
 }
 
 void main() {
-    vec4 particle = texture(gtexture, vTexCoord) * vVertexColor;
+    vec4 particleTexture = texture(gtexture, vTexCoord);
+    vec4 particle = particleTexture * vVertexColor;
     if (particle.a < 0.01) discard;
 
     float emission = 0.0;
-    vec4 particleTexture = texture(gtexture, vTexCoord);
 
     // This is a post-deferred forward path: retain Minecraft's colored
     // lightmap response without sampling forbidden colortex0-3 attachments.
@@ -74,7 +74,7 @@ void main() {
         if (float(textureSize(gtexture, 0).x) < 1100.0) {
             if (particle.b > 1.15 * (particle.r + particle.g) &&
                 particle.g > particle.r * 1.25 && particle.g < 0.425 && particle.b > 0.75) {
-                // Water splash/drop particles: reduce saturation and overdraw.
+                // Water splash/drop particles: reduce saturation and opacity.
                 particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.0 / 3.0)) * 0.7;
                 particle.a *= 0.6;
             } else if (particle.b > 0.7 && particle.r < 0.28 &&
