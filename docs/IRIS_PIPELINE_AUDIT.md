@@ -199,3 +199,9 @@ The validator now requires both pairs and their output contracts. This is Iris-p
 
 ## First-person hand lighting correction — 2026-11-23
 Iris routes `gbuffers_hand` to a textured-lit fallback when no custom shader exists. The custom Serene hand shader previously sampled only albedo, so replacing that fallback removed the vanilla lightmap response. Added transformed `gl_MultiTexCoord1` coordinates in `gbuffers_hand.vsh` and a `lightmap` sample in `gbuffers_hand.fsh`, multiplying the hand albedo by the sampled lightmap RGB. This restores the documented lightmap component of the fallback behavior. `heldBlockLightValue` / `heldBlockLightValue2` dynamic held-item illumination remains a separate item-light implementation task; do not claim it is complete.
+
+## Dimension-aware celestial lighting — 2026-11-23
+- Deferred now gates ordinary sun/moon direct light with Iris `hasSkylight`; dimensions without skylight no longer receive an invented Overworld day/night direct-light cycle.
+- Enabled Iris `endFlashShadows=true`. In the End, Iris redirects `shadowLightPosition` to `endFlashPosition`; deferred uses `endFlashIntensity` as the direct-light gate when `hasSkylight` is false.
+- Shadow sampling is skipped when the surface faces away from the active light or the celestial gate is zero, avoiding four shadow comparisons for pixels that cannot receive direct celestial light.
+- Nether receives no direct celestial term from this path; End-flash illumination is supported at source level. Runtime verification in Nether/End remains outstanding.
