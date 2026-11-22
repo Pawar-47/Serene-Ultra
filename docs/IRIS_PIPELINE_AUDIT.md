@@ -361,3 +361,7 @@ The water fragment stage now derives a three-band analytic wave normal from abso
 
 ## Water colour and noise sampler audit — 2026-11-23
 The water fragment stage now samples Iris' documented read-only `noisetex` sampler once per water fragment for subtle colour variation. The sampler is only read; no custom image or texture binding is assumed. The base tint is restricted to the classified water material and preserves the incoming alpha. Its world-space UVs use `cameraPosition + vPlayerPosition`; temporal drift is periodic using the integer-cycle `frameTimeCounter` phase already used by the wave system, avoiding a discontinuity at the timer wrap. The two colour controls are exposed as shader options. The exact noise appearance and cost still require in-game calibration on Intel HD 5500.
+
+
+## Water foam depth reconstruction — 2026-11-23
+The water pass reuses the documented opaque-only `depthtex1` sample and `gbufferProjectionInverse` reconstruction already used for thickness/refraction. It transforms the reconstructed view-space point through `gbufferModelViewInverse` to compare its player-space Y with the current water surface. The foam calculation is limited to top-facing water, uses a bounded height-intersection ramp, is applied to albedo before lighting, and reduces the reflection contribution. No additional depth attachment or gbuffers feedback is introduced. This remains a source-level effect requiring runtime and visual calibration.
