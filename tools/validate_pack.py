@@ -82,12 +82,15 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
     for output in ("outColor", "outLightmapData", "outEncodedNormal"):
         if output not in source:
             errors.append(f"{name} is missing G-buffer output {output}")
+    if "uniform sampler2D lightmap" not in source or "texture2D(lightmap" not in source:
+        errors.append(f"{name} must capture the vanilla colored lightmap")
 
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex1",
               "sampler2D colortex2", "sampler2D depthtex0",
               "sampler2DShadow shadowtex0", "gbufferProjectionInverse",
-              "shadowModelView", "shadowProjection", "sampleShadow"):
+              "shadowModelView", "shadowProjection", "sampleShadow",
+              "vanillaAmbient", "lightData.a"):
     if token not in deferred:
         errors.append(f"Deferred lighting is missing required component: {token}")
 
