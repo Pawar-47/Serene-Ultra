@@ -23,7 +23,7 @@ in vec2 vTexCoord;
 
 // Deferred reads colortex0 and writes a different attachment. Composite later
 // copies colortex3 back to colortex0, avoiding read/write feedback on one image.
-/* RENDERTARGETS: 3 */
+/* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
 
 vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
