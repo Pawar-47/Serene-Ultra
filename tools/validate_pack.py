@@ -154,7 +154,8 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
             errors.append(f"{name} is missing G-buffer output {output}")
     if "uniform sampler2D lightmap" not in source or "texture(lightmap" not in source:
         errors.append(f"{name} must capture the vanilla colored lightmap")
-    if "uniform float alphaTestRef" not in source or "albedo.a < alphaTestRef" not in source:
+    alpha_test_uses_ref = ("albedo.a < alphaTestRef" in source or "particle.a < alphaTestRef" in source)
+    if "uniform float alphaTestRef" not in source or not alpha_test_uses_ref:
         errors.append(f"{name} must use Iris alphaTestRef instead of a hardcoded alpha cutoff")
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
