@@ -10,6 +10,7 @@ uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2DShadow shadowtex0;
 
+uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
@@ -116,9 +117,10 @@ vec3 sampleWaterScreenReflection(vec3 viewPosition, vec3 viewNormal, out float h
             break;
         }
 
-        ivec2 samplePixel = ivec2(sampleUV * vec2(textureSize(depthtex2, 0)));
-        float sceneDepth = texelFetch(depthtex2, samplePixel, 0).r;
-        vec4 sceneSample = texelFetch(colortex4, samplePixel, 0);
+        ivec2 depthPixel = ivec2(sampleUV * vec2(textureSize(depthtex2, 0)));
+        ivec2 scenePixel = ivec2(sampleUV * vec2(textureSize(colortex4, 0)));
+        float sceneDepth = texelFetch(depthtex2, depthPixel, 0).r;
+        vec4 sceneSample = texelFetch(colortex4, scenePixel, 0);
 
         // Alpha zero marks pixels where the deferred scene snapshot contained
         // first-person hand or transparent overlays rather than opaque/sky color.
@@ -179,9 +181,18 @@ void main() {
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
     vec3 normal = normalize(vPlayerNormal);
-    if (!gl_FrontFacing) normal = -normal;
-    vec3 viewNormal = normalize(mat3(gbufferModelView) * normal);
+    vec3 viewNormal = normalize(vViewNormal);
+    if (!gl_FrontFacing) {
+        normal = -normal;
+        viewNormal = -viewNormal;
+    }
     vec3 viewDirection = normalize(vViewPosition);
+    // Iris water normals can face away from the camera on back-facing fluid
+    // geometry; orient both coordinate-space copies consistently.
+    if (dot(viewDirection, viewNormal) > 0.0) {
+        normal = -normal;
+        viewNormal = -viewNormal;
+    }
     float nDotV = clamp(dot(viewNormal, -viewDirection), 0.0, 1.0);
     float waterFresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
     vec3 reflectionDirection = reflect(viewDirection, viewNormal);
@@ -264,10 +275,15 @@ void main() {
                     refractionConfidence = 0.0;
                 }
 
-                refractedSceneLinear = pow(
-                    max(texture(colortex4, refractedUV).rgb, vec3(0.0)),
-                    vec3(2.2)
-                );
+                vec4 refractedSceneSample = texture(colortex4, refractedUV);
+                if (refractedSceneSample.a > 0.5) {
+                    refractedSceneLinear = pow(
+                        max(refractedSceneSample.rgb, vec3(0.0)),
+                        vec3(2.2)
+                    );
+                } else {
+                    refractionConfidence = 0.0;
+                }
             }
         }
 
@@ -286,6 +302,19 @@ void main() {
         vec3 specularHighlight = celestialColor * specularPower
             * celestialIntensity * shadow * celestialGate * 0.8;
         waterReflectionLinear = environmentReflection + specularHighlight;
+        #if WATER_REFLECTION_QUALITY > 0
+        float screenReflectionConfidence = 0.0;
+        vec3 screenReflectionColor = sampleWaterScreenReflection(
+            vViewPosition, viewNormal, screenReflectionConfidence
+        );
+        vec3 screenReflectionLinear = pow(
+            max(screenReflectionColor, vec3(0.0)), vec3(2.2)
+        );
+        waterReflectionLinear = mix(
+            waterReflectionLinear, screenReflectionLinear,
+            clamp(screenReflectionConfidence, 0.0, 1.0)
+        );
+        #endif
         waterReflectionMix = clamp(waterFresnel * WATER_REFLECTION_STRENGTH, 0.0, 0.85);
     }
 
