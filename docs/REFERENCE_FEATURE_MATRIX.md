@@ -10,11 +10,11 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Albedo, lightmap UV and world-aligned normal G-buffer capture; material classification remains next | Partial |
 | Entity rendering | Entity-specific shading and shadows | Entity albedo, lightmap UV and normal capture with alpha cutoff | Partial |
 | Hand/item rendering | Correct first-person hand/item rendering | Dedicated hand pipeline and parity tests | Foundation |
-| Shadow mapping | Sun/moon directional shadows | Depth map, cascade/clip strategy if needed, culling | Foundation |
+| Shadow mapping | Sun/moon directional shadows | Depth map, position reconstruction and directional comparison | Partial |
 | Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
-| Shadow filtering | Soft filtered shadows and quality controls | Tunable PCF/rotated sampling with temporal stability | Pending |
+| Shadow filtering | Soft filtered shadows and quality controls | Four hardware-filtered comparison taps with slope-aware bias; stability/quality tuning remains | Partial |
 | Ambient occlusion | Contact/local occlusion | Horizon/contact approximation with edge-aware filtering | Pending |
-| Direct lighting | Directional lighting and block light response | Shared physically coherent lighting model | Pending |
+| Direct lighting | Directional lighting and block light response | Day/night celestial diffuse term combined with lightmap-derived ambient | Partial |
 | Colored lighting | Colored block/emissive light response | Efficient light sampling and material response | Pending |
 | Indirect lighting / GI | Bounced/indirect illumination appearance | Screen-space/temporal approximation; preserve visual contribution | Pending |
 | Volumetric lighting | Light shafts and volumetric scattering | Depth-aware low-resolution integration and reconstruction | Pending |
@@ -58,4 +58,4 @@ Next audit pass must extract the actual Ultra profile values and enumerate every
 
 ## Latest implementation note
 
-The G-buffer now preserves base albedo in colortex0, lightmap coordinates in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. The hand remains color-only. The composite pass intentionally remains an identity copy until the deferred lighting result can be tested against the neutral baseline; this avoids changing the image with a speculative lighting approximation.
+The G-buffer preserves base albedo in colortex0, lightmap coordinates in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. The deferred pass reconstructs player-space positions, evaluates directional celestial diffuse lighting and samples the shadow map with four hardware-filtered comparison taps. The hand and sky remain unchanged by deferred world lighting. These paths are initial implementations only; visual parity and runtime stability remain unverified.
