@@ -79,3 +79,6 @@ option.MATERIAL_SPECULAR_STRENGTH.comment = Controls deferred highlights for cla
 
 option.WATER_ABSORPTION_STRENGTH = Water Absorption
 option.WATER_ABSORPTION_STRENGTH.comment = Controls depth-dependent Beer-Lambert colour absorption in refracted water. Higher values attenuate red and green light more strongly, producing deeper blue water.
+
+option.PORTAL_DISTORTION_STRENGTH = Nether Portal Distortion
+option.PORTAL_DISTORTION_STRENGTH.comment = Controls the four-tap animated portal texture distortion. Samples are clamped to the current atlas sprite to prevent texture bleeding.
