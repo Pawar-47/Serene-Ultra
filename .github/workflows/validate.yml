@@ -77,12 +77,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for shader in shaders/gbuffers_terrain.fsh shaders/gbuffers_water.fsh shaders/deferred.fsh; do
-            echo "Compiling LabPBR branch: $shader"
-            glslangValidator -DMC_TEXTURE_FORMAT_LAB_PBR=1 -S frag "$shader"
-          done
+          echo "Linking terrain oldPBR/LabPBR variants"
           glslangValidator -DMC_TEXTURE_FORMAT_LAB_PBR=1 -l shaders/gbuffers_terrain.vsh shaders/gbuffers_terrain.fsh
+          echo "Linking water oldPBR/LabPBR variants"
           glslangValidator -DMC_TEXTURE_FORMAT_LAB_PBR=1 -l shaders/gbuffers_water.vsh shaders/gbuffers_water.fsh
+          echo "Linking deferred oldPBR/LabPBR variants"
           glslangValidator -DMC_TEXTURE_FORMAT_LAB_PBR=1 -l shaders/deferred.vsh shaders/deferred.fsh
       - name: Link vertex and fragment shader programs
         shell: bash
