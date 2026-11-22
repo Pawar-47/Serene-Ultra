@@ -34,7 +34,6 @@ void main() {
     float horizonBlend = 0.0;
 
     float solarElevation = sin(sunAngle * 6.28318530718);
-    float dayFactor = smoothstep(0.0, 0.30, solarElevation);
     float twilight = hasSkylight
         ? exp(-abs(solarElevation) * 12.0) * (1.0 - rainStrength)
         : 0.0;
