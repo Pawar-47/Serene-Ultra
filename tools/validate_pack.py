@@ -216,11 +216,24 @@ ao_strength_line = next((line for line in deferred_options.splitlines() if line.
 if "0.65" not in ao_strength_line:
     errors.append("AO_STRENGTH option values must include the 0.65 profile preset")
 
+terrain_vertex = sources.get("gbuffers_terrain.vsh", "")
+for token in ("in vec2 mc_Entity", "flat out int vMaterialId", "vMaterialId = int(mc_Entity.x + 0.5)"):
+    if token not in terrain_vertex:
+        errors.append(f"Terrain vertex stage is missing Iris mc_Entity material classification: {token}")
+terrain_fragment = sources.get("gbuffers_terrain.fsh", "")
+for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = vec4(albedo.rgb, emissionStrength / 5.0)"):
+    if token not in terrain_fragment:
+        errors.append(f"Terrain G-buffer is missing emissive material output: {token}")
+block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
+for token in ("block.32100=minecraft:glowstone", "block.32118=minecraft:lava"):
+    if token not in block_properties:
+        errors.append(f"Missing emissive block ID mapping: {token}")
+
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particles.fsh"):
     source = sources.get(name, "")
-    if "/* RENDERTARGETS: 0,1,2 */" not in source:
-        errors.append(f"{name} must write albedo, lightmap and normal attachments")
-    for output in ("outColor", "outLightmapData", "outEncodedNormal"):
+    if "/* RENDERTARGETS: 0,1,2,3 */" not in source:
+        errors.append(f"{name} must write albedo, lightmap, normal and emissive attachments")
+    for output in ("outColor", "outLightmapData", "outEncodedNormal", "outEmissionData"):
         if output not in source:
             errors.append(f"{name} is missing G-buffer output {output}")
     if "uniform sampler2D lightmap" not in source or "texture(lightmap" not in source:
@@ -230,6 +243,8 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
         errors.append(f"{name} must use Iris alphaTestRef instead of a hardcoded alpha cutoff")
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
+    if name != "gbuffers_terrain.fsh" and "outEmissionData = vec4(0.0)" not in source:
+        errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
 
 entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
 block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
@@ -356,7 +371,8 @@ if "texture(lightmap" not in translucent_particles:
 
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
-              "sampler2D colortex1", "sampler2D colortex2",
+              "sampler2D colortex1", "sampler2D colortex2", "sampler2D colortex3",
+              "texture(colortex3, vTexCoord)", "emissionData.a * 5.0",
               "sampler2D depthtex0", "sampler2D depthtex2", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
@@ -399,10 +415,16 @@ if "/* RENDERTARGETS: 3 */" in deferred:
     errors.append("Deferred must write the lit scene to logical colortex0 through Iris buffer flipping")
 if "copies colortex3 back to colortex0" in deferred:
     errors.append("Deferred source contains obsolete colortex3 copy-back commentary")
-if "colortex3" in deferred:
-    errors.append("Deferred still references obsolete colortex3 scene output")
+if "/* RENDERTARGETS: 3 */" in deferred:
+    errors.append("Deferred must read, not write, the emissive colortex3 buffer")
+if "colortex3" not in deferred:
+    errors.append("Deferred must sample the emissive G-buffer before fogging the final lit scene")
 for directive in (
     "flip.deferred.colortex0=true", "flip.composite.colortex0=true",
+    "flip.deferred.colortex3=false",
+    "blend.gbuffers_terrain.colortex3=off",
+    "blend.gbuffers_entities.colortex3=off",
+    "blend.gbuffers_particles.colortex3=off",
     "blend.gbuffers_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
