@@ -8,6 +8,10 @@ out vec4 vVertexColor;
 out vec3 vPlayerNormal;
 out vec3 vPlayerPosition;
 out vec3 vViewPosition;
+flat out int vMaterialId;
+flat out float vFluidRenderType;
+
+in vec2 mc_Entity;
 
 void main() {
     gl_Position = ftransform();
@@ -20,6 +24,8 @@ void main() {
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
     vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
     vViewPosition = viewPosition.xyz;
+    vMaterialId = int(mc_Entity.x + 0.5);
+    vFluidRenderType = mc_Entity.y;
 
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
