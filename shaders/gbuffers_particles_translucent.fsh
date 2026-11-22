@@ -13,6 +13,7 @@ uniform mat4 gbufferModelViewInverse;
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
+uniform float rainStrength;
 uniform float endFlashIntensity;
 uniform int isEyeInWater;
 uniform vec3 cameraPosition;
@@ -88,20 +89,18 @@ void main() {
                 particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.0 / 3.0)) * 0.7;
                 float particleDither = textureLod(noisetex, gl_FragCoord.xy / 128.0, 0.0).b;
                 if (particleDither > 0.4) discard;
-            #ifdef OVERWORLD
-            } else if (particle.b > 0.7 && particle.r < 0.28 &&
+            } else if (hasSkylight && rainStrength > 0.001 && particle.b > 0.7 && particle.r < 0.28 &&
                        particle.g < 0.425 && particle.g > particle.r * 1.4) {
                 // Physics-mod rain particles; only classify these in the Overworld.
                 if (particle.a < 0.1 || isEyeInWater == 3) discard;
                 particle.a *= rainTexOpacity;
                 particle.rgb = sqrt(max(particle.rgb, vec3(0.0)));
-            } else if (all(equal(particle.rgb, vec3(1.0))) &&
+            } else if (hasSkylight && rainStrength > 0.001 && all(equal(particle.rgb, vec3(1.0))) &&
                        particle.a < 0.765 && particle.a > 0.605) {
                 // Physics-mod snow particles.
                 if (particle.a < 0.1 || isEyeInWater == 3) discard;
                 particle.a *= snowTexOpacity;
                 particle.rgb = sqrt(max(particle.rgb, vec3(0.0)));
-            #endif
             } else if (abs(particle.r - particle.g) < 0.001 &&
                        particle.r - 0.5 * particle.b < 0.06) {
                 // Underwater particle sprites are suppressed outside water.
