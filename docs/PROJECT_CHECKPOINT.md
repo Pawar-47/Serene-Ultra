@@ -439,8 +439,8 @@ The user has selected Complementary Unbound as the primary visual/material refer
 
 
 ## Unbound water foam checkpoint — 2026-11-23
-- Added a first shoreline/shallow-surface foam approximation using the opaque surface position reconstructed from Iris `depthtex1` and `gbufferProjectionInverse`, then transformed through `gbufferModelViewInverse` into player space.
-- Foam is restricted to top-facing water near the top of the block, blended into water albedo before lighting, and attenuates the SSR contribution.
+- Added a first shoreline/shallow-surface foam approximation from the existing opaque-view thickness reconstructed through Iris `depthtex1` and `gbufferProjectionInverse`.
+- Foam uses `1.0 - smoothstep(0.035, 0.42, waterThickness)`, is restricted to top-facing water with valid opaque depth, blends into water albedo before lighting, and attenuates SSR. This supersedes the earlier world-Y/block-height gate.
 - Added `WATER_FOAM_STRENGTH` to the Quality menu and sliders. The validator checks the depth reconstruction, surface gating and reflection attenuation path.
 - This is a low-cost approximation, not full Unbound foam parity. Runtime/visual calibration, caustics and complete underwater response remain outstanding.
 
