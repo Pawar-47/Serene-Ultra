@@ -1,7 +1,7 @@
 #version 330 compatibility
 
 /*
-const int colortex2Format = RGBA16F;
+const int colortex2Format = RGBA8;
 */
 /*
 const int colortex3Format = R8;
