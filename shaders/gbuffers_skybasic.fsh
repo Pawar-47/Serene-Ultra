@@ -26,7 +26,7 @@ vec3 reconstructPlayerDirection() {
 }
 
 void main() {
-    vec3 color = vVertexColor.rgb;
+    vec3 colorLinear = pow(max(vVertexColor.rgb, vec3(0.0)), vec3(2.2));
     float alpha = vVertexColor.a;
 
     vec3 playerDirection = reconstructPlayerDirection();
@@ -57,23 +57,29 @@ void main() {
     #endif
 
     if (isVoid) {
-        color = vec3(0.0);
+        colorLinear = vec3(0.0);
         alpha = 1.0;
     } else if (isStars) {
         float nightFactor = 1.0 - smoothstep(-0.15, 0.20, solarElevation);
-        color *= nightFactor * (1.0 - 0.9 * rainStrength);
+        colorLinear *= nightFactor * (1.0 - 0.9 * rainStrength);
     } else if (isSky || isSunset) {
-        color = mix(fogColor, skyColor, horizonBlend);
+        vec3 fogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
+        vec3 skyLinear = pow(max(skyColor, vec3(0.0)), vec3(2.2));
+        colorLinear = mix(fogLinear, skyLinear, horizonBlend);
         if (isSunset) {
             float horizonBand = exp(-abs(upDot) * 10.0);
-            vec3 twilightColor = mix(vec3(0.95, 0.38, 0.20), vec3(0.42, 0.34, 0.55), 1.0 - dayFactor);
-            color = mix(color, twilightColor, horizonBand * twilight * 0.18);
+            float dawnSide = step(0.0, cos(sunAngle * 6.28318530718));
+            vec3 dawnColor = pow(vec3(1.0, 0.48, 0.28), vec3(2.2));
+            vec3 duskColor = pow(vec3(0.82, 0.32, 0.42), vec3(2.2));
+            vec3 twilightColor = mix(duskColor, dawnColor, dawnSide);
+            colorLinear = mix(colorLinear, twilightColor, horizonBand * twilight * 0.18);
         }
-        color = mix(color, fogColor, 0.35 * rainStrength);
+        colorLinear = mix(colorLinear, fogLinear, 0.35 * rainStrength);
         alpha = 1.0;
     }
 
-    outColor = vec4(color, alpha);
+    vec3 outputColor = pow(max(colorLinear, vec3(0.0)), vec3(1.0 / 2.2));
+    outColor = vec4(outputColor, alpha);
     // Sky, stars and void have no deferred surface normal. Explicitly keep
     // them outside opaque deferred lighting.
     outDeferredValidity = vec4(0.0);
