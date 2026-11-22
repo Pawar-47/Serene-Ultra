@@ -37,7 +37,7 @@ vec3 applyHdrLook(vec3 color) {
 }
 
 void main() {
-    vec4 scene = texture2D(colortex0, vTexCoord);
+    vec4 scene = texture(colortex0, vTexCoord);
     vec3 color = max(scene.rgb, vec3(0.0));
 
     // Exposure is expressed in photographic stops.
