@@ -389,3 +389,7 @@ The `colortex2` normal attachment now packs both deferred validity and a scalar 
 
 ## Beer-Lambert absorption path — 2026-11-23
 The water pass applies absorption only after a valid refraction sample has passed the existing `depthtex1`/`colortex4` scene-copy checks. It operates on linearized scene colour and uses reconstructed `waterThickness` to compute per-channel exponential transmission. The tint comes from the same water material colour used for the surface, avoiding an independent hardcoded colour path. No new sampler or render target is introduced. The strength is a shader option; runtime colour/performance calibration remains required.
+
+
+## Per-quad portal atlas sampling — 2026-11-23
+The portal effect now uses Iris `mc_midTexCoord`, which the attribute reference documents as the center of the current quad's texture region and valid in `gbuffers_*.vsh`. The vertex stage applies the same texture matrix as `gl_MultiTexCoord0`, then forwards the midpoint and half extents as flat varyings. Four fragment samples are clamped to the per-quad region with a one-texel inset. This prevents sampling neighboring atlas sprites and does not require a custom texture or a screen-space attachment. It remains a bounded four-tap approximation; verify on the exact Iris/Minecraft runtime and with resource packs that alter portal atlas dimensions.
