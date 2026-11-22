@@ -236,6 +236,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "WATER_FOG_MULT", "uniform float alphaTestRef",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
               "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)",
+              "gl_FragCoord.xy / vec2(textureSize(depthtex1, 0))",
               "sqrt(max(translucentAlbedo.a, 0.0))",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
