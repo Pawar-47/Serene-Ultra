@@ -257,3 +257,7 @@ Water refraction now receives linear-space Beer-Lambert attenuation based on rec
 
 ## Nether portal distortion update — 2026-11-23
 Nether portals now receive a four-tap animated UV distortion, with each sample clamped to the current quad's texture region using Iris `mc_midTexCoord`. The pre-tint portal signal drives self-emission, followed by a warm nonlinear tint. The full Unbound raymarch/edge treatment is not yet implemented.
+
+
+### Water wave spatial scale — 2026-11-23
+`WATER_WAVE_SCALE` now adjusts the spatial frequency of the three analytic wave bands independently of wave strength and animation speed. It is exposed as a Quality slider; in-game tuning remains pending.
