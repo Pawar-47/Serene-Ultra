@@ -190,3 +190,5 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - It uses the existing source-alpha blend directive and does not sample colortex0–3.
 - Extended structural validation to require the dedicated hand-water pair and forward output contract.
 - Runtime verification and dynamic held-item illumination remain pending.
+
+- Updated first-person hand lightmap multiplication and `entityColor` tint blending to occur in linear space, following Iris' fog guide's color conversion guidance. Source-buffer color-space assumptions remain subject to supplied reference-source comparison and runtime calibration.
