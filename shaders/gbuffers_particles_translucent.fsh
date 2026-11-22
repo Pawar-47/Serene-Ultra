@@ -82,11 +82,13 @@ void main() {
                 // Physics-mod rain particles.
                 if (particle.a < 0.1 || isEyeInWater == 3) discard;
                 particle.a *= 0.25;
+                particle.rgb = sqrt(max(particle.rgb, vec3(0.0)));
             } else if (all(equal(particleTexture.rgb, vec3(1.0))) &&
                        particle.a < 0.765 && particle.a > 0.605) {
                 // Physics-mod snow particles.
                 if (particle.a < 0.1 || isEyeInWater == 3) discard;
                 particle.a *= 0.5;
+                particle.rgb = sqrt(max(particle.rgb, vec3(0.0)));
             } else if (abs(particleTexture.r - particleTexture.g) < 0.001 &&
                        particleTexture.r - 0.5 * particleTexture.b < 0.06) {
                 // Underwater particle sprites are suppressed outside water.
