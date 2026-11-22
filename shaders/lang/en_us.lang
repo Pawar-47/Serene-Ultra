@@ -38,3 +38,6 @@ option.WATER_FOG_MULT.comment = Controls how quickly water becomes opaque with d
 
 option.WEATHER_TEX_OPACITY = Weather particle opacity
 option.WEATHER_TEX_OPACITY.comment = Adjusts the opacity of vanilla rain and snow textures.
+
+option.WAVING_RAIN = Waving rain and snow
+option.WAVING_RAIN.comment = Adds subtle wind-driven motion to falling rain and snow.
