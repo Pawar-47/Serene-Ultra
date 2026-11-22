@@ -20,6 +20,7 @@ REQUIRED = (
     "gbuffers_spidereyes.vsh", "gbuffers_spidereyes.fsh",
     "gbuffers_armor_glint.vsh", "gbuffers_armor_glint.fsh",
     "gbuffers_lightning.vsh", "gbuffers_lightning.fsh",
+    "gbuffers_clouds.vsh", "gbuffers_clouds.fsh",
     "gbuffers_beaconbeam.vsh", "gbuffers_beaconbeam.fsh",
     "shadow.vsh", "shadow.fsh",
     "deferred.vsh", "deferred.fsh",
@@ -246,6 +247,11 @@ block_props = (SHADERS / "block.properties").read_text(encoding="utf-8") if (SHA
 for token in ("block.32000=minecraft:water",):
     if token not in block_props:
         errors.append(f"Missing stable Iris block material mapping: {token}")
+clouds = sources.get("gbuffers_clouds.fsh", "")
+for token in ("/* RENDERTARGETS: 0,2 */", "isEyeInWater != 0", "fogColor",
+              "fogDensity", "fogMode", "fogShape", "outDeferredValidity = vec4(0.0)"):
+    if token not in clouds:
+        errors.append(f"Cloud overlay is missing Iris forward component: {token}")
 for name in ("gbuffers_lightning.fsh", "gbuffers_beaconbeam.fsh"):
     overlay = sources.get(name, "")
     for token in ("/* RENDERTARGETS: 0,2 */", "outDeferredValidity = vec4(0.0)",
@@ -334,6 +340,7 @@ for directive in (
     "blend.gbuffers_armor_glint.colortex2=off",
     "blend.gbuffers_lightning.colortex2=off",
     "blend.gbuffers_beaconbeam.colortex2=off",
+    "blend.gbuffers_clouds.colortex2=off",
 ):
     if directive not in props:
         errors.append(f"Missing Iris translucent-scene pipeline directive: {directive}")
