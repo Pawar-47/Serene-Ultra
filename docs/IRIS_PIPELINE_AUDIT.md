@@ -121,3 +121,9 @@ Iris documents `shadowLightPosition` as the highest celestial body's **view-spac
 Iris' colortex contract explicitly prohibits sampling colortex0–3 from gbuffers programs (they may be render targets). New geometry shaders must not sample those attachments. Deferred/composite passes may use the documented main/alternate buffer flipping behavior.
 
 These checks verify the current code against Iris' documented contracts only. The Vanilla-stock archive still needs to be inspected for the corresponding Minecraft-native attributes/lightmap behavior, and Complementary's actual source must still be traced for visual/algorithmic comparison.
+
+## CI guard added
+
+The structural validator now rejects gbuffers shader files that declare sampler reads from colortex0–3, matching Iris' documented restriction. It also reports missing dedicated `gbuffers_water`, `gbuffers_weather` and `gbuffers_hand_water` fragment programs as a visible non-failing warning while their implementations remain pending. This keeps the current baseline green without disguising the missing coverage.
+
+The validator change and README update passed CI on HEAD `26d5aafb525029b31739f56e70ea5625571e0304` (run `45060856038`). This remains structural + standalone GLSL validation only, not Iris runtime validation.
