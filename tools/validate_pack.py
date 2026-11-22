@@ -86,6 +86,7 @@ else:
             errors.append(f"Reference audit is missing required setting: {token}")
 
 props_path = SHADERS / "shaders.properties"
+props = ""
 if props_path.is_file():
     props = props_path.read_text(encoding="utf-8")
     for profile in ("Ultra-Light", "Smooth", "Ultra", "HDR", "Ultra-HDR"):
@@ -94,14 +95,7 @@ if props_path.is_file():
     for screen in ("screen = <profile>", "screen.QUALITY =", "screen.COLOR ="):
         if screen not in props:
             errors.append(f"Missing menu configuration: {screen}")
-    # These two Iris additional programs are only activated by separateEntityDraws.
-# Keep them out of the missing-program warning while that option is intentionally
-# disabled because current Iris documentation warns it may be broken.
-if "separateEntityDraws=true" not in props:
-    missing_iris_programs.pop("gbuffers_entities_translucent", None)
-    missing_iris_programs.pop("gbuffers_block_translucent", None)
-
-for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
+    for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
     if "separateAo=false" not in props:
@@ -110,6 +104,13 @@ for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
+
+# These two Iris additional programs are only activated by separateEntityDraws.
+# Keep them out of the missing-program warning while that option is intentionally
+# disabled because current Iris documentation warns it may be broken.
+if props and "separateEntityDraws=true" not in props:
+    missing_iris_programs.pop("gbuffers_entities_translucent", None)
+    missing_iris_programs.pop("gbuffers_block_translucent", None)
 
 # Iris shader constants are GLSL declarations, not shaders.properties keys.
 all_glsl = "\n".join(sources.values())
