@@ -400,6 +400,9 @@ for token in ("WATER_FOAM_STRENGTH", "opaquePlayerPosition",
               "(1.0 - waterFoam)"):
     if token not in water:
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
+if "uniform int isEyeInWater;" not in water:
+    errors.append("Water pass must declare Iris isEyeInWater as int")
+
 for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureLod(noisetex, noiseUV, 0.0)",
               "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH"):
     if token not in water:
