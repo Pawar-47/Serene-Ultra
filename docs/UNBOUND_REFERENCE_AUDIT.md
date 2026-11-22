@@ -126,6 +126,7 @@ Key constraints applied to Serene:
 - Screen-space refraction with depth rejection and scene-snapshot validity checks.
 - Screen-space water reflection using full-resolution `depthtex2` and correctly scaled/clamped half-resolution `colortex4` coordinates.
 - Three-band analytic water-normal waves anchored to absolute player/world XZ coordinates, transformed into view space with Iris `gbufferModelView`; wave speed uses integer cycles per Iris `frameTimeCounter` hour to avoid phase jumps at the documented timer wrap.
+- Unbound-style base water tint retaining biome influence, plus animated one-sample `noisetex` colour variation with a wrap-safe periodic drift.
 - Fresnel-weighted reflection blending with a bounded user strength.
 - Forward lightmap/celestial/shadow/fog treatment.
 - View-space and player-space normal orientation correction; refraction depth is fetched at an exact clamped texel and reconstructed using that texel's centre UV.
@@ -133,7 +134,7 @@ Key constraints applied to Serene:
 ### Still missing or incomplete relative to Unbound
 
 - Texture-driven multi-scale normal maps, configurable wave scale/bumpiness and the upstream reference's normal-map parallax refinement. Serene currently uses a lower-bandwidth analytic three-wave approximation, not the same texture-based method.
-- Water noise-colour variation.
+- More advanced water noise-colour variation and per-biome colour calibration. Serene currently uses a single-sample low-amplitude tint variation.
 - Surface foam.
 - Full Unbound water colour and underwater-specific response.
 - Sky/environment reflection fallback when SSR misses, plus optional world-space reflections.
@@ -160,3 +161,7 @@ These are parity gaps, not approved omissions. Low-end optimisation must preserv
 
 ## Analytic water-wave milestone — 2026-11-23
 Serene now has three animated analytic wave bands in `gbuffers_water.fsh`. The waves use absolute player/world coordinates (`vPlayerPosition + cameraPosition`) so the pattern remains stable as the camera moves. The perturbed normal is transformed with Iris `gbufferModelView` for Fresnel/refraction/SSR while the player-space normal is used for lighting and shadowing. `WATER_WAVE_STRENGTH` and `WATER_WAVE_SPEED` are exposed in the Quality menu. Speed is expressed as an integer number of complete cycles per 3600-second `frameTimeCounter` interval, avoiding a phase discontinuity when Iris' documented timer wraps. This is an original low-bandwidth approximation of Unbound's animated multi-scale normal map; texture-driven normals, parallax refinement and calibrated wave appearance remain outstanding.
+
+
+## Unbound-style water colour update — 2026-11-23
+The water pass now applies a dedicated Unbound-inspired base tint only to the water material ID, retaining alpha and blending behavior. The tint combines a stable blue base with a restrained biome vertex-colour contribution. A single Iris `noisetex` sample adds low-amplitude animated colour variation. The noise drift uses the same integer-cycle timer basis as the wave system so it does not jump when Iris' `frameTimeCounter` wraps. `WATER_COLOR_STRENGTH` and `WATER_NOISE_COLOR_STRENGTH` are exposed in the Quality menu. This is a first-pass colour treatment; underwater tint, absorption, foam, and reference visual calibration remain outstanding.
