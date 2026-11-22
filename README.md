@@ -70,3 +70,5 @@ The optional particle-material path now handles water splash, modded rain/snow, 
 A compact emissive material channel is now integrated: terrain block IDs feed an R8 `colortex3` buffer, deferred adds emission outside AO/shadow attenuation, and lava receives forward self-emission. Full PBR emission maps and bloom remain future work.
 
 Dedicated Iris programs now cover leash/debug overlays (`gbuffers_basic`), block-breaking cracks (`gbuffers_damagedblock`) and block entities/sign text (`gbuffers_block`). Sign text is fogged and bypasses deferred lighting; portal/gateway IDs have a separate emissive value. Runtime visual verification remains outstanding.
+
+The dedicated `gbuffers_textured_lit` Iris fallback now preserves vanilla lightmap, player-space normals and scalar emissive output for lit particles/generic lit geometry. Iris terrain-solid and terrain-cutout programs intentionally fall back to the shared terrain shader to preserve `mc_Entity` block/fluid classification. Shared particle/weather menu options are declared identically across every shader program that consumes them.
