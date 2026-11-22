@@ -365,3 +365,7 @@ The water fragment stage now samples Iris' documented read-only `noisetex` sampl
 
 ## Water foam depth reconstruction — 2026-11-23
 The water pass reuses the documented opaque-only `depthtex1` sample and `gbufferProjectionInverse` reconstruction already used for thickness/refraction. It transforms the reconstructed view-space point through `gbufferModelViewInverse` to compare its player-space Y with the current water surface. The foam calculation is limited to top-facing water, uses a bounded height-intersection ramp, is applied to albedo before lighting, and reduces the reflection contribution. No additional depth attachment or gbuffers feedback is introduced. This remains a source-level effect requiring runtime and visual calibration.
+
+
+### Water foam depth signal correction — 2026-11-23
+The foam mask now uses the existing `calculateWaterThickness` result, derived from Iris `depthtex1` and `gbufferProjectionInverse`, rather than comparing world-Y coordinates. The mask is `1 - smoothstep(0.035, 0.42, waterThickness)` and only runs on top-facing water fragments with valid opaque depth. This reuses the depth reconstruction already performed for refraction/absorption and adds no new depth texture fetch. The foam threshold is a first-pass world/view-space approximation and needs runtime visual calibration.
