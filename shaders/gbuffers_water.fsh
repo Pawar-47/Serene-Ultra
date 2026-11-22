@@ -113,9 +113,10 @@ vec2 calculateWaterNoiseDrift() {
 }
 
 vec2 calculateWaterNoisePosition(vec3 stableWorldPosition) {
-    // Match Unbound's world-height-aware water coordinates. The stable
-    // 256-block Iris camera coordinate period maps to integer noisetex repeats.
-    return 0.032 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);
+    // Match Unbound's world-height-aware coordinates while keeping the
+    // 256-block stable-world period exactly tileable: 256 * 0.03125 = 8 repeats.
+    // This is a wrap-safe 1/32 approximation of Unbound's 0.032 scale.
+    return 0.03125 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);
 }
 
 vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
