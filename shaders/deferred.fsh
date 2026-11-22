@@ -4,7 +4,7 @@
 const int colortex2Format = RGBA8;
 */
 /*
-const int colortex3Format = RGBA8;
+const int colortex3Format = RGB8;
 */
 
 uniform sampler2D colortex0;
@@ -44,7 +44,6 @@ in vec2 vTexCoord;
 #define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.65 0.70 0.80 0.90 1.00] Contact occlusion strength
 #define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
 #define MATERIAL_SPECULAR_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Deferred specular response for smooth materials
-#define MATERIAL_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material ambient occlusion strength
 #define MATERIAL_SSS_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] LabPBR subsurface scattering strength
 
 // Deferred is a composite-style pass: it reads the main colortex0 image and
@@ -243,9 +242,7 @@ void main() {
 #else
     vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
 #endif
-    float materialAO = clamp(emissionData.b, 0.0, 1.0);
-    float materialAOFactor = mix(1.0, materialAO, MATERIAL_AO_STRENGTH * 0.01);
-    vec3 litLinear = albedoLinear * (ambient * materialAOFactor + direct);
+    vec3 litLinear = albedoLinear * (ambient + direct);
 
     // Low-cost GGX direct specular. The branch is skipped for non-glossy
     // surfaces and when no direct celestial light reaches the pixel.
@@ -286,7 +283,7 @@ void main() {
     // Decode the SSS range here; porosity remains packed for later wet-surface work.
     float materialSSS = 0.0;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
-    float materialSurfaceCode = floor(emissionData.a * 255.0 + 0.5);
+    float materialSurfaceCode = floor(emissionData.b * 255.0 + 0.5);
     if (materialSurfaceCode >= 65.0) {
         materialSSS = clamp((materialSurfaceCode - 65.0) / 190.0, 0.0, 1.0);
     }
