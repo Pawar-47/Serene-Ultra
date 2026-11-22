@@ -764,7 +764,7 @@ for token in ("materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0)"
               "vec4 emissionData = texture(colortex3, vTexCoord)",
               "materialReflectance = clamp(emissionData.g, 0.0, 1.0)",
               "MC_TEXTURE_FORMAT_LAB_PBR", "materialReflectance >= (230.0 / 255.0)",
-              "float labDielectricF0 = materialReflectance",
+              "float labDielectricF0 = clamp(materialReflectance * (255.0 / 229.0), 0.0, 1.0) * 0.08",
               "vec3(labDielectricF0)",
               "mix(vec3(0.04), albedoLinear, materialReflectance)"):
     if token not in deferred:
