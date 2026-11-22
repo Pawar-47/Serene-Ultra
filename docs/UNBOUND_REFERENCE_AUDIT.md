@@ -191,3 +191,7 @@ Added Iris ID `32004` for ice/frosted ice, matching the shared r5.10 material ID
 
 ## Glossy opaque material milestone — 2026-11-23
 The shared r5.10 material map identifies slime and honey blocks as special smooth materials. Serene now assigns them Iris `block.properties` IDs and packs a smoothness scalar into the existing G-buffer normal alpha, preserving the deferred-validity sentinel. Deferred uses that scalar for a sun/moon half-vector specular highlight, gated so ordinary surfaces do not pay the specular exponent cost. This is an original low-bandwidth first pass; full IPBR textures, per-material masks and the reference's full lighting response remain outstanding.
+
+
+## Beer-Lambert water absorption — 2026-11-23
+The water pass now applies depth-dependent absorption to the refracted opaque-scene sample. It computes per-channel transmission as `exp(-absorptionCoefficient * waterThickness)` and blends the transmitted scene with the current water tint. Red attenuates faster than green, and green faster than blue, producing stronger blue tint with depth. The calculation is performed in linear colour space after the validated refraction sample and before the final refraction blend. `WATER_ABSORPTION_STRENGTH` is exposed in the Quality menu. This is a physically motivated first-pass approximation; coefficients and appearance still need in-game comparison against Unbound.
