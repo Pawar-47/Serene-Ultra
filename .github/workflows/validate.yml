@@ -87,8 +87,8 @@ jobs:
             local vertex_out="$tmpdir/$name.vert"
             local fragment_out="$tmpdir/$name.frag"
 
-            # Inject the Iris format define after #version. Strip at_tangent
-            # only from the temporary vertex copy for glslang compatibility.
+            # Inject the Iris format define after #version; preserve the
+            # documented at_tangent declaration in the temporary test copy.
             awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } { print }' "$vertex" > "$vertex_out"
             awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } { print }' "$fragment" > "$fragment_out"
 
