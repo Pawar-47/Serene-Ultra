@@ -127,6 +127,7 @@ Key constraints applied to Serene:
 - Screen-space water reflection using full-resolution `depthtex2` and correctly scaled/clamped half-resolution `colortex4` coordinates.
 - Three-band analytic water-normal waves anchored to absolute player/world XZ coordinates, transformed into view space with Iris `gbufferModelView`; wave speed uses integer cycles per Iris `frameTimeCounter` hour to avoid phase jumps at the documented timer wrap.
 - Unbound-style base water tint retaining biome influence, plus animated one-sample `noisetex` colour variation with a wrap-safe periodic drift.
+- Shoreline/shallow-surface foam estimated from opaque depth reconstructed through Iris `depthtex1` and `gbufferProjectionInverse`, converted back to player space with `gbufferModelViewInverse`; foam is restricted to top-facing water and attenuates the SSR contribution.
 - Fresnel-weighted reflection blending with a bounded user strength.
 - Forward lightmap/celestial/shadow/fog treatment.
 - View-space and player-space normal orientation correction; refraction depth is fetched at an exact clamped texel and reconstructed using that texel's centre UV.
@@ -135,7 +136,7 @@ Key constraints applied to Serene:
 
 - Texture-driven multi-scale normal maps, configurable wave scale/bumpiness and the upstream reference's normal-map parallax refinement. Serene currently uses a lower-bandwidth analytic three-wave approximation, not the same texture-based method.
 - More advanced water noise-colour variation and per-biome colour calibration. Serene currently uses a single-sample low-amplitude tint variation.
-- Surface foam.
+- More complete foam shaping/calibration. Serene now has a first depth-intersection foam approximation, but does not yet match the reference's complete surface/foam logic.
 - Full Unbound water colour and underwater-specific response.
 - Sky/environment reflection fallback when SSR misses, plus optional world-space reflections.
 - More robust SSR refinement, edge handling, temporal stability and quality scaling.
@@ -165,3 +166,7 @@ Serene now has three animated analytic wave bands in `gbuffers_water.fsh`. The w
 
 ## Unbound-style water colour update — 2026-11-23
 The water pass now applies a dedicated Unbound-inspired base tint only to the water material ID, retaining alpha and blending behavior. The tint combines a stable blue base with a restrained biome vertex-colour contribution. A single Iris `noisetex` sample adds low-amplitude animated colour variation. The noise drift uses the same integer-cycle timer basis as the wave system so it does not jump when Iris' `frameTimeCounter` wraps. `WATER_COLOR_STRENGTH` and `WATER_NOISE_COLOR_STRENGTH` are exposed in the Quality menu. This is a first-pass colour treatment; underwater tint, absorption, foam, and reference visual calibration remain outstanding.
+
+
+## Water foam milestone — 2026-11-23
+The water pass now reconstructs the opaque scene position behind water using Iris `depthtex1` and `gbufferProjectionInverse`, transforms it to player space with `gbufferModelViewInverse`, and estimates the vertical intersection with the water surface. Foam is restricted to top-facing water near the top of the block, blended into the water albedo before lighting, and reduces SSR contribution in foamy pixels. `WATER_FOAM_STRENGTH` is exposed as a Quality-menu slider. This is a low-cost shoreline approximation; visual calibration, caustics and the full Unbound foam response remain outstanding.
