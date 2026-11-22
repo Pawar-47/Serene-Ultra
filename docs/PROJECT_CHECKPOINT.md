@@ -16,8 +16,7 @@ The Vanilla-stock archive contains 89 shader source files (42 fragment, 30 verte
 
 ## Work completed in this session
 - Identified a same-attachment deferred read/write hazard: deferred previously sampled colortex0 while writing colortex0.
-- Changed deferred to read the scene from colortex0 and write lit output to colortex3.
-- Changed composite to read colortex3 and write the completed scene back to colortex0.
+- Historical first implementation used colortex3 as deferred output and copied it back in composite. **Superseded on 2026-11-23:** deferred and composite now use Iris main/alternate flipping on logical colortex0; see the authoritative correction section below.
 - Added an initial eight-neighbor depth-based screen-space contact AO approximation.
 - AO attenuates ambient lighting only; direct celestial light is left intact.
 - Added AO_STRENGTH and AO_RADIUS controls to the Quality menu and all five profile presets.
@@ -55,8 +54,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Corrected the validation record: this latest run is newer than the previously cited `0aa562...` checkpoint.
 - Clarified the execution boundary: Iris is the shaderpack loader/runtime contract; Vanilla-stock describes native Minecraft pipeline behavior; Complementary Reimagined is the working Iris source/visual reference.
 - Added `docs/IRIS_PIPELINE_AUDIT.md` using the published Iris program, buffer, depth and blending contracts.
-- Identified a high-priority likely overwrite hazard: `gbuffers_water`, `gbuffers_weather` and `gbuffers_hand_water` run after deferred, while the current composite copies colortex3 over colortex0. Those dedicated program files are absent, so Iris fallback behavior may route them through opaque G-buffer shaders and the later copy-back may overwrite their contribution.
-- This is a source-level risk, not a runtime-confirmed bug. Do not claim water/weather compatibility until explicit paths and in-game tests exist.
+- Identified a high-priority likely overwrite hazard in the former colortex3 copy-back design. **Superseded:** the attachment flow was corrected using Iris main/alternate flips. Dedicated water/weather/hand-water shading and in-game tests are still required.
 - The exact supplied ZIP archives were not available through the current Project Files listing during this pass; no file-by-file comparison of their contents is claimed. Continue using already recorded archive inventory, and obtain the actual archive bytes through the normal attachment/project access path before making feature-specific choices that require line-level reference evidence.
 
 ### Next actions (priority order)
@@ -98,3 +96,10 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - The missing dedicated water/weather/hand-water programs are fallback-covered but are not feature-complete. Dedicated water lighting/reflections, weather treatment and hand-water shading remain pending.
 - This continuation has not inspected the actual bytes of the supplied Complementary and Vanilla-stock ZIPs; no line-by-line archive comparison is claimed. Iris documentation and the current repository source are the evidence used here.
 - Next implementation target remains dedicated water forward shading, then weather and first-person translucent coverage, followed by other missing program families.
+
+## Current authoritative state (2026-11-23)
+- `main` currently uses deferred `RENDERTARGETS: 0`, with `flip.deferred.colortex0=true`; composite reads/writes logical colortex0 with `flip.composite.colortex0=true`.
+- The old colortex3 output/copy-back architecture is historical only. Earlier sections above describe the original implementation and should not be used as current instructions.
+- Iris CI run `45062112552` passed on commit `e52e0447ca949d488f7d0c520c1ec772ed15c627`. The current documentation/validator reconciliation commits are newer and their CI must be checked separately.
+- Iris fallback routing is documented in `docs/IRIS_PIPELINE_AUDIT.md`. Missing dedicated water/weather/hand-water shaders currently fall back to terrain/textured-lit/hand; fallback routing is not feature parity.
+- Dedicated water/weather/hand-water material implementations, broader geometry coverage, archive line-by-line comparison, Iris runtime testing, visual parity and target hardware measurements remain outstanding.
