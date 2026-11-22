@@ -307,3 +307,10 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - The fragment path samples the vanilla lightmap, computes the active celestial source, applies one hardware-filtered `shadowtex0` comparison and Iris fog.
 - One shadow comparison is intentional to limit bandwidth/ALU cost on Intel HD 5500; this is a source-level performance choice, not measured FPS.
 - Particle-specific emissive classification, campfire smoke, underwater particles and material-specific water/rain/snow effects remain pending.
+
+## Iris compatibility correction — 2026-11-23
+- Rechecked the current Iris documentation and disabled `separateEntityDraws` again (`separateEntityDraws=false`).
+- Removed `iris.features.optional=ENTITY_TRANSLUCENT` from active configuration.
+- Retained the forward `gbuffers_entities_translucent` and `gbuffers_block_translucent` source pairs, but they are inactive until a fixed Iris version is runtime-verified.
+- Validator now rejects `separateEntityDraws=true` or the optional feature flag and does not require inactive programs.
+- CI run [45068091455](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45068091455) passed GLSL compile, macro-branch compile, vertex/fragment linking and structural validation.
