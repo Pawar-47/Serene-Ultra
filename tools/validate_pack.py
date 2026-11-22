@@ -140,15 +140,15 @@ if props_path.is_file():
             errors.append(f"Missing menu configuration: {screen}")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
-                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
+                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
     slider_options_line = next((line for line in props.splitlines() if line.startswith("sliders = ")), "")
-    for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH"):
+    for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH"):
         if option not in slider_options_line:
             errors.append(f"{option} must be exposed as an Iris slider")
     if "separateAo=false" not in props:
-        errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
+        errors.append("G-buffer alpha remains smoothness; material AO must stay in colortex3.b while separateAo remains false")
     if "separateEntityDraws=true" not in props:
         errors.append("Iris translucent entity/block-entity passes require separateEntityDraws=true")
     if "iris.features.optional=ENTITY_TRANSLUCENT" not in props:
@@ -156,8 +156,8 @@ if props_path.is_file():
     deferred_format_source = sources.get("deferred.fsh", "")
     if "const int colortex2Format = RGBA8;" not in deferred_format_source:
         errors.append("Iris colortex2 normal/smoothness target must use normalized RGBA8 to preserve bandwidth on low-end GPUs")
-    if "const int colortex3Format = RG8;" not in deferred_format_source:
-        errors.append("Iris colortex3 material target must declare RG8 using the documented GLSL buffer-format directive")
+    if "const int colortex3Format = RGBA8;" not in deferred_format_source:
+        errors.append("Iris colortex3 material target must declare RGBA8 for emission, reflectance, AO and SSS channels")
     if "format.colortex2=" in props or "format.colortex3=" in props or "colortex3Format=" in props:
         errors.append("Buffer formats must use Iris GLSL const directives, not shaders.properties key/value syntax")
     if "particles.ordering=mixed" not in props:
@@ -320,7 +320,7 @@ for token in ("uniform sampler2D specular", "texture(specular, vTexCoord)",
               "pbrSpecular.a", "pbrSpecular.b", "materialSmoothness"):
     if token not in terrain_fragment:
         errors.append(f"Terrain PBR specular/emissive decode is missing component: {token}")
-for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, 0.0, 1.0)"):
+for token in ("flat in int vMaterialId", "emissionStrength", "materialAO", "materialSurfaceData", "outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData)"):
     if token not in terrain_fragment:
         errors.append(f"Terrain G-buffer is missing emissive material output: {token}")
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
@@ -364,7 +364,7 @@ if "signText ? 0.0 : 0.5 + 0.5 * materialSmoothness" not in sources.get("gbuffer
     errors.append("Block-entity validity/smoothness alpha must keep sign text invalid and normal geometry at 0.5")
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
-    if "materialReflectance = labF0Code / 255.0;" not in source:
+    if "materialReflectance = labF0Code / 255.0;" not in source or "materialReflectance = 0.04;" not in source:
         errors.append(f"{name} must decode LabPBR dielectric F0 linearly as code/255")
 for name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_block.vsh", "gbuffers_water.vsh"):
     vertex_source = sources.get(name, "")
@@ -406,11 +406,29 @@ if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, mater
     errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")
 
 
+for token in ("#define MATERIAL_AO_STRENGTH 100", "#define MATERIAL_SSS_STRENGTH 100",
+              "float materialAO = clamp(emissionData.b, 0.0, 1.0)",
+              "mix(1.0, materialAO, MATERIAL_AO_STRENGTH * 0.01)",
+              "float materialSurfaceCode = floor(emissionData.a * 255.0 + 0.5)",
+              "materialSSS = clamp((materialSurfaceCode - 65.0) / 190.0, 0.0, 1.0)",
+              "mix(shadow, vec3(1.0), sssStrength * 0.65)"):
+    if token not in sources.get("deferred.fsh", ""):
+        errors.append(f"Deferred material AO/SSS path is missing: {token}")
+for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    if "outEmissionData = vec4(pbrEmission, materialReflectance, materialAO, materialSurfaceData)" not in source and name == "gbuffers_entities.fsh":
+        errors.append("Entity G-buffer must pack emission, reflectance, material AO and SSS data")
+    if "outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData)" not in source and name == "gbuffers_block.fsh":
+        errors.append("Block-entity G-buffer must pack emission, reflectance, material AO and SSS data")
+for name in ("gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
+    if "outEmissionData = vec4(emissionStrength / 5.0, defaultReflectance, 1.0, 0.0)" not in sources.get(name, ""):
+        errors.append(f"{name} must initialize neutral PBR reflectance/AO/SSS channels")
+
 opaque_particles = sources.get("gbuffers_particles.fsh", "")
 for token in ("PARTICLE_MATERIAL_FEATURES", "float(textureSize(gtexture, 0).x) < 1100.0",
               "emissionStrength = clamp(particle.r * 8.0, 1.6, 5.0)",
               "emissionStrength = 2.0", "suppressLightmap",
-              "outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0)"):
+              "outEmissionData = vec4(emissionStrength / 5.0, defaultReflectance, 1.0, 0.0)"):
     if token not in opaque_particles:
         errors.append(f"Opaque particle emissive path is missing component: {token}")
 
@@ -688,7 +706,7 @@ for token in ("gbufferModelViewInverse", "vPlayerPosition", "vPlayerNormal"):
 textured_lit = sources.get("gbuffers_textured_lit.fsh", "")
 for token in ("/* RENDERTARGETS: 0,1,2,3 */", "texture(gtexture", "texture(lightmap",
               "alphaTestRef", "outLightmapData", "outEncodedNormal",
-              "outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0)"):
+              "outEmissionData = vec4(emissionStrength / 5.0, defaultReflectance, 1.0, 0.0)"):
     if token not in textured_lit:
         errors.append(f"Iris lit-texture fallback is missing G-buffer component: {token}")
 for name in ("gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh", "gbuffers_textured_lit.fsh"):
