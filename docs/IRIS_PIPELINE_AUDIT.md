@@ -235,3 +235,22 @@ Iris' fog guide explicitly converts fog and sampled colors to linear space befor
 
 ## Emissive-eye fog correction — 2026-11-23
 The dedicated `gbuffers_spidereyes` path now also applies Iris fog using view-space distance and the documented fog uniforms. It still clears deferred-validity alpha so eye pixels remain emissive, but distant eyes now fade consistently with the rest of the scene.
+
+## Full Iris gbuffers fallback inventory — 2026-11-23
+The validator now inventories the documented Iris fallback chain for the remaining special geometry programs, not just the three translucent programs. Current dedicated Serene implementations include terrain, entities, hand, water, weather, hand-water, opaque/translucent particles and spider eyes. The remaining fallbacks being tracked are:
+
+| Iris program | Geometry | Iris fallback | Serene status |
+|---|---|---|---|
+| `gbuffers_block` | Block entities/sign text | `gbuffers_terrain` | Fallback; terrain path currently covers it |
+| `gbuffers_damagedblock` | Block-breaking overlay | `gbuffers_terrain` | Fallback; overlay-specific validation pending |
+| `gbuffers_beaconbeam` | Beacon beam | `gbuffers_textured` | Fallback; beam compositing pending |
+| `gbuffers_armor_glint` | Enchantment glint | `gbuffers_textured` | Fallback; preserve glint against deferred lighting |
+| `gbuffers_clouds` | Vanilla clouds | `gbuffers_textured` | Fallback; cloud/fog integration pending |
+| `gbuffers_skybasic` | Sky color/horizon/stars/void | `gbuffers_basic` | Fallback; custom sky pending |
+| `gbuffers_skytextured` | Sun/moon textures | `gbuffers_textured` | Fallback; celestial disc handling pending |
+| `gbuffers_lightning` | Lightning/dragon death beams | `gbuffers_entities` | Fallback; special depth/color handling pending |
+| `gbuffers_line` | Block outline/fishing line | `gbuffers_basic` | Fallback; outline preservation pending |
+| `gbuffers_textured_lit` | Most lit particles | `gbuffers_textured` | Fallback used by some non-dedicated geometry |
+| `gbuffers_textured` | World border/unlit particles | `gbuffers_basic` | Fallback chain |
+
+`gbuffers_entities_translucent` and `gbuffers_block_translucent` remain conditional on `separateEntityDraws=true`; that option stays disabled due Iris' current warning. This inventory is driven by the official Iris fallback table and the validator now reports missing dedicated vertex/fragment pairs with their immediate fallback.
