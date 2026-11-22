@@ -357,3 +357,7 @@ The current Iris ordering reference documents `separateEntityDraws=true` but als
 
 ## Animated water normal path — 2026-11-23
 The water fragment stage now derives a three-band analytic wave normal from absolute player/world XZ coordinates. Iris documents `cameraPosition`, `frameTimeCounter`, and `gbufferModelView`; the code uses the first two to keep the pattern world-anchored and the third to transform the perturbed player-space normal into view space for Fresnel/refraction/SSR. The direct-light and shadow calculations retain the player-space normal. Wave strength and speed are shader options. Speed is an integer cycle count per 3600-second Iris timer interval so the phases remain continuous when `frameTimeCounter` wraps. This is a low-bandwidth approximation, not a claim of parity with Unbound's texture-driven normal map/parallax method.
+
+
+## Water colour and noise sampler audit — 2026-11-23
+The water fragment stage now samples Iris' documented read-only `noisetex` sampler once per water fragment for subtle colour variation. The sampler is only read; no custom image or texture binding is assumed. The base tint is restricted to the classified water material and preserves the incoming alpha. Its world-space UVs use `cameraPosition + vPlayerPosition`; temporal drift is periodic using the integer-cycle `frameTimeCounter` phase already used by the wave system, avoiding a discontinuity at the timer wrap. The two colour controls are exposed as shader options. The exact noise appearance and cost still require in-game calibration on Intel HD 5500.
