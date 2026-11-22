@@ -434,6 +434,11 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
     if "outLightmapData = vec4(vanillaLight, skyLight);" not in sources.get(name, ""):
         errors.append(f"{name} must write vanilla lightmap RGB and sky-light factor to colortex1")
 
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    if source.find("float skyLight =") < 0 or source.find("outLightmapData = vec4(vanillaLight, skyLight)") < source.find("float skyLight ="):
+        errors.append(f"{name} must initialize skyLight before writing the vanilla lightmap G-buffer")
+
 for name in ("gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
     if "outEmissionData = vec4(emissionStrength / 5.0, defaultReflectance, 1.0, 0.0)" not in sources.get(name, ""):
         errors.append(f"{name} must initialize neutral PBR reflectance/AO/SSS channels")
