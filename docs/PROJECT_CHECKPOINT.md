@@ -333,7 +333,7 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Current coverage is the translucent particle program; opaque particle material emission and additional modded-particle types remain to audit.
 
 ## Emissive G-buffer checkpoint — 2026-11-23
-- The initial emissive attachment was wired as RGBA8, then reduced to R8; the later PBR material milestone superseded R8 with RG8 to store both emission and reflectance.
+- The initial emissive attachment was wired as RGBA8, then reduced to R8; the later PBR material milestone superseded R8 with RGBA8 to store emission, reflectance, AO and LabPBR surface data.
 - Extended terrain/entities/opaque-particle G-buffers to `RENDERTARGETS: 0,1,2,3`.
 - Added Iris `mc_Entity` (`in vec2`, valid in `gbuffers_terrain.vsh`) and stable `block.properties` IDs for emissive blocks.
 - Terrain writes emission RGB plus normalized strength; entities and opaque particles explicitly write zero until their material classification is implemented.
@@ -349,13 +349,13 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Runtime validation remains pending for signs, portal animation, block-entity rendering and block-breaking overlays.
 
 ## Low-end bandwidth optimization — emissive attachment
-- Initially changed colortex3 from default RGBA8 to `R8`; the current PBR implementation uses Iris-supported `RG8`.
+- Initially changed colortex3 from default RGBA8 to `R8`; the current PBR implementation uses Iris-supported `RGBA8` for emission, reflectance, AO and SSS/porosity data.
 - Terrain and block-entity G-buffers write emission strength into red only; deferred reuses scene albedo as emission tint.
 - This reduces the emissive attachment from 4 bytes/pixel to 1 byte/pixel (75% less storage/bandwidth) with under 0.005 quantization error for current emission strengths.
 - `flip.deferred.colortex3=false` and disabled blending on all emissive G-buffer writers remain required.
 
 ## Iris buffer-format directive correction — 2026-11-23
-- Current Iris documentation defines attachment formats through GLSL directives such as `const int colortex2Format = RGBA16F;` and `const int colortex3Format = RG8;`, placed in block comments in a shader source file.
+- Current Iris documentation defines attachment formats through GLSL directives such as `const int colortex2Format = RGBA16F;` and `const int colortex3Format = RGBA8;`, placed in block comments in a shader source file.
 - Removed invalid `format.colortex2=...`, `format.colortex3=...` and `colortex3Format=...` key/value entries from `shaders.properties`.
 - Added the documented format declarations to `deferred.fsh`; validator now checks the source directives and rejects the invalid properties syntax.
 - Corrected the opaque-particle atlas-size validator to match the actual explicit float conversion around `textureSize`.
