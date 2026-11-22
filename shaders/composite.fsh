@@ -20,7 +20,7 @@ in vec2 vTexCoord;
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
 
-#define PBR_REFLECTION_STRENGTH 70 // [0 25 50 75 100 125 150] Opaque material reflection strength
+#define PBR_REFLECTION_STRENGTH 75 // [0 25 50 75 100 125 150] Opaque material reflection strength
 #define PBR_REFLECTION_QUALITY 4 // [0 4 6 8] Opaque screen-space reflection steps
 
 #if PBR_REFLECTION_QUALITY > 0
