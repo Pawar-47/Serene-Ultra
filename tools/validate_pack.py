@@ -49,6 +49,10 @@ for path in SHADERS.rglob("*"):
         errors.append(f"{path.relative_to(ROOT)}: expected an explicit GLSL 330 version")
     if source.count("{") != source.count("}"):
         errors.append(f"{path.relative_to(ROOT)}: unbalanced brace count")
+    uniform_names = re.findall(r"^\\s*uniform\\s+\\w+\\s+(\\w+)\\s*;", source, re.MULTILINE)
+    duplicate_uniforms = sorted({name for name in uniform_names if uniform_names.count(name) > 1})
+    if duplicate_uniforms:
+        errors.append(f"{path.relative_to(ROOT)}: duplicate uniform declarations: {', '.join(duplicate_uniforms)}")
 
 # Iris does not permit gbuffers programs to sample colortex0-3. They may
 # write those attachments, but sampling them from geometry passes is invalid.
