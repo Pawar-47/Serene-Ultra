@@ -150,3 +150,9 @@ Reference refinement: retained `alphaTest.gbuffers_water=GREATER 0.0001` (matchi
 - Weather: reference-style rain/snow texture classification and alpha multipliers; adjustable `WEATHER_TEX_OPACITY`; Iris `alphaTestRef`; powdered-snow camera suppression; optional wind motion using Iris `rainStrength` and `eyeBrightnessSmooth`.
 - Vanilla clouds: dedicated forward pass preserves vanilla texture/vertex lighting, applies Iris fog, hides clouds underwater/in fluids, and clears the deferred normal-validity mask.
 - Custom cloud layers, volumetric clouds, cloud shadows and cloud reflections remain pending.
+
+## Textured and sky program coverage — 2026-11-23
+- `gbuffers_textured`: dedicated unlit texture fallback with Iris alpha test/fog and deferred-normal bypass; game blend state is preserved.
+- `gbuffers_skytextured`: uses Iris render-stage macros to distinguish sun/moon textures and applies rain/underwater dimming.
+- `gbuffers_skybasic`: uses `skyColor`/`fogColor` and Iris render stages for sky gradient, sunset band, stars and void; direction reconstruction is skipped for stars/void.
+- All three clear colortex2 validity for overlays. Full atmospheric scattering, custom stars/clouds and lit textured-particle parity remain pending.
