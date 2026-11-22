@@ -46,30 +46,27 @@ jobs:
 
           {
             head -n 1 shaders/gbuffers_skybasic.fsh
-            cat <<'SKY_DEFINES'
-#define MC_RENDER_STAGE_SKY 1
-#define MC_RENDER_STAGE_SUNSET 2
-#define MC_RENDER_STAGE_STARS 3
-#define MC_RENDER_STAGE_VOID 4
-SKY_DEFINES
+            printf '%s\n' \
+              '#define MC_RENDER_STAGE_SKY 1' \
+              '#define MC_RENDER_STAGE_SUNSET 2' \
+              '#define MC_RENDER_STAGE_STARS 3' \
+              '#define MC_RENDER_STAGE_VOID 4'
             tail -n +2 shaders/gbuffers_skybasic.fsh
           } > "$tmpdir/skybasic.frag"
 
           {
             head -n 1 shaders/gbuffers_skytextured.fsh
-            cat <<'SUN_DEFINES'
-#define MC_RENDER_STAGE_SUN 5
-#define MC_RENDER_STAGE_MOON 6
-SUN_DEFINES
+            printf '%s\n' \
+              '#define MC_RENDER_STAGE_SUN 5' \
+              '#define MC_RENDER_STAGE_MOON 6'
             tail -n +2 shaders/gbuffers_skytextured.fsh
           } > "$tmpdir/skytextured.frag"
 
           {
             head -n 1 shaders/gbuffers_line.fsh
-            cat <<'LINE_DEFINES'
-#define MC_RENDER_STAGE_OUTLINE 7
-#define MC_RENDER_STAGE_DEBUG 8
-LINE_DEFINES
+            printf '%s\n' \
+              '#define MC_RENDER_STAGE_OUTLINE 7' \
+              '#define MC_RENDER_STAGE_DEBUG 8'
             tail -n +2 shaders/gbuffers_line.fsh
           } > "$tmpdir/line.frag"
 
