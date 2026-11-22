@@ -90,3 +90,6 @@ option.WATER_CAUSTICS_STRENGTH = Water Caustics Strength
 option.WATER_CAUSTICS_STRENGTH.comment = Controls the contrast of projected water caustics on terrain receiving sunlight.
 option.WATER_CAUSTICS_SCALE = Water Caustics Scale
 option.WATER_CAUSTICS_SCALE.comment = Controls the spatial frequency of the projected water-light pattern.
+
+option.WATER_NORMAL_MAP_STRENGTH = Water Normal Map Strength
+option.WATER_NORMAL_MAP_STRENGTH.comment = Blends resource-pack PBR water normals into the animated surface normal. Neutral when no water normal map is supplied.
