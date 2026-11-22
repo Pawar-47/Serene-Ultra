@@ -596,3 +596,8 @@ A source comparison with the pinned Unbound water path showed that `WATER_FOG_MU
 ## Glass and ice PBR normal-map support — 2026-11-23
 
 The shared Iris tangent-space normal-map decoder now also applies to clear glass, stained glass, tinted glass and ice. A separate `GLASS_NORMAL_MAP_STRENGTH` slider controls these materials independently from water. LabPBR flips the DirectX Y- channel while oldPBR retains its legacy Y+ convention; tangent handedness follows Iris' documented `cross(tangent, normal)` basis. The original geometric normal remains in use for shadow bias. Neutral Iris fallback normals leave materials unchanged when no resource-pack normal map is present.
+
+
+## LabPBR normal-map channel correction — 2026-11-23
+
+A deeper check against the shaderLABS LabPBR 1.3 specification found that the blue channel of a LabPBR normal map stores ambient occlusion, not the normal's Z component. The shared translucent normal decoder now reconstructs Z as `sqrt(max(1 - dot(xy, xy), 0))` from the red/green XY channels, flips Y for LabPBR's DirectX convention, and keeps RGB decoding for oldPBR. This prevents AO data from corrupting the normal direction on modern PBR resource packs.
