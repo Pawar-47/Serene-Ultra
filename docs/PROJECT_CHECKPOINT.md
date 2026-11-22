@@ -258,3 +258,11 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Removed the `alphaTest.gbuffers_water=GREATER 0.0001` override; the shader now uses Iris-provided `alphaTestRef` directly.
 - Matched the reference shader's depth-difference exponential water opacity formula and retained a `WATER_FOG_MULT` control.
 - Still pending: reference-guided water Fresnel/reflections/refraction/waves/normals/foam/absorption and in-game validation.
+
+## Special geometry update — 2026-11-23
+- Added `gbuffers_armor_glint.vsh/.fsh`; preserves the Complementary glint-strength RGB multiplier and clears colortex2 validity only for nontransparent glint fragments. Color blend state is intentionally not overridden.
+- Added `gbuffers_lightning.vsh/.fsh`; preserves entityColor tint, applies Iris fog and clears the deferred normal mask. Iris docs note dragon-death beam depth is supplied by `gbuffers_basic`.
+- Added `gbuffers_beaconbeam.vsh/.fsh`; applies emissive response and Iris fog, uses alphaTestRef, and clears the deferred normal mask.
+- Added per-program `colortex2=off` mask blending and structural checks.
+- CI run 45066097345 passed GLSL compilation, vertex/fragment linking and structural validation.
+- Runtime blend/depth behavior is not yet verified in Minecraft 26.3 + Iris.
