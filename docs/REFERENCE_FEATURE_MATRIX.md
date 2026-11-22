@@ -253,3 +253,7 @@ Iris IDs now classify slime and honey blocks in the terrain G-buffer. Smoothness
 
 ## Depth-dependent water absorption — 2026-11-23
 Water refraction now receives linear-space Beer-Lambert attenuation based on reconstructed opaque-scene thickness. Red/green/blue transmission coefficients create depth-dependent blue tint; the water's own base tint is the absorption colour. A strength slider is available. Coefficient tuning and in-game visual parity remain pending.
+
+
+## Nether portal distortion update — 2026-11-23
+Nether portals now receive a four-tap animated UV distortion, with each sample clamped to the current quad's texture region using Iris `mc_midTexCoord`. The pre-tint portal signal drives self-emission, followed by a warm nonlinear tint. The full Unbound raymarch/edge treatment is not yet implemented.
