@@ -31,14 +31,13 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 
 ## Validation status
 - Shader, menu, validator and documentation changes are committed to main.
-- GitHub Actions structural validation passed on checkpoint commit a220febfa5af86a5d855fabe7111d31cd24cae07 (run 45059880225, job validate).
+- GitHub Actions structural validation passed on the latest checkpoint commit 8db1632740078a8fedf896dfec31ef40abb78987 (run 45059986709, job validate).
 - No GLSL compiler or Minecraft/Iris runtime test has confirmed these passes.
 - No visual parity comparison or target-machine performance measurement has been performed.
 - The AO implementation is an initial screen-space approximation; depth bias, view-space reconstruction, camera stability, edge artifacts and GPU cost need calibration.
 - The current stock shader archive has not yet been inspected file-by-file in this session, so do not treat vanilla interface cross-check as complete.
 
 ## Next actions
-1. Add localized AO labels/tooltips and make CI enforce them.
-2. Inspect the actual Minecraft 26.3 Vanilla-stock files for terrain, entities, hand, shadow, deferred/composite and final/post passes; document exact paths and reconcile interfaces.
-3. Continue material classification, advanced colored light, AO refinement, translucency, water/reflections, atmosphere and the remaining Ultra features.
-4. Obtain GLSL/Iris runtime validation and target-machine comparisons; do not publish an unverified release.
+1. Inspect the actual Minecraft 26.3 Vanilla-stock files for terrain, entities, hand, shadow, deferred/composite and final/post passes; document exact paths and reconcile interfaces.
+2. Continue material classification, advanced colored light, AO refinement, translucency, water/reflections, atmosphere and the remaining Ultra features.
+3. Obtain GLSL/Iris runtime validation and target-machine comparisons; do not publish an unverified release.
