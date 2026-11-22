@@ -142,11 +142,6 @@ void main() {
     vec3 worldLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
     float nDotL = max(dot(normal, worldLightDirection), 0.0);
     float skyLight = clamp(lightData.a, 0.0, 1.0);
-    float celestialGate = hasSkylight ? skyLight : clamp(endFlashIntensity, 0.0, 1.0);
-    float shadow = 1.0;
-    if (nDotL > 0.001 && celestialGate > 0.001) {
-        shadow = sampleShadow(playerPosition, normal, worldLightDirection);
-    }
     // Iris sunAngle: 0=dawn, 0.25=noon, 0.5=sunset, 0.75=midnight.
     // Celestial lighting is only used in dimensions with skylight.
     float solarElevation = sin(sunAngle * 6.28318530718);
@@ -154,6 +149,10 @@ void main() {
     // Iris can redirect shadowLightPosition to the End flash when enabled.
     // Nether has neither skylight nor an End flash, so its direct term is zero.
     float celestialGate = hasSkylight ? skyLight : clamp(endFlashIntensity, 0.0, 1.0);
+    float shadow = 1.0;
+    if (nDotL > 0.001 && celestialGate > 0.001) {
+        shadow = sampleShadow(playerPosition, normal, worldLightDirection);
+    }
 
     // Use Minecraft's own sampled lightmap RGB as the ambient/block-light
     // foundation so its existing colored light response is retained.
