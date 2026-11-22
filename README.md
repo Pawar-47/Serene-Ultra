@@ -39,3 +39,5 @@ The `gbuffers_water` program handles all translucent terrain (including water an
 Water material handling now distinguishes water/water-cauldron from other translucent terrain using Iris `mc_Entity` and `block.properties`, and applies depth-dependent opacity from `depthtex1`. Advanced water effects and runtime validation remain pending.
 
 Water handling now uses Iris' documented `mc_Entity` ID/fluid fields, opaque-only `depthtex1` and inverse-projection reconstruction for thickness. The water alpha threshold follows Iris `alphaTestRef`; depth opacity follows the Complementary reference's exponential thickness model. Advanced water effects and in-game verification remain outstanding.
+
+Special geometry now includes dedicated armor-glint, beacon-beam and lightning overlay programs with deferred-normal bypass masks. Their blend/depth behavior still requires in-game validation.
