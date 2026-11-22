@@ -428,3 +428,11 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Added `WATER_WAVE_STRENGTH` and `WATER_WAVE_SPEED` to the Quality menu and slider list. Speed is an integer complete-cycle count per 3600-second Iris timer interval, preventing phase discontinuity at `frameTimeCounter` wrap.
 - This is an original, low-bandwidth approximation of Unbound's texture-driven multi-scale normal map. Texture-based normals/parallax refinement, water noise colour, foam, absorption tint, full underwater response and reflection fallback remain outstanding.
 - Structural validation now requires the Iris uniforms, all three wave bands, and both menu/slider entries. Wait for the new CI run before reporting the change as validated.
+
+
+## Unbound-style water colour checkpoint — 2026-11-23
+- Implemented a water-ID-only Unbound-inspired base tint using a stable blue base and restrained biome vertex-colour contribution. Incoming water alpha is preserved.
+- Added one read-only Iris `noisetex` sample for subtle animated water colour variation. No custom texture binding is assumed.
+- Noise UVs are anchored to absolute world XZ and drift with a periodic integer-cycle phase derived from `frameTimeCounter`, avoiding a jump at Iris' 3600-second timer wrap.
+- Added `WATER_COLOR_STRENGTH` and `WATER_NOISE_COLOR_STRENGTH` controls to the Quality menu and sliders. Structural validation requires both controls and the documented sampler path.
+- Remaining water work includes foam, absorption/depth tint calibration, underwater-specific colour/lighting, caustics, sky/environment reflection fallback and stronger SSR refinement. No runtime or visual parity claim is made.
