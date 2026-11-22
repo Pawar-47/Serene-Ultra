@@ -196,3 +196,6 @@ Iris `particles.ordering=mixed` places opaque particles before deferred and tran
 - `gbuffers_particles_translucent.vsh/.fsh`: writes color only, uses the vanilla colored lightmap, and is blended after deferred without sampling colortex0–3.
 - Explicit per-program blend directives for translucent particles and disabled blending on opaque particle data attachments.
 The validator now requires both pairs and their output contracts. This is Iris-program coverage and a basic rendering path, not yet reference Ultra particle parity or runtime-verified behavior.
+
+## First-person hand lighting correction — 2026-11-23
+Iris routes `gbuffers_hand` to a textured-lit fallback when no custom shader exists. The custom Serene hand shader previously sampled only albedo, so replacing that fallback removed the vanilla lightmap response. Added transformed `gl_MultiTexCoord1` coordinates in `gbuffers_hand.vsh` and a `lightmap` sample in `gbuffers_hand.fsh`, multiplying the hand albedo by the sampled lightmap RGB. This restores the documented lightmap component of the fallback behavior. `heldBlockLightValue` / `heldBlockLightValue2` dynamic held-item illumination remains a separate item-light implementation task; do not claim it is complete.
