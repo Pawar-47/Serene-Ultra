@@ -53,6 +53,8 @@ flat in float vFluidRenderType;
 #define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
 #define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
 #define WATER_UNDERWATER_STRENGTH 100 // [0 25 50 75 100 125 150] Underwater tint and surface response
+#define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Glass and stained-glass screen-space reflection
+#define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
 layout(location = 0) out vec4 outColor;
 
 // Reconstruct a stable, periodic world position from Iris' unshifted integer
@@ -253,6 +255,11 @@ void main() {
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
     bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
+    bool isClearGlass = (vMaterialId == 32008 || vMaterialId == 32012);
+    bool isStainedGlass = (vMaterialId >= 31000 && vMaterialId <= 31031);
+    bool isTintedGlass = (vMaterialId == 30008);
+    bool isGlass = isClearGlass || isStainedGlass || isTintedGlass;
+    bool isPortal = (vMaterialId == 30020);
     vec3 normal = normalize(vPlayerNormal);
     vec3 viewNormal = normalize(vViewNormal);
     if (!gl_FrontFacing) {
@@ -290,7 +297,7 @@ void main() {
 
     bool cameraUnderwater = (isEyeInWater == 1);
     float shadow = 1.0;
-    if (nDotL > 0.001 && celestialGate > 0.001 && !(isWater && cameraUnderwater)) {
+    if (nDotL > 0.001 && celestialGate > 0.001 && !(isWater && cameraUnderwater) && !isPortal) {
         shadow = sampleTranslucentShadow(vPlayerPosition, shadowNormal, worldLightDirection);
     }
 
@@ -304,7 +311,7 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
-    if (isWater && cameraUnderwater) direct = vec3(0.0);
+    if ((isWater && cameraUnderwater) || isPortal) direct = vec3(0.0);
 
     float waterThickness = 0.0;
     float waterFog = 0.0;
@@ -388,6 +395,14 @@ void main() {
         }
     }
 
+    if (isPortal) {
+        // The animated vanilla portal texture supplies the pattern. This
+        // Unbound-inspired colour/emission treatment avoids atlas-crossing
+        // ray samples while keeping the effect independent of deferred data.
+        translucentAlbedo.rgb *= translucentAlbedo.rgb * vec3(1.25, 1.0, 0.65);
+        translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0)) * 0.8;
+    }
+
     if (isWater) {
         vec3 unboundWaterColor = calculateWaterBaseColor(vVertexColor.rgb, stableWaterWorldPosition);
         translucentAlbedo.rgb = mix(
@@ -416,12 +431,40 @@ void main() {
     vec3 litLinear = albedoLinear * (ambient + direct);
     // Lava shares the post-deferred fluid pass but retains its self-emission.
     float lavaEmission = (vMaterialId == 32118) ? 0.9 : 0.0;
-    litLinear += albedoLinear * lavaEmission;
+    float portalSignal = max(translucentAlbedo.r, 0.0);
+    float portalEmission = isPortal
+        ? clamp(pow(portalSignal, 8.0) * 120.0, 0.03, 1.2) * 8.0
+          * (PORTAL_EMISSION_STRENGTH * 0.01)
+        : 0.0;
+    litLinear += albedoLinear * (lavaEmission + portalEmission);
 
     float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
     float fogFactor = calculateTranslucentFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     litLinear = mix(litLinear, fogColorLinear, fogFactor);
+
+    if (isGlass && GLASS_REFLECTION_STRENGTH > 0.001) {
+        #if WATER_REFLECTION_QUALITY > 0
+        vec3 glassViewNormal = normalize(viewNormal);
+        if (dot(normalize(vViewPosition), glassViewNormal) > 0.0) {
+            glassViewNormal = -glassViewNormal;
+        }
+        float glassNdotV = clamp(dot(glassViewNormal, normalize(-vViewPosition)), 0.0, 1.0);
+        float glassFresnel = 0.02 + 0.98 * pow(1.0 - glassNdotV, 5.0);
+        float glassReflectionConfidence = 0.0;
+        vec3 glassReflectionColor = sampleWaterScreenReflection(
+            vViewPosition, glassViewNormal, glassReflectionConfidence
+        );
+        vec3 glassReflectionLinear = pow(max(glassReflectionColor, vec3(0.0)), vec3(2.2));
+        float materialReflectionScale = isTintedGlass ? 0.65 : (isClearGlass ? 0.50 : 0.32);
+        float glassReflectionWeight = clamp(
+            glassFresnel * materialReflectionScale * glassReflectionConfidence
+            * (GLASS_REFLECTION_STRENGTH * 0.01),
+            0.0, 0.85
+        );
+        litLinear = mix(litLinear, glassReflectionLinear, glassReflectionWeight);
+        #endif
+    }
 
     if (isWater) {
         float offsetStrength = clamp(length(waterRefractionOffset) * 25.0, 0.0, 1.0);
