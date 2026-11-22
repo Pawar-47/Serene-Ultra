@@ -251,8 +251,10 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
         errors.append(f"{name} must use Iris alphaTestRef instead of a hardcoded alpha cutoff")
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
-    if name != "gbuffers_terrain.fsh" and "outEmissionData = vec4(0.0)" not in source:
+    if name not in ("gbuffers_terrain.fsh", "gbuffers_block.fsh") and "outEmissionData = vec4(0.0)" not in source:
         errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
+if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
+    errors.append("Block-entity emission must default to zero unless an emissive blockEntityId is detected")
 
 entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
 block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
