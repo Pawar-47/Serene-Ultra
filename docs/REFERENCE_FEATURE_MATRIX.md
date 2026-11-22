@@ -166,3 +166,6 @@ Reference refinement: retained `alphaTest.gbuffers_water=GREATER 0.0001` (matchi
 | `gbuffers_clouds` | Vanilla clouds | Preserves atlas RGB and vertex alpha; hides clouds underwater; deferred validity mask cleared |
 
 Render-stage macro names and celestial uniforms were checked against current Iris documentation. These are baseline implementations, not yet visual parity with Complementary Ultra.
+
+## Line overlays — 2026-11-23
+Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` macros to skip fog on selection outlines/debug lines while fogging ordinary lines. It clears deferred-normal validity and leaves color blending to the game.
