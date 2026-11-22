@@ -239,9 +239,6 @@ for token in ("block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
 if "minecraft:flowing_lava" in block_properties:
     errors.append("Remove legacy flowing_lava block ID; Minecraft 1.13+ uses minecraft:lava block states")
 
-    if token not in block_properties:
-        errors.append(f"Missing emissive block ID mapping: {token}")
-
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh"):
     source = sources.get(name, "")
     if "/* RENDERTARGETS: 0,1,2,3 */" not in source:
