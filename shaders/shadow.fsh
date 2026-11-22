@@ -1,6 +1,7 @@
 #version 330 compatibility
 
 uniform sampler2D gtexture;
+uniform float alphaTestRef;
 
 in vec2 vShadowTexCoord;
 in vec4 vShadowVertexColor;
