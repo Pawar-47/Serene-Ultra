@@ -2,6 +2,7 @@
 
 uniform sampler2D texture;
 uniform sampler2D lightmap;
+uniform float alphaTestRef;
 
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
@@ -16,7 +17,7 @@ layout(location = 2) out vec4 outEncodedNormal;
 
 void main() {
     vec4 albedo = texture2D(texture, vTexCoord) * vVertexColor;
-    if (albedo.a < 0.1) discard;
+    if (albedo.a < alphaTestRef) discard;
 
     // Preserve the vanilla lightmap's RGB tint (including warm block light
     // and skylight color) plus a separate sky-light factor for direct sun.
