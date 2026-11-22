@@ -147,7 +147,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2",
-              "sampler2D depthtex2", "sampler2DShadow shadowtex0",
+              "sampler2D depthtex0", "sampler2D depthtex2", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
               "sampleContactAO", "AO_STRENGTH", "AO_RADIUS",
@@ -155,8 +155,11 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "smoothstep(0.0, 0.30, solarElevation)"):
     if token not in deferred:
         errors.append(f"Deferred lighting is missing required component: {token}")
-if "depthtex0" in deferred:
-    errors.append("Deferred world reconstruction must use depthtex2 to exclude transparent and hand geometry")
+if "abs(sceneDepth - opaqueWorldDepth) > 0.000001" not in deferred:
+    errors.append("Deferred must mask hand/translucent pixels by comparing depthtex0 with depthtex2")
+if "vec3(vTexCoord, opaqueWorldDepth)" not in deferred:
+    errors.append("Deferred must reconstruct world position from depthtex2")
+
 if "1.0 - smoothstep(0.45, 0.55, sunAngle)" in deferred:
     errors.append("Deferred day/night curve incorrectly treats Iris sunrise as full daylight")
 # Numerically guard the documented Iris sunAngle cycle: dawn=0, noon=0.25,
