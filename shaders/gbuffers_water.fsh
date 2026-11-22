@@ -330,11 +330,6 @@ void main() {
         // water opacity, cool the surface tint and suppress directional light.
         if (cameraUnderwater) {
             waterAlpha *= mix(1.0, 0.75, clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.5));
-            translucentAlbedo.rgb *= mix(
-                vec3(1.0),
-                vec3(0.78, 0.90, 1.05),
-                clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.0)
-            );
         }
         translucentAlbedo.a = clamp(waterAlpha, 0.0, 1.0);
 
@@ -387,6 +382,13 @@ void main() {
             unboundWaterColor,
             clamp(WATER_COLOR_STRENGTH * 0.01, 0.0, 1.0)
         );
+        if (cameraUnderwater) {
+            translucentAlbedo.rgb *= mix(
+                vec3(1.0),
+                vec3(0.78, 0.90, 1.05),
+                clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.0)
+            );
+        }
     }
 
     if (isWater && waterFoam > 0.0) {
