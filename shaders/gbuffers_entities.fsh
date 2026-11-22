@@ -97,5 +97,5 @@ void main() {
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5 + 0.5 * materialSmoothness);
-    outEmissionData = vec4(pbrEmission, materialReflectance, materialAO, materialSurfaceData);
+    outEmissionData = vec4(pbrEmission, materialReflectance, materialSurfaceData, 1.0);
 }
