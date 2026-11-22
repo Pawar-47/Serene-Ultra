@@ -160,3 +160,5 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added `gbuffers_spidereyes.vsh/.fsh` using Iris `gtexture` and `alphaTestRef`.
 - The pass writes color to colortex0 and a zero deferred-validity mask to colortex2, preventing opaque entity normals behind spider/enderman/dragon eyes from darkening the emissive overlay.
 - Added `blend.gbuffers_spidereyes.colortex2=off` and structural validation for the mask.
+
+- Refined validator reporting so `gbuffers_entities_translucent` and `gbuffers_block_translucent` are only reported as missing when `separateEntityDraws=true`; that Iris option remains intentionally disabled due the current docs warning. Translucent entity compatibility remains a runtime test item.
