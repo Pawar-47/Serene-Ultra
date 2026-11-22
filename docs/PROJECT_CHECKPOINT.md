@@ -586,3 +586,8 @@ Mapped `minecraft:water_cauldron` to a dedicated water material ID in `block.pro
 - Corrected the post-deferred `gbuffers_water` forward-lighting path to use Iris `shadowtex0`, opaque-only `shadowtex1` and `shadowcolor0` transmission, matching the deferred shadow path.
 - The forward pass retains four-tap PCF, performs a center translucent-blocker comparison and conditionally reads the RGBA8 material transmission. Its direct lighting now uses RGB shadow colour rather than a scalar shadow factor.
 - This prevents water/glass surfaces from treating the same translucent blocker as opaque after deferred has already applied its colored transmission. Structural and GLSL validation pending for this latest correction.
+
+
+## Water depth/fog control separation — 2026-11-23
+
+A source comparison with the pinned Unbound water path showed that `WATER_FOG_MULT` scales the depth term used for the water opacity/fog response, not the physical distance used by every other water effect. Serene now keeps `waterThickness` as the reconstructed geometric distance and derives a separate `waterFogThickness` for `waterFog`. Beer-Lambert absorption, refraction offset and foam breakup use physical thickness; only the water opacity/fog term responds to `WATER_FOG_MULT`. This avoids a fog-menu adjustment unintentionally changing refraction, absorption and shoreline foam.
