@@ -38,13 +38,15 @@ void main() {
 
     // Weather is post-deferred. Preserve the vanilla lightmap and fog response
     // in a color-only forward pass without reading colortex0-3.
-    weatherColor.rgb *= texture(lightmap, vLightmapCoord).rgb;
+    vec3 lightmapLinear = pow(max(texture(lightmap, vLightmapCoord).rgb, vec3(0.0)), vec3(2.2));
+    vec3 weatherLinear = pow(max(weatherColor.rgb, vec3(0.0)), vec3(2.2)) * lightmapLinear;
 
     float fogDistance = (fogShape == 1)
         ? length(vViewPosition.xz)
         : length(vViewPosition);
     float fogFactor = calculateWeatherFog(fogDistance);
-    weatherColor.rgb = mix(weatherColor.rgb, fogColor, fogFactor);
+    vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
+    weatherColor.rgb = pow(max(mix(weatherLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));
 
     outColor = weatherColor;
 }
