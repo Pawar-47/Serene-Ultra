@@ -189,3 +189,10 @@ Important distinction: Iris fallback routing prevents some geometry from simply 
 
 ## Shadow-distance culling correction — 2026-11-23
 Iris documents that `shadowDistance` scales the shadow projection but does not cull geometry beyond that range by default. Added `const float shadowDistanceRenderMul = 1.0;` to `shadow.vsh`, which enables Iris' documented shadow-distance culling. This avoids submitting shadow casters outside the configured profile distance and is especially relevant to the Intel HD 5500 target. The validator now requires this constant. Confirm culling boundaries and shadow stability in Iris runtime.
+
+## Dedicated particle paths — 2026-11-23
+Iris `particles.ordering=mixed` places opaque particles before deferred and translucent particles after it. Leaving both programs on the default fallback would be incorrect for this architecture: opaque particles need to write the Serene G-buffer before deferred, while translucent particles need a color-only forward path after deferred. Added:
+- `gbuffers_particles.vsh/.fsh`: writes albedo, sampled vanilla lightmap and player-aligned normal to colortex0/1/2 for deferred lighting.
+- `gbuffers_particles_translucent.vsh/.fsh`: writes color only, uses the vanilla colored lightmap, and is blended after deferred without sampling colortex0–3.
+- Explicit per-program blend directives for translucent particles and disabled blending on opaque particle data attachments.
+The validator now requires both pairs and their output contracts. This is Iris-program coverage and a basic rendering path, not yet reference Ultra particle parity or runtime-verified behavior.
