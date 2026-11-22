@@ -155,3 +155,8 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Enabled `endFlashShadows=true` so Iris can set `shadowLightPosition` to the End flash. End direct light is gated by `endFlashIntensity`.
 - Added an early condition to avoid shadow-map sampling when `nDotL` or the active celestial gate is zero.
 - Validator now requires the Iris dimension and End-flash contracts. Runtime dimension testing remains pending.
+
+## Emissive eye overlay correction — 2026-11-23
+- Added `gbuffers_spidereyes.vsh/.fsh` using Iris `gtexture` and `alphaTestRef`.
+- The pass writes color to colortex0 and a zero deferred-validity mask to colortex2, preventing opaque entity normals behind spider/enderman/dragon eyes from darkening the emissive overlay.
+- Added `blend.gbuffers_spidereyes.colortex2=off` and structural validation for the mask.
