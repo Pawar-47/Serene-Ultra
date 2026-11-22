@@ -246,7 +246,7 @@ void main() {
 #else
     vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
 #endif
-    vec3 litLinear = albedoLinear * (ambient * materialAOFactor + direct);
+    vec3 litLinear = albedoLinear * (ambient + direct);
 
     // Low-cost GGX direct specular. The branch is skipped for non-glossy
     // surfaces and when no direct celestial light reaches the pixel.
