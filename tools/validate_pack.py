@@ -422,10 +422,11 @@ for token in ("uniform int isEyeInWater", "bool cameraUnderwater = (isEyeInWater
               "(cameraUnderwater ? 0.5 : 1.0)", "WATER_UNDERWATER_STRENGTH"):
     if token not in water:
         errors.append(f"Unbound-guided underwater water response is missing component: {token}")
-for token in ("WATER_FOAM_STRENGTH",
+for token in ("WATER_FOAM_STRENGTH", "textureLod(noisetex, foamNoiseUV, 0.0)",
               "float foamThreshold = mix(0.06, 0.42, foamNoise * foamNoise)",
               "float shallowFoam = 1.0 - smoothstep(0.035, foamThreshold, waterThickness)",
-              "waterFoamColor", "waterFoam = shallowFoam",
+              "waterFoamColor",
+              "waterFoam = shallowFoam * (hasSkylight ? (0.4 + 0.25 * skyLight) : 0.6)",
               "(1.0 - waterFoam)"):
     if token not in water:
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
@@ -465,6 +466,9 @@ for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt
               "cameraPositionFract + playerPosition", "calculateWaterWaveNormal",
               "float phaseA = worldXZ.x * frequencyA", "float phaseB = worldXZ.y * frequencyB",
               "float phaseC = dot(worldXZ, vec2(1.0, 1.0))",
+              "float waveScale = WATER_WAVE_SCALE * 0.01",
+              "frequencyA = (6.28318530718 / 64.0) * waveScale",
+              "frequencyB = (6.28318530718 / 32.0) * waveScale",
               "viewNormal = normalize(mat3(gbufferModelView) * normal)"):
     if token not in water:
         errors.append(f"Unbound-guided animated water normal path is missing component: {token}")
