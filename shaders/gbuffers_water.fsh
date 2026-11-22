@@ -80,11 +80,16 @@ vec3 getStableWaterWorldPosition(vec3 playerPosition) {
 // a full-screen texture fetch or an additional normal-map asset.
 vec3 calculateWaterNormalMap(vec3 geometricNormal) {
     vec3 tangentNormal = textureLod(normals, vTexCoord, 0.0).xyz * 2.0 - 1.0;
+    // LabPBR uses DirectX Y- normals; oldPBR retains the legacy Y+ convention.
+    #ifdef MC_TEXTURE_FORMAT_LAB_PBR
+        tangentNormal.y = -tangentNormal.y;
+    #endif
     tangentNormal.xy *= WATER_NORMAL_MAP_STRENGTH * 0.01;
     tangentNormal = normalize(tangentNormal);
 
     vec3 tangent = normalize(vPlayerTangent - geometricNormal * dot(vPlayerTangent, geometricNormal));
-    vec3 bitangent = normalize(cross(geometricNormal, tangent)) * vTangentHandedness;
+    // Iris defines handedness for bitangent = cross(tangent, normal).
+    vec3 bitangent = normalize(cross(tangent, geometricNormal)) * vTangentHandedness;
     return normalize(
         tangent * tangentNormal.x +
         bitangent * tangentNormal.y +
