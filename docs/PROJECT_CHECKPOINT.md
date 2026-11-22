@@ -47,3 +47,21 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 1. Inspect the actual Minecraft 26.3 Vanilla-stock files for terrain, entities, hand, shadow, deferred/composite and final/post passes; document exact paths and reconcile interfaces.
 2. Continue material classification, advanced colored light, AO refinement, translucency, water/reflections, atmosphere and the remaining Ultra features.
 3. Obtain GLSL/Iris runtime validation and target-machine comparisons; do not publish an unverified release.
+
+
+## Iris-specific continuation update — 2026-11-23
+- Confirmed current `main` HEAD before this audit was `826fe3ee513e5b3d35afa42473f2717864fbef9a`.
+- Verified the latest CI run for that HEAD: `45060295410`, conclusion `success` (structural validation + standalone GLSL stage compilation).
+- Corrected the validation record: this latest run is newer than the previously cited `0aa562...` checkpoint.
+- Clarified the execution boundary: Iris is the shaderpack loader/runtime contract; Vanilla-stock describes native Minecraft pipeline behavior; Complementary Reimagined is the working Iris source/visual reference.
+- Added `docs/IRIS_PIPELINE_AUDIT.md` using the published Iris program, buffer, depth and blending contracts.
+- Identified a high-priority likely overwrite hazard: `gbuffers_water`, `gbuffers_weather` and `gbuffers_hand_water` run after deferred, while the current composite copies colortex3 over colortex0. Those dedicated program files are absent, so Iris fallback behavior may route them through opaque G-buffer shaders and the later copy-back may overwrite their contribution.
+- This is a source-level risk, not a runtime-confirmed bug. Do not claim water/weather compatibility until explicit paths and in-game tests exist.
+- The exact supplied ZIP archives were not available through the current Project Files listing during this pass; no file-by-file comparison of their contents is claimed. Continue using already recorded archive inventory, and obtain the actual archive bytes through the normal attachment/project access path before making feature-specific choices that require line-level reference evidence.
+
+### Next actions (priority order)
+1. Inspect the actual Complementary water/weather/hand-water programs and their render-target/blend/order configuration, alongside the relevant Vanilla-stock source and Iris docs.
+2. Design explicit post-deferred handling for water, weather and hand-water, respecting Iris attachment flips and blending.
+3. Add Iris program coverage for block entities, particles, translucent entities and remaining required geometry using the reference inventory and Iris fallback table.
+4. Expand tests to detect missing post-deferred program coverage and invalid attachment contracts.
+5. Run Iris runtime tests in scenes containing water, rain/snow, first-person hand water, particles, entities, signs/text and all dimensions.
