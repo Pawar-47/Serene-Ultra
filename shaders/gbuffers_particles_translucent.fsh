@@ -2,7 +2,6 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
-uniform float alphaTestRef;
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -34,7 +33,7 @@ float calculateParticleFog(float distanceToCamera) {
 
 void main() {
     vec4 particle = texture(gtexture, vTexCoord) * vVertexColor;
-    if (particle.a < alphaTestRef) discard;
+    if (particle.a <= 0.001) discard;
 
     // This is a post-deferred forward path: retain Minecraft's colored
     // lightmap response without sampling forbidden colortex0-3 attachments.
