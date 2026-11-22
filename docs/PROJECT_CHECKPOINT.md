@@ -135,3 +135,10 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added Iris GLSL constant `shadowDistanceRenderMul = 1.0` to `shadow.vsh`.
 - Iris docs state that `shadowDistance` alone changes projection scale but does not cull out-of-range geometry; a positive `shadowDistanceRenderMul` enables culling.
 - Added a validator requirement for the culling constant. Runtime performance and boundary behavior remain to be measured.
+
+## Particle implementation — 2026-11-23
+- Added `gbuffers_particles.vsh/.fsh` for opaque particles before deferred. It writes albedo, vanilla lightmap RGB plus normalized sky-light mask, and player-aligned normals to colortex0/1/2.
+- Added `gbuffers_particles_translucent.vsh/.fsh` for translucent particles after deferred. It writes only colortex0, applies the vanilla lightmap, and uses explicit source-alpha blending.
+- Added explicit per-program blending configuration and expanded `tools/validate_pack.py` to require both particle program pairs and their output contracts.
+- Corrected the `AO_STRENGTH` option values to include the 0.65 profile default.
+- This closes the missing Iris particle program paths at source level; it does not establish Complementary Ultra parity or runtime validation.
