@@ -127,8 +127,16 @@ shadow_fragment = sources.get("shadow.fsh", "")
 for varying in ("vShadowTexCoord", "vShadowVertexColor"):
     if varying not in shadow_vertex or varying not in shadow_fragment:
         errors.append(f"Shadow alpha-test varying is missing or mismatched: {varying}")
-if "uniform sampler2D texture" not in shadow_fragment or "discard" not in shadow_fragment:
-    errors.append("Shadow pass must sample the material texture and discard transparent texels")
+if "uniform sampler2D gtexture" not in shadow_fragment or "texture(gtexture" not in shadow_fragment or "discard" not in shadow_fragment:
+    errors.append("Shadow pass must use Iris gtexture and discard transparent texels")
+for path in SHADERS.rglob("*.fsh"):
+    source = path.read_text(encoding="utf-8")
+    if re.search(r"\\buniform\\s+sampler\\w*\\s+texture\\b", source):
+        errors.append(f"{path.relative_to(ROOT)}: reserved texture sampler alias; use Iris gtexture or another valid sampler name")
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh"):
+    source = sources.get(name, "")
+    if "uniform sampler2D gtexture" not in source or "texture(gtexture" not in source:
+        errors.append(f"{name} must sample the Iris block/entity atlas through gtexture")
 if "#define SHADOW_ALPHA_CUTOFF " not in shadow_fragment:
     errors.append("Shadow alpha cutoff must be an active shader option")
 
