@@ -23,8 +23,8 @@ https://github.com/Pawar-47/Serene-Ultra
 All five profiles retain the planned full feature set. Lower-cost profiles currently change only shadow-map resolution and distance; further quality budgets will be connected as their rendering systems are implemented.
 
 ## Validation status
-- Prior structural CI passed on commit `5fa4a229`.
-- The current menu/profile/color changes have been committed; CI must run on the new head.
+- Structural GitHub Actions workflow passed on current implementation commit `ba85b56e`.
+- The workflow checks entrypoints, GLSL version markers, profile names, menu screens, RGB/gamma/color controls and the cumulative brief.
 - No GLSL compiler or Minecraft/Iris runtime validation has yet been performed.
 - No visual parity or FPS claim is made.
 - HDR and Ultra-HDR are tone-mapping looks for current output, not verified true HDR display output.
@@ -40,7 +40,6 @@ All five profiles retain the planned full feature set. Lower-cost profiles curre
 - Target-machine performance and runtime testing.
 
 ## Next actions
-1. Verify the latest CI run and correct any failures.
-2. Build out shadow and material pipelines while keeping the new menu options functional.
-3. Expand settings screens only alongside real implementations.
-4. Keep this checkpoint and `PROJECT_BRIEF.md` updated with every new user instruction and development milestone.
+1. Build out shadow and material pipelines while keeping the new menu options functional.
+2. Expand settings screens only alongside real implementations.
+3. Keep this checkpoint and `PROJECT_BRIEF.md` updated with every new user instruction and development milestone.
