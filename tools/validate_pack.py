@@ -213,9 +213,9 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
         errors.append(f"Hand-water shader is missing forward component: {token}")
 water = sources.get("gbuffers_water.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
-              "shadowModelView", "shadowProjection", "sampleWaterShadow",
-              "uniform vec3 fogColor", "uniform float fogDensity", "calculateWaterFog",
-              "texture(gtexture", "texture(lightmap", "outColor = vec4(litColor, waterAlbedo.a)"):
+              "shadowModelView", "shadowProjection", "sampleTranslucentShadow",
+              "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
+              "texture(gtexture", "texture(lightmap", "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward water shader is missing Iris-compatible component: {token}")
 spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
