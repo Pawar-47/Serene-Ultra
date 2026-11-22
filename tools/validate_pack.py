@@ -364,6 +364,24 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
+
+for token in ("uniform sampler2D depthtex2", "uniform sampler2D colortex4",
+              "uniform mat4 gbufferProjection", "WATER_REFLECTION_QUALITY",
+              "sampleWaterScreenReflection", "texelFetch(depthtex2, samplePixel, 0)",
+              "texelFetch(colortex4, samplePixel, 0)", "float fresnel = 0.02 + 0.98 * pow",
+              "float reflectionWeight = min(fresnel * 2.5, 0.85) * reflectionConfidence"):
+    if token not in water:
+        errors.append(f"Water screen-space reflection path is missing component: {token}")
+if re.search(r"\\buniform\\s+sampler\\w*\\s+colortex0\\b", water):
+    errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
+if "in vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
+    errors.append("Water vertex path must pass the Iris view-space normal for Fresnel reflection")
+if "WATER_REFLECTION_QUALITY" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("Water reflection quality must be exposed in the Iris Quality menu")
+if "WATER_REFLECTION_QUALITY" not in props.split("sliders =", 1)[-1].splitlines()[0]:
+    errors.append("Water reflection quality must be adjustable as an Iris slider")
+if "option.WATER_REFLECTION_QUALITY =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("Water reflection quality needs a user-facing label")
 for token in ("in vec2 mc_Entity", "vMaterialId = int(mc_Entity.x + 0.5)", "vFluidRenderType = mc_Entity.y"):
     if token not in water_vertex:
         errors.append(f"Translucent-terrain vertex stage is missing Iris material attribute: {token}")
