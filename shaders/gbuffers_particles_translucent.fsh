@@ -1,6 +1,6 @@
 #version 330 compatibility
 
-#define PARTICLE_MATERIAL_FEATURES // Detect emissive, water, rain, snow and smoke particles
+#define PARTICLE_MATERIAL_FEATURES // Detect water, rain, snow, smoke and emissive particle textures
 #define WEATHER_TEX_OPACITY 100 //[25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Weather particle opacity
 
 uniform sampler2D gtexture;
