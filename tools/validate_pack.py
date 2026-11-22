@@ -401,14 +401,14 @@ for token in ("WATER_FOAM_STRENGTH",
     if token not in water:
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
 for token in ("vMaterialId == 32008", "vMaterialId >= 31000 && vMaterialId <= 31031",
-              "vMaterialId == 30008", "vMaterialId == 30020",
+              "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
               "sampleWaterScreenReflection(", "GLASS_REFLECTION_STRENGTH",
               "PORTAL_EMISSION_STRENGTH", "float portalEmission = isPortal"):
     if token not in water:
         errors.append(f"Unbound-guided translucent material path is missing component: {token}")
 for token in ("block.30008=minecraft:tinted_glass", "block.30020=minecraft:nether_portal",
               "block.31000=minecraft:white_stained_glass", "block.31031=minecraft:black_stained_glass_pane",
-              "block.32008=minecraft:glass", "block.32012=minecraft:glass_pane"):
+              "block.32004=minecraft:ice minecraft:frosted_ice", "block.32008=minecraft:glass", "block.32012=minecraft:glass_pane"):
     if token not in block_properties:
         errors.append(f"Missing Iris translucent material ID mapping: {token}")
 if "uniform int isEyeInWater;" not in water:
