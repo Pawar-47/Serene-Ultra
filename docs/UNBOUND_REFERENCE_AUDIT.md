@@ -199,3 +199,6 @@ The water pass now applies depth-dependent absorption to the refracted opaque-sc
 
 ## Atlas-safe portal distortion — 2026-11-23
 The portal material now uses Iris' documented `mc_midTexCoord` per-quad UV center. The water vertex stage forwards the transformed midpoint and per-quad half extents; the fragment stage clamps each of four animated portal texture taps to the current sprite bounds plus a one-texel inset. This prevents adjacent atlas tiles from bleeding into the distortion. Portal emission is calculated from the pre-tint texture signal, then the colour is given the nonlinear warm tint. This is a four-tap low-cost approximation, not the full Unbound eight-step portal raymarch/edge effect.
+
+
+The analytic wave approximation now also exposes `WATER_WAVE_SCALE`, allowing spatial frequency to be tuned independently of strength and animation speed. This is a procedural substitute for the reference's multi-scale normal-map size controls.
