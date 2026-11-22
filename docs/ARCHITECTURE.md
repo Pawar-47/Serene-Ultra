@@ -142,3 +142,6 @@ Opaque G-buffer programs write a dedicated RGBA8 emissive target in `colortex3`.
 
 ## Basic overlays, block entities and damage cracks
 `gbuffers_basic` handles leash/debug overlays as vertex-colored, fogged forward geometry and clears the deferred-validity mask. `gbuffers_damagedblock` handles the crack texture as a color-only overlay with Iris `alphaTestRef` at the Complementary-matched 0.004 threshold; it intentionally inherits the opaque block's underlying G-buffer lighting. `gbuffers_block` handles block entities and sign text using Iris `blockEntityId`. Sign text is fogged in this stage and marked as deferred-bypass so it does not inherit wooden-sign lighting. End portal/gateway IDs receive an emissive G-buffer value. Sign and portal IDs are assigned in `block.properties`. These paths are source/CI verified but still need runtime and visual checks.
+
+## Emissive G-buffer bandwidth
+The emission attachment stores only a scalar in colortex3 red (`colortex3Format=R8`). The deferred pass uses the existing albedo from colortex0 as the emission tint, so no duplicate RGB is stored. Compared with default RGBA8, R8 uses one byte instead of four per pixel for this attachment, reducing its bandwidth/storage by 75%. Current discrete emission levels (0.25, 0.55, 0.90, 1.25) quantize with less than 0.005 absolute reconstruction error.
