@@ -25,6 +25,7 @@ uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
 uniform vec3 fogColor;
+uniform vec3 skyColor;
 uniform float fogStart;
 uniform float fogEnd;
 uniform float fogDensity;
@@ -230,6 +231,18 @@ vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out f
     return reflectionColor;
 }
 #endif
+
+
+// Iris-provided sky and horizon colours provide a low-cost environment
+// fallback when the screen-space reflection ray leaves the visible scene.
+vec3 sampleEnvironmentReflection(vec3 viewReflectionDirection) {
+    vec3 playerReflectionDirection = normalize(
+        mat3(gbufferModelViewInverse) * viewReflectionDirection
+    );
+    float skyBlend = smoothstep(-0.12, 0.28, playerReflectionDirection.y);
+    vec3 environmentSrgb = mix(fogColor, skyColor, skyBlend);
+    return pow(max(environmentSrgb, vec3(0.0)), vec3(2.2));
+}
 
 float calculateTranslucentFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -466,11 +479,17 @@ void main() {
         vec3 glassReflectionColor = sampleTranslucentScreenReflection(
             vViewPosition, glassViewNormal, glassReflectionConfidence
         );
-        vec3 glassReflectionLinear = pow(max(glassReflectionColor, vec3(0.0)), vec3(2.2));
+        vec3 glassReflectionDirection = normalize(
+            reflect(normalize(vViewPosition), glassViewNormal)
+        );
+        vec3 glassEnvironmentLinear = sampleEnvironmentReflection(glassReflectionDirection);
+        vec3 glassScreenReflectionLinear = pow(max(glassReflectionColor, vec3(0.0)), vec3(2.2));
+        vec3 glassReflectionLinear = mix(
+            glassEnvironmentLinear, glassScreenReflectionLinear, glassReflectionConfidence
+        );
         float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : (isClearGlass ? 0.50 : 0.32));
         float glassReflectionWeight = clamp(
-            glassFresnel * materialReflectionScale * glassReflectionConfidence
-            * (GLASS_REFLECTION_STRENGTH * 0.01),
+            glassFresnel * materialReflectionScale * (GLASS_REFLECTION_STRENGTH * 0.01),
             0.0, 0.85
         );
         litLinear = mix(litLinear, glassReflectionLinear, glassReflectionWeight);
@@ -499,9 +518,18 @@ void main() {
         vec3 reflectionColor = sampleTranslucentScreenReflection(
             vViewPosition, reflectionViewNormal, reflectionConfidence
         );
-        vec3 reflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
+        vec3 reflectionDirection = normalize(
+            reflect(normalize(vViewPosition), reflectionViewNormal)
+        );
+        vec3 environmentReflectionLinear = sampleEnvironmentReflection(reflectionDirection);
+        vec3 screenReflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
+        // Blend valid SSR hits over the sky/horizon fallback. Missing or
+        // off-screen rays retain a plausible environment reflection.
+        vec3 reflectionLinear = mix(
+            environmentReflectionLinear, screenReflectionLinear, reflectionConfidence
+        );
         float reflectionWeight = clamp(
-            min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH
+            min(fresnel * 2.5, 0.85) * WATER_REFLECTION_STRENGTH
             * (1.0 - waterFoam) * (cameraUnderwater ? 0.5 : 1.0),
             0.0, 0.95
         );
