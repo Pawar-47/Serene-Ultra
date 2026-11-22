@@ -140,11 +140,11 @@ if props_path.is_file():
             errors.append(f"Missing menu configuration: {screen}")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
-                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
+                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
     slider_options_line = next((line for line in props.splitlines() if line.startswith("sliders = ")), "")
-    for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
+    for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH"):
         if option not in slider_options_line:
             errors.append(f"{option} must be exposed as an Iris slider")
     if "separateAo=false" not in props:
@@ -370,6 +370,28 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
                   "outEmissionData = vec4("):
         if token not in source:
             errors.append(f"{name} is missing resource-pack PBR specular support: {token}")
+for vertex_name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_block.vsh"):
+    source = sources.get(vertex_name, "")
+    for token in ("in vec4 at_tangent;", "out vec3 vPlayerTangent;", "flat out float vTangentHandedness;",
+                  "vPlayerTangent = normalize(mat3(gbufferModelViewInverse) * viewTangent)",
+                  "vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0"):
+        if token not in source:
+            errors.append(f"{vertex_name} is missing Iris tangent basis component: {token}")
+for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
+    source = sources.get(fragment_name, "")
+    for token in ("uniform sampler2D normals;", "in vec3 vPlayerTangent;", "flat in float vTangentHandedness;",
+                  "calculateOpaquePbrNormal", "textureLod(normals, vTexCoord, 0.0)",
+                  "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
+                  "cross(tangent, geometricNormal)", "OPAQUE_NORMAL_MAP_STRENGTH"):
+        if token not in source:
+            errors.append(f"{fragment_name} is missing opaque PBR normal-map component: {token}")
+if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get("gbuffers_terrain.fsh", ""):
+    errors.append("Terrain must apply resource-pack tangent-space normal maps")
+if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get("gbuffers_entities.fsh", ""):
+    errors.append("Entities must apply resource-pack tangent-space normal maps")
+if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get("gbuffers_block.fsh", ""):
+    errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")
+
 if "materialReflectance = labF0Code / 255.0" not in terrain_fragment:
     errors.append("Terrain LabPBR F0 must use the standard linear 0-229/255 range")
 
