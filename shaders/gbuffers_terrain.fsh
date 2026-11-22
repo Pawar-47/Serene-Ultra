@@ -47,5 +47,5 @@ void main() {
         emissionStrength = 0.25;
     }
 
-    outEmissionData = vec4(albedo.rgb, emissionStrength / 5.0);
+    outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
 }
