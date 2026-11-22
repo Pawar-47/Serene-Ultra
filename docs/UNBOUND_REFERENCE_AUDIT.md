@@ -187,3 +187,7 @@ Added Iris `block.properties` IDs for clear glass, glass panes, all 16 stained-g
 
 ### Translucent ice dispatch — 2026-11-23
 Added Iris ID `32004` for ice/frosted ice, matching the shared r5.10 material ID map. Ice now uses the shared Fresnel SSR path with its own reflection scale, separate from water absorption/refraction. This is a first-pass material response; ice-specific smoothness, thickness, tint and roughness calibration remain outstanding.
+
+
+## Glossy opaque material milestone — 2026-11-23
+The shared r5.10 material map identifies slime and honey blocks as special smooth materials. Serene now assigns them Iris `block.properties` IDs and packs a smoothness scalar into the existing G-buffer normal alpha, preserving the deferred-validity sentinel. Deferred uses that scalar for a sun/moon half-vector specular highlight, gated so ordinary surfaces do not pay the specular exponent cost. This is an original low-bandwidth first pass; full IPBR textures, per-material masks and the reference's full lighting response remain outstanding.
