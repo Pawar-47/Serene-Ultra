@@ -130,3 +130,8 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Removed the unused terrain view-position varying.
 - Normalized the Iris transformed sky-light coordinate before storing the direct-light mask in terrain/entity G-buffers. The vanilla lightmap sample still uses the unmodified transformed UV.
 - Extended structural validation to enforce the atlas sampler and lightmap normalization contracts.
+
+## Shadow-distance culling correction — 2026-11-23
+- Added Iris GLSL constant `shadowDistanceRenderMul = 1.0` to `shadow.vsh`.
+- Iris docs state that `shadowDistance` alone changes projection scale but does not cull out-of-range geometry; a positive `shadowDistanceRenderMul` enables culling.
+- Added a validator requirement for the culling constant. Runtime performance and boundary behavior remain to be measured.
