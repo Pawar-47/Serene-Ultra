@@ -30,16 +30,15 @@ The Vanilla-stock archive contains 89 shader source files (42 fragment, 30 verte
 These remain preliminary. AO controls currently use the same defaults in all profiles; complete system-wide quality budgets are still in progress.
 
 ## Validation status
-- Shader and menu changes are committed to main; documentation and validator commits are still being applied in this session.
-- Structural validation has been expanded but has not yet been run by CI on the newest commit.
+- Shader, menu, validator and documentation changes are committed to main.
+- GitHub Actions structural validation passed on checkpoint commit a220febfa5af86a5d855fabe7111d31cd24cae07 (run 45059880225, job validate).
 - No GLSL compiler or Minecraft/Iris runtime test has confirmed these passes.
 - No visual parity comparison or target-machine performance measurement has been performed.
 - The AO implementation is an initial screen-space approximation; depth bias, view-space reconstruction, camera stability, edge artifacts and GPU cost need calibration.
 - The current stock shader archive has not yet been inspected file-by-file in this session, so do not treat vanilla interface cross-check as complete.
 
 ## Next actions
-1. Finish and verify the validator and documentation commits for the deferred/composite attachment change and contact AO.
-2. Run CI and inspect logs; correct structural failures.
-3. Inspect the actual Minecraft 26.3 Vanilla-stock files for terrain, entities, hand, shadow, deferred/composite and final/post passes; document exact paths and reconcile interfaces.
-4. Continue material classification, advanced colored light, AO refinement, translucency, water/reflections, atmosphere and the remaining Ultra features.
-5. Do not publish a release until Iris runtime and visual validation are complete.
+1. Add localized AO labels/tooltips and make CI enforce them.
+2. Inspect the actual Minecraft 26.3 Vanilla-stock files for terrain, entities, hand, shadow, deferred/composite and final/post passes; document exact paths and reconcile interfaces.
+3. Continue material classification, advanced colored light, AO refinement, translucency, water/reflections, atmosphere and the remaining Ultra features.
+4. Obtain GLSL/Iris runtime validation and target-machine comparisons; do not publish an unverified release.
