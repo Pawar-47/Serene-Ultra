@@ -361,3 +361,13 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Corrected the opaque-particle atlas-size validator to match the actual explicit float conversion around `textureSize`.
 - Iris noisetex documentation confirms a generated square RGB8 noise texture (default 256×256); the translucent-particle dither path uses its runtime size and `texelFetch`, so it does not assume a fixed resolution.
 - Latest completed CI before the lit-fallback additions passed GLSL compilation, macro-branch compilation, program linking and structural validation; the new lit-fallback and option-synchronization commits are awaiting their own run.
+
+## Iris lit fallback and shared shader-option correction — 2026-11-23
+- Added dedicated `gbuffers_textured_lit.vsh/.fsh`, the documented Iris fallback for most lit particles and generic lit geometry. It writes the same G-buffer contract as opaque particles: albedo, vanilla lightmap, player-space normal and scalar emission.
+- The generic lit fallback uses Iris `alphaTestRef` with `alphaTest.gbuffers_textured_lit=GREATER 0.01`, and disables blending for its opaque G-buffer outputs.
+- `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` intentionally continue to fall back to `gbuffers_terrain`. Iris documents these fallbacks, and `mc_Entity` is valid in `gbuffers_terrain.vsh` (not the split program names), so the common terrain program preserves stable block/fluid IDs.
+- Iris shader-settings documentation requires a macro option to be declared identically in every file where it is used. Unified `PARTICLE_MATERIAL_FEATURES` across opaque particles, translucent particles and `gbuffers_textured_lit`.
+- Unified `WEATHER_TEX_OPACITY` across `gbuffers_weather` and `gbuffers_particles_translucent`; the validator now checks the exact identical option declaration.
+- CI run [45071600491](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45071600491) passed after adding the generic lit fallback and its structural checks.
+- CI run [45071787808](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45071787808) passed after synchronizing the shared weather-opacity option and validating its identical declarations.
+- These runs validate GLSL compilation, macro-branch compilation, vertex/fragment linking and structural checks only. Iris/Minecraft runtime sorting, visuals and Intel HD 5500 performance remain unverified.
