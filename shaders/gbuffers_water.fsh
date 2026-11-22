@@ -45,7 +45,7 @@ flat in float vFluidRenderType;
 #define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
-#define WATER_WAVE_SPEED 100 // [25 50 75 100 125 150 175 200] Animated water wave speed
+#define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
 layout(location = 0) out vec4 outColor;
 
 // Three analytic wave bands provide stable multi-scale surface normals without
@@ -58,15 +58,17 @@ vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 playerPosition) {
     }
 
     vec2 worldXZ = (playerPosition + cameraPosition).xz;
-    float waveTime = frameTimeCounter * (WATER_WAVE_SPEED * 0.01);
+    // Iris frameTimeCounter wraps every 3600 seconds. Integer cycle counts
+    // keep every wave phase continuous at that wrap for all slider values.
+    float waveTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
 
     vec2 directionA = normalize(vec2(0.83, 0.55));
     vec2 directionB = normalize(vec2(-0.42, 0.91));
     vec2 directionC = normalize(vec2(0.18, -0.98));
 
-    float phaseA = dot(worldXZ, directionA) * 0.075 + waveTime * 0.72;
-    float phaseB = dot(worldXZ, directionB) * 0.16 - waveTime * 1.03;
-    float phaseC = dot(worldXZ, directionC) * 0.34 + waveTime * 1.37;
+    float phaseA = dot(worldXZ, directionA) * 0.075 + waveTime;
+    float phaseB = dot(worldXZ, directionB) * 0.16 - waveTime * 2.0;
+    float phaseC = dot(worldXZ, directionC) * 0.34 + waveTime * 3.0;
 
     vec2 slope = directionA * (0.34 * 0.075 * cos(phaseA));
     slope += directionB * (0.15 * 0.16 * cos(phaseB));
