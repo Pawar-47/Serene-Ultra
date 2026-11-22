@@ -29,7 +29,7 @@ in vec3 vViewPosition;
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
 
-float sampleWaterShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
+float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
     vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
     vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
 
@@ -54,7 +54,7 @@ float sampleWaterShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
     return visibility * 0.25;
 }
 
-float calculateWaterFog(float distanceToCamera) {
+float calculateTranslucentFog(float distanceToCamera) {
     if (fogMode == 9729) {
         return clamp((distanceToCamera - fogStart) / max(fogEnd - fogStart, 0.0001), 0.0, 1.0);
     }
@@ -69,12 +69,14 @@ float calculateWaterFog(float distanceToCamera) {
 }
 
 void main() {
-    vec4 waterAlbedo = texture(gtexture, vTexCoord) * vVertexColor;
-    if (waterAlbedo.a <= 0.001) discard;
+    vec4 translucentAlbedo = texture(gtexture, vTexCoord) * vVertexColor;
+    if (translucentAlbedo.a <= 0.001) discard;
 
-    // This pass executes after deferred. It cannot sample colortex0-3, so
-    // water is shaded forward using its atlas color, vanilla lightmap and
-    // the already-rendered Iris shadow map.
+    // Iris routes all translucent terrain through gbuffers_water, including
+    // water and stained glass. Keep this a generic forward-lit surface path:
+    // do not apply water-only material effects to non-fluid translucent blocks.
+    // The pass cannot sample colortex0-3, so it uses atlas color, vanilla
+    // lightmap, the already-rendered Iris shadow map and fog uniforms.
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
@@ -94,7 +96,7 @@ void main() {
 
     float shadow = 1.0;
     if (nDotL > 0.001 && celestialGate > 0.001) {
-        shadow = sampleWaterShadow(vPlayerPosition, normal, worldLightDirection);
+        shadow = sampleTranslucentShadow(vPlayerPosition, normal, worldLightDirection);
     }
 
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
@@ -108,13 +110,13 @@ void main() {
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
 
-    vec3 albedoLinear = pow(max(waterAlbedo.rgb, vec3(0.0)), vec3(2.2));
+    vec3 albedoLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
     float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
-    float fogFactor = calculateWaterFog(fogDistance);
+    float fogFactor = calculateTranslucentFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     litLinear = mix(litLinear, fogColorLinear, fogFactor);
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
 
-    outColor = vec4(litColor, waterAlbedo.a);
+    outColor = vec4(litColor, translucentAlbedo.a);
 }
