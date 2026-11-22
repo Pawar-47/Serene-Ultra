@@ -498,3 +498,13 @@ The latest CI run at this checkpoint is `45075658130` for commit `d42ab0940fd54c
 - Red attenuation is strongest, green intermediate, blue weakest, producing depth-dependent blue tint. No additional sampler or render target was added.
 - Added `WATER_ABSORPTION_STRENGTH` to the Quality menu and slider list; validator requires the coefficient, transmission and tint-mix path.
 - This is an initial physical approximation. Compare coefficient strength and colour against Unbound in actual Minecraft scenes; runtime/visual parity is not claimed.
+
+
+## Water absorption and reflection fallback — 2026-11-23
+
+- Added depth-dependent Beer-Lambert absorption to refracted water colour. The current absorption coefficients attenuate red more strongly than green and blue, blending transmitted scene light toward the water's linear-space tint as thickness increases. `WATER_ABSORPTION_STRENGTH` is exposed in the Iris Quality menu and slider list with a tooltip.
+- Added an Iris-uniform environment reflection fallback for water, glass and ice. `skyColor` and `fogColor` are blended by the reflected direction's player-space elevation; valid screen-space hits are blended over that fallback according to hit confidence. This prevents SSR misses/off-screen rays from collapsing to black.
+- Iris docs consulted: [rendering uniforms](https://shaders.properties/current/reference/uniforms/rendering/) documents `skyColor` and `fogColor`; [matrix uniforms](https://shaders.properties/current/reference/uniforms/matrices/) documents player/view transforms; [gbuffers](https://shaders.properties/current/reference/programs/gbuffers/) documents that translucent terrain, including water, runs in `gbuffers_water`.
+- The reflection fallback adds no extra texture fetches. It uses the existing reflection direction and two Iris colour uniforms. It remains an approximate sky/horizon environment, not a cubemap or world-space reflection system.
+- The validator now checks the fallback path and no longer expects reflection confidence to be multiplied into the reflection weight; confidence selects between environment and screen-space reflection instead.
+- Runtime appearance, water absorption calibration, glass/ice tint and Intel HD 5500 performance remain unverified.
