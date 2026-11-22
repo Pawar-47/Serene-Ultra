@@ -123,7 +123,7 @@ void main() {
     // LabPBR porosity (blue codes 0-64) makes a wet material darker and
     // less reflective. The map-influence and overall lighting controls remain
     // separate; non-LabPBR and SSS-coded materials stay neutral here.
-    float precipitationFactor = biome_precipitation == PPT_RAIN
+    float precipitationFactor = biome_precipitation == 1
         ? clamp(rainfall, 0.0, 1.0) : 0.0;
     float wetnessFactor = clamp(wetness * precipitationFactor, 0.0, 1.0);
     float rainFactor = clamp(rainStrength * precipitationFactor, 0.0, 1.0);
