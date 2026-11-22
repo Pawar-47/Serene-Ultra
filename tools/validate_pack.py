@@ -364,8 +364,8 @@ if "signText ? 0.0 : 0.5 + 0.5 * materialSmoothness" not in sources.get("gbuffer
     errors.append("Block-entity validity/smoothness alpha must keep sign text invalid and normal geometry at 0.5")
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
-    if "materialReflectance = labF0Code / 255.0;" not in source or "materialReflectance = 0.45;" not in source:
-        errors.append(f"{name} must store the normalized LabPBR G code and use the neutral F0 fallback code")
+    if "materialReflectance = labF0Code / 255.0;" not in source or "materialReflectance = 0.04;" not in source or "materialReflectance = 0.45;" in source:
+        errors.append(f"{name} must store linear LabPBR F0 and use a 0.04 dielectric fallback")
 for name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_block.vsh", "gbuffers_water.vsh"):
     vertex_source = sources.get(name, "")
     if "in vec4 at_tangent;" not in vertex_source or "at_tangent.w" not in vertex_source:
@@ -767,7 +767,7 @@ for token in ("materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0)"
               "vec4 emissionData = texture(colortex3, vTexCoord)",
               "materialReflectance = clamp(emissionData.g, 0.0, 1.0)",
               "MC_TEXTURE_FORMAT_LAB_PBR", "materialReflectance >= (230.0 / 255.0)",
-              "float labDielectricF0 = clamp(materialReflectance * (255.0 / 229.0), 0.0, 1.0) * 0.08",
+              "float labDielectricF0 = materialReflectance",
               "vec3(labDielectricF0)",
               "mix(vec3(0.04), albedoLinear, materialReflectance)"):
     if token not in deferred:
