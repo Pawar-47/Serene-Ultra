@@ -123,6 +123,8 @@ if props_path.is_file():
             errors.append(f"{option} is not exposed in the Quality menu")
     if "separateAo=false" not in props:
         errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
+    if "separateEntityDraws=true" in props or "iris.features.optional=ENTITY_TRANSLUCENT" in props:
+        errors.append("Do not enable separateEntityDraws: current Iris documentation warns this feature is broken in newer versions")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
     if "separateEntityDraws=true" not in props:
