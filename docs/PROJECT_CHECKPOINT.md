@@ -527,3 +527,7 @@ float portalPhase = frameTimeCounter * (6.28318530718 * 458.0 / 3600.0);
 ```
 
 This preserves animation continuity when Iris resets the timer. The validator checks the cycle expression. Iris' system-uniform documentation confirms that `frameTimeCounter` resets after 3600 seconds. The exact animation rate remains a visual-tuning parameter.
+
+
+### Water wave scale option — 2026-11-23
+Added `WATER_WAVE_SCALE` to control spatial frequency independently from normal strength and temporal speed. It is exposed in the Quality menu and slider list and is required by structural validation.
