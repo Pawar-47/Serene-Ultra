@@ -464,3 +464,9 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Added material dispatch: water retains depth/refraction/foam; clear/stained/tinted glass receive material-scaled Fresnel SSR using the existing opaque scene snapshot; nether portal receives a warm nonlinear tint and self-emission.
 - Added `GLASS_REFLECTION_STRENGTH` and `PORTAL_EMISSION_STRENGTH` to the Quality menu and slider list. Validator checks the block IDs and shader branches.
 - This is not full Unbound parity: portal UV raymarch/edge effects, connected-glass behavior, absorption, and in-game visual/alpha sorting checks remain pending.
+
+
+## Translucent ice material checkpoint — 2026-11-23
+- Added `block.32004` for ice/frosted ice, following the r5.10 shared Complementary material ID map and Iris `block.properties`/`mc_Entity` contract.
+- Ice is classified separately from water and now uses the shared screen-space Fresnel reflection helper with its own reflection scale. It does not receive water refraction, depth opacity or foam.
+- Added the ID and branch to structural validation. Ice-specific roughness, thickness, tint and in-game calibration remain outstanding.
