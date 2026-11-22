@@ -1,0 +1,28 @@
+# Serene Ultra — English (US) shader menu labels
+
+screen.QUALITY = Quality & Profiles
+screen.COLOR = Color & HDR Controls
+
+option.RED_GAIN = Red Channel
+option.GREEN_GAIN = Green Channel
+option.BLUE_GAIN = Blue Channel
+option.GAMMA = Gamma
+option.EXPOSURE = Exposure
+option.CONTRAST = Contrast
+option.SATURATION = Saturation
+option.HDR_LOOK = HDR Tone Mapping
+
+option.RED_GAIN.comment = Adjust the red channel independently. 1.00 is neutral.
+option.GREEN_GAIN.comment = Adjust the green channel independently. 1.00 is neutral.
+option.BLUE_GAIN.comment = Adjust the blue channel independently. 1.00 is neutral.
+option.GAMMA.comment = Display gamma correction. 1.00 is neutral.
+option.EXPOSURE.comment = Brightness adjustment in photographic stops.
+option.CONTRAST.comment = Adjust contrast around middle gray.
+option.SATURATION.comment = Adjust color intensity. 1.00 is neutral; 0.00 is monochrome.
+option.HDR_LOOK.comment = HDR-style tone mapping for SDR output. This does not enable operating-system or monitor HDR output.
+
+value.HDR_LOOK.0 = Neutral
+value.HDR_LOOK.1 = HDR
+value.HDR_LOOK.2 = Ultra HDR
+
+profile.comment = Ultra-Light: lower shadow cost while retaining effects. Smooth: balanced shadow quality. Ultra: full shadow-distance target. HDR: Ultra with HDR-style tone mapping. Ultra-HDR: stronger highlight compression and HDR-style presentation. All profiles retain the complete planned feature set.

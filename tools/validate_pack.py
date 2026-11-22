@@ -14,13 +14,14 @@ REQUIRED = (
     "shadow.vsh", "shadow.fsh",
     "composite.vsh", "composite.fsh",
     "final.vsh", "final.fsh",
+    "lang/en_us.lang",
 )
 errors = []
 
 for rel in REQUIRED:
     path = SHADERS / rel
     if not path.is_file():
-        errors.append(f"Missing required shaderpack entrypoint: shaders/{rel}")
+        errors.append(f"Missing required shaderpack file: shaders/{rel}")
 
 for path in SHADERS.rglob("*"):
     if path.suffix not in {".vsh", ".fsh", ".csh", ".glsl"}:
@@ -28,7 +29,6 @@ for path in SHADERS.rglob("*"):
     text = path.read_text(encoding="utf-8")
     if not re.search(r"^\s*#version\s+330\b", text, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: expected an explicit GLSL 330 version")
-    # Lightweight structural sanity check only; strings/comments are not parsed.
     if text.count("{") != text.count("}"):
         errors.append(f"{path.relative_to(ROOT)}: unbalanced brace count")
 
@@ -41,6 +41,28 @@ else:
                   "WATER_REFLECT_QUALITY", "CLOUD_QUALITY", "RAIN_PUDDLES"):
         if token not in audit_text:
             errors.append(f"Reference audit is missing required setting: {token}")
+
+props_path = SHADERS / "shaders.properties"
+if props_path.is_file():
+    props = props_path.read_text(encoding="utf-8")
+    for profile in ("Ultra-Light", "Smooth", "Ultra", "HDR", "Ultra-HDR"):
+        if f"profile.{profile} =" not in props:
+            errors.append(f"Missing shader profile: {profile}")
+    for screen in ("screen = <profile>", "screen.QUALITY =", "screen.COLOR ="):
+        if screen not in props:
+            errors.append(f"Missing menu configuration: {screen}")
+
+final_path = SHADERS / "final.fsh"
+if final_path.is_file():
+    final = final_path.read_text(encoding="utf-8")
+    for option in ("RED_GAIN", "GREEN_GAIN", "BLUE_GAIN", "GAMMA", "EXPOSURE",
+                   "CONTRAST", "SATURATION", "HDR_LOOK"):
+        if f"#define {option} " not in final:
+            errors.append(f"Missing active color control: {option}")
+
+brief = ROOT / "PROJECT_BRIEF.md"
+if not brief.is_file():
+    errors.append("Missing cumulative PROJECT_BRIEF.md")
 
 if errors:
     print("Serene Ultra structural validation FAILED:")
