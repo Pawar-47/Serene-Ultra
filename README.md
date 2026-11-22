@@ -4,7 +4,7 @@ An independently implemented, full-featured Minecraft Java shaderpack targeting 
 
 ## Project status
 
-Repository initialized. The first implementation milestone is a complete reference-feature inventory and a runnable Iris shaderpack foundation. Feature preservation is mandatory: performance work must optimize implementation cost rather than silently remove visual capabilities.
+Early rendering foundation committed: terrain/entity/hand G-buffer paths, alpha-tested shadow casters, deferred celestial lighting, initial contact AO, Iris settings/profiles and CI GLSL compilation are present. This is not yet Ultra parity or a runtime-validated release. Current priority is resolving Iris post-deferred water/weather/hand-water handling and expanding geometry-program coverage. See [the project checkpoint](docs/PROJECT_CHECKPOINT.md), [Iris pipeline audit](docs/IRIS_PIPELINE_AUDIT.md) and [reference feature matrix](docs/REFERENCE_FEATURE_MATRIX.md). Feature preservation is mandatory: performance work must optimize implementation cost rather than silently remove visual capabilities.
 
 ## Target hardware
 
