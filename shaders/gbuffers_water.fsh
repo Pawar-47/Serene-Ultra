@@ -13,7 +13,8 @@ uniform sampler2DShadow shadowtex0;
 
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
-uniform vec3 cameraPosition;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
 uniform float frameTimeCounter;
 uniform int isEyeInWater;
 uniform mat4 shadowModelView;
@@ -54,31 +55,39 @@ flat in float vFluidRenderType;
 #define WATER_UNDERWATER_STRENGTH 100 // [0 25 50 75 100 125 150] Underwater tint and surface response
 layout(location = 0) out vec4 outColor;
 
+// Reconstruct a stable, periodic world position from Iris' unshifted integer
+// camera position, fractional camera position and player-relative position.
+// This avoids cameraPosition's documented 30,000-block wrap and large-float jitter.
+vec3 getStableWaterWorldPosition(vec3 playerPosition) {
+    ivec3 cameraModulo = cameraPositionInt % ivec3(256);
+    vec3 cameraOffset = mod(vec3(cameraModulo), vec3(256.0));
+    return mod(cameraOffset + cameraPositionFract + playerPosition, vec3(256.0));
+}
+
 // Three analytic wave bands provide stable multi-scale surface normals without
-// a full-screen texture fetch or an additional normal-map asset. Coordinates
-// are reconstructed in absolute player/world space so camera motion does not
-// make the wave pattern swim.
-vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 playerPosition) {
+// a full-screen texture fetch or an additional normal-map asset.
+vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 stableWorldPosition) {
     if (abs(geometricNormal.y) < 0.72 || WATER_WAVE_STRENGTH <= 0) {
         return geometricNormal;
     }
 
-    vec2 worldXZ = (playerPosition + cameraPosition).xz;
+    vec2 worldXZ = stableWorldPosition.xz;
     // Iris frameTimeCounter wraps every 3600 seconds. Integer cycle counts
     // keep every wave phase continuous at that wrap for all slider values.
     float waveTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
 
-    vec2 directionA = normalize(vec2(0.83, 0.55));
-    vec2 directionB = normalize(vec2(-0.42, 0.91));
-    vec2 directionC = normalize(vec2(0.18, -0.98));
+    // Integer-divisor wavelengths tile the 256-block coordinate domain, so
+    // camera-coordinate wrapping cannot create a visible phase discontinuity.
+    const float frequencyA = 6.28318530718 / 64.0;
+    const float frequencyB = 6.28318530718 / 32.0;
+    const float frequencyC = 6.28318530718 / 32.0;
+    float phaseA = worldXZ.x * frequencyA + waveTime;
+    float phaseB = worldXZ.y * frequencyB - waveTime * 2.0;
+    float phaseC = dot(worldXZ, vec2(1.0, 1.0)) * frequencyC + waveTime * 3.0;
 
-    float phaseA = dot(worldXZ, directionA) * 0.075 + waveTime;
-    float phaseB = dot(worldXZ, directionB) * 0.16 - waveTime * 2.0;
-    float phaseC = dot(worldXZ, directionC) * 0.34 + waveTime * 3.0;
-
-    vec2 slope = directionA * (0.34 * 0.075 * cos(phaseA));
-    slope += directionB * (0.15 * 0.16 * cos(phaseB));
-    slope += directionC * (0.055 * 0.34 * cos(phaseC));
+    vec2 slope = vec2(0.34 * frequencyA * cos(phaseA),
+                     0.15 * frequencyB * cos(phaseB));
+    slope += vec2(1.0, 1.0) * (0.38 * frequencyC * cos(phaseC));
 
     float strength = (WATER_WAVE_STRENGTH * 0.01) * 3.0;
     float faceSign = geometricNormal.y < 0.0 ? -1.0 : 1.0;
@@ -90,7 +99,7 @@ vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 playerPosition) {
 // Unbound-style water base colour: retain biome influence, but move the
 // surface away from the flat vanilla atlas tint. A single Iris noise lookup
 // adds slow, low-amplitude colour variation without a second custom texture.
-vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 absoluteWorldPosition) {
+vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
     vec3 biomeTint = sqrt(max(vertexColor, vec3(0.0))) * vec3(1.0, 0.85, 0.8);
     vec3 waterTint = mix(vec3(0.43, 0.60, 0.80), biomeTint, 0.5);
     vec3 baseColor = 0.375 * waterTint;
@@ -98,7 +107,7 @@ vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 absoluteWorldPosition) {
     if (WATER_NOISE_COLOR_STRENGTH > 0) {
         float noiseTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
         vec2 noiseDrift = vec2(cos(noiseTime), sin(noiseTime)) * 0.025;
-        vec2 noiseUV = absoluteWorldPosition.xz * 0.008 + noiseDrift;
+        vec2 noiseUV = stableWorldPosition.xz * (1.0 / 128.0) + noiseDrift;
         float noise = textureLod(noisetex, noiseUV, 0.0).g - 0.5;
         baseColor *= 1.0 + noise * 0.25 * (WATER_NOISE_COLOR_STRENGTH * 0.01);
     }
@@ -256,8 +265,12 @@ void main() {
         normal = -normal;
         viewNormal = -viewNormal;
     }
+    // Preserve geometric normal for shadow-map bias while wave normals affect lighting.
+    vec3 shadowNormal = normal;
+    vec3 stableWaterWorldPosition = vec3(0.0);
     if (isWater) {
-        normal = calculateWaterWaveNormal(normal, vPlayerPosition);
+        stableWaterWorldPosition = getStableWaterWorldPosition(vPlayerPosition);
+        normal = calculateWaterWaveNormal(normal, stableWaterWorldPosition);
         // Iris documents gbufferModelView as player-space to view-space.
         // Transform the perturbed normal for Fresnel, refraction and SSR.
         viewNormal = normalize(mat3(gbufferModelView) * normal);
@@ -278,7 +291,7 @@ void main() {
     bool cameraUnderwater = (isEyeInWater == 1);
     float shadow = 1.0;
     if (nDotL > 0.001 && celestialGate > 0.001 && !(isWater && cameraUnderwater)) {
-        shadow = sampleTranslucentShadow(vPlayerPosition, normal, worldLightDirection);
+        shadow = sampleTranslucentShadow(vPlayerPosition, shadowNormal, worldLightDirection);
     }
 
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
@@ -376,8 +389,7 @@ void main() {
     }
 
     if (isWater) {
-        vec3 absoluteWorldPosition = vPlayerPosition + cameraPosition;
-        vec3 unboundWaterColor = calculateWaterBaseColor(vVertexColor.rgb, absoluteWorldPosition);
+        vec3 unboundWaterColor = calculateWaterBaseColor(vVertexColor.rgb, stableWaterWorldPosition);
         translucentAlbedo.rgb = mix(
             translucentAlbedo.rgb,
             unboundWaterColor,
@@ -425,10 +437,8 @@ void main() {
         // world depth without first-person hand/translucent depth) and the
         // separate colortex4 scene snapshot. Quality controls ray-march steps.
         #if WATER_REFLECTION_QUALITY > 0
-        vec3 reflectionViewNormal = normalize(vViewNormal);
-        if (dot(normalize(vViewPosition), reflectionViewNormal) > 0.0) {
-            reflectionViewNormal = -reflectionViewNormal;
-        }
+        // Reuse the already camera-oriented, wave-perturbed view normal.
+        vec3 reflectionViewNormal = viewNormal;
         float nDotV = clamp(dot(reflectionViewNormal, normalize(-vViewPosition)), 0.0, 1.0);
         float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
         float reflectionConfidence = 0.0;
