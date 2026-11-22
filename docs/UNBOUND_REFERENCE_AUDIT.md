@@ -206,3 +206,7 @@ The analytic wave approximation now also exposes `WATER_WAVE_SCALE`, allowing sp
 
 ## Colored translucent shadows and water caustics — 2026-11-23
 Serene now follows Iris' transparent-shadow contract using `shadowtex0`, `shadowtex1` and `shadowcolor0`. The shadow pass stores material-specific transmission: animated analytic water caustics, neutral clear-glass transmission, stained-glass tint, darker tinted-glass transmission, blue ice tint and purple portal tint. Deferred combines the RGB transmission with four-tap opaque PCF. This mirrors the reference's colored-shadow/material behavior at a lower sample count and with original analytic caustic math; it is not a line-for-line reproduction of Unbound's water-normal caustic projection. Runtime validation and HD 5500 performance calibration remain outstanding.
+
+
+## Water cauldron material dispatch — 2026-11-23
+Added the shared r5.10 `block.10049` mapping for filled water cauldrons and remapped it to material ID `32001` in both water and shadow vertex stages, matching the reference's cauldron-water classification. ID 32001 now receives the same depth/refraction/absorption/foam/underwater water surface path and caustic shadow transmission as water, without relying on the normal fluid-render-type flag. Empty cauldrons are not mapped.
