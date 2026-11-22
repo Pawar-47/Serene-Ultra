@@ -134,7 +134,7 @@ void main() {
             float puddleForm = clamp(puddleNoise1.b * 3.0 + puddleNoise2.b * 5.0
                 + puddleNoise3.b * 8.0 - 7.0, 0.0, 1.0);
             float noPuddles = clamp(materialPorosity, 0.0, 1.0);
-            if (vMaterialId == 10009) noPuddles = 1.0; // Foliage material class
+            if (vMaterialId == 10009 || vMaterialId == 10011 || vMaterialId == 10129 || vMaterialId == 10137) noPuddles = 1.0; // Leaves and farmland
             float wetnessSquared = wetness * wetness;
             puddleMask = clamp(wetnessSquared * wetnessSquared * puddleMixer * puddleForm
                 * (1.0 - noPuddles) * (RAIN_PUDDLE_STRENGTH * 0.01), 0.0, 1.0);
