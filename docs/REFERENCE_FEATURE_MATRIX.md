@@ -269,3 +269,7 @@ The shadow pass now writes RGBA8 transmission data for water, clear/stained/tint
 
 ## Water cauldron material coverage — 2026-11-23
 Filled water cauldrons now map to material ID 32001 and use the water surface pipeline (refraction, absorption, waves, foam, underwater response and caustic shadow transmission). Empty cauldrons remain unaffected.
+
+
+## Forward translucent shadow consistency — 2026-11-23
+The forward `gbuffers_water` pass now samples the same `shadowtex1`/`shadowcolor0` material transmission as deferred, so water and glass surfaces receive colored shadow/caustic lighting consistently with opaque receivers.
