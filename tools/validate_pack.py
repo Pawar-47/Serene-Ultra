@@ -11,8 +11,6 @@ REQUIRED = (
     "shaders.properties", "block.properties",
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
-    "gbuffers_entities_translucent.vsh", "gbuffers_entities_translucent.fsh",
-    "gbuffers_block_translucent.vsh", "gbuffers_block_translucent.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
     "gbuffers_water.vsh", "gbuffers_water.fsh",
     "gbuffers_hand_water.vsh", "gbuffers_hand_water.fsh",
