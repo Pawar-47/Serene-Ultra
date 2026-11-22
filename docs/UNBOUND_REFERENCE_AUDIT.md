@@ -210,3 +210,7 @@ Serene now follows Iris' transparent-shadow contract using `shadowtex0`, `shadow
 
 ## Water cauldron material dispatch — 2026-11-23
 Added the shared r5.10 `block.10049` mapping for filled water cauldrons and remapped it to material ID `32001` in both water and shadow vertex stages, matching the reference's cauldron-water classification. ID 32001 now receives the same depth/refraction/absorption/foam/underwater water surface path and caustic shadow transmission as water, without relying on the normal fluid-render-type flag. Empty cauldrons are not mapped.
+
+
+## oldPBR/LabPBR terrain material decode — 2026-11-23
+Serene now uses Iris' `specular` atlas in `gbuffers_terrain`. Smoothness is read from red for both formats. The LabPBR branch decodes green as dielectric F0 or metal code (230–255), and alpha as emissive with 255 treated as no emission. The oldPBR branch decodes green as metalness and blue as emissive. Material reflectance is packed into colortex3.g while emission remains in colortex3.r, changing the attachment from R8 to RG8. Deferred derives dielectric F0 or albedo-coloured metallic F0 and applies it to the smoothness-gated specular lobe. This is a compact first-pass PBR implementation; per-material LabPBR metal IDs, porosity/SSS, normal maps for opaque terrain and full Unbound IPBR handling remain outstanding.
