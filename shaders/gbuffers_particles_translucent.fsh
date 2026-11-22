@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define PARTICLE_MATERIAL_FEATURES // Detect emissive, water, rain, snow and smoke particles
+
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2DShadow shadowtex0;
@@ -10,6 +12,8 @@ uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
+uniform int isEyeInWater;
+uniform vec3 cameraPosition;
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -59,10 +63,59 @@ float sampleParticleShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection
 
 void main() {
     vec4 particle = texture(gtexture, vTexCoord) * vVertexColor;
-    if (particle.a <= 0.001) discard;
+    if (particle.a < 0.01) discard;
+
+    float emission = 0.0;
+    vec4 particleTexture = texture(gtexture, vTexCoord);
 
     // This is a post-deferred forward path: retain Minecraft's colored
     // lightmap response without sampling forbidden colortex0-3 attachments.
+    #ifdef PARTICLE_MATERIAL_FEATURES
+        if (float(textureSize(gtexture, 0).x) < 1100.0) {
+            if (particle.b > 1.15 * (particle.r + particle.g) &&
+                particle.g > particle.r * 1.25 && particle.g < 0.425 && particle.b > 0.75) {
+                // Water splash/drop particles: reduce saturation and overdraw.
+                particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.0 / 3.0)) * 0.7;
+                particle.a *= 0.6;
+            } else if (particle.b > 0.7 && particle.r < 0.28 &&
+                       particle.g < 0.425 && particle.g > particle.r * 1.4) {
+                // Physics-mod rain particles.
+                if (particle.a < 0.1 || isEyeInWater == 3) discard;
+                particle.a *= 0.25;
+            } else if (all(equal(particleTexture.rgb, vec3(1.0))) &&
+                       particle.a < 0.765 && particle.a > 0.605) {
+                // Physics-mod snow particles.
+                if (particle.a < 0.1 || isEyeInWater == 3) discard;
+                particle.a *= 0.5;
+            } else if (abs(particleTexture.r - particleTexture.g) < 0.001 &&
+                       particleTexture.r - 0.5 * particleTexture.b < 0.06) {
+                // Underwater particle sprites are suppressed outside water.
+                if (isEyeInWater == 1) {
+                    particle.rgb = sqrt(max(particle.rgb, vec3(0.0))) * 0.35;
+                    if (fract(vPlayerPosition.y + cameraPosition.y) > 0.25) discard;
+                }
+            } else if (particle.a < 0.99 && dot(particle.rgb, particle.rgb) < 1.0) {
+                // Campfire smoke is intentionally softer and more transparent.
+                particle.a *= 0.5;
+            } else if (max(abs(particleTexture.r - particleTexture.b),
+                           abs(particleTexture.b - particleTexture.g)) < 0.001) {
+                float dotColor = dot(particle.rgb, particle.rgb);
+                if (dotColor > 0.25 && particle.g < 0.5 &&
+                    ((particle.b > particle.r * 1.1 && particle.r > 0.3) ||
+                     particle.r > (particle.g + particle.b) * 3.0)) {
+                    // Ender, crying-obsidian and redstone particles.
+                    emission = clamp(particle.r * 8.0, 1.6, 5.0);
+                    particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.5));
+                } else if (particle.r > 0.83 && particle.g > 0.23 && particle.b < 0.4) {
+                    // Lava particles.
+                    emission = 2.0;
+                    particle.b *= 0.5;
+                    particle.r *= 1.2;
+                }
+            }
+        }
+    #endif
+
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
@@ -97,7 +150,7 @@ void main() {
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
 
     vec3 particleLinear = pow(max(particle.rgb, vec3(0.0)), vec3(2.2));
-    vec3 litLinear = particleLinear * (ambient + direct);
+    vec3 litLinear = particleLinear * (ambient + direct) + particleLinear * emission;
     float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
     float fogFactor = calculateParticleFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
