@@ -509,8 +509,8 @@ if "texture(lightmap" not in translucent_particles:
     errors.append("Translucent particles must preserve the vanilla lightmap response")
 if "if (!gl_FrontFacing) normal = -normal;" not in translucent_particles:
     errors.append("Translucent particles must flip back-face normals before forward lighting")
-if "if (!gl_FrontFacing) normal = -normal;" not in water:
-    errors.append("Translucent terrain must flip back-face normals before forward lighting")
+if "if (!gl_FrontFacing) {" not in water or "normal = -normal;" not in water or "viewNormal = -viewNormal;" not in water:
+    errors.append("Translucent terrain must flip both player-space and view-space back-face normals before forward lighting")
 
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
