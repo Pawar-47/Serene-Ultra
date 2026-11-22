@@ -36,7 +36,7 @@ void main() {
         vMaterialId == 32114 || vMaterialId == 32115) {
         emissionStrength = 1.25;
     } else if (vMaterialId == 32103 || vMaterialId == 32108 ||
-               vMaterialId == 32117 || vMaterialId == 32123) {
+               vMaterialId == 32117 || vMaterialId == 32118 || vMaterialId == 32123) {
         emissionStrength = 0.90;
     } else if (vMaterialId == 32102 || vMaterialId == 32104 ||
                vMaterialId == 32105 || vMaterialId == 32110 ||
