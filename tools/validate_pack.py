@@ -235,6 +235,11 @@ block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
 for token in ("block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
               "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal"):
     if token not in block_properties:
+        errors.append(f"Missing emissive/block-entity ID mapping: {token}")
+if "minecraft:flowing_lava" in block_properties:
+    errors.append("Remove legacy flowing_lava block ID; Minecraft 1.13+ uses minecraft:lava block states")
+
+    if token not in block_properties:
         errors.append(f"Missing emissive block ID mapping: {token}")
 
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh"):
