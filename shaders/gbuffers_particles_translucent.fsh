@@ -88,7 +88,8 @@ void main() {
                 particle.g > particle.r * 1.25 && particle.g < 0.425 && particle.b > 0.75) {
                 // Water splash/drop particles: reduce saturation and opacity.
                 particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.0 / 3.0)) * 0.7;
-                ivec2 noiseCoord = ivec2(gl_FragCoord.xy) % noiseTextureResolution;
+                ivec2 noiseSize = textureSize(noisetex, 0);
+                ivec2 noiseCoord = ivec2(gl_FragCoord.xy) % noiseSize;
                 float particleDither = texelFetch(noisetex, noiseCoord, 0).b;
                 if (particleDither > 0.4) discard;
             } else if (hasSkylight && rainStrength > 0.001 && particle.b > 0.7 && particle.r < 0.28 &&
