@@ -179,3 +179,7 @@ The first implementation used a world-Y difference and a block-height gate. Sour
 
 ## Underwater water-surface response — 2026-11-23
 The water pass now consumes Iris `isEyeInWater` (water state `1`) to select a separate underwater response. It softens water opacity, applies a cool surface tint after the Unbound-inspired base tint, removes direct celestial shading for water surfaces viewed underwater, and reduces the SSR contribution. `WATER_UNDERWATER_STRENGTH` is exposed as a Quality slider. This does not replace Minecraft's underwater fog and is not yet the full Unbound absorption/underwater colour model; validate with first-person underwater scenes.
+
+
+## Glass and portal material dispatch — 2026-11-23
+Added Iris `block.properties` IDs for clear glass, glass panes, all 16 stained-glass colours and panes, tinted glass, and nether portal. The dedicated `gbuffers_water` fragment stage now distinguishes these from water using the documented `mc_Entity.x` ID while retaining `mc_Entity.y` as the independent fluid discriminator. Clear/stained/tinted glass receive material-scaled Fresnel SSR using the existing opaque depth and half-resolution scene snapshot. Nether portal receives the Unbound-inspired warm nonlinear tint and self-emission, without atlas-crossing portal raymarch. The latter remains a deliberate feature gap; the full portal distortion/edge effect and glass-specific material/absorption response remain outstanding.
