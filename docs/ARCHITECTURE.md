@@ -87,3 +87,6 @@ Deferred celestial lighting now uses Iris `hasSkylight` to avoid applying the Ov
 
 ## Water rendering path
 `gbuffers_water` is now a dedicated post-deferred forward pass. It shades the water atlas color with the vanilla lightmap and Iris shadow map, uses the active dimension's celestial source, writes only the scene color attachment, and relies on the explicit source-alpha blend directive. This replaces the terrain G-buffer fallback, which was not appropriate after deferred. Advanced water effects remain future work.
+
+## Weather rendering path
+`gbuffers_weather` is now a dedicated post-deferred forward pass. It uses Iris atlas and lightmap sampling, applies the provided fog parameters, writes only scene color and relies on source-alpha blending. `rain.depth=false` keeps weather out of the depth snapshots. Volumetric weather and wetness interaction remain future work.
