@@ -313,8 +313,10 @@ void main() {
             vViewPosition, reflectionViewNormal, reflectionConfidence
         );
         vec3 reflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
-        float reflectionWeight = min(fresnel * 2.5, 0.85)
-            * reflectionConfidence * WATER_REFLECTION_STRENGTH;
+        float reflectionWeight = clamp(
+            min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH,
+            0.0, 0.95
+        );
         litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
         #endif
     }
