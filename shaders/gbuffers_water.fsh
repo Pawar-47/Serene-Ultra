@@ -423,9 +423,12 @@ void main() {
 
         vec3 opaqueViewPosition;
         float opaqueDepth;
-        waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)
-            * (WATER_FOG_MULT * 0.01);
-        waterFog = clamp(1.0 - exp(-waterThickness * 0.075), 0.0, 1.0);
+        // Keep geometric thickness independent from the visual fog multiplier:
+        // absorption, refraction and foam use physical depth; only opacity fog
+        // responds to WATER_FOG_MULT, matching Unbound's waterFog treatment.
+        waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth);
+        float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01);
+        waterFog = clamp(1.0 - exp(-waterFogThickness * 0.075), 0.0, 1.0);
 
         // Unbound-inspired shallow-water foam. Reconstructed view-space
         // thickness is the stable signal for a nearby opaque intersection;
