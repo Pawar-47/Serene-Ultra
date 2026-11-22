@@ -70,7 +70,6 @@ float calculateWaterThickness() {
     // depthtex1 is full-resolution; fetch the exact current pixel without
     // filtering or normalized-coordinate arithmetic.
     float opaqueDepth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
-    vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
     // depthtex1 clears to 1.0. Reconstruct that far-plane sample with the
     // inverse projection instead of using Iris' "far" uniform, which is
     // render distance in blocks rather than the projection far plane.
@@ -139,7 +138,7 @@ void main() {
 
     // Iris mc_Entity.y identifies fluid geometry; block.properties supplies
     // stable IDs so water-only attenuation never affects glass or portals.
-    bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
+    bool isWater = (vMaterialId == 32000 && vFluidRenderType > 0.5) || vMaterialId == 32001;
     if (isWater) {
         // Match the reference shader's baseline water alpha shaping.
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0));
