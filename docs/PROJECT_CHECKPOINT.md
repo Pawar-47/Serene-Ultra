@@ -107,3 +107,14 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Expanded `tools/validate_pack.py` to report the complete current Iris fallback coverage set (water, weather, hand-water, block entities, translucent entities/block entities, particles/translucent particles, solid and cutout terrain). Each missing dedicated vertex+fragment pair is reported with its documented immediate Iris fallback; this remains a non-failing warning until those programs are implemented and runtime-tested.
 - Added a guard against stale colortex3 scene-output references in deferred.fsh.
 - Validator expansion commit: `99682a6765f47579c311412bed11cb87984953c0`; check its CI result and the latest main HEAD before treating it as green.
+
+## Full-source Iris audit correction pass — 2026-11-23
+- Verified Iris docs: `shadowHardwareFiltering` and `shadowIntervalSize` are GLSL constants. Moved both into `deferred.fsh`; removed their invalid `shaders.properties` assignments; corrected validator accordingly.
+- Disabled `separateAo`: with this setting enabled Iris moves AO into `gl_Color.a`, but current G-buffer uses vertex alpha as material opacity. Keeping it false preserves cutout/transparency semantics.
+- Replaced hard-coded G-buffer alpha cutoffs with Iris `alphaTestRef` in terrain, entity and hand fragment shaders.
+- Applied Iris `entityColor` tint to entity albedo using the documented alpha blend factor.
+- Changed deferred world reconstruction and contact AO from `depthtex0` to `depthtex2`, which excludes transparent and first-person hand geometry.
+- Explicitly set `particles.ordering=mixed` so opaque particles run before deferred and translucent particles after deferred.
+- `separateEntityDraws` remains disabled because Iris warns it may not work in newer versions.
+- Updated the validator to require these Iris contracts and reject the prior incorrect settings.
+- These are source-level corrections; CI compilation/structural checks and runtime validation remain separate.
