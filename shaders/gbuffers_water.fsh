@@ -11,6 +11,9 @@ uniform mat4 gbufferProjectionInverse;
 uniform sampler2DShadow shadowtex0;
 
 uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferModelView;
+uniform vec3 cameraPosition;
+uniform float frameTimeCounter;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 
@@ -41,7 +44,40 @@ flat in float vFluidRenderType;
 #define WATER_REFLECTION_STRENGTH 0.75 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
 #define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
+#define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
+#define WATER_WAVE_SPEED 100 // [25 50 75 100 125 150 175 200] Animated water wave speed
 layout(location = 0) out vec4 outColor;
+
+// Three analytic wave bands provide stable multi-scale surface normals without
+// a full-screen texture fetch or an additional normal-map asset. Coordinates
+// are reconstructed in absolute player/world space so camera motion does not
+// make the wave pattern swim.
+vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 playerPosition) {
+    if (abs(geometricNormal.y) < 0.72 || WATER_WAVE_STRENGTH <= 0) {
+        return geometricNormal;
+    }
+
+    vec2 worldXZ = (playerPosition + cameraPosition).xz;
+    float waveTime = frameTimeCounter * (WATER_WAVE_SPEED * 0.01);
+
+    vec2 directionA = normalize(vec2(0.83, 0.55));
+    vec2 directionB = normalize(vec2(-0.42, 0.91));
+    vec2 directionC = normalize(vec2(0.18, -0.98));
+
+    float phaseA = dot(worldXZ, directionA) * 0.075 + waveTime * 0.72;
+    float phaseB = dot(worldXZ, directionB) * 0.16 - waveTime * 1.03;
+    float phaseC = dot(worldXZ, directionC) * 0.34 + waveTime * 1.37;
+
+    vec2 slope = directionA * (0.34 * 0.075 * cos(phaseA));
+    slope += directionB * (0.15 * 0.16 * cos(phaseB));
+    slope += directionC * (0.055 * 0.34 * cos(phaseC));
+
+    float strength = (WATER_WAVE_STRENGTH * 0.01) * 3.0;
+    float faceSign = geometricNormal.y < 0.0 ? -1.0 : 1.0;
+    vec3 waveNormal = normalize(vec3(-slope.x * strength, faceSign, -slope.y * strength));
+    return normalize(mix(geometricNormal, waveNormal,
+                         clamp(WATER_WAVE_STRENGTH * 0.01, 0.0, 1.0)));
+}
 
 float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
     vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
@@ -192,6 +228,12 @@ void main() {
     if (isWater && dot(normalize(vViewPosition), viewNormal) > 0.0) {
         normal = -normal;
         viewNormal = -viewNormal;
+    }
+    if (isWater) {
+        normal = calculateWaterWaveNormal(normal, vPlayerPosition);
+        // Iris documents gbufferModelView as player-space to view-space.
+        // Transform the perturbed normal for Fresnel, refraction and SSR.
+        viewNormal = normalize(mat3(gbufferModelView) * normal);
     }
     vec3 viewLightDirection = normalize(shadowLightPosition);
     vec3 worldLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
