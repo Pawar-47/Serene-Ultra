@@ -282,8 +282,9 @@ deferred_options = sources.get("deferred.fsh", "")
 
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
               "float centerShadow0 = texture(shadowtex0", "float centerShadow1 = texture(shadowtex1",
-              "float waterTransmission = texture(shadowcolor0, shadowPosition.xy).r",
-              "visibility = mix(visibility, translucentVisibility, 1.0 - visibility)"):
+              "vec4 casterColor = texture(shadowcolor0, shadowPosition.xy)",
+              "vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a)",
+              "return clamp(", "vec3 shadow = vec3(1.0)"):
     if token not in deferred_options:
         errors.append(f"Deferred translucent shadow transmission is missing component: {token}")
 
