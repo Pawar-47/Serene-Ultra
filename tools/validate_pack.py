@@ -11,6 +11,9 @@ REQUIRED = (
     "shaders.properties", "block.properties",
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
+    "gbuffers_block.vsh", "gbuffers_block.fsh",
+    "gbuffers_basic.vsh", "gbuffers_basic.fsh",
+    "gbuffers_damagedblock.vsh", "gbuffers_damagedblock.fsh",
     "gbuffers_entities_translucent.vsh", "gbuffers_entities_translucent.fsh",
     "gbuffers_block_translucent.vsh", "gbuffers_block_translucent.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
@@ -199,9 +202,9 @@ for path in SHADERS.rglob("*.fsh"):
     source = path.read_text(encoding="utf-8")
     if re.search(r"\buniform\s+sampler\w*\s+texture\b", source):
         errors.append(f"{path.relative_to(ROOT)}: reserved texture sampler alias; use Iris gtexture or another valid sampler name")
-for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_hand.fsh",
              "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh",
-             "gbuffers_spidereyes.fsh"):
+             "gbuffers_spidereyes.fsh", "gbuffers_damagedblock.fsh"):
     source = sources.get(name, "")
     if "uniform sampler2D gtexture" not in source or "texture(gtexture" not in source:
         errors.append(f"{name} must sample the Iris block/entity atlas through gtexture")
@@ -231,7 +234,7 @@ for token in ("block.32100=minecraft:glowstone", "block.32118=minecraft:lava"):
     if token not in block_properties:
         errors.append(f"Missing emissive block ID mapping: {token}")
 
-for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particles.fsh"):
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh"):
     source = sources.get(name, "")
     if "/* RENDERTARGETS: 0,1,2,3 */" not in source:
         errors.append(f"{name} must write albedo, lightmap, normal and emissive attachments")
@@ -300,6 +303,23 @@ block_props = (SHADERS / "block.properties").read_text(encoding="utf-8") if (SHA
 for token in ("block.32000=minecraft:water",):
     if token not in block_props:
         errors.append(f"Missing stable Iris block material mapping: {token}")
+basic = sources.get("gbuffers_basic.fsh", "")
+for token in ("/* RENDERTARGETS: 0,2 */", "fogColor", "fogMode", "fogShape",
+              "outDeferredValidity = vec4(0.0)"):
+    if token not in basic:
+        errors.append(f"Basic overlay program is missing forward/fog component: {token}")
+damaged = sources.get("gbuffers_damagedblock.fsh", "")
+for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "alphaTestRef",
+              "crackColor.a < alphaTestRef", "crackColor.rgb *= vVertexColor.rgb"):
+    if token not in damaged:
+        errors.append(f"Damaged-block overlay is missing Iris alpha/color component: {token}")
+block_shader = sources.get("gbuffers_block.fsh", "")
+for token in ("/* RENDERTARGETS: 0,1,2,3 */", "uniform int blockEntityId",
+              "blockEntityId == 5004", "blockEntityId == 5025",
+              "outEncodedNormal = vec4(normalize(vPlayerNormal) * 0.5 + 0.5, signText ? 0.0 : 1.0)",
+              "calculateBlockFog", "outEmissionData"):
+    if token not in block_shader:
+        errors.append(f"Block-entity shader is missing Iris blockEntityId component: {token}")
 line_overlay = sources.get("gbuffers_line.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLINE", "MC_RENDER_STAGE_DEBUG",
               "fogColor", "fogDensity", "outDeferredValidity = vec4(0.0)"):
@@ -426,6 +446,11 @@ for directive in (
     "blend.gbuffers_terrain.colortex3=off",
     "blend.gbuffers_entities.colortex3=off",
     "blend.gbuffers_particles.colortex3=off",
+    "blend.gbuffers_block.colortex1=off",
+    "blend.gbuffers_block.colortex2=off",
+    "blend.gbuffers_block.colortex3=off",
+    "blend.gbuffers_basic.colortex2=off",
+    "alphaTest.gbuffers_damagedblock=GREATER 0.004",
     "blend.gbuffers_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
