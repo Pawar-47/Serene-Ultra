@@ -554,3 +554,11 @@ GitHub Actions run [45076104051](https://github.com/Pawar-47/Serene-Ultra/action
 The dedicated water vertex/fragment pair now consumes Iris' documented `at_tangent` attribute and `normals` atlas. The tangent and handedness are transformed into player space; water top-face normal maps are decoded in tangent space and blended into the analytic wave normal before Fresnel/refraction/SSR. The original geometric normal is retained for shadow-map bias and shoreline orientation. A `WATER_NORMAL_MAP_STRENGTH` Quality slider controls the contribution.
 
 Iris documents `at_tangent` as available in `gbuffers_*.vsh`, and `normals` as the resource-pack PBR normal atlas. When no `_n` texture exists, Iris returns the neutral normal (127,127,255), so the feature is effectively flat and does not invent surface detail. This is resource-pack PBR integration, not a replacement for Unbound's own generated multi-scale water normal texture. The implementation adds one normal-atlas lookup only for top-facing water fragments when the option is enabled. Runtime behavior with actual LabPBR/oldPBR packs and Intel HD 5500 cost remain unverified.
+
+
+## Colored shadow transmission checkpoint — 2026-11-23
+- Verified Iris shadow documentation: `shadowtex0` includes all casters, `shadowtex1` includes opaque casters only, and `shadowcolor0` is writable from `shadow.fsh` and readable by deferred.
+- Enabled `shadowTranslucent=true`; `shadow.fsh` writes RGBA8 transmission for water caustics, clear/stained/tinted glass, ice and Nether portal. Unknown translucent materials default to neutral full transmission.
+- Deferred retains four `shadowtex0` PCF taps, then performs a center `shadowtex0`/`shadowtex1` comparison and samples `shadowcolor0` only when a translucent blocker is detected. RGB transmission affects direct and specular lighting.
+- Added `blend.shadow.shadowcolor0=off` and `flip.shadow.shadowcolor0=false` to preserve the shadow pass's output for deferred.
+- This adds an RGBA8 shadow-color attachment and an extra translucent shadow render; measure cost on Intel HD 5500. No in-game visual validation is claimed.
