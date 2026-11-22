@@ -580,3 +580,9 @@ The shadow color target is RGBA8 because it now carries RGB transmission and alp
 ## Water cauldron material routing — 2026-11-23
 
 Mapped `minecraft:water_cauldron` to a dedicated water material ID in `block.properties`, then remapped that ID in both the gbuffers-water and shadow vertex stages. The water fragment path treats the translucent water surface as water even though it is a block model rather than an Iris fluid render type. The shadow pass applies caustic transmission to the cauldron surface only when its sampled material alpha is below 0.999, preventing the opaque cauldron shell from receiving water-caustic transmission. This relies on Minecraft 26.1+ per-sprite cutout/translucent block-model routing; runtime behavior on the target 26.3 build remains to be verified.
+
+
+## Forward translucent shadow consistency checkpoint — 2026-11-23
+- Corrected the post-deferred `gbuffers_water` forward-lighting path to use Iris `shadowtex0`, opaque-only `shadowtex1` and `shadowcolor0` transmission, matching the deferred shadow path.
+- The forward pass retains four-tap PCF, performs a center translucent-blocker comparison and conditionally reads the RGBA8 material transmission. Its direct lighting now uses RGB shadow colour rather than a scalar shadow factor.
+- This prevents water/glass surfaces from treating the same translucent blocker as opaque after deferred has already applied its colored transmission. Structural and GLSL validation pending for this latest correction.
