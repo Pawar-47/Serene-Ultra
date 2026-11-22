@@ -183,3 +183,7 @@ The water pass now consumes Iris `isEyeInWater` (water state `1`) to select a se
 
 ## Glass and portal material dispatch — 2026-11-23
 Added Iris `block.properties` IDs for clear glass, glass panes, all 16 stained-glass colours and panes, tinted glass, and nether portal. The dedicated `gbuffers_water` fragment stage now distinguishes these from water using the documented `mc_Entity.x` ID while retaining `mc_Entity.y` as the independent fluid discriminator. Clear/stained/tinted glass receive material-scaled Fresnel SSR using the existing opaque depth and half-resolution scene snapshot. Nether portal receives the Unbound-inspired warm nonlinear tint and self-emission, without atlas-crossing portal raymarch. The latter remains a deliberate feature gap; the full portal distortion/edge effect and glass-specific material/absorption response remain outstanding.
+
+
+### Translucent ice dispatch — 2026-11-23
+Added Iris ID `32004` for ice/frosted ice, matching the shared r5.10 material ID map. Ice now uses the shared Fresnel SSR path with its own reflection scale, separate from water absorption/refraction. This is a first-pass material response; ice-specific smoothness, thickness, tint and roughness calibration remain outstanding.
