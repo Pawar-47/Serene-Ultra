@@ -93,7 +93,7 @@ void main() {
                 if (particleDither > 0.4) discard;
             } else if (hasSkylight && rainStrength > 0.001 && particle.b > 0.7 && particle.r < 0.28 &&
                        particle.g < 0.425 && particle.g > particle.r * 1.4) {
-                // Physics-mod rain particles; only classify these in the Overworld.
+                // Physics-mod rain particles; require Iris to report active sky weather.
                 if (particle.a < 0.1 || isEyeInWater == 3) discard;
                 particle.a *= rainTexOpacity;
                 particle.rgb = sqrt(max(particle.rgb, vec3(0.0)));
