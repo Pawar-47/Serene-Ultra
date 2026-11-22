@@ -19,8 +19,11 @@ void main() {
     vec4 albedo = texture(gtexture, vTexCoord) * vVertexColor;
     if (albedo.a < alphaTestRef) discard;
 
-    // Iris entity tint carries a blend factor in alpha; apply it before lighting.
-    albedo.rgb = mix(albedo.rgb, entityColor.rgb, entityColor.a);
+    // Iris entity tint carries a blend factor in alpha. Blend sampled colors
+    // in linear space, then re-encode for the G-buffer color representation.
+    vec3 entityAlbedoLinear = pow(max(albedo.rgb, vec3(0.0)), vec3(2.2));
+    vec3 entityTintLinear = pow(max(entityColor.rgb, vec3(0.0)), vec3(2.2));
+    albedo.rgb = pow(max(mix(entityAlbedoLinear, entityTintLinear, entityColor.a), vec3(0.0)), vec3(1.0 / 2.2));
 
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     outColor = albedo;
