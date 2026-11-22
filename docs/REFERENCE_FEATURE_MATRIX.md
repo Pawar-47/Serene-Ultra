@@ -1,7 +1,7 @@
 # Reference Ultra Feature Preservation Matrix
 
 **Status:** Inventory baseline created; implementation and parity verification are pending.
-**Rule:** Every feature found in the supplied Good Working Shader's Ultra profile must have an explicit disposition. "Optimized" does not mean removed. A feature may be marked complete only after code inspection and visual/runtime validation.
+**Rule:** Every feature found in the supplied reference's Ultra profile must have an explicit disposition. "Optimized" does not mean removed. A feature may be marked complete only after code inspection and visual/runtime validation.
 
 The supplied archive is a Complementary Reimagined shaderpack. Its source is not copied into Serene Ultra; this matrix records feature categories and the work required for an independent implementation.
 
@@ -11,6 +11,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Entity rendering | Entity-specific shading and shadows | Entity material path with alpha handling | Pending |
 | Hand/item rendering | Correct first-person hand/item rendering | Dedicated hand pipeline and parity tests | Foundation |
 | Shadow mapping | Sun/moon directional shadows | Depth map, cascade/clip strategy if needed, culling | Foundation |
+| Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
 | Shadow filtering | Soft filtered shadows and quality controls | Tunable PCF/rotated sampling with temporal stability | Pending |
 | Ambient occlusion | Contact/local occlusion | Horizon/contact approximation with edge-aware filtering | Pending |
 | Direct lighting | Directional lighting and block light response | Shared physically coherent lighting model | Pending |
@@ -30,7 +31,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | TAA | Temporal anti-aliasing | Motion-aware history, rejection and sharpening controls | Pending |
 | Other anti-aliasing | Additional AA modes/quality settings | Configurable AA path and edge validation | Pending |
 | Bloom/emissive | Emissive contribution and glow/post effects | Thresholded multi-scale bloom with bandwidth-aware buffers | Pending |
-| Color grading | Tonemapping, exposure, saturation and contrast | Reference-matched color pipeline | Pending |
+| Color grading | Tonemapping, exposure, saturation and contrast | Reference-matched color pipeline | Foundation; parity pending |
 | Depth of field | Focus/depth post-processing if present in Ultra | Depth-aware bounded blur | Pending |
 | Motion blur | Motion-dependent post-processing if present | Velocity-aware path; avoid ghosting | Pending |
 | Lens/post effects | Any enabled Ultra lens and post-processing effects | Individually inventoried and switchable | Pending |
@@ -40,9 +41,9 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Night vision/potions | Correct vanilla effect interactions | Explicit effect compatibility tests | Pending |
 | Emissive entities/blocks | Correct emissive response | Emissive classification and lighting path | Pending |
 | Translucent materials | Glass, foliage, water and particles | Ordered/appropriate translucent passes and alpha rules | Pending |
-| Foliage | Alpha-tested leaves/grass and wind response if present | Alpha-aware shadows and material animation | Pending |
+| Foliage | Alpha-tested leaves/grass and wind response if present | Alpha-aware shadow casters are started; material animation and parity remain | Partial |
 | Voxelization/SSBO-dependent effects | Reference's voxel/structured-buffer features | Determine visible Ultra contribution; implement a hardware-compatible alternative where needed | Pending |
-| Profiles/settings | Full reference Ultra quality controls | Serene Ultra master profile plus scalable implementation controls | Pending |
+| Profiles/settings | Full reference Ultra quality controls | Serene Ultra master profile plus scalable implementation controls | Foundation |
 | Iris compatibility | Shaderpack lifecycle and supported uniforms/programs | Current Iris 26.3 validation | Pending |
 
 ## Audit follow-up required
@@ -54,3 +55,7 @@ The initial archive inventory recorded:
 - Quality profiles including POTATO through ULTRA and COMPLEMENTARY.
 
 Next audit pass must extract the actual Ultra profile values and enumerate every program, define, material branch, render target, and post-processing stage. This matrix is intentionally conservative and must be expanded rather than treating its current rows as exhaustive.
+
+## Latest implementation note
+
+The shadow vertex stage now forwards base texture coordinates and vertex alpha. The shadow fragment stage samples the material texture and discards texels below `SHADOW_ALPHA_CUTOFF`, so cutout materials can cast shaped shadows. This is a first shadow-quality step only: filtered shadow sampling, bias tuning, lighting integration and in-game verification remain incomplete.
