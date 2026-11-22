@@ -3,6 +3,7 @@
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
+uniform sampler2D colortex3;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 uniform sampler2DShadow shadowtex0;
@@ -203,6 +204,12 @@ void main() {
     // existing color-grading/final pass. This keeps the output contract intact.
     vec3 albedoLinear = pow(max(scene.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
+
+    // Emission is stored separately from albedo/lightmap/normal so it is not
+    // attenuated by contact AO or the celestial shadow term.
+    vec4 emissionData = texture(colortex3, vTexCoord);
+    vec3 emissionLinear = pow(max(emissionData.rgb, vec3(0.0)), vec3(2.2));
+    litLinear += emissionLinear * (emissionData.a * 5.0);
 
     float fogDistance = (fogShape == 1) ? length(viewPosition.xz) : length(viewPosition);
     float fogFactor = calculateFogFactor(fogDistance);
