@@ -195,3 +195,7 @@ The shared r5.10 material map identifies slime and honey blocks as special smoot
 
 ## Beer-Lambert water absorption — 2026-11-23
 The water pass now applies depth-dependent absorption to the refracted opaque-scene sample. It computes per-channel transmission as `exp(-absorptionCoefficient * waterThickness)` and blends the transmitted scene with the current water tint. Red attenuates faster than green, and green faster than blue, producing stronger blue tint with depth. The calculation is performed in linear colour space after the validated refraction sample and before the final refraction blend. `WATER_ABSORPTION_STRENGTH` is exposed in the Quality menu. This is a physically motivated first-pass approximation; coefficients and appearance still need in-game comparison against Unbound.
+
+
+## Atlas-safe portal distortion — 2026-11-23
+The portal material now uses Iris' documented `mc_midTexCoord` per-quad UV center. The water vertex stage forwards the transformed midpoint and per-quad half extents; the fragment stage clamps each of four animated portal texture taps to the current sprite bounds plus a one-texel inset. This prevents adjacent atlas tiles from bleeding into the distortion. Portal emission is calculated from the pre-tint texture signal, then the colour is given the nonlinear warm tint. This is a four-tap low-cost approximation, not the full Unbound eight-step portal raymarch/edge effect.
