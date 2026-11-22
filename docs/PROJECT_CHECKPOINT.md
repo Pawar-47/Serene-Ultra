@@ -203,3 +203,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 
 
 - Added Iris fog to the emissive spider-eyes program while retaining its colortex2 deferred-validity mask.
+
+## Expanded Iris geometry coverage audit — 2026-11-23
+- Extended the validator's fallback inventory to include damaged blocks, beacon beams, armor glint, clouds, skybasic/skytextured, lightning, lines, textured-lit and textured fallback programs.
+- The remaining special geometry is now visible as non-failing CI warnings with documented Iris fallback destinations; it is not silently treated as feature-complete.
