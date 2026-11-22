@@ -496,8 +496,9 @@ for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureL
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 
 for token in ("uniform sampler2D normals;", "calculateWaterNormalMap",
-              "textureLod(normals, vTexCoord, 0.0)", "vPlayerTangent",
-              "vTangentHandedness", "at_tangent.w < 0.0 ? -1.0 : 1.0"):
+              "textureLod(normals, vTexCoord, 0.0)", "MC_TEXTURE_FORMAT_LAB_PBR",
+              "tangentNormal.y = -tangentNormal.y", "cross(tangent, geometricNormal)",
+              "vPlayerTangent", "vTangentHandedness", "at_tangent.w < 0.0 ? -1.0 : 1.0"):
     if token not in water and token not in water_vertex:
         errors.append(f"Water resource-pack normal-map path is missing component: {token}")
 for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt;",
@@ -512,6 +513,8 @@ for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt
               "viewNormal = normalize(mat3(gbufferModelView) * normal)"):
     if token not in water:
         errors.append(f"Unbound-guided animated water normal path is missing component: {token}")
+if "cross(geometricNormal, tangent)" in water:
+    errors.append("Water tangent basis must follow Iris at_tangent handedness: cross(tangent, normal)")
 if "uniform vec3 cameraPosition;" in water:
     errors.append("Water waves must avoid Iris cameraPosition's 30,000-block wrap")
 if "vec3 shadowNormal = normal;" not in water or "sampleTranslucentShadow(vPlayerPosition, shadowNormal, worldLightDirection)" not in water:
