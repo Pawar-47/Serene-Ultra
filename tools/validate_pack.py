@@ -366,6 +366,11 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
     source = sources.get(name, "")
     if "materialReflectance = labF0Code / 255.0;" not in source:
         errors.append(f"{name} must decode LabPBR dielectric F0 linearly as code/255")
+for name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_block.vsh", "gbuffers_water.vsh"):
+    vertex_source = sources.get(name, "")
+    if "in vec4 at_tangent;" not in vertex_source or "at_tangent.w" not in vertex_source:
+        errors.append(f"{name} must declare and use Iris at_tangent with handedness")
+
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     for token in ("uniform sampler2D specular;", "texture(specular, vTexCoord)",
