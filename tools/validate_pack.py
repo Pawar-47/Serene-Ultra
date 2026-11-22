@@ -140,11 +140,11 @@ if props_path.is_file():
             errors.append(f"Missing menu configuration: {screen}")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
-                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
+                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
     slider_options_line = next((line for line in props.splitlines() if line.startswith("sliders = ")), "")
-    for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH"):
+    for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH"):
         if option not in slider_options_line:
             errors.append(f"{option} must be exposed as an Iris slider")
     if "separateAo=false" not in props:
@@ -326,8 +326,15 @@ for token in ("flat in int vMaterialId", "emissionStrength", "materialAO", "mate
 for token in ("in vec3 vPlayerPosition", "uniform sampler2D noisetex",
               "uniform ivec3 cameraPositionInt", "uniform vec3 cameraPositionFract",
               "uniform float frameTimeCounter", "uniform float wetness", "uniform float rainStrength",
-              "#define RAIN_PUDDLE_STRENGTH 70", "puddleLightFactor", "puddleNormalFactor",
-              "puddleForm", "materialPorosity", "puddleMask", "puddleSmoothness",
+              "uniform float rainfall", "uniform int biome_precipitation", "biome_precipitation == PPT_RAIN",
+              "#define RAIN_PUDDLE_STRENGTH 70", "#define MATERIAL_WETNESS_STRENGTH 100",
+              "materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0)",
+              "float porousWetness = clamp(", "materialReflectance *= 1.0 - porousWetness * 0.45",
+              "materialSmoothness *= 1.0 - porousWetness * 0.35",
+              "puddleLightFactor", "puddleNormalFactor", "puddleForm",
+              "float puddleTime = mod(frameTimeCounter, 60.0)",
+              "materialPorosity", "puddleMask", "puddleSmoothness",
+              "vec3 bitangent = normalize(cross(tangent, surfaceNormal))",
               "vMaterialId == 10009 || vMaterialId == 10011 || vMaterialId == 10129 || vMaterialId == 10137"):
     if token not in terrain_fragment:
         errors.append(f"Terrain rain-puddle path is missing component: {token}")
