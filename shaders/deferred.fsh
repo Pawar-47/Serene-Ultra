@@ -203,7 +203,7 @@ void main() {
     float celestialGate = endFlashActive
         ? clamp(endFlashIntensity, 0.0, 1.0)
         : (hasSkylight ? skyLight : 0.0);
-    float shadow = 1.0;
+    vec3 shadow = vec3(1.0);
     if (nDotL > 0.001 && celestialGate > 0.001) {
         shadow = sampleShadow(playerPosition, normal, worldLightDirection);
     }
