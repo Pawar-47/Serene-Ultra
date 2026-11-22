@@ -6,6 +6,7 @@ uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 uniform sampler2D colortex4;
 uniform sampler2D noisetex;
+uniform sampler2D normals;
 uniform float alphaTestRef;
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
@@ -41,6 +42,8 @@ in vec3 vPlayerNormal;
 in vec3 vPlayerPosition;
 in vec3 vViewPosition;
 in vec3 vViewNormal;
+in vec3 vPlayerTangent;
+flat in float vTangentHandedness;
 flat in int vMaterialId;
 flat in float vFluidRenderType;
 
@@ -50,6 +53,7 @@ flat in float vFluidRenderType;
 #define WATER_REFLECTION_STRENGTH 0.75 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
 #define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
+#define WATER_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack water normal-map detail
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
 #define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
@@ -74,6 +78,20 @@ vec3 getStableWaterWorldPosition(vec3 playerPosition) {
 
 // Three analytic wave bands provide stable multi-scale surface normals without
 // a full-screen texture fetch or an additional normal-map asset.
+vec3 calculateWaterNormalMap(vec3 geometricNormal) {
+    vec3 tangentNormal = textureLod(normals, vTexCoord, 0.0).xyz * 2.0 - 1.0;
+    tangentNormal.xy *= WATER_NORMAL_MAP_STRENGTH * 0.01;
+    tangentNormal = normalize(tangentNormal);
+
+    vec3 tangent = normalize(vPlayerTangent - geometricNormal * dot(vPlayerTangent, geometricNormal));
+    vec3 bitangent = normalize(cross(geometricNormal, tangent)) * vTangentHandedness;
+    return normalize(
+        tangent * tangentNormal.x +
+        bitangent * tangentNormal.y +
+        geometricNormal * tangentNormal.z
+    );
+}
+
 vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 stableWorldPosition) {
     if (abs(geometricNormal.y) < 0.72 || WATER_WAVE_STRENGTH <= 0) {
         return geometricNormal;
@@ -306,11 +324,17 @@ void main() {
         normal = -normal;
         viewNormal = -viewNormal;
     }
-    // Preserve geometric normal for shadow-map bias while wave normals affect lighting.
+    // Keep the geometric normal for shadow-map bias; PBR and wave detail
+    // are applied only to the forward lighting/reflection normal.
     vec3 shadowNormal = normal;
     vec3 stableWaterWorldPosition = vec3(0.0);
     if (isWater) {
         stableWaterWorldPosition = getStableWaterWorldPosition(vPlayerPosition);
+        #if WATER_NORMAL_MAP_STRENGTH > 0
+            if (abs(normal.y) > 0.72) {
+                normal = calculateWaterNormalMap(normal);
+            }
+        #endif
         normal = calculateWaterWaveNormal(normal, stableWaterWorldPosition);
         // Iris documents gbufferModelView as player-space to view-space.
         // Transform the perturbed normal for Fresnel, refraction and SSR.
