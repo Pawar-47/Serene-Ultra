@@ -131,7 +131,10 @@ void main() {
     float shadow = sampleShadow(playerPosition, normal, worldLightDirection);
 
     float skyLight = clamp(lightData.a, 0.0, 1.0);
-    float dayFactor = 1.0 - smoothstep(0.45, 0.55, sunAngle);
+    // Iris sunAngle: 0=dawn, 0.25=noon, 0.5=sunset, 0.75=midnight.
+    // The sine curve wraps continuously through dawn and keeps the night side at zero.
+    float solarElevation = sin(sunAngle * 6.28318530718);
+    float dayFactor = smoothstep(0.0, 0.30, solarElevation);
 
     // Use Minecraft's own sampled lightmap RGB as the ambient/block-light
     // foundation so its existing colored light response is retained.
