@@ -669,7 +669,7 @@ for token in ("materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0)"
               "MATERIAL_SPECULAR_STRENGTH", "float specularPower = mix(12.0, 96.0, materialSmoothness)",
               "normalize(mat3(gbufferModelViewInverse) * normalize(-viewPosition))",
               "halfVectorLengthSquared > 0.000001", "inversesqrt(halfVectorLengthSquared)",
-              "litLinear += celestialColor * specularStrength"):
+              "litLinear += celestialColor * shadow * specularStrength"):
     if token not in deferred:
         errors.append(f"Deferred material specular path is missing component: {token}")
 
