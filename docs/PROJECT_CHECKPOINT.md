@@ -7,9 +7,9 @@ https://github.com/Pawar-47/Serene-Ultra
 - Verified the live main branch contains the cumulative project brief, checkpoint, profiles, color controls and structural CI.
 - Implemented texture-aware alpha-tested shadow casters with a user-adjustable cutoff.
 - Added terrain and entity G-buffer capture for albedo, lightmap UVs and encoded player-aligned normals.
-- Added explicit Iris RENDERTARGETS mapping for terrain, entities, hand and composite passes.
-- Added non-blended G-buffer data attachment settings for terrain and entity data buffers.
-- Expanded structural validation to check the alpha-tested shadow path and required G-buffer attachments.
+- Added a deferred lighting pass with depth reconstruction, celestial diffuse lighting, slope-aware depth bias and four hardware-filtered shadow comparison taps.
+- Added explicit Iris RENDERTARGETS mappings and G-buffer data attachment blend rules.
+- Expanded structural validation to check shadow alpha testing, G-buffer attachments and deferred lighting dependencies.
 - Updated the feature matrix, architecture document and living project brief.
 
 ## Current profile behavior
@@ -23,24 +23,24 @@ All five profiles retain the planned full feature set. Lower-cost profiles curre
 
 ## Validation status
 - Source changes are committed to main.
-- The GitHub Actions run for the latest commit has not yet been confirmed.
+- Structural CI for the newest deferred-lighting commit has not yet been confirmed.
 - Structural checks do not compile GLSL and cannot establish Iris runtime compatibility.
 - No Minecraft/Iris runtime test, visual parity test, or target-machine FPS measurement has been performed.
+- The deferred lighting balance and shadow bias are initial values and require in-game calibration.
 - HDR and Ultra-HDR are tone-mapping looks for current output, not verified true HDR display output.
 
 ## Still in progress
-- Deferred lighting using the captured albedo, lightmap and normal data.
-- Filtered shadow sampling, depth bias and direct-light integration.
-- Material classification, translucent geometry and full material response.
-- AO, block lighting, indirect/colored lighting and emissive response.
-- Water, reflections, weather and puddles.
-- Atmosphere, sky, clouds, fog and volumetrics.
-- TAA/FXAA, bloom and remaining post effects.
-- Dimension-specific behavior, vanilla compatibility and menu expansion for each implemented subsystem.
+- Calibrate direct/ambient lighting and shadow bias against fixed reference scenes.
+- Improve lightmap-derived block/sky response and implement colored lighting.
+- Add AO, indirect illumination and material classification.
+- Complete translucent materials, water, reflections, weather and puddles.
+- Add atmosphere, sky, clouds, fog and volumetrics.
+- Add TAA/FXAA, bloom and remaining post effects.
+- Add dimension-specific behavior and complete vanilla compatibility.
 - Target-machine performance and runtime testing.
 
 ## Next actions
-1. Confirm structural CI for the latest commit.
-2. Implement depth reconstruction and shadow-aware directional lighting using Iris-documented uniforms and buffers.
-3. Keep the identity composite until the deferred lighting result can be tested against the neutral baseline.
-4. Do not publish a release until a usable shaderpack passes runtime validation.
+1. Confirm structural CI and obtain GLSL/runtime validation.
+2. Compare day, night, cave, foliage and entity scenes against the reference Ultra profile; tune light and shadow behavior.
+3. Continue with AO/colored lighting and material classification without dropping planned features.
+4. Keep the project brief and checkpoint current; do not publish an unverified release.
