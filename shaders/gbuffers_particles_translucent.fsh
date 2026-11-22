@@ -63,11 +63,44 @@ void main() {
 
     // This is a post-deferred forward path: retain Minecraft's colored
     // lightmap response without sampling forbidden colortex0-3 attachments.
-    vec3 lightmapLinear = pow(max(texture(lightmap, vLightmapCoord).rgb, vec3(0.0)), vec3(2.2));
-    vec3 particleLinear = pow(max(particle.rgb, vec3(0.0)), vec3(2.2)) * lightmapLinear;
+    vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
+    float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
+
+    vec3 normal = normalize(vPlayerNormal);
+    vec3 viewLightDirection = normalize(shadowLightPosition);
+    vec3 playerLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
+    float nDotL = max(dot(normal, playerLightDirection), 0.0);
+
+    bool endFlashActive = endFlashIntensity > 0.001;
+    float solarElevation = sin(sunAngle * 6.28318530718);
+    float dayFactor = (hasSkylight && !endFlashActive)
+        ? smoothstep(0.0, 0.30, solarElevation)
+        : 0.0;
+    float celestialGate = endFlashActive
+        ? clamp(endFlashIntensity, 0.0, 1.0)
+        : (hasSkylight ? skyLight : 0.0);
+
+    float shadow = 1.0;
+    if (nDotL > 0.001 && celestialGate > 0.001) {
+        shadow = sampleParticleShadow(vPlayerPosition, normal, playerLightDirection);
+    }
+
+    vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
+    vec3 celestialColor = endFlashActive
+        ? vec3(1.0)
+        : (hasSkylight
+            ? mix(vec3(0.36, 0.44, 0.68), vec3(1.0, 0.94, 0.82), dayFactor)
+            : vec3(1.0));
+    float celestialIntensity = endFlashActive
+        ? 0.70
+        : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
+    vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
+
+    vec3 particleLinear = pow(max(particle.rgb, vec3(0.0)), vec3(2.2));
+    vec3 litLinear = particleLinear * (ambient + direct);
     float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
     float fogFactor = calculateParticleFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
-    particle.rgb = pow(max(mix(particleLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));
+    particle.rgb = pow(max(mix(litLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));
     outColor = particle;
 }
