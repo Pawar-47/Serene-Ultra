@@ -340,3 +340,10 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Deferred adds emission after contact AO/direct lighting and before fog, keeping it independent of AO/shadow attenuation.
 - Added lava self-emission to the post-deferred water/fluid shader.
 - This is a compact block-ID emission baseline; PBR emission maps, entity emissive classification, bloom and runtime visual tuning remain pending.
+
+## Dedicated basic/block/damaged-block programs — 2026-11-23
+- Added `gbuffers_basic` for leash/debug overlays. It applies Iris fog, writes scene color and clears the deferred-validity mask.
+- Added `gbuffers_damagedblock` for crack overlays. It writes color only, uses Iris `alphaTestRef`, and matches Complementary's `alphaTest.gbuffers_damagedblock=GREATER 0.004` threshold. Deferred lighting continues to use the underlying block's G-buffer data.
+- Added `gbuffers_block` for block entities/sign text. It writes albedo/lightmap/normal/emission attachments, uses documented `blockEntityId`, fogs sign text in the forward stage and marks it as deferred-bypass; portal/gateway IDs have a dedicated emission strength.
+- Added `block.properties` mappings for sign families (5004) and End portal/gateway (5025), plus blend/alpha-test directives and structural checks.
+- Runtime validation remains pending for signs, portal animation, block-entity rendering and block-breaking overlays.
