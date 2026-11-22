@@ -89,7 +89,7 @@ float calculateWaterThickness(out vec3 opaqueViewPosition, out float opaqueDepth
 
 
 #if WATER_REFLECTION_QUALITY > 0
-// The deferred pass writes a separate opaque/sky color snapshot to colortex4.
+// The deferred1 pass writes a separate half-resolution opaque/sky color snapshot to colortex4.
 // depthtex2 excludes both translucent geometry and first-person hand geometry,
 // so this forward pass never samples colortex0 while writing to it.
 vec3 sampleWaterScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
