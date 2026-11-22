@@ -84,11 +84,12 @@ vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 stableWorldPosition) {
     // keep every wave phase continuous at that wrap for all slider values.
     float waveTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
 
-    // Integer-divisor wavelengths tile the 256-block coordinate domain, so
-    // camera-coordinate wrapping cannot create a visible phase discontinuity.
-    const float frequencyA = 6.28318530718 / 64.0;
-    const float frequencyB = 6.28318530718 / 32.0;
-    const float frequencyC = 6.28318530718 / 32.0;
+    // Every exposed scale is a quarter-step, so all selected wavelengths
+    // remain integer divisors of the 256-block stable-world coordinate period.
+    float waveScale = WATER_WAVE_SCALE * 0.01;
+    float frequencyA = (6.28318530718 / 64.0) * waveScale;
+    float frequencyB = (6.28318530718 / 32.0) * waveScale;
+    float frequencyC = (6.28318530718 / 32.0) * waveScale;
     float phaseA = worldXZ.x * frequencyA + waveTime;
     float phaseB = worldXZ.y * frequencyB - waveTime * 2.0;
     float phaseC = dot(worldXZ, vec2(1.0, 1.0)) * frequencyC + waveTime * 3.0;
