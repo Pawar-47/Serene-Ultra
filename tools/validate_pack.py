@@ -371,6 +371,10 @@ for name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_block.vs
     if "in vec4 at_tangent;" not in vertex_source or "at_tangent.w" not in vertex_source:
         errors.append(f"{name} must declare and use Iris at_tangent with handedness")
 
+if sources.get("deferred.fsh", "").count("ambient *= materialAOFactor") != 1:
+    errors.append("Material AO must be applied exactly once to deferred ambient")
+if "ambient * materialAOFactor + direct" in sources.get("deferred.fsh", ""):
+    errors.append("Material AO must not be applied twice in the final diffuse expression")
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     for token in ("uniform sampler2D specular;", "texture(specular, vTexCoord)",
@@ -412,6 +416,8 @@ if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, mater
 for token in ("#define MATERIAL_AO_STRENGTH 100", "#define MATERIAL_SSS_STRENGTH 100",
               "float materialAO = clamp(emissionData.b, 0.0, 1.0)",
               "mix(1.0, materialAO, MATERIAL_AO_STRENGTH * 0.01)",
+              "ambient *= materialAOFactor",
+              "vec3 litLinear = albedoLinear * (ambient + direct)",
               "float materialSurfaceCode = floor(emissionData.a * 255.0 + 0.5)",
               "materialSSS = clamp((materialSurfaceCode - 65.0) / 190.0, 0.0, 1.0)",
               "mix(shadow, vec3(1.0), sssStrength * 0.65)"):
