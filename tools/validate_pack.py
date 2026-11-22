@@ -142,14 +142,21 @@ for path in SHADERS.rglob("*.fsh"):
     source = path.read_text(encoding="utf-8")
     if re.search(r"\buniform\s+sampler\w*\s+texture\b", source):
         errors.append(f"{path.relative_to(ROOT)}: reserved texture sampler alias; use Iris gtexture or another valid sampler name")
-for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh"):
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
+             "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh"):
     source = sources.get(name, "")
     if "uniform sampler2D gtexture" not in source or "texture(gtexture" not in source:
         errors.append(f"{name} must sample the Iris block/entity atlas through gtexture")
 if "#define SHADOW_ALPHA_CUTOFF " not in shadow_fragment:
     errors.append("Shadow alpha cutoff must be an active shader option")
+if "const int shadowMapResolution" not in shadow_vertex or "const float shadowDistance" not in shadow_vertex:
+    errors.append("Shadow pass must declare Iris shadowMapResolution and shadowDistance constants")
 if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
     errors.append("Shadow pass must enable Iris shadow-distance culling")
+deferred_options = sources.get("deferred.fsh", "")
+ao_strength_line = next((line for line in deferred_options.splitlines() if line.startswith("#define AO_STRENGTH ")), "")
+if "0.65" not in ao_strength_line:
+    errors.append("AO_STRENGTH option values must include the 0.65 profile preset")
 
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particles.fsh"):
     source = sources.get(name, "")
