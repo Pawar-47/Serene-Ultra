@@ -229,3 +229,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Shadow caster alpha testing now uses the stricter of Iris `alphaTestRef` and the Serene `SHADOW_ALPHA_CUTOFF` option; validator enforces both.
 
 - Translucent particle shader now preserves fractional alpha and only discards near-zero alpha; Iris `alphaTestRef` remains on opaque/cutout particle paths.
+
+## Iris scope correction — `gbuffers_water` — 2026-11-23
+- Iris documents `gbuffers_water` as all translucent terrain, including water and stained glass.
+- Renamed water-specific local symbols to generic translucent-surface symbols and corrected the pipeline comments.
+- The current shader applies the same forward diffuse/lightmap/shadow/fog baseline to all geometry routed through this program; it does not claim fluid-specific refraction, Fresnel, or absorption.
+- Iris' `mc_Entity.y` is the documented fluid discriminator (`1.0` fluids, `-1.0` other terrain) and is reserved for the next reference-guided material-specific pass.
