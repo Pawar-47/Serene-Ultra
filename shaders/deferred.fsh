@@ -233,31 +233,47 @@ void main() {
     vec3 albedoLinear = pow(max(scene.rgb, vec3(0.0)), vec3(2.2));
     vec4 emissionData = texture(colortex3, vTexCoord);
     float materialReflectance = clamp(emissionData.g, 0.0, 1.0);
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    vec3 specularColor = (materialReflectance >= (230.0 / 255.0))
+        ? albedoLinear
+        : vec3(materialReflectance);
+#else
+    vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
+#endif
     vec3 litLinear = albedoLinear * (ambient + direct);
 
-    // Smoothness is packed into colortex2 alpha without another G-buffer.
-    // Only explicitly classified glossy materials pay for the specular term.
-    if (materialSmoothness > 0.01 && MATERIAL_SPECULAR_STRENGTH > 0) {
+    // Low-cost GGX direct specular. The branch is skipped for non-glossy
+    // surfaces and when no direct celestial light reaches the pixel.
+    if (materialSmoothness > 0.01 && MATERIAL_SPECULAR_STRENGTH > 0
+        && nDotL > 0.001 && celestialGate > 0.001) {
         vec3 viewDirectionPlayer = normalize(mat3(gbufferModelViewInverse) * normalize(-viewPosition));
         vec3 halfVector = worldLightDirection + viewDirectionPlayer;
         float halfVectorLengthSquared = dot(halfVector, halfVector);
-        // Opposing view/light directions can produce a zero-length half-vector.
-        // Skip the specular lobe rather than normalizing a zero vector.
         if (halfVectorLengthSquared > 0.000001) {
             vec3 halfDirection = halfVector * inversesqrt(halfVectorLengthSquared);
-            float specularPower = mix(12.0, 96.0, materialSmoothness);
-            float specularShape = pow(max(dot(normal, halfDirection), 0.0), specularPower);
-            float specularStrength = specularShape * materialSmoothness
-                * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18
-                * nDotL * celestialGate * celestialIntensity;
-#ifdef MC_TEXTURE_FORMAT_LAB_PBR
-            vec3 specularColor = (materialReflectance >= (230.0 / 255.0))
-                ? albedoLinear
-                : vec3(materialReflectance);
-#else
-            vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
-#endif
-            litLinear += celestialColor * shadow * specularColor * specularStrength;
+            float nDotV = max(dot(normal, viewDirectionPlayer), 0.001);
+            float nDotH = max(dot(normal, halfDirection), 0.0);
+            float vDotH = max(dot(viewDirectionPlayer, halfDirection), 0.0);
+            float roughness = max(1.0 - materialSmoothness, 0.08);
+            float alpha = roughness * roughness;
+            float alphaSquared = alpha * alpha;
+            float distributionDenominator = nDotH * nDotH * (alphaSquared - 1.0) + 1.0;
+            float distribution = alphaSquared
+                / max(3.14159265359 * distributionDenominator * distributionDenominator, 0.000001);
+            float geometryK = (roughness + 1.0) * (roughness + 1.0) * 0.125;
+            float geometryV = nDotV / (nDotV * (1.0 - geometryK) + geometryK);
+            float geometryL = nDotL / (nDotL * (1.0 - geometryK) + geometryK);
+            float fresnelFactor = 1.0 - vDotH;
+            fresnelFactor *= fresnelFactor;
+            fresnelFactor *= fresnelFactor * (1.0 - vDotH);
+            vec3 fresnel = specularColor + (1.0 - specularColor) * fresnelFactor;
+            vec3 specularBRDF = distribution * geometryV * geometryL * fresnel
+                / max(4.0 * nDotV * nDotL, 0.001);
+            vec3 specularContribution = direct * specularBRDF
+                * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18;
+            // Keep very sharp PBR peaks stable on low-bandwidth integrated GPUs.
+            specularContribution /= (1.0 + 0.125 * specularContribution);
+            litLinear += specularContribution;
         }
     }
 
