@@ -3,6 +3,7 @@
 // Iris shader options for the initial shadow-map implementation.
 const int shadowMapResolution = 1024; // [512 768 1024 1536 2048] Shadow-map resolution
 const float shadowDistance = 96.0; // [64.0 96.0 128.0 160.0 192.0 224.0] Shadow draw distance in blocks
+const float shadowDistanceRenderMul = 1.0; // Cull shadow geometry outside shadowDistance
 
 out vec2 vShadowTexCoord;
 out vec4 vShadowVertexColor;
