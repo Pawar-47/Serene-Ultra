@@ -66,3 +66,5 @@ Test after Iris runtime loading:
 - Confirm particle material heuristics are bypassed for larger resource-pack atlases.
 
 The optional particle-material path now handles water splash, modded rain/snow, underwater particles, campfire smoke and emissive ender/redstone/lava effects using Complementary's reference heuristics and Iris runtime uniforms.
+
+A compact emissive material channel is now integrated: terrain block IDs feed an RGBA8 `colortex3` buffer, deferred adds emission outside AO/shadow attenuation, and lava receives forward self-emission. Full PBR emission maps and bloom remain future work.
