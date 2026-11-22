@@ -253,14 +253,18 @@ if "const int shadowMapResolution" not in shadow_vertex or "const float shadowDi
 if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
     errors.append("Shadow pass must enable Iris shadow-distance culling")
 deferred_options = sources.get("deferred.fsh", "")
-for token in ("/* RENDERTARGETS: 0,4 */", "outOpaqueReflectionScene",
-              "outOpaqueReflectionScene = vec4(scene.rgb, reflectionSceneValid)",
-              "outOpaqueReflectionScene = vec4(litColor, 1.0)",
-              "abs(sceneDepth - opaqueWorldDepth) <= 0.000001"):
-    if token not in deferred_options:
-        errors.append(f"Deferred opaque-reflection snapshot is missing component: {token}")
-if "flip.deferred.colortex4=true" not in props:
-    errors.append("Deferred opaque-reflection snapshot must flip colortex4 into the main buffer")
+if "/* RENDERTARGETS: 0 */" not in deferred_options or "outOpaqueReflectionScene" in deferred_options:
+    errors.append("Full-resolution deferred must write only colortex0; the half-resolution water copy belongs in deferred1")
+deferred1 = sources.get("deferred1.fsh", "")
+for token in ("/* RENDERTARGETS: 4 */", "uniform sampler2D colortex0",
+              "uniform sampler2D depthtex0", "uniform sampler2D depthtex2",
+              "validCount", "step(0.5, validCount)", "outOpaqueSceneCopy = vec4("):
+    if token not in deferred1:
+        errors.append(f"Half-resolution deferred1 scene copy is missing component: {token}")
+if "size.buffer.colortex4=0.5 0.5" not in props:
+    errors.append("Water scene-copy attachment must be half resolution")
+if "flip.deferred.colortex4=false" not in props or "flip.deferred1.colortex4=true" not in props:
+    errors.append("Only deferred1 may flip the half-resolution colortex4 scene copy")
 ao_strength_line = next((line for line in deferred_options.splitlines() if line.startswith("#define AO_STRENGTH ")), "")
 if "0.65" not in ao_strength_line:
     errors.append("AO_STRENGTH option values must include the 0.65 profile preset")
@@ -367,28 +371,30 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
               "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)",
               "gl_FragCoord.xy / vec2(textureSize(depthtex1, 0))",
-              "sqrt(max(translucentAlbedo.a, 0.0))",
+              "refractedSceneSample.a > 0.5", "sqrt(max(translucentAlbedo.a, 0.0))",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
 
-for token in ("uniform sampler2D depthtex2", "uniform sampler2D colortex4",
-              "uniform mat4 gbufferProjection", "WATER_REFLECTION_QUALITY",
-              "sampleWaterScreenReflection", "texelFetch(depthtex2, samplePixel, 0)",
-              "texelFetch(colortex4, samplePixel, 0)", "float fresnel = 0.02 + 0.98 * pow",
-              "float reflectionWeight = min(fresnel * 2.5, 0.85) * reflectionConfidence"):
+for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
+              "uniform mat4 gbufferModelView", "WATER_REFLECTION_QUALITY",
+              "sampleWaterScreenReflection(", "texelFetch(depthtex2, depthPixel, 0)",
+              "texelFetch(colortex4, scenePixel, 0)", "waterReflectionLinear = mix("):
     if token not in water:
         errors.append(f"Water screen-space reflection path is missing component: {token}")
-if re.search(r"\\buniform\\s+sampler\\w*\\s+colortex0\\b", water):
+if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
 if "in vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
     errors.append("Water vertex path must pass the Iris view-space normal for Fresnel reflection")
-if "WATER_REFLECTION_QUALITY" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
-    errors.append("Water reflection quality must be exposed in the Iris Quality menu")
-if "WATER_REFLECTION_QUALITY" not in props.split("sliders =", 1)[-1].splitlines()[0]:
-    errors.append("Water reflection quality must be adjustable as an Iris slider")
-if "option.WATER_REFLECTION_QUALITY =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
-    errors.append("Water reflection quality needs a user-facing label")
+water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH")
+lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
+for option in water_options:
+    if option not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+        errors.append(f"{option} must be exposed in the Iris Quality menu")
+    if option not in props.split("sliders =", 1)[-1].splitlines()[0]:
+        errors.append(f"{option} must be adjustable as an Iris slider")
+    if f"option.{option} =" not in lang:
+        errors.append(f"{option} needs a user-facing label")
 for token in ("in vec2 mc_Entity", "vMaterialId = int(mc_Entity.x + 0.5)", "vFluidRenderType = mc_Entity.y"):
     if token not in water_vertex:
         errors.append(f"Translucent-terrain vertex stage is missing Iris material attribute: {token}")
