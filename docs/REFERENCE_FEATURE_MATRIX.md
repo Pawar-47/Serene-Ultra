@@ -137,7 +137,7 @@ The generic `gbuffers_water` translucent-terrain path now uses Iris `mc_Entity` 
 | `mc_Entity.x` maps to `block.properties` ID; `.y` is fluid render type | Water branch requires ID 32000 and fluid type `> 0.5` |
 | `depthtex1` excludes transparent geometry and is valid from deferred onward | Water thickness samples it in post-deferred `gbuffers_water` |
 | `far` is render distance, not the projection far plane | Clear depth and opaque depth are reconstructed through `gbufferProjectionInverse` |
-| Iris recommends using `alphaTestRef` | Water shader uses the uniform without overriding it in `shaders.properties` |
+| Iris alpha-test contract | Water shader uses `alphaTestRef`, set to `GREATER 0.0001` by the Complementary-matched `alphaTest.gbuffers_water` directive |
 
 The depth-opacity calculation follows the same thickness/exponential form used by Complementary Reimagined. Advanced water materials remain pending.
 
