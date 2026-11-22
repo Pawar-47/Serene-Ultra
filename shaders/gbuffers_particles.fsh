@@ -9,7 +9,7 @@ in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vPlayerNormal;
 
-#define PARTICLE_MATERIAL_FEATURES // Detect emissive particle textures
+#define PARTICLE_MATERIAL_FEATURES // Detect water, rain, snow, smoke and emissive particle textures
 
 /* RENDERTARGETS: 0,1,2,3 */
 layout(location = 0) out vec4 outColor;
