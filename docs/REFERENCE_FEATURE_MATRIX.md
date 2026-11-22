@@ -25,8 +25,8 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Atmospheric scattering | Sky color, horizon and atmospheric depth | Analytic atmosphere with shared sky/lighting parameters | Pending |
 | Fog | Distance, height and dimension-aware fog | Iris fog modes/shape in deferred and forward water/weather/particle/hand-water paths | Partial; source paths implemented, runtime tuning pending |
 | Clouds | Procedural/cloud-layer appearance and lighting | Procedural cloud system with adaptive sampling | Pending |
-| Water surface | Water tint, transparency, normals and forward lighting | Dedicated `gbuffers_water` forward path with lightmap and shadow sampling | Basic path implemented; advanced effects/runtime parity pending |
-| Water reflections | Reflected scene/sky and Fresnel response | Screen-space reflection plus fallback hierarchy | Pending |
+| Water surface | Unbound-style water tint, transparency, normals and forward lighting | Dedicated `gbuffers_water`; fluid-gated depth opacity, half-resolution refraction, Fresnel SSR, lightmap/shadow/fog | Partial; waves, foam, absorption colour, underwater response and runtime parity pending |
+| Water reflections | Reflected scene/sky and Fresnel response | Fresnel-weighted screen-space ray march (4/6/8 steps) using half-resolution scene colour and full-resolution opaque depth | Partial; sky-depth hits work, but environment/WSR fallback and advanced refinement remain pending |
 | Block reflections | Reflective material response | Material masks and screen-space/fallback reflections | Pending |
 | Rain/wetness | Rain response and wet surfaces | Weather/material masks and roughness response | Pending |
 | Puddles | Rain puddles and surface reflections | Surface classification and puddle masks | Pending |
@@ -66,12 +66,12 @@ The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB pl
 
 
 ## Iris program coverage audit (2026-11-23)
-The current source explicitly implements `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, `gbuffers_particles`, `gbuffers_particles_translucent` and `gbuffers_spidereyes`. All three post-deferred translucent programs use color-only forward outputs with Iris lightmap/fog handling; water also samples the shadow map. Advanced water/weather effects and all runtime/visual parity checks remain pending. See [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md).
+The current source explicitly implements `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, `gbuffers_particles`, `gbuffers_particles_translucent` and `gbuffers_spidereyes`. All three post-deferred translucent programs use color-only forward outputs with Iris lightmap/fog handling; water additionally implements depth opacity, half-resolution refraction and Fresnel SSR. Advanced Unbound water/weather effects and all runtime/visual parity checks remain pending. See [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md) and [UNBOUND_REFERENCE_AUDIT.md](UNBOUND_REFERENCE_AUDIT.md).
 
 Do not equate Iris fallback coverage with correct feature implementation. The matrix must track both the native geometry category and the actual Iris program that receives it.
 
 ## Post-deferred scene preservation correction
-The old colortex3-to-colortex0 copy-back has been removed. Deferred and composite now use Iris-supported same-logical-attachment read/write with their default main/alternate flips explicitly enabled. Water, weather and hand-water have explicit source-alpha blend rules on colortex0. This addresses the source-level overwrite risk but is not runtime verification or a substitute for dedicated forward-lit water and material implementations.
+The old colortex3-to-colortex0 copy-back has been removed. Deferred and composite use Iris main/alternate flips. Water, weather and hand-water have explicit source-alpha blend rules on colortex0. The water scene copy is produced separately by half-resolution `deferred1` into `colortex4`; `gbuffers_water` samples this separate attachment and never reads its own `colortex0` output. This is source-level architecture, not runtime proof.
 
 ## Iris contract correction status — 2026-11-23
 | Area | Corrected source contract | Remaining validation |
@@ -107,7 +107,7 @@ The hand fragment shader now samples the Iris `lightmap` texture using `gl_Textu
 A dedicated `gbuffers_spidereyes` program now writes emissive eye color and marks those pixels as ineligible for opaque deferred lighting, preventing the body normal behind the eyes from shading the emissive overlay.
 
 ## Water program update — 2026-11-23
-Dedicated `gbuffers_water` now replaces the terrain fallback. It forward-shades translucent water after deferred using the Iris atlas, vanilla lightmap, world normal, shadow map and dimension-aware celestial source. It writes color only and blends with the configured source-alpha factors. This fixes the unlit fallback path but is not yet full Ultra water: refraction, reflections/Fresnel, absorption, wave normals and rain interaction remain pending.
+Dedicated `gbuffers_water` replaces the terrain fallback. It forward-shades translucent terrain after deferred using the Iris atlas, vanilla lightmap, normals, shadow map and dimension-aware celestial source. Water-only effects are gated by stable material ID plus Iris fluid render type. Water depth opacity, half-resolution refraction and Fresnel SSR are implemented; waves, absorption colour, foam and underwater response remain pending.
 
 ## Weather program update — 2026-11-23
 Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-shades rain/snow using the Iris lightmap and fog uniforms, writes only colortex0, and retains source-alpha blending. `rain.depth=false` keeps it out of scene depth. Volumetric rain/snow, wind-aware streaks, wetness interaction and reference parity remain pending.
@@ -116,7 +116,7 @@ Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-
 | Program path | Fog implementation | Status |
 |---|---|---|
 | Opaque terrain/entities/particles | Deferred Iris fog using fogColor/start/end/density/mode/shape | Implemented at source level |
-| Water | Forward Iris fog in `gbuffers_water` | Implemented at source level |
+| Water | Forward Iris fog, depth opacity, half-resolution refraction and Fresnel SSR in `gbuffers_water` | Implemented at source level; runtime/visual validation pending |
 | Weather | Forward Iris fog in `gbuffers_weather` | Implemented at source level |
 | Translucent particles | Forward Iris fog in `gbuffers_particles_translucent` | Implemented at source level |
 | Hand-water | Dedicated forward color-only path with lightmap and Iris fog | Implemented at source level; runtime check pending |
@@ -126,7 +126,7 @@ Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-
 Dedicated `gbuffers_hand_water` now replaces the ordinary hand fallback for post-deferred first-person translucent geometry. It samples the Iris atlas and lightmap, applies Iris fog and writes color only with source-alpha blending.
 
 ## Translucent terrain scope correction — 2026-11-23
-Iris' `gbuffers_water` program handles all translucent terrain, including but not limited to water. The current implementation is a generic forward-lit translucent surface baseline; it does not yet implement fluid-only behavior. Iris' `mc_Entity.y` attribute (available in `gbuffers_water.vsh`) distinguishes fluids (`1.0`) from other translucent terrain (`-1.0`) and must be used for future water-only effects.
+Iris' `gbuffers_water` program handles all translucent terrain, including but not limited to water. Serene keeps a generic forward-lit translucent surface path for non-water materials and gates water-only opacity/refraction/reflection on both the stable water material ID and Iris' `mc_Entity.y` fluid render type (`1.0` for fluids, `-1.0` for other translucent terrain).
 
 ## Water depth-opacity update — 2026-11-23
 The generic `gbuffers_water` translucent-terrain path now uses Iris `mc_Entity` material IDs to isolate actual water/water-cauldron from glass and portals. It reads opaque-only `depthtex1` and reconstructs the underlying view-space distance to apply depth-dependent water opacity. `WATER_FOG_MULT` exposes the reference-style 25–900% control range. This is a first reference-guided water-material feature; it is not yet full water parity.
@@ -139,7 +139,7 @@ The generic `gbuffers_water` translucent-terrain path now uses Iris `mc_Entity` 
 | `far` is render distance, not the projection far plane | Clear depth and opaque depth are reconstructed through `gbufferProjectionInverse` |
 | Iris alpha-test contract | Water shader uses `alphaTestRef`, set to `GREATER 0.0001` by the Complementary-matched `alphaTest.gbuffers_water` directive |
 
-The depth-opacity calculation follows the same thickness/exponential form used by Complementary Reimagined. Advanced water materials remain pending.
+The depth-opacity calculation follows the same thickness/exponential form used by Complementary. Half-resolution refraction and Fresnel SSR are now present; advanced Unbound water materials remain pending.
 
 ## Special overlay coverage — 2026-11-23
 Dedicated paths now exist for armor glint, beacon beams and lightning. Each writes color and clears the deferred-normal validity mask so overlays are not shaded using the opaque surface beneath them. Armor-glint color blending remains under Minecraft/Iris' active render state. Beacon beams and lightning receive Iris fog. Runtime depth/blend validation remains pending.
@@ -171,7 +171,7 @@ Render-stage macro names and celestial uniforms were checked against current Iri
 Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` macros to skip fog on selection outlines/debug lines while fogging ordinary lines. It clears deferred-normal validity and leaves color blending to the game.
 
 ## Translucent particles — 2026-11-23
-`gbuffers_particles_translucent` now forward-lights post-deferred particles using player-space normals/positions, vanilla lightmap, day/night/End-flash direct light, one hardware-filtered shadow comparison and Iris fog. The one-tap shadow path is the low-cost baseline for integrated graphics. Particle-specific emission and smoke/water material heuristics remain pending.
+`gbuffers_particles_translucent` forward-lights post-deferred particles using player-space normals/positions, vanilla lightmap, day/night/End-flash direct light, one hardware-filtered shadow comparison and Iris fog. Its material option ports Complementary-guided water-splash, physics rain/snow, underwater, smoke and emissive heuristics; opaque ender/redstone/crying-obsidian/lava emission is also written to the scalar G-buffer. Visual material calibration remains pending.
 
 ## Entity translucent gate — 2026-11-23
 `separateEntityDraws=true` is active as documented by Iris. The pack queries `ENTITY_TRANSLUCENT` as an optional feature and uses dedicated forward entity/block-entity programs after deferred. Runtime sorting and blending still require testing.
@@ -185,13 +185,13 @@ Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` ma
 Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANSLUCENT`. The programs write only colortex0 after deferred; runtime compatibility remains to be checked.
 
 ## Particle material effects — 2026-11-23
-`PARTICLE_MATERIAL_FEATURES` is shared by opaque, translucent and generic lit-fallback particle paths. The opaque path writes emission into colortex3; the translucent path uses forward lightmap/shadow/fog and ports Complementary-guided water splash, physics rain/snow, underwater, campfire-smoke and emissive particle heuristics. It uses Iris `noisetex` via `textureSize`/`texelFetch`, and rain/snow detection is gated by runtime `hasSkylight` and `rainStrength`.
+`PARTICLE_MATERIAL_FEATURES` is shared by opaque, translucent and generic lit-fallback particle paths. The opaque path writes reference-aligned ender/redstone/crying-obsidian/lava emission into colortex3; the translucent path uses forward lightmap/shadow/fog and ports Complementary-guided water splash, physics rain/snow, underwater, campfire-smoke and emissive heuristics. It uses Iris `noisetex` with `textureLod(noisetex, gl_FragCoord.xy / 128.0, 0.0)` to match the working reference's dither scale; rain/snow detection is gated by runtime `hasSkylight` and `rainStrength`.
 
 ## Iris generic lit-texture fallback — 2026-11-23
 `gbuffers_textured_lit` now has a dedicated G-buffer vertex/fragment pair, matching the Iris fallback table for most lit particles. It writes albedo, lightmap, player-space normal and scalar emission to colortex0–3, applies Iris `alphaTestRef` at 0.01, and disables blending on the opaque G-buffer attachments. The generic path reuses the same atlas-size-guarded particle material classifier. `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` deliberately retain the documented fallback to `gbuffers_terrain`, which is also the program where Iris exposes `mc_Entity` for stable block/fluid IDs.
 
 ## Emissive materials — 2026-11-23
-A compact single-channel R8 `colortex3` emission buffer is now written by opaque G-buffer programs. Terrain uses Iris `mc_Entity` plus `block.properties` IDs to classify luminous blocks; deferred adds their tinted emission after AO/direct lighting and before fog. Lava gets a forward emission term in `gbuffers_water`. Entity and opaque-particle paths currently initialize emission to zero; richer entity/particle material maps and bloom remain pending.
+A compact single-channel R8 `colortex3` emission buffer is now written by opaque G-buffer programs. Terrain uses Iris `mc_Entity` plus `block.properties` IDs to classify luminous blocks; deferred adds their tinted emission after AO/direct lighting and before fog. Opaque particle paths use the Complementary grayscale-texture, channel-ratio and lava predicates to write emissive strength. Richer entity/resource-pack material maps and bloom remain pending.
 
 ## Core overlay/block-entity coverage — 2026-11-23
 | Iris program | Geometry | Current implementation |
@@ -208,3 +208,9 @@ Emissive data is now a single R8 scalar in colortex3; deferred reuses scene albe
 The primary visual/material reference is now Complementary Unbound (Unbound water style branch `WATER_STYLE == 3`) in the official r5.10 upstream codebase. The supplied working Reimagined ZIP remains the functioning Iris implementation reference. The upstream Unbound water target includes animated multi-scale normals, water noise colouring, depth-based opacity, foam, underwater response, Fresnel/specular highlights, screen-space reflections and sky/world-space reflection fallbacks. The broader material reference includes IntegratedPBR+ terrain/entity/translucent classification, material-specific emission/smoothness, normal maps, generated normals, coated textures, POM and parallax self-shadow.
 
 Serene currently has a forward water baseline with depth thickness, half-resolution scene snapshot, refraction, Fresnel-weighted SSR, normal-orientation correction, forward lighting and Iris fog. The following Unbound parity items remain outstanding: animated water normals, noise colour, foam, full underwater response, sky/WSR reflection fallback and higher-quality SSR refinement. Broader terrain/entity PBR, normal/roughness maps, POM, generated normals, coated textures and full translucent material dispatch are also outstanding. These are feature gaps, not approved removals. See [UNBOUND_REFERENCE_AUDIT.md](UNBOUND_REFERENCE_AUDIT.md).
+
+
+## Water refraction and reflection implementation — 2026-11-23
+Iris-verified buffer flow: `deferred` writes full-resolution `colortex0` only; `deferred1` writes the half-resolution scene snapshot to `colortex4` after masking invalid hand/translucent samples with `depthtex0` versus `depthtex2`. `gbuffers_water` reads `colortex4` plus full-resolution `depthtex1` / `depthtex2` and writes only `colortex0`, avoiding same-attachment feedback.
+
+Water currently includes fluid-gated depth opacity, exact-texel depth validation, half-resolution refraction, Fresnel-weighted SSR with 4/6/8 ray steps, bounded user reflection strength, and paired view/player normal orientation correction. This is a low-bandwidth source implementation, not full Unbound parity or runtime proof. Animated multi-scale normals, noise colour, foam, full underwater response, environment/WSR fallback and advanced SSR refinement remain outstanding.
