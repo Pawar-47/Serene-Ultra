@@ -362,6 +362,10 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.
         errors.append(f"{name} must encode valid zero-smoothness geometry as colortex2 alpha 0.5")
 if "signText ? 0.0 : 0.5 + 0.5 * materialSmoothness" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity validity/smoothness alpha must keep sign text invalid and normal geometry at 0.5")
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    if "materialReflectance = (labF0Code / 229.0) * 0.08;" not in source:
+        errors.append(f"{name} must decode LabPBR dielectric F0 using the 0–0.08 range")
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     for token in ("uniform sampler2D specular;", "texture(specular, vTexCoord)",
