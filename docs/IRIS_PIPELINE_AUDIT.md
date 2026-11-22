@@ -401,3 +401,7 @@ Iris documents `shadowtex0` as including all shadow casters, `shadowtex1` as opa
 
 ## Water cauldron ID remap — 2026-11-23
 The `block.properties` entry maps `minecraft:water_cauldron` to ID 10049. The `gbuffers_water.vsh` and `shadow.vsh` stages remap 10049 to the pack's cauldron-water ID 32001 before forwarding the material ID. This follows the same Iris `mc_Entity.x`/`block.properties` contract as other material IDs and avoids misclassifying the cauldron as a flowing-fluid render type. Water and shadow fragments treat 32001 as water material independently of `mc_Entity.y`.
+
+
+## Forward translucent colored-shadow sampling — 2026-11-23
+The post-deferred `gbuffers_water` pass now uses the same Iris `shadowtex0`/`shadowtex1`/`shadowcolor0` contract as deferred. This is necessary because water, glass and other translucent geometry are lit forward after deferred; using only `shadowtex0` there would treat the translucent blocker as opaque and produce inconsistent lighting. The water pass retains its four-tap `shadowtex0` PCF, then conditionally samples `shadowcolor0` when the center comparison detects a translucent caster. The returned RGB transmission modulates the water's direct lighting. No screen attachment feedback is introduced; the shadow samplers are separate from `colortex0`.
