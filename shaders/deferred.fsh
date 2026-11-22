@@ -14,6 +14,8 @@ uniform mat4 shadowProjection;
 
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
+uniform bool hasSkylight;
+uniform float endFlashIntensity;
 
 // Iris shader constants belong in GLSL, not shaders.properties.
 const bool shadowHardwareFiltering = true;
@@ -139,13 +141,19 @@ void main() {
     vec3 viewLightDirection = normalize(shadowLightPosition);
     vec3 worldLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
     float nDotL = max(dot(normal, worldLightDirection), 0.0);
-    float shadow = sampleShadow(playerPosition, normal, worldLightDirection);
-
     float skyLight = clamp(lightData.a, 0.0, 1.0);
+    float celestialGate = hasSkylight ? skyLight : clamp(endFlashIntensity, 0.0, 1.0);
+    float shadow = 1.0;
+    if (nDotL > 0.001 && celestialGate > 0.001) {
+        shadow = sampleShadow(playerPosition, normal, worldLightDirection);
+    }
     // Iris sunAngle: 0=dawn, 0.25=noon, 0.5=sunset, 0.75=midnight.
-    // The sine curve wraps continuously through dawn and keeps the night side at zero.
+    // Celestial lighting is only used in dimensions with skylight.
     float solarElevation = sin(sunAngle * 6.28318530718);
-    float dayFactor = smoothstep(0.0, 0.30, solarElevation);
+    float dayFactor = hasSkylight ? smoothstep(0.0, 0.30, solarElevation) : 0.0;
+    // Iris can redirect shadowLightPosition to the End flash when enabled.
+    // Nether has neither skylight nor an End flash, so its direct term is zero.
+    float celestialGate = hasSkylight ? skyLight : clamp(endFlashIntensity, 0.0, 1.0);
 
     // Use Minecraft's own sampled lightmap RGB as the ambient/block-light
     // foundation so its existing colored light response is retained.
@@ -157,9 +165,11 @@ void main() {
     float contactAO = sampleContactAO(viewPosition, viewNormal);
     ambient *= contactAO;
 
-    vec3 celestialColor = mix(vec3(0.36, 0.44, 0.68), vec3(1.0, 0.94, 0.82), dayFactor);
-    float celestialIntensity = mix(0.10, 0.70, dayFactor);
-    vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * skyLight;
+    vec3 celestialColor = hasSkylight
+        ? mix(vec3(0.36, 0.44, 0.68), vec3(1.0, 0.94, 0.82), dayFactor)
+        : vec3(1.0);
+    float celestialIntensity = hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.70;
+    vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
 
     // Decode sampled sRGB albedo for lighting, then encode it again for the
     // existing color-grading/final pass. This keeps the output contract intact.
