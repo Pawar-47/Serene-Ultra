@@ -93,3 +93,6 @@ Deferred celestial lighting now uses Iris `hasSkylight` to avoid applying the Ov
 
 ## Iris fog pipeline
 Opaque world surfaces receive Iris fog in deferred using the documented `fogColor`, `fogStart`, `fogEnd`, `fogDensity`, `fogMode` and `fogShape` uniforms. Post-deferred water, weather and translucent particles apply the same fog model in their forward fragment programs. Fog blending is performed in linearized color space.
+
+## First-person translucent hand-water
+`gbuffers_hand_water` is now a dedicated post-deferred forward pass. It preserves the vanilla lightmap response, applies Iris fog, writes only scene color and blends with source alpha. The ordinary hand shader remains the pre-deferred hand path.
