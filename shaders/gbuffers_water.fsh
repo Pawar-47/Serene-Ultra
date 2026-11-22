@@ -263,6 +263,7 @@ float calculateTranslucentFog(float distanceToCamera) {
 
 void main() {
     vec4 translucentAlbedo = texture(gtexture, vTexCoord) * vVertexColor;
+    float portalEmissionSignal = 0.0;
     if (translucentAlbedo.a < alphaTestRef) discard;
 
     // Iris routes all translucent terrain through gbuffers_water. Fluid IDs
@@ -474,7 +475,9 @@ void main() {
             }
             translucentAlbedo = portalAccum / max(portalWeightSum, 0.0001);
         }
-        // Warm nonlinear tint and emission preserve the reference's portal glow.
+        // Preserve the pre-tint signal for emission, then apply the warm
+        // nonlinear portal colour treatment.
+        portalEmissionSignal = max(translucentAlbedo.r, 0.0);
         translucentAlbedo.rgb *= translucentAlbedo.rgb * vec3(1.25, 1.0, 0.65);
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0)) * 0.8;
     }
@@ -491,9 +494,8 @@ void main() {
     vec3 litLinear = albedoLinear * (ambient + direct);
     // Lava shares the post-deferred fluid pass but retains its self-emission.
     float lavaEmission = (vMaterialId == 32118) ? 0.9 : 0.0;
-    float portalSignal = max(translucentAlbedo.r, 0.0);
     float portalEmission = isPortal
-        ? clamp(pow(portalSignal, 8.0) * 120.0, 0.03, 1.2) * 8.0
+        ? clamp(pow(portalEmissionSignal, 8.0) * 120.0, 0.03, 1.2) * 8.0
           * (PORTAL_EMISSION_STRENGTH * 0.01)
         : 0.0;
     litLinear += albedoLinear * (lavaEmission + portalEmission);
