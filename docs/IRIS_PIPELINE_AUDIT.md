@@ -208,3 +208,6 @@ Iris routes `gbuffers_hand` to a textured-lit fallback when no custom shader exi
 
 ## Emissive eye overlay handling — 2026-11-23
 Iris identifies `gbuffers_spidereyes` as the spider/enderman/dragon eye pass, falling back to `gbuffers_textured` when absent. That fallback writes color but no Serene normal-validity data. If deferred then sees the underlying entity normal, it can incorrectly apply body lighting to the emissive eye texture. Added a dedicated `gbuffers_spidereyes` pair that writes the eye color and clears the deferred-validity alpha in colortex2 for those pixels. The per-buffer blend directive disables blending on that mask so the invalid marker is deterministic. This is a source-level emissive-preservation correction; verify eye layering and depth behavior in Iris runtime.
+
+### Conditional translucent entity programs
+`gbuffers_entities_translucent` and `gbuffers_block_translucent` are only activated when `separateEntityDraws=true`. Serene intentionally leaves that option disabled because current Iris documentation warns the feature may be broken in newer Iris versions. The validator now excludes these two inactive programs from the missing-program warning unless the option is explicitly enabled. This does not mean translucent entity handling is complete; the current pre-deferred entity path still needs visual/runtime verification.
