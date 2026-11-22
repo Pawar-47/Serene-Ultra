@@ -428,7 +428,8 @@ for token in ("WATER_FOAM_STRENGTH",
     if token not in water:
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
 for token in ("flat in vec2 vMidTexCoord", "flat in vec2 vTexHalfSize",
-              "PORTAL_DISTORTION_STRENGTH", "textureSize(gtexture, 0)",
+              "PORTAL_DISTORTION_STRENGTH", "frameTimeCounter * (6.28318530718 * 458.0 / 3600.0)",
+              "textureSize(gtexture, 0)",
               "portalMinUV", "portalMaxUV", "textureLod(gtexture, portalUV, 0.0)"):
     if token not in water:
         errors.append(f"Atlas-safe portal distortion path is missing component: {token}")
