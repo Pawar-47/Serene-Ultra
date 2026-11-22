@@ -62,3 +62,6 @@ option.WATER_COLOR_STRENGTH = Water Style Tint
 option.WATER_COLOR_STRENGTH.comment = Blends the Unbound-style water base tint with the sampled water atlas colour. Set to 0 to preserve the atlas colour.
 option.WATER_NOISE_COLOR_STRENGTH = Water Colour Variation
 option.WATER_NOISE_COLOR_STRENGTH.comment = Adds subtle animated colour variation using Iris noisetex. Set to 0 to disable the noise lookup.
+
+option.WATER_FOAM_STRENGTH = Water Foam
+option.WATER_FOAM_STRENGTH.comment = Controls foam at water and opaque-surface intersections. The effect is restricted to top-facing water surfaces.
