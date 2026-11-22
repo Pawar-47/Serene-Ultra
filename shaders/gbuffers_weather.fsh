@@ -2,6 +2,8 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform float alphaTestRef;
+uniform int isEyeInWater;
 
 uniform vec3 fogColor;
 uniform float fogStart;
@@ -34,7 +36,7 @@ float calculateWeatherFog(float distanceToCamera) {
 
 void main() {
     vec4 weatherColor = texture(gtexture, vTexCoord) * vVertexColor;
-    if (weatherColor.a <= 0.001) discard;
+    if (weatherColor.a < max(0.1, alphaTestRef) || isEyeInWater == 3) discard;
 
     // Weather is post-deferred. Preserve the vanilla lightmap and fog response
     // in a color-only forward pass without reading colortex0-3.
