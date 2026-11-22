@@ -65,3 +65,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 3. Add Iris program coverage for block entities, particles, translucent entities and remaining required geometry using the reference inventory and Iris fallback table.
 4. Expand tests to detect missing post-deferred program coverage and invalid attachment contracts.
 5. Run Iris runtime tests in scenes containing water, rain/snow, first-person hand water, particles, entities, signs/text and all dimensions.
+
+- Latest repository HEAD after this audit: `26d5aafb525029b31739f56e70ea5625571e0304`.
+- Latest CI run on that exact HEAD: `45060856038`, conclusion `success`; both standalone GLSL compilation and structural validation completed successfully.
+- Structural validation now rejects gbuffers shaders that declare sampler reads from Iris-forbidden colortex0–3 and prints a non-failing warning while the dedicated post-deferred water/weather/hand-water programs remain absent.
