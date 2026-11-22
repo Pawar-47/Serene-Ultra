@@ -93,3 +93,6 @@ option.WATER_CAUSTICS_SCALE.comment = Controls the spatial frequency of the proj
 
 option.WATER_NORMAL_MAP_STRENGTH = Water Normal Map Strength
 option.WATER_NORMAL_MAP_STRENGTH.comment = Blends resource-pack PBR water normals into the animated surface normal. Neutral when no water normal map is supplied.
+
+option.GLASS_NORMAL_MAP_STRENGTH = Glass / Ice Normal Map Strength
+option.GLASS_NORMAL_MAP_STRENGTH.comment = Applies resource-pack PBR normal maps to glass and ice reflections. Neutral when no normal map is supplied.
