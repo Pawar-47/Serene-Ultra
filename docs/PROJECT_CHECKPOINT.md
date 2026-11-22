@@ -295,3 +295,8 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Uses `MC_RENDER_STAGE_OUTLINE` and `MC_RENDER_STAGE_DEBUG` to keep selection/debug lines crisp while fogging ordinary line geometry.
 - Writes color plus zero colortex2 validity; per-buffer mask blending is disabled, color blend state remains game-managed.
 - Added CI compilation of Iris render-stage macro branches for sky and line programs.
+
+## Latest CI verification — 2026-11-23
+- Run [45067162625](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45067162625) passed after adding the dedicated line overlay and compiling Iris render-stage macro branches for sky-basic, sky-textured and line programs.
+- Run [45067030813](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45067030813) also passed the complete shader compile/link/structural checks with sky render-stage macros enabled.
+- These runs validate GLSL and structure only. Iris 1.x runtime loading, Minecraft 26.3 rendering, visual parity, and Intel HD 5500 performance are not yet tested.
