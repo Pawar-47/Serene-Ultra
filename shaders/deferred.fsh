@@ -41,6 +41,7 @@ in vec2 vTexCoord;
 // direct sun/moon lighting and emissive/block-light contribution are retained.
 #define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.65 0.70 0.80 0.90 1.00] Contact occlusion strength
 #define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
+#define MATERIAL_SPECULAR_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Deferred specular response for smooth materials
 
 // Deferred is a composite-style pass: it reads the main colortex0 image and
 // writes the alternate image. Iris flips the pair after this pass, so the
@@ -160,6 +161,7 @@ void main() {
 
     vec4 lightData = texture(colortex1, vTexCoord);
     vec3 normal = normalize(normalData.rgb * 2.0 - 1.0);
+    float materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0);
 
     vec3 ndcPosition = vec3(vTexCoord, opaqueWorldDepth) * 2.0 - 1.0;
     vec3 viewPosition = projectAndDivide(gbufferProjectionInverse, ndcPosition);
@@ -211,6 +213,19 @@ void main() {
     // existing color-grading/final pass. This keeps the output contract intact.
     vec3 albedoLinear = pow(max(scene.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
+
+    // Smoothness is packed into colortex2 alpha without another G-buffer.
+    // Only explicitly classified glossy materials pay for the specular term.
+    if (materialSmoothness > 0.01 && MATERIAL_SPECULAR_STRENGTH > 0) {
+        vec3 viewDirectionPlayer = normalize(-playerPosition);
+        vec3 halfDirection = normalize(worldLightDirection + viewDirectionPlayer);
+        float specularPower = mix(12.0, 96.0, materialSmoothness);
+        float specularShape = pow(max(dot(normal, halfDirection), 0.0), specularPower);
+        float specularStrength = specularShape * materialSmoothness
+            * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18
+            * nDotL * shadow * celestialGate * celestialIntensity;
+        litLinear += celestialColor * specularStrength;
+    }
 
     // Emission is stored separately from albedo/lightmap/normal so it is not
     // attenuated by contact AO or the celestial shadow term.
