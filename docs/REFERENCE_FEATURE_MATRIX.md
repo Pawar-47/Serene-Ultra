@@ -156,3 +156,13 @@ Reference refinement: retained `alphaTest.gbuffers_water=GREATER 0.0001` (matchi
 - `gbuffers_skytextured`: uses Iris render-stage macros to distinguish sun/moon textures and applies rain/underwater dimming.
 - `gbuffers_skybasic`: uses `skyColor`/`fogColor` and Iris render stages for sky gradient, sunset band, stars and void; direction reconstruction is skipped for stars/void.
 - All three clear colortex2 validity for overlays. Full atmospheric scattering, custom stars/clouds and lit textured-particle parity remain pending.
+
+## Sky and fallback geometry — 2026-11-23
+| Iris program | Geometry | Current implementation |
+|---|---|---|
+| `gbuffers_skybasic` | Sky/horizon, stars, void | Render-stage-specific gradient, twilight and void handling; deferred validity mask cleared |
+| `gbuffers_skytextured` | Sun and moon textures (also leaves custom sky textures unchanged) | Render-stage sun/moon tint, rain attenuation and low alpha threshold |
+| `gbuffers_textured` | World border and unlit-texture particle fallback | Atlas/vertex color, Iris fog and deferred validity mask cleared |
+| `gbuffers_clouds` | Vanilla clouds | Preserves atlas RGB and vertex alpha; hides clouds underwater; deferred validity mask cleared |
+
+Render-stage macro names and celestial uniforms were checked against current Iris documentation. These are baseline implementations, not yet visual parity with Complementary Ultra.
