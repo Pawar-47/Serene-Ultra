@@ -283,6 +283,24 @@ for token in ("PARTICLE_MATERIAL_FEATURES", "float(textureSize(gtexture, 0).x) <
     if token not in opaque_particles:
         errors.append(f"Opaque particle emissive path is missing component: {token}")
 
+particle_reference_tokens = (
+    "float dotColor = dot(particle.rgb, particle.rgb)",
+    "dotColor > 0.25 && particle.g < 0.5",
+    "particle.b > particle.r * 1.1 && particle.r > 0.3",
+    "particle.r > (particle.g + particle.b) * 3.0",
+    "particle.r > 0.83 && particle.g > 0.23 && particle.b < 0.4",
+    "particle.b *= 0.5",
+    "particle.r *= 1.2"
+)
+for name in ("gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
+    source = sources.get(name, "")
+    for token in particle_reference_tokens:
+        if token not in source:
+            errors.append(f"{name} diverges from the Complementary particle-emission reference: {token}")
+    if "particleColorSum" in source or "particleTexture.r < 0.75" in source:
+        errors.append(f"{name} contains the superseded broad grayscale-emission classifier")
+
+
 entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
 block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
 for name, source in (("gbuffers_entities_translucent", entity_translucent),
