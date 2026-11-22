@@ -77,8 +77,8 @@ option.PORTAL_EMISSION_STRENGTH.comment = Controls the self-emission of nether p
 option.MATERIAL_SPECULAR_STRENGTH = Material Specular Strength
 option.MATERIAL_SPECULAR_STRENGTH.comment = Controls deferred highlights for oldPBR/LabPBR terrain materials and classified smooth blocks such as slime and honey.
 
-option.MATERIAL_AO_STRENGTH = Material AO Strength
-option.MATERIAL_AO_STRENGTH.comment = Applies LabPBR material ambient occlusion to indirect light only; oldPBR and packs without AO maps remain neutral.
+option.MATERIAL_AO_STRENGTH = Material AO Lighting Strength
+option.MATERIAL_AO_STRENGTH.comment = Controls how strongly stored material AO attenuates indirect/block lighting; direct celestial illumination remains unchanged.
 
 option.MATERIAL_SSS_STRENGTH = Subsurface Scattering Strength
 option.MATERIAL_SSS_STRENGTH.comment = Adds a low-cost backlighting approximation from LabPBR's subsurface channel. LabPBR porosity values remain reserved for wet-surface response.
@@ -105,8 +105,8 @@ option.GLASS_NORMAL_MAP_STRENGTH.comment = Applies resource-pack PBR normal maps
 
 option.OPAQUE_NORMAL_MAP_STRENGTH = Opaque Normal Map Strength
 option.OPAQUE_NORMAL_MAP_STRENGTH.comment = Applies resource-pack PBR normal maps to terrain, entities and block entities. Neutral when no normal map is supplied.
-option.PBR_AO_STRENGTH = LabPBR Material AO Strength
-option.PBR_AO_STRENGTH.comment = Uses the LabPBR normal-map blue channel to attenuate indirect and block lighting. Neutral with oldPBR or missing AO data.
+option.PBR_AO_STRENGTH = LabPBR AO Map Influence
+option.PBR_AO_STRENGTH.comment = Controls how strongly the LabPBR normal-map blue channel influences the material AO value. Zero ignores the map; 100 uses it fully.
 
 option.PBR_REFLECTION_STRENGTH = PBR Reflection Strength
 option.PBR_REFLECTION_STRENGTH.comment = Fresnel-weighted screen-space and sky/horizon reflections on glossy opaque materials.
