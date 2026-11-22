@@ -65,3 +65,11 @@ The current pack has no dedicated `gbuffers_water`, `gbuffers_weather` or `gbuff
 Iris documentation specifies that deferred and composite passes read the main image and write the alternate image, then flip the pair after execution by default. This permits a composite-style pass to sample and write the same logical colortex attachment safely. The previous Serene colortex3-to-colortex0 copy-back was unsafe for the post-deferred geometry sequence: water/weather/hand-water can render after deferred, and copying an opaque-only colortex3 over colortex0 in composite could discard those later contributions.
 
 The pipeline now writes deferred-lit opaque output directly to logical colortex0 (RENDERTARGETS: 0) and explicitly retains flip.deferred.colortex0=true. Translucent water, weather and hand-water then blend into the new main colortex0 image. Composite samples colortex0 and writes colortex0 with flip.composite.colortex0=true, preserving the accumulated scene. Explicit source-alpha blending is configured for the three post-deferred programs; water's auxiliary G-buffer outputs are unblended. This is an architectural correction based on Iris' documented buffer semantics, not yet an in-game validation. Water's fallback shading is still not equivalent to a dedicated forward-lit water implementation.
+
+## Additional Iris contract corrections — 2026-11-23
+- Shadow sampler filtering and update interval are declared as GLSL constants (`shadowHardwareFiltering`, `shadowIntervalSize`), not as `shaders.properties` keys.
+- `separateAo` is disabled because the current G-buffer treats vertex alpha as material opacity; Iris moves AO into that alpha channel when `separateAo=true`.
+- G-buffer alpha discard uses Iris `alphaTestRef`; entity tint uses Iris `entityColor`.
+- Deferred reconstruction/AO uses `depthtex2` to exclude transparent and hand geometry.
+- `particles.ordering=mixed` explicitly separates opaque particles before deferred from translucent particles after deferred.
+- `separateEntityDraws` remains disabled due Iris' documented warning about newer versions.
