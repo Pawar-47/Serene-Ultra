@@ -612,14 +612,14 @@ A deeper check against the shaderLABS LabPBR 1.3 specification found that the bl
 
 ## Opaque terrain/entity/block PBR specular coverage — 2026-11-23
 
-Iris' `specular` atlas is now consumed by the terrain, entity and block-entity G-buffers. All three paths pack perceptual smoothness into `colortex2.a`, emission into `colortex3.r`, and reflectance/metalness into `colortex3.g`; the existing RG8 attachment is retained, so no new render target or full-resolution memory allocation is introduced. Entities and block entities now receive the same resource-pack smoothness/emission support as terrain.
+Iris' `specular` atlas is now consumed by the terrain, entity and block-entity G-buffers. All three paths pack perceptual smoothness into `colortex2.a`; `colortex3` is RGBA8 with emission in R, reflectance/metal classification in G, material AO in B and LabPBR porosity/SSS data in A. This reuses the existing attachment without adding another render target, but increases its bandwidth versus the earlier RG8 intermediate.
 
 A standards review corrected LabPBR F0 decoding: non-metal green-channel values 0–229 are stored linearly as `code / 255`; values 230–255 are metal identifiers and use albedo-tinted reflection. Deferred now tests the exact 230/255 boundary instead of treating high-F0 dielectrics as metals. oldPBR continues to use green as metalness and blue as emissiveness. The shader uses the specular atlas fallback of zero when no `_s` map is present, with a 0.04 dielectric F0 fallback for LabPBR. This path is source-validated; visual calibration with actual LabPBR and oldPBR resource packs remains outstanding.
 
 
 ## Opaque terrain/entity/block-entity PBR normals — 2026-11-23
 
-The opaque terrain, entity and block-entity vertex/fragment pairs now pass Iris' `at_tangent` basis and sample the `normals` atlas. LabPBR reconstructs Z from RG, reads AO from B (not used yet), and flips Y for DirectX orientation; oldPBR decodes RGB directly. Tangent handedness follows Iris' documented `cross(tangent, normal)` convention. Sign text deliberately bypasses normal perturbation. `OPAQUE_NORMAL_MAP_STRENGTH` controls the feature independently of translucent water/glass normal controls.
+The opaque terrain, entity and block-entity vertex/fragment pairs now pass Iris' `at_tangent` basis and sample the `normals` atlas. LabPBR reconstructs Z from RG, reads AO from B, and flips Y for DirectX orientation; oldPBR decodes RGB directly. Tangent handedness follows Iris' documented `cross(tangent, normal)` convention. Sign text deliberately bypasses normal perturbation. `OPAQUE_NORMAL_MAP_STRENGTH` controls the feature independently of translucent water/glass normal controls.
 
 This adds one normal-atlas lookup per opaque G-buffer fragment when enabled, with no extra render target or additional full-resolution buffer. Iris' neutral fallback normal leaves geometry unchanged without resource-pack `_n` maps. Runtime validation with real LabPBR/oldPBR packs and Intel HD 5500 performance remain outstanding.
 
@@ -640,8 +640,8 @@ The exact-source GLSL and structural validation for the GGX/PBR material state p
 GitHub Actions run 919 (`bc0dd3d`) passed all stages: shader compilation, Iris render-stage macro branches, LabPBR macro compilation/linking for terrain/entities/block entities/water/deferred, full vertex-fragment program linking and structural validation. The source keeps Iris' documented `in vec4 at_tangent;` declarations; the earlier duplicate-symbol failure was transient and the direct-source workflow now passes. Minecraft 26.3 runtime loading, real resource-pack decoding and Intel HD 5500 performance remain unverified.
 
 
-## LabPBR material AO — 2026-11-23
-Implemented the optional LabPBR normal-map blue-channel AO for terrain, entities and block entities. The G-buffer applies the material AO to existing lightmap RGB with inverse-gamma compensation; sky-light alpha remains separate so direct celestial lighting is preserved. This reuses the normal-map sample and existing attachments, adds no render target, and has an independent Iris quality slider. oldPBR remains unchanged. Porosity/SSS, actual resource-pack visual validation and Intel HD 5500 profiling remain outstanding.
+## LabPBR material AO and subsurface scattering — 2026-11-23
+The opaque G-buffers now store LabPBR normal-map blue-channel AO in `colortex3.b`, reusing the normal-map sample. Deferred applies this AO once to indirect/block-light ambient only; direct celestial lighting remains unchanged. `PBR_AO_STRENGTH` controls map influence and `MATERIAL_AO_STRENGTH` controls lighting impact. oldPBR and missing-map fallbacks remain neutral. LabPBR specular blue values 65–255 are decoded as subsurface scattering in `colortex3.a`; the deferred pass adds a low-cost backlighting approximation controlled by `MATERIAL_SSS_STRENGTH`. Values 0–64 remain reserved for porosity and are not yet used for wet-surface response. The material attachment is now RGBA8, so no new render target is added but the extra channels cost more bandwidth than the former RG8 intermediate. Runtime visual validation and Intel HD 5500 profiling remain outstanding.
 
 
 ## Opaque PBR screen-space reflections — 2026-11-23
