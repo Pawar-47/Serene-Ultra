@@ -15,7 +15,6 @@ uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float rainStrength;
 uniform float endFlashIntensity;
-uniform float rainStrength;
 uniform int isEyeInWater;
 uniform vec3 cameraPosition;
 uniform vec3 fogColor;
