@@ -19,6 +19,7 @@ uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
 uniform vec3 fogColor;
+uniform vec3 skyColor;
 uniform float fogStart;
 uniform float fogEnd;
 uniform float fogDensity;
@@ -37,6 +38,8 @@ flat in float vFluidRenderType;
 
 /* RENDERTARGETS: 0 */
 
+#define WATER_REFRACTION_STRENGTH 1.00 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 2.00] Screen-space water refraction strength
+#define WATER_REFLECTION_STRENGTH 0.75 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50] Fresnel sky reflection strength
 #define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
 layout(location = 0) out vec4 outColor;
@@ -71,16 +74,16 @@ vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
     return homogeneous.xyz / homogeneous.w;
 }
 
-float calculateWaterThickness() {
+float calculateWaterThickness(out vec3 opaqueViewPosition, out float opaqueDepth) {
     // depthtex1 is full-resolution; fetch the exact current pixel without
     // filtering, then normalize only for inverse-projection reconstruction.
-    float opaqueDepth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
+    opaqueDepth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
     // depthtex1 clears to 1.0. Reconstruct that far-plane sample with the
     // inverse projection instead of using Iris' "far" uniform, which is
     // render distance in blocks rather than the projection far plane.
     vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
     vec3 opaqueNdc = vec3(screenUV, opaqueDepth) * 2.0 - 1.0;
-    vec3 opaqueViewPosition = projectAndDivide(gbufferProjectionInverse, opaqueNdc);
+    opaqueViewPosition = projectAndDivide(gbufferProjectionInverse, opaqueNdc);
     float opaqueDistance = length(opaqueViewPosition);
     return max(opaqueDistance - length(vViewPosition), 0.0);
 }
@@ -170,15 +173,20 @@ void main() {
     if (translucentAlbedo.a < alphaTestRef) discard;
 
     // Iris routes all translucent terrain through gbuffers_water, including
-    // water and stained glass. Keep this a generic forward-lit surface path:
-    // do not apply water-only material effects to non-fluid translucent blocks.
-    // The pass cannot sample colortex0-3, so it uses atlas color, vanilla
-    // lightmap, the already-rendered Iris shadow map and fog uniforms.
+    // water and stained glass. Keep non-fluid materials on the generic forward
+    // path; only actual water receives depth refraction and Fresnel reflection.
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
     vec3 normal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) normal = -normal;
+    vec3 viewNormal = normalize(mat3(gbufferModelView) * normal);
+    vec3 viewDirection = normalize(vViewPosition);
+    float nDotV = clamp(dot(viewNormal, -viewDirection), 0.0, 1.0);
+    float waterFresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
+    vec3 reflectionDirection = reflect(viewDirection, viewNormal);
+    vec3 viewUp = normalize(mat3(gbufferModelView) * vec3(0.0, 1.0, 0.0));
+
     vec3 viewLightDirection = normalize(shadowLightPosition);
     vec3 worldLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
     float nDotL = max(dot(normal, worldLightDirection), 0.0);
@@ -211,12 +219,74 @@ void main() {
     // Iris mc_Entity.y identifies fluid geometry; block.properties supplies
     // stable IDs so water-only attenuation never affects glass, lava or portals.
     bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
+    float waterFog = 0.0;
+    float waterThickness = 0.0;
+    float waterReflectionMix = 0.0;
+    float refractionConfidence = 0.0;
+    vec3 refractedSceneLinear = vec3(0.0);
+    vec3 waterReflectionLinear = vec3(0.0);
+
     if (isWater) {
-        // Match the reference shader's baseline water alpha shaping.
+        vec3 opaqueViewPosition;
+        float opaqueDepth;
+        waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)
+            * (WATER_FOG_MULT * 0.01);
+        waterFog = clamp(1.0 - exp(-waterThickness * 0.075), 0.0, 1.0);
+
+        // Match the reference shader's baseline water alpha shaping, then
+        // increase edge opacity using the dielectric Fresnel term.
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0));
-        float thickness = calculateWaterThickness() * (WATER_FOG_MULT * 0.01);
-        float waterFog = clamp(1.0 - exp(-thickness * 0.075), 0.0, 1.0);
-        translucentAlbedo.a *= 0.25 + 0.75 * waterFog;
+        float waterAlpha = translucentAlbedo.a * (0.25 + 0.75 * waterFog);
+        waterAlpha = mix(waterAlpha, 1.0, waterFresnel * 0.25);
+        translucentAlbedo.a = clamp(waterAlpha, 0.0, 1.0);
+
+        // The deferred1 pass stores a half-resolution copy of the lit opaque
+        // scene in colortex4. This gbuffers pass writes only colortex0, so
+        // sampling colortex4 is a distinct attachment and avoids feedback.
+        if (WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999) {
+            vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
+            vec2 refractionOffset = viewNormal.xy
+                * min(waterThickness * 0.0025, 0.035)
+                * WATER_REFRACTION_STRENGTH;
+            vec2 halfTexel = 0.5 / vec2(textureSize(colortex4, 0));
+            vec2 refractedUV = clamp(screenUV + refractionOffset,
+                                     halfTexel, vec2(1.0) - halfTexel);
+
+            float refractedDepth = texture(depthtex1, refractedUV).r;
+            if (refractedDepth < 0.999999) {
+                vec3 refractedNdc = vec3(refractedUV, refractedDepth) * 2.0 - 1.0;
+                vec3 refractedViewPosition = projectAndDivide(gbufferProjectionInverse, refractedNdc);
+                float depthDelta = abs(length(refractedViewPosition) - length(opaqueViewPosition));
+                refractionConfidence = 1.0 - smoothstep(0.5, 4.0, depthDelta);
+
+                // Reject offsets that cross onto geometry in front of the water.
+                if (refractedViewPosition.z > vViewPosition.z + 0.05) {
+                    refractionConfidence = 0.0;
+                }
+
+                refractedSceneLinear = pow(
+                    max(texture(colortex4, refractedUV).rgb, vec3(0.0)),
+                    vec3(2.2)
+                );
+            }
+        }
+
+        // Low-cost Fresnel environment reflection: blend the Iris sky/fog
+        // colors by reflected direction and add a tight sun/moon glint.
+        vec3 skyColorLinear = pow(max(skyColor, vec3(0.0)), vec3(2.2));
+        vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
+        float skyAmount = smoothstep(-0.15, 0.45, dot(reflectionDirection, viewUp));
+        vec3 environmentReflection = hasSkylight
+            ? mix(fogColorLinear, skyColorLinear, skyAmount)
+            : fogColorLinear;
+        float specularPower = pow(
+            max(dot(reflectionDirection, normalize(shadowLightPosition)), 0.0),
+            96.0
+        );
+        vec3 specularHighlight = celestialColor * specularPower
+            * celestialIntensity * shadow * celestialGate * 0.8;
+        waterReflectionLinear = environmentReflection + specularHighlight;
+        waterReflectionMix = clamp(waterFresnel * WATER_REFLECTION_STRENGTH, 0.0, 0.85);
     }
 
     vec3 albedoLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
@@ -224,28 +294,26 @@ void main() {
     // Lava shares the post-deferred fluid pass but retains its self-emission.
     float lavaEmission = (vMaterialId == 32118) ? 0.9 : 0.0;
     litLinear += albedoLinear * lavaEmission;
+
     float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
     float fogFactor = calculateTranslucentFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     litLinear = mix(litLinear, fogColorLinear, fogFactor);
 
-    // Fresnel-weighted screen-space reflection is applied only to water, not
-    // stained glass, lava, portals or other translucent terrain.
-    #if WATER_REFLECTION_QUALITY > 0
     if (isWater) {
-        vec3 viewNormal = normalize(vViewNormal);
-        if (dot(normalize(vViewPosition), viewNormal) > 0.0) viewNormal = -viewNormal;
-        float nDotV = clamp(dot(viewNormal, normalize(-vViewPosition)), 0.0, 1.0);
-        float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
-        float reflectionConfidence = 0.0;
-        vec3 reflectionColor = sampleWaterScreenReflection(vViewPosition, viewNormal, reflectionConfidence);
-        vec3 reflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
-        float reflectionWeight = min(fresnel * 2.5, 0.85) * reflectionConfidence;
-        litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
+        float offsetStrength = clamp(length(viewNormal.xy)
+            * min(waterThickness * 0.0025, 0.035) * 25.0, 0.0, 1.0);
+        float refractionMix = clamp(
+            0.55 * WATER_REFRACTION_STRENGTH * waterFog
+            * refractionConfidence * offsetStrength,
+            0.0, 0.75
+        );
+        // The scene copy is already fogged by deferred; do not fog it twice.
+        litLinear = mix(litLinear, refractedSceneLinear, refractionMix);
+        vec3 reflectionWithFog = mix(waterReflectionLinear, fogColorLinear, fogFactor);
+        litLinear = mix(litLinear, reflectionWithFog, waterReflectionMix);
     }
-    #endif
 
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
-
     outColor = vec4(litColor, translucentAlbedo.a);
 }
