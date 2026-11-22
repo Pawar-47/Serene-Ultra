@@ -334,7 +334,9 @@ for token in ("uniform float alphaTestRef", "texture(gtexture", "vec4(vec3(1.0),
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
 if "particle.a < 0.01" not in translucent_particles or "alphaTestRef" in translucent_particles:
     errors.append("Translucent particles must preserve fractional alpha instead of applying cutout alphaTestRef")
-for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog"):
+for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog",
+              "uniform sampler2D noisetex", "textureLod(noisetex", "WEATHER_TEX_OPACITY",
+              "rainTexOpacity", "snowTexOpacity", "suppressLightmap", "#ifdef OVERWORLD"):
     if token not in translucent_particles:
         errors.append(f"Translucent particle shader is missing forward lighting component: {token}")
 translucent_particle_vertex = sources.get("gbuffers_particles_translucent.vsh", "")
