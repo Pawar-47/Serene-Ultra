@@ -484,6 +484,11 @@ for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureL
     if token not in water:
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 
+for token in ("uniform sampler2D normals;", "calculateWaterNormalMap",
+              "textureLod(normals, vTexCoord, 0.0)", "vPlayerTangent",
+              "vTangentHandedness", "at_tangent.w < 0.0 ? -1.0 : 1.0"):
+    if token not in water and token not in water_vertex:
+        errors.append(f"Water resource-pack normal-map path is missing component: {token}")
 for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt;",
               "uniform vec3 cameraPositionFract;", "uniform float frameTimeCounter",
               "getStableWaterWorldPosition", "cameraPositionInt % ivec3(256)",
@@ -505,7 +510,7 @@ if "vec3 reflectionViewNormal = viewNormal;" not in water:
 if "out vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
     errors.append("Water vertex stage must output the Iris view-space normal used by Fresnel reflection")
 water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
-                 "WATER_WAVE_STRENGTH", "WATER_WAVE_SPEED", "WATER_WAVE_SCALE", "WATER_CAUSTICS_STRENGTH", "WATER_CAUSTICS_SCALE", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH")
+                 "WATER_NORMAL_MAP_STRENGTH", "WATER_WAVE_STRENGTH", "WATER_WAVE_SPEED", "WATER_WAVE_SCALE", "WATER_CAUSTICS_STRENGTH", "WATER_CAUSTICS_SCALE", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH")
 lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
 for option in water_options:
     if option not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
