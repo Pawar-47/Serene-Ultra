@@ -419,3 +419,12 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Removed the unused `iris.features.optional=ENTITY_TRANSLUCENT` declaration. Iris feature flags expose compile-time capability defines; they do not activate the separate-entity routing directive, and no shader consumed the define.
 - `particles.ordering=mixed` remains a separate, documented Iris mechanism for opaque-before-deferred and translucent-after-deferred particle ordering.
 - Source/CI success is not proof that translucent entity/block-entity routing works in-game. Keep this limitation visible in future checkpoints.
+
+
+## Unbound water-wave implementation checkpoint — 2026-11-23
+- Reviewed the pinned Unbound water source and identified animated multi-scale normal detail as a missing water feature.
+- Before implementation, verified Iris documentation for `cameraPosition`, `frameTimeCounter`, `gbufferModelView` and player/view coordinate transforms.
+- Added three analytic wave bands anchored to absolute player/world XZ coordinates. The player-space perturbed normal feeds direct lighting/shadowing; the view-space transformed normal feeds Fresnel, refraction and SSR.
+- Added `WATER_WAVE_STRENGTH` and `WATER_WAVE_SPEED` to the Quality menu and slider list. Speed is an integer complete-cycle count per 3600-second Iris timer interval, preventing phase discontinuity at `frameTimeCounter` wrap.
+- This is an original, low-bandwidth approximation of Unbound's texture-driven multi-scale normal map. Texture-based normals/parallax refinement, water noise colour, foam, absorption tint, full underwater response and reflection fallback remain outstanding.
+- Structural validation now requires the Iris uniforms, all three wave bands, and both menu/slider entries. Wait for the new CI run before reporting the change as validated.
