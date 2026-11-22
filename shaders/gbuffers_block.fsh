@@ -125,6 +125,7 @@ void main() {
         materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
     } else if (labF0Code >= 230.0) {
         materialReflectance = 1.0;
+        materialSurfaceData = 0.0; // LabPBR reserves blue for future use on metals.
     } else {
         materialReflectance = labF0Code / 255.0;
     }

@@ -663,3 +663,12 @@ The combined material AO/SSS, opaque PBR normals, GGX direct specular, opaque SS
 The terrain G-buffer now decodes LabPBR specular-blue codes 0–64 as porosity (0–1); codes 65–255 remain SSS data. Porous materials darken and lose reflectance/smoothness under wet conditions, controlled by `MATERIAL_WETNESS_STRENGTH`. The puddle mask follows the Unbound-style exposure model: rain-only biome precipitation, biome rainfall, sky exposure, low block light and upward-facing normals. Three noise samples provide breakup and ripple normals; the tangent basis follows Iris' documented `cross(tangent, normal)` handedness. `RAIN_PUDDLE_STRENGTH` controls pooling, and LabPBR porosity reduces it. Leaves/farmland are excluded by material ID. A 60-second periodic noise drift avoids a phase jump when Iris' `frameTimeCounter` wraps at 3600 seconds. No 3D voxel map or new render target is used.
 
 Known limits: this is a screen-space/terrain-G-buffer approximation rather than Unbound's full material/voxel pipeline; it does not wet entities or block entities, and still needs in-game weather/biome visual calibration and HD 5500 performance testing.
+
+
+## LabPBR reserved metal-channel correction — 2026-11-23
+
+- Confirmed the deferred pass already decodes LabPBR SSS codes 65–255 as `(code - 65) / 190`; no change to that correct mapping was needed.
+- Terrain already zeroed the packed surface-data channel for metal IDs. Entity and block-entity G-buffers now also clear `materialSurfaceData` when LabPBR green selects a metal (230–255), because the blue channel is reserved/undefined for metals.
+- Extended `tools/validate_pack.py` to prevent regression in both shader paths.
+- The supplied working Complementary archive was consulted for the material-system reference; the Vanilla-stock terrain pipeline was checked to preserve the native vertex/lightmap/albedo contract. LabPBR channel semantics were checked against the shaderLABS LabPBR 1.3 specification.
+- Previous baseline CI run 1040 passed all nine stages on `eb070b7566e6c6b12f43f548298be210d858d92c`. The combined correction commit below requires its own fresh CI run. Minecraft/Iris runtime and Intel HD 5500 visual/performance validation remain outstanding.

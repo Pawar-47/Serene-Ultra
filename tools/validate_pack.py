@@ -342,6 +342,16 @@ for token in ("out vec3 vPlayerPosition", "vPlayerPosition = (gbufferModelViewIn
     if token not in terrain_vertex:
         errors.append(f"Terrain vertex stage is missing stable player-space position: {token}")
 
+# LabPBR blue values 65-255 encode SSS only for non-metals. Metal IDs
+# reserve this channel, so opaque entity/block-entity paths must clear it.
+for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    metal_branch = re.search(
+        r"else if \\(labF0Code >= 230\\.0\\) \\{([^}]*)\\}", source
+    )
+    if not metal_branch or "materialSurfaceData = 0.0;" not in metal_branch.group(1):
+        errors.append(f"{name} must clear reserved LabPBR blue-channel data for metals")
+
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
 for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_block",
               "block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
