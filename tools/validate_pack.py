@@ -143,7 +143,9 @@ if "/* RENDERTARGETS: 0 */" not in composite:
 if "texture(colortex0" not in composite and "texture2D(colortex0" not in composite:
     errors.append("Composite does not preserve the accumulated scene")
 if "/* RENDERTARGETS: 3 */" in deferred:
-    errors.append("Deferred must write the lit scene to colortex0 so post-deferred geometry is preserved")
+    errors.append("Deferred must write the lit scene to logical colortex0 through Iris buffer flipping")
+if "copies colortex3 back to colortex0" in deferred:
+    errors.append("Deferred source contains obsolete colortex3 copy-back commentary")
 for directive in (
     "flip.deferred.colortex0=true", "flip.composite.colortex0=true",
     "blend.gbuffers_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
