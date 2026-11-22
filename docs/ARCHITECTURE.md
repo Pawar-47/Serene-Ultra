@@ -156,3 +156,7 @@ The Unbound water reference requires refraction and Fresnel reflections, but a g
 The forward `gbuffers_water` pass reads `colortex4` and full-resolution `depthtex1` / `depthtex2`, but writes only `colortex0`. `depthtex1` validates opaque depth behind water for thickness/refraction; `depthtex2` provides opaque-only SSR intersections. The scene copy's alpha marks valid samples, and the water pass samples the half-resolution attachment at its own texture size. Fresnel SSR quality supports 4/6/8 steps; refraction and reflection strengths are user-adjustable. Water normals are oriented consistently in player and view space before shadowing/reflection calculations.
 
 This pipeline is source/GLSL/structural validated, not in-game proven. It remains a low-bandwidth approximation of Unbound; animated multi-scale normals/waves, water noise colour, foam, full underwater response, environment/WSR reflection fallback, advanced SSR refinement and complete translucent PBR dispatch remain outstanding.
+
+
+### Translucent shadow data
+The shadow pass writes material transmission into Iris `shadowcolor0` (RGBA8). `shadowtex0` contains all shadow casters; `shadowtex1` contains opaque casters only. Deferred uses their center comparison to detect translucent blockers and applies the stored RGB transmission to direct/specular light. Recognized materials include water caustics, glass variants, ice and nether portal. The shadow color buffer is separate from the screen-space `colortex` G-buffer.
