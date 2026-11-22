@@ -45,3 +45,7 @@ As each subsystem is implemented, add its controls to dedicated screens:
 - Dimension and compatibility options.
 
 Do not add decorative or non-functional controls. Every visible setting must affect a real implemented shader path and have a useful tooltip. Add profile mappings whenever new quality controls are introduced.
+
+
+## Quality menu update — 2026-11-23
+The Quality screen currently includes shadow-map resolution, shadow distance, shadow alpha cutoff, contact AO strength and contact AO radius. `AO_STRENGTH` now includes the 0.65 profile default in its Iris option value list so the profile value is a valid selectable option.
