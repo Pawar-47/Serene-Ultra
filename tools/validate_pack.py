@@ -364,8 +364,8 @@ if "signText ? 0.0 : 0.5 + 0.5 * materialSmoothness" not in sources.get("gbuffer
     errors.append("Block-entity validity/smoothness alpha must keep sign text invalid and normal geometry at 0.5")
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
-    if "materialReflectance = (labF0Code / 229.0) * 0.08;" not in source:
-        errors.append(f"{name} must decode LabPBR dielectric F0 using the 0–0.08 range")
+    if "materialReflectance = labF0Code / 255.0;" not in source:
+        errors.append(f"{name} must decode LabPBR dielectric F0 linearly as code/255")
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     for token in ("uniform sampler2D specular;", "texture(specular, vTexCoord)",
@@ -396,8 +396,6 @@ if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get(
 if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")
 
-if "materialReflectance = labF0Code / 255.0" not in terrain_fragment:
-    errors.append("Terrain LabPBR F0 must use the standard linear 0-229/255 range")
 
 opaque_particles = sources.get("gbuffers_particles.fsh", "")
 for token in ("PARTICLE_MATERIAL_FEATURES", "float(textureSize(gtexture, 0).x) < 1100.0",
