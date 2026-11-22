@@ -26,3 +26,7 @@ The supplied working shader is used only as a visual/feature reference. Its sour
 2. Keep expensive features available; optimize sampling, pass scheduling, precision, culling, temporal reuse and resolution strategy.
 3. Keep a working baseline at every milestone.
 4. Record validation honestly; never claim FPS or visual parity without measurements.
+
+
+
+Iris fog is now applied to deferred opaque surfaces and the dedicated forward water, weather and translucent-particle paths using the documented fog uniforms and modes. This remains source-level implementation pending in-game fog calibration.
