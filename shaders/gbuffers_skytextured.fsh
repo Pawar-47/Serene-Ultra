@@ -12,7 +12,6 @@ uniform mat4 gbufferModelView;
 
 in vec2 vTexCoord;
 flat in vec4 vVertexColor;
-in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0,2 */
 layout(location = 0) out vec4 outColor;
@@ -24,8 +23,12 @@ void main() {
 
     vec3 colorLinear = pow(max(skyTexture.rgb, vec3(0.0)), vec3(2.2));
     vec3 upVector = normalize(gbufferModelView[1].xyz);
-    float sunElevation = dot(normalize(sunPosition), upVector);
-    float moonElevation = dot(normalize(moonPosition), upVector);
+    float sunElevation = 0.0;
+    float moonElevation = 0.0;
+    if (hasSkylight) {
+        sunElevation = dot(normalize(sunPosition), upVector);
+        moonElevation = dot(normalize(moonPosition), upVector);
+    }
 
     bool isSun = false;
     bool isMoon = false;
