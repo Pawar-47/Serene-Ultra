@@ -258,6 +258,7 @@ void main() {
     bool isClearGlass = (vMaterialId == 32008 || vMaterialId == 32012);
     bool isStainedGlass = (vMaterialId >= 31000 && vMaterialId <= 31031);
     bool isTintedGlass = (vMaterialId == 30008);
+    bool isIce = (vMaterialId == 32004);
     bool isGlass = isClearGlass || isStainedGlass || isTintedGlass;
     bool isPortal = (vMaterialId == 30020);
     vec3 normal = normalize(vPlayerNormal);
@@ -443,7 +444,7 @@ void main() {
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     litLinear = mix(litLinear, fogColorLinear, fogFactor);
 
-    if (isGlass && GLASS_REFLECTION_STRENGTH > 0.001) {
+    if ((isGlass || isIce) && GLASS_REFLECTION_STRENGTH > 0.001) {
         #if WATER_REFLECTION_QUALITY > 0
         vec3 glassViewNormal = normalize(viewNormal);
         if (dot(normalize(vViewPosition), glassViewNormal) > 0.0) {
@@ -456,7 +457,7 @@ void main() {
             vViewPosition, glassViewNormal, glassReflectionConfidence
         );
         vec3 glassReflectionLinear = pow(max(glassReflectionColor, vec3(0.0)), vec3(2.2));
-        float materialReflectionScale = isTintedGlass ? 0.65 : (isClearGlass ? 0.50 : 0.32);
+        float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : (isClearGlass ? 0.50 : 0.32));
         float glassReflectionWeight = clamp(
             glassFresnel * materialReflectionScale * glassReflectionConfidence
             * (GLASS_REFLECTION_STRENGTH * 0.01),
