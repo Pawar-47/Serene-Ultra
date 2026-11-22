@@ -85,3 +85,10 @@ The old colortex3-to-colortex0 copy-back has been removed. Deferred and composit
 | Particle ordering | `particles.ordering=mixed` | Dedicated particle programs and visual order checks |
 
 Do not mark these as fully validated until Iris/Minecraft runtime checks are performed.
+
+## Iris atlas/lightmap correction status — 2026-11-23
+| Area | Current implementation | Remaining validation |
+|---|---|---|
+| Block/entity atlas | `gtexture` sampler | Resource-pack atlas and modded texture checks |
+| GLSL sampling | `texture()` function | Target Iris compiler/runtime check |
+| Sky light coordinate | Iris transformed-coordinate normalization before storing G-buffer mask | Compare light levels across time/weather/dimensions |
