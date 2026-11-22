@@ -176,3 +176,10 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added explicit `rain.depth=false` to preserve the color-only weather path and the existing source-alpha blend directive.
 - Extended structural validation to require weather atlas/lightmap/fog contracts.
 - Volumetric weather, rain streaks, wet-surface response and reference Ultra parity remain pending.
+
+## Iris fog integration — 2026-11-23
+- Added Iris fog uniforms and linear/exp/exp2 calculations to deferred opaque lighting.
+- Added matching fog to forward water, weather and translucent-particle programs.
+- Used `fogShape` to choose spherical or cylindrical distance.
+- Fog color is converted to linear space and blended before re-encoding to avoid mixing encoded colors.
+- Extended structural validation for the fog contracts. Hand-water remains on the hand fallback and needs a dedicated path.
