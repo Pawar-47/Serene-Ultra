@@ -110,3 +110,6 @@ The `gbuffers_water` vertex stage consumes Iris `mc_Entity` and passes the mater
 Armor glint, beacon beams and lightning are rendered in dedicated Iris gbuffers programs before deferred. Their forward fragment paths write scene color and clear the colortex2 deferred-validity mask, preventing the opaque normal beneath an overlay from being reused. Armor glint keeps the game-managed blend state; beacon beams and lightning apply Iris fog. Lightning's separate depth path is provided by `gbuffers_basic` according to Iris' program documentation.
 
 The current water baseline additionally matches the Complementary reference's low alpha-test threshold and square-root water alpha shaping. Opaque depth is read using an exact-pixel `texelFetch` from `depthtex1`, avoiding filtering and normalized UV calculations.
+
+## Weather and cloud paths
+`gbuffers_weather` uses the reference's rain/snow texture classification and default alpha multipliers, with a user opacity control. It uses Iris `alphaTestRef`, `isEyeInWater`, `rainStrength` and `eyeBrightnessSmooth` for powdered-snow suppression and optional vertex motion. `gbuffers_clouds` is a dedicated pre-deferred overlay that preserves vanilla cloud texture/vertex tint, applies Iris fog, hides clouds while the camera is submerged, and clears the deferred normal mask. Custom volumetric clouds remain a later feature.
