@@ -73,11 +73,11 @@ Missing files do not mean geometry is necessarily omitted: Iris applies document
 
 ## High-priority attachment/order hazard to resolve
 
-Serene's current `deferred.fsh` writes opaque lit output to `colortex3`. The current `composite.fsh` then copies `colortex3` to `colortex0`.
+Serene previously wrote deferred-lit opaque output to `colortex3` and copied it over `colortex0` in composite. That design risked overwriting geometry rendered after deferred.
 
 Iris documents that translucent terrain/water, weather and hand-water are among the gbuffers programs that execute after deferred. In the current pack, those program names are absent, so Iris can route them through fallback shaders such as `gbuffers_terrain` or `gbuffers_hand`. Those existing fallback shaders write scene color/G-buffer data, while the later composite copy-back takes its source from the opaque deferred result in `colortex3`.
 
-This creates a likely overwrite hazard: post-deferred geometry rendered into the scene-color path may be replaced by the subsequent composite copy. The exact visual manifestation must be confirmed in Iris runtime/debug mode, but the current architecture must not be considered water/weather/hand-water compatible until this is resolved.
+This created a likely overwrite hazard: post-deferred geometry rendered into the scene-color path could be replaced by the subsequent composite copy. The exact visual manifestation still requires runtime confirmation.
 
 Do not patch this by guesswork. Before implementing the fix:
 1. Inspect Complementary's actual `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, relevant composite passes and their `shaders.properties` blending/ordering/target directives.
@@ -138,3 +138,13 @@ float dayFactor = smoothstep(0.0, 0.30, solarElevation);
 ```
 
 This uses the positive half of the solar cycle for daylight and smoothly attenuates near the horizon. The change is guarded by structural validation. It is not a runtime or visual-parity result; the actual supplied Vanilla-stock and Complementary archive files still require direct inspection before the dual-reference audit can be marked complete.
+
+## Translucent scene flow correction — 2026-11-23
+The first pipeline correction is now committed:
+- deferred.fsh writes its lit opaque result to logical colortex0.
+- flip.deferred.colortex0=true explicitly retains Iris' main/alternate flip. Deferred is a composite-style pass, so sampling colortex0 and writing colortex0 is safe through the flip; it is not a gbuffers read/write feedback pattern.
+- gbuffers_water, gbuffers_weather and gbuffers_hand_water receive explicit source-alpha blending on colortex0.
+- composite.fsh now passes through colortex0 to colortex0 with flip.composite.colortex0=true, rather than copying a potentially stale opaque-only colortex3 image over later translucent geometry.
+- Water fallback auxiliary G-buffer attachments 1 and 2 are explicitly unblended. They are not consumed by a later deferred pass.
+
+This corrects the identified attachment-flow hazard at source level. It does not yet provide dedicated forward lighting, refraction, Fresnel, absorption or reflections for water; nor does it prove runtime correctness. Iris runtime tests remain required for water, weather, particles and first-person translucent items. The working Complementary and Vanilla-stock ZIP files still need direct source-level comparison before the reference audit can be marked complete.
