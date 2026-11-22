@@ -13,6 +13,7 @@ flat in int vShadowMaterialId;
 flat in float vShadowFluidRenderType;
 
 /* RENDERTARGETS: 0 */
+/* const int shadowcolor0Format = RGBA8; */
 
 layout(location = 0) out vec4 outShadowColor;
 
@@ -66,7 +67,7 @@ void main() {
     outShadowColor = vec4(1.0, 1.0, 1.0, 0.0);
 
     if (vShadowMaterialId == 32000 && vShadowFluidRenderType > 0.5) {
-        vec3 absoluteWorldPosition = vShadowPlayerPosition + cameraPosition;
+        vec3 absoluteWorldPosition = getStableShadowWorldPosition(vShadowPlayerPosition);
         float caustic = calculateWaterCaustics(absoluteWorldPosition);
         outShadowColor = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12);
     } else if (vShadowMaterialId == 30008) {
