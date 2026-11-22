@@ -77,7 +77,7 @@ void main() {
     } else if (labF0Code >= 230.0) {
         materialReflectance = 1.0;
     } else {
-        materialReflectance = labF0Code / 255.0;
+        materialReflectance = (labF0Code / 229.0) * 0.08;
     }
     float labEmissionCode = floor(pbrSpecular.a * 255.0 + 0.5);
     if (labEmissionCode < 254.5) pbrEmission = labEmissionCode / 254.0;
