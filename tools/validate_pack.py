@@ -106,6 +106,13 @@ if "/* RENDERTARGETS: 0 */" not in composite:
 if "texture(colortex3" not in composite and "texture2D(colortex3" not in composite:
     errors.append("Composite does not sample the deferred output")
 
+lang_path = SHADERS / "lang" / "en_us.lang"
+if lang_path.is_file():
+    lang = lang_path.read_text(encoding="utf-8")
+    for option in ("AO_STRENGTH", "AO_RADIUS"):
+        if f"option.{option} =" not in lang or f"option.{option}.comment =" not in lang:
+            errors.append(f"Missing user-facing label or tooltip for {option}")
+
 brief = ROOT / "PROJECT_BRIEF.md"
 if not brief.is_file():
     errors.append("Missing cumulative PROJECT_BRIEF.md")
