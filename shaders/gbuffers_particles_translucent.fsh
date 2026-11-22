@@ -141,6 +141,7 @@ void main() {
     }
 
     vec3 normal = normalize(vPlayerNormal);
+    if (!gl_FrontFacing) normal = -normal;
     vec3 viewLightDirection = normalize(shadowLightPosition);
     vec3 playerLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
     float nDotL = max(dot(normal, playerLightDirection), 0.0);
