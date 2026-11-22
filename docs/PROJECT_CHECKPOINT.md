@@ -74,7 +74,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Replaced it with `solarElevation = sin(sunAngle * 2π)` and `smoothstep(0.0, 0.30, solarElevation)`. This produces a continuous daylight envelope: zero at dawn/sunset, peak at noon and zero through night.
 - Extended the structural validator to require the cyclic expression and reject the previous incorrect formula.
 - This is an Iris-contract source correction. It has not yet been validated in Minecraft/Iris or compared against the actual supplied archive contents.
-- Translucent water/weather/hand-water path remains unresolved and is still the next major pipeline task; do not add speculative fallback shaders until the exact reference source and Iris attachment behavior can be traced.
+- Historical checkpoint: the initial translucent water/weather/hand-water path was unresolved. Superseded for water by the dedicated forward water program committed 2026-11-23; weather and hand-water remain outstanding.
 
 
 - Added a numeric validator check for dawn/noon/sunset/midnight samples of the Iris cyclic daylight envelope; it checks the expected phase values rather than relying only on source-token matching.
@@ -93,9 +93,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Current main HEAD at start of this continuation: e52e0447ca949d488f7d0c520c1ec772ed15c627. CI run 45062112552 completed successfully (standalone GLSL compilation + structural validation).
 - Corrected stale architecture commentary: deferred no longer writes colortex3 and composite no longer copies colortex3 back to colortex0. Both passes use Iris main/alternate flipping on logical colortex0.
 - Verified Iris fallback routing from the current Iris program reference: gbuffers_water → gbuffers_terrain; gbuffers_weather → gbuffers_textured_lit; gbuffers_hand_water → gbuffers_hand; gbuffers_block → gbuffers_terrain; gbuffers_entities_translucent → gbuffers_entities; gbuffers_block_translucent → gbuffers_block; gbuffers_particles → gbuffers_textured_lit; gbuffers_particles_translucent → gbuffers_particles (translucent particle ordering requires particles.ordering=mixed).
-- The missing dedicated water/weather/hand-water programs are fallback-covered but are not feature-complete. Dedicated water lighting/reflections, weather treatment and hand-water shading remain pending.
+- Historical note: water/weather/hand-water were all fallback-covered at the time. Superseded for water by a dedicated forward-lit path; advanced water effects, dedicated weather and dedicated hand-water remain pending.
 - This continuation has not inspected the actual bytes of the supplied Complementary and Vanilla-stock ZIPs; no line-by-line archive comparison is claimed. Iris documentation and the current repository source are the evidence used here.
-- Next implementation target remains dedicated water forward shading, then weather and first-person translucent coverage, followed by other missing program families.
+- Next implementation target after the water baseline is dedicated weather and first-person hand-water rendering, followed by remaining special geometry and advanced water effects.
 
 ## Current authoritative state (2026-11-23)
 - `main` currently uses deferred `RENDERTARGETS: 0`, with `flip.deferred.colortex0=true`; composite reads/writes logical colortex0 with `flip.composite.colortex0=true`.
