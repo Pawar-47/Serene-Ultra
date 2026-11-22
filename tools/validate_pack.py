@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""Structural checks for Serene Ultra. This is not a GLSL compiler."""
+from pathlib import Path
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+SHADERS = ROOT / "shaders"
+REQUIRED = (
+    "shaders.properties",
+    "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
+    "gbuffers_entities.vsh", "gbuffers_entities.fsh",
+    "gbuffers_hand.vsh", "gbuffers_hand.fsh",
+    "shadow.vsh", "shadow.fsh",
+    "composite.vsh", "composite.fsh",
+    "final.vsh", "final.fsh",
+)
+errors = []
+
+for rel in REQUIRED:
+    path = SHADERS / rel
+    if not path.is_file():
+        errors.append(f"Missing required shaderpack entrypoint: shaders/{rel}")
+
+for path in SHADERS.rglob("*"):
+    if path.suffix not in {".vsh", ".fsh", ".csh", ".glsl"}:
+        continue
+    text = path.read_text(encoding="utf-8")
+    if not re.search(r"^\s*#version\s+330\b", text, re.MULTILINE):
+        errors.append(f"{path.relative_to(ROOT)}: expected an explicit GLSL 330 version")
+    # Lightweight structural sanity check only; strings/comments are not parsed.
+    if text.count("{") != text.count("}"):
+        errors.append(f"{path.relative_to(ROOT)}: unbalanced brace count")
+
+audit = ROOT / "docs" / "REFERENCE_ULTRA_AUDIT.md"
+if not audit.is_file():
+    errors.append("Missing source-derived Ultra reference audit")
+else:
+    audit_text = audit.read_text(encoding="utf-8")
+    for token in ("SHADOW_QUALITY", "COLORED_LIGHTING", "WORLD_SPACE_REFLECTIONS",
+                  "WATER_REFLECT_QUALITY", "CLOUD_QUALITY", "RAIN_PUDDLES"):
+        if token not in audit_text:
+            errors.append(f"Reference audit is missing required setting: {token}")
+
+if errors:
+    print("Serene Ultra structural validation FAILED:")
+    for error in errors:
+        print(f" - {error}")
+    sys.exit(1)
+
+print("Serene Ultra structural validation passed.")
+print("Note: GLSL compilation and in-game Iris compatibility require runtime testing.")
