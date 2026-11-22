@@ -176,3 +176,6 @@ Important distinction: Iris fallback routing prevents some geometry from simply 
 - `separateEntityDraws` is not enabled: Iris documentation warns it may be broken in newer Iris versions. Translucent entities/block entities therefore remain a separate compatibility item requiring version-specific runtime verification.
 - Dedicated `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, particle, and translucent entity/block-entity implementations are still not present. Iris fallback routing is coverage, not material parity.
 - These source corrections are grounded in current Iris documentation but are not substitutes for loading the pack in the target Iris/Minecraft build.
+
+### Follow-up: hand/translucent depth masking
+`depthtex2` is the correct depth source for opaque-world reconstruction because it excludes transparent and hand geometry, but it cannot by itself identify pixels where `colortex0` already contains first-person hand color. The deferred pass now also samples `depthtex0` and compares it with `depthtex2`. When they differ, it passes the current scene color through instead of applying the opaque surface's normal/light data to the hand or transparent overlay. This is an Iris-depth-contract source correction; verify with first-person scenes and transparent entity cases in-game.
