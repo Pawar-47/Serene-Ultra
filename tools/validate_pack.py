@@ -253,6 +253,8 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
         errors.append(f"{name} must use Iris alphaTestRef instead of a hardcoded alpha cutoff")
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
+    if "if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;" not in source:
+        errors.append(f"{name} must orient back-face normals before deferred lighting")
     if name not in ("gbuffers_terrain.fsh", "gbuffers_block.fsh") and "outEmissionData = vec4(0.0)" not in source:
         errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
 if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
@@ -398,6 +400,10 @@ if "/* RENDERTARGETS: 0 */" not in translucent_particles:
     errors.append("Translucent particles must use a forward color-only output")
 if "texture(lightmap" not in translucent_particles:
     errors.append("Translucent particles must preserve the vanilla lightmap response")
+if "if (!gl_FrontFacing) normal = -normal;" not in translucent_particles:
+    errors.append("Translucent particles must flip back-face normals before forward lighting")
+if "if (!gl_FrontFacing) normal = -normal;" not in water:
+    errors.append("Translucent terrain must flip back-face normals before forward lighting")
 
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
