@@ -169,3 +169,10 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - It reuses the dimension-aware sun/moon/End-flash gate and shadow sampling, outputs only `colortex0`, and uses the existing source-alpha blending directive.
 - Added validator checks for its forward-only output, lightmap and shadow contracts.
 - This removes reliance on the unlit `gbuffers_terrain` fallback for water. Refraction, Fresnel/reflections, absorption/depth tint, wave normals, rain ripples and reference Ultra parity are still pending.
+
+## Dedicated weather forward path — 2026-11-23
+- Added `gbuffers_weather.vsh/.fsh` for Iris post-deferred rain/snow geometry.
+- It samples `gtexture` and `lightmap`, applies the documented Iris fog uniforms and writes only colortex0.
+- Added explicit `rain.depth=false` to preserve the color-only weather path and the existing source-alpha blend directive.
+- Extended structural validation to require weather atlas/lightmap/fog contracts.
+- Volumetric weather, rain streaks, wet-surface response and reference Ultra parity remain pending.
