@@ -2,6 +2,8 @@
 
 uniform sampler2D texture;
 uniform sampler2D lightmap;
+uniform float alphaTestRef;
+uniform vec4 entityColor;
 
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
@@ -15,7 +17,10 @@ layout(location = 2) out vec4 outEncodedNormal;
 
 void main() {
     vec4 albedo = texture2D(texture, vTexCoord) * vVertexColor;
-    if (albedo.a < 0.1) discard;
+    if (albedo.a < alphaTestRef) discard;
+
+    // Iris entity tint carries a blend factor in alpha; apply it before lighting.
+    albedo.rgb = mix(albedo.rgb, entityColor.rgb, entityColor.a);
 
     vec3 vanillaLight = texture2D(lightmap, vLightmapCoord).rgb;
     outColor = albedo;
