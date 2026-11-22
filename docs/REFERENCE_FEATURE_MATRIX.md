@@ -273,3 +273,7 @@ Filled water cauldrons now map to material ID 32001 and use the water surface pi
 
 ## Forward translucent shadow consistency — 2026-11-23
 The forward `gbuffers_water` pass now samples the same `shadowtex1`/`shadowcolor0` material transmission as deferred, so water and glass surfaces receive colored shadow/caustic lighting consistently with opaque receivers.
+
+
+## Resource-pack water normal maps — 2026-11-23
+The water path now supports Iris `normals` atlas maps via `at_tangent`, with LabPBR Y- inversion selected by Iris' `MC_TEXTURE_FORMAT_LAB_PBR` macro and tangent handedness applied to the bitangent. A neutral normal is supplied when no `_n` texture exists. The `WATER_NORMAL_MAP_STRENGTH` slider controls the contribution; resource-pack/runtime validation remains pending.
