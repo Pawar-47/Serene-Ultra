@@ -25,8 +25,8 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Atmospheric scattering | Sky color, horizon and atmospheric depth | Analytic atmosphere with shared sky/lighting parameters | Pending |
 | Fog | Distance, height and dimension-aware fog | Iris fog modes/shape in deferred and forward water/weather/particle/hand-water paths | Partial; source paths implemented, runtime tuning pending |
 | Clouds | Procedural/cloud-layer appearance and lighting | Procedural cloud system with adaptive sampling | Pending |
-| Water surface | Unbound-style water tint, transparency, normals and forward lighting | Dedicated `gbuffers_water`; fluid-gated depth opacity, half-resolution refraction, Fresnel SSR, lightmap/shadow/fog | Partial; waves, foam, absorption colour, underwater response and runtime parity pending |
-| Water reflections | Reflected scene/sky and Fresnel response | Fresnel-weighted screen-space ray march (4/6/8 steps) using half-resolution scene colour and full-resolution opaque depth | Partial; sky-depth hits work, but environment/WSR fallback and advanced refinement remain pending |
+| Water surface | Unbound-style water tint, transparency, animated normals, depth absorption and foam | Dedicated `gbuffers_water`; fluid-gated depth opacity, Beer-Lambert absorption, three-band analytic waves, world-height-aware noise tint, noise-broken foam, underwater response, lightmap/shadow/fog | Partial; texture-driven normal maps/parallax, caustics, coefficient/visual calibration and runtime parity pending |
+| Water reflections | Reflected scene/sky and Fresnel response | Fresnel SSR (4/6/8 steps) using half-resolution scene colour and full-resolution opaque depth, with Iris sky/horizon fallback for missed rays | Partial; world-space reflections, temporal stability and advanced SSR refinement remain pending |
 | Block reflections | Reflective material response | Material masks and screen-space/fallback reflections | Pending |
 | Rain/wetness | Rain response and wet surfaces | Weather/material masks and roughness response | Pending |
 | Puddles | Rain puddles and surface reflections | Surface classification and puddle masks | Pending |
@@ -107,7 +107,7 @@ The hand fragment shader now samples the Iris `lightmap` texture using `gl_Textu
 A dedicated `gbuffers_spidereyes` program now writes emissive eye color and marks those pixels as ineligible for opaque deferred lighting, preventing the body normal behind the eyes from shading the emissive overlay.
 
 ## Water program update — 2026-11-23
-Dedicated `gbuffers_water` replaces the terrain fallback. It forward-shades translucent terrain after deferred using the Iris atlas, vanilla lightmap, normals, shadow map and dimension-aware celestial source. Water-only effects are gated by stable material ID plus Iris fluid render type. Water depth opacity, half-resolution refraction and Fresnel SSR are implemented; waves, absorption colour, foam and underwater response remain pending.
+Dedicated `gbuffers_water` replaces the terrain fallback. It forward-shades translucent terrain after deferred using the Iris atlas, vanilla lightmap, normals, shadow map and dimension-aware celestial source. Water-only effects are gated by stable material ID plus Iris fluid render type. It now includes depth opacity, half-resolution refraction, Fresnel SSR with sky/horizon fallback, three-band analytic waves, Unbound-style tint/noise, noisy shallow-water foam, Beer-Lambert absorption and a separate underwater surface response. Texture-driven normal maps, parallax refinement, caustics and runtime calibration remain pending.
 
 ## Weather program update — 2026-11-23
 Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-shades rain/snow using the Iris lightmap and fog uniforms, writes only colortex0, and retains source-alpha blending. `rain.depth=false` keeps it out of scene depth. Volumetric rain/snow, wind-aware streaks, wetness interaction and reference parity remain pending.
@@ -207,13 +207,13 @@ Emissive data is now a single R8 scalar in colortex3; deferred reuses scene albe
 ## Complementary Unbound water/material parity — 2026-11-23
 The primary visual/material reference is now Complementary Unbound (Unbound water style branch `WATER_STYLE == 3`) in the official r5.10 upstream codebase. The supplied working Reimagined ZIP remains the functioning Iris implementation reference. The upstream Unbound water target includes animated multi-scale normals, water noise colouring, depth-based opacity, foam, underwater response, Fresnel/specular highlights, screen-space reflections and sky/world-space reflection fallbacks. The broader material reference includes IntegratedPBR+ terrain/entity/translucent classification, material-specific emission/smoothness, normal maps, generated normals, coated textures, POM and parallax self-shadow.
 
-Serene currently has a forward water baseline with depth thickness, half-resolution scene snapshot, refraction, Fresnel-weighted SSR, normal-orientation correction, forward lighting and Iris fog. The following Unbound parity items remain outstanding: animated water normals, noise colour, foam, full underwater response, sky/WSR reflection fallback and higher-quality SSR refinement. Broader terrain/entity PBR, normal/roughness maps, POM, generated normals, coated textures and full translucent material dispatch are also outstanding. These are feature gaps, not approved removals. See [UNBOUND_REFERENCE_AUDIT.md](UNBOUND_REFERENCE_AUDIT.md).
+Serene now has depth thickness, half-resolution scene snapshot/refraction, Fresnel SSR with sky/horizon fallback, normal-orientation correction, three-band analytic waves, Unbound-inspired water tint/noise, depth-based absorption, noisy foam breakup, underwater response, forward lighting and Iris fog. Remaining Unbound water gaps include texture-driven multi-scale normal maps/parallax refinement, caustics, world-space reflections and more advanced/temporally stable SSR. Broader terrain/entity PBR, normal/roughness maps, POM, generated normals, coated textures and complete material dispatch remain outstanding. These are feature gaps, not approved removals. See [UNBOUND_REFERENCE_AUDIT.md](UNBOUND_REFERENCE_AUDIT.md).
 
 
 ## Water refraction and reflection implementation — 2026-11-23
 Iris-verified buffer flow: `deferred` writes full-resolution `colortex0` only; `deferred1` writes the half-resolution scene snapshot to `colortex4` after masking invalid hand/translucent samples with `depthtex0` versus `depthtex2`. `gbuffers_water` reads `colortex4` plus full-resolution `depthtex1` / `depthtex2` and writes only `colortex0`, avoiding same-attachment feedback.
 
-Water currently includes fluid-gated depth opacity, exact-texel depth validation, half-resolution refraction, Fresnel-weighted SSR with 4/6/8 ray steps, bounded user reflection strength, and paired view/player normal orientation correction. This is a low-bandwidth source implementation, not full Unbound parity or runtime proof. Animated multi-scale normals, noise colour, foam, full underwater response, environment/WSR fallback and advanced SSR refinement remain outstanding.
+Water currently includes fluid-gated depth opacity, exact-texel depth validation, half-resolution refraction, Fresnel SSR with 4/6/8 ray steps, sky/horizon environment fallback, paired view/player normal orientation, analytic waves, Unbound-inspired noise tint, noisy foam breakup, Beer-Lambert absorption and underwater response. This remains a low-bandwidth source implementation, not full Unbound parity or runtime proof. Texture-driven multi-scale normals, parallax refinement, caustics, world-space reflections and advanced/temporal SSR remain outstanding.
 
 
 ## Iris translucent entity routing caveat — 2026-11-23
@@ -225,11 +225,11 @@ The dedicated `gbuffers_entities_translucent` and `gbuffers_block_translucent` s
 
 
 ## Water colour feature update — 2026-11-23
-The water-only branch now applies an Unbound-inspired biome-aware base tint and a single-sample animated `noisetex` colour variation. Both effects are user-adjustable; noise animation is periodic across Iris' `frameTimeCounter` wrap. Underwater tint/absorption and visual calibration remain pending.
+The water-only branch applies an Unbound-inspired biome-aware base tint and animated `noisetex` colour variation. The world-height-aware coordinates are tiled exactly over Serene's 256-block stable-world period, and the animation is periodic across Iris' `frameTimeCounter` wrap. Foam uses a separate higher-frequency noise sample to break up the depth-based shoreline mask. Visual calibration and target-GPU performance remain pending.
 
 
 ## Water foam feature update — 2026-11-23
-A first shoreline foam approximation now uses Iris opaque depth reconstruction to estimate the vertical intersection behind top-facing water surfaces. Foam is applied before lighting and suppresses SSR locally. It is adjustable and source-validated; in-game appearance and performance remain unverified.
+Shallow-water foam now uses Iris opaque-depth thickness, top-facing water geometry and a noise-varying threshold for breakup. Foam is applied before lighting and suppresses SSR locally; strengths below/above 100 adjust coverage/tint. It is source-validated; in-game appearance and performance remain unverified.
 
 
 ## Foam implementation correction — 2026-11-23
@@ -239,8 +239,8 @@ Water foam is driven by the already reconstructed opaque-view thickness (`deptht
 ## Glass and portal material coverage — 2026-11-23
 - Clear glass and panes, all stained-glass colours and panes, tinted glass, and nether portal now have dedicated Iris `block.properties` IDs.
 - Clear/stained/tinted glass receive material-scaled Fresnel SSR from the existing opaque scene snapshot.
-- Nether portal receives warm nonlinear colour treatment and self-emission.
-- Full Unbound portal distortion/edge effect, glass absorption/connected-glass treatment, and visual/runtime validation remain outstanding.
+- Nether portal receives warm nonlinear colour treatment, self-emission and four-tap animated UV distortion clamped to the current Iris atlas sprite using `mc_midTexCoord`.
+- Portal animation uses an integer cycle count over Iris' 3600-second timer to avoid wrap discontinuities. Full Unbound raymarch/edge treatment, glass absorption/connected-glass treatment, and visual/runtime validation remain outstanding.
 
 
 ## Translucent ice feature update — 2026-11-23
