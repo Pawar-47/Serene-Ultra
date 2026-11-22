@@ -15,6 +15,7 @@ uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float rainStrength;
 uniform float endFlashIntensity;
+uniform float rainStrength;
 uniform int isEyeInWater;
 uniform vec3 cameraPosition;
 uniform vec3 fogColor;
@@ -87,7 +88,8 @@ void main() {
                 particle.g > particle.r * 1.25 && particle.g < 0.425 && particle.b > 0.75) {
                 // Water splash/drop particles: reduce saturation and opacity.
                 particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.0 / 3.0)) * 0.7;
-                float particleDither = textureLod(noisetex, gl_FragCoord.xy / 128.0, 0.0).b;
+                ivec2 noiseCoord = ivec2(gl_FragCoord.xy) % noiseTextureResolution;
+                float particleDither = texelFetch(noisetex, noiseCoord, 0).b;
                 if (particleDither > 0.4) discard;
             } else if (hasSkylight && rainStrength > 0.001 && particle.b > 0.7 && particle.r < 0.28 &&
                        particle.g < 0.425 && particle.g > particle.r * 1.4) {
