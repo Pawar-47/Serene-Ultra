@@ -93,8 +93,9 @@ vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 absoluteWorldPosition) {
     vec3 baseColor = 0.375 * waterTint;
 
     if (WATER_NOISE_COLOR_STRENGTH > 0) {
-        vec2 noiseUV = absoluteWorldPosition.xz * 0.008
-                     + vec2(frameTimeCounter * 0.0005, -frameTimeCounter * 0.0003);
+        float noiseTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
+        vec2 noiseDrift = vec2(cos(noiseTime), sin(noiseTime)) * 0.025;
+        vec2 noiseUV = absoluteWorldPosition.xz * 0.008 + noiseDrift;
         float noise = textureLod(noisetex, noiseUV, 0.0).g - 0.5;
         baseColor *= 1.0 + noise * 0.25 * (WATER_NOISE_COLOR_STRENGTH * 0.01);
     }
