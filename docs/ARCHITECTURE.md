@@ -96,3 +96,6 @@ Opaque world surfaces receive Iris fog in deferred using the documented `fogColo
 
 ## First-person translucent hand-water
 `gbuffers_hand_water` is now a dedicated post-deferred forward pass. It preserves the vanilla lightmap response, applies Iris fog, writes only scene color and blends with source alpha. The ordinary hand shader remains the pre-deferred hand path.
+
+## Translucent terrain scope
+The `gbuffers_water` program is Iris' post-deferred translucent-terrain program, not a water-only callback. It covers water and other translucent terrain (e.g. stained glass). The current forward shader therefore uses generic surface lighting, vanilla lightmap, shadowing and fog. Fluid-only effects must branch on Iris' `mc_Entity.y` attribute and will be implemented only after comparison with the supplied reference source.
