@@ -151,14 +151,14 @@ This corrects the identified attachment-flow hazard at source level. It does not
 ## Corrected fallback coverage inventory
 | Iris program | Geometry | Iris fallback | Serene dedicated implementation |
 |---|---|---|---|
-| gbuffers_water | Translucent terrain, including water | gbuffers_terrain | Missing; current terrain fallback is not water-lit |
-| gbuffers_weather | Falling rain and snow (not particles) | gbuffers_textured_lit | Missing; basic fallback only |
-| gbuffers_hand_water | Translucent first-person items | gbuffers_hand | Missing; basic hand fallback only |
-| gbuffers_block | Block entities and sign text | gbuffers_terrain | Missing; fallback coverage only |
-| gbuffers_entities_translucent | Translucent entities | gbuffers_entities | Missing; Iris additional-program fallback |
-| gbuffers_block_translucent | Translucent block entities | gbuffers_block | Missing; Iris additional-program fallback |
-| gbuffers_particles | Particles | gbuffers_textured_lit | Missing; fallback coverage only |
-| gbuffers_particles_translucent | Translucent particles (requires particles.ordering=mixed) | gbuffers_particles | Missing; fallback coverage only |
+| gbuffers_water | Translucent terrain, including water | gbuffers_terrain | Dedicated forward lighting; documented `mc_Entity` material/fluid classification, `depthtex1` thickness, source-alpha output and lava emission; refraction/Fresnel/reflections still pending |
+| gbuffers_weather | Falling rain and snow (not particles) | gbuffers_textured_lit | Dedicated post-deferred lightmap/fog path with shared rain/snow opacity option |
+| gbuffers_hand_water | Translucent first-person items | gbuffers_hand | Dedicated forward lightmap/fog path; runtime depth/visual checks pending |
+| gbuffers_block | Block entities and sign text | gbuffers_terrain | Dedicated G-buffer path; sign text bypasses deferred and portal/gateway IDs receive emission |
+| gbuffers_entities_translucent | Translucent entities | gbuffers_entities | Active forward path via `separateEntityDraws=true`; lightmap, celestial shadow, Iris fog and `entityColor` |
+| gbuffers_block_translucent | Translucent block entities | gbuffers_block | Active forward lightmap/shadow/fog path; source-alpha blend |
+| gbuffers_particles | Particles | gbuffers_textured_lit | Dedicated opaque G-buffer path with lightmap, normals and emissive particle classification |
+| gbuffers_particles_translucent | Translucent particles (requires particles.ordering=mixed) | gbuffers_particles | Dedicated forward lighting, shadow/fog and Complementary-guided water/rain/snow/smoke/emission heuristics |
 
 Important distinction: Iris fallback routing prevents some geometry from simply disappearing, but does not guarantee that its material data is compatible with Serene's G-buffer or that it receives the intended lighting. The attachment-flow fix prevents the old composite copy-back from replacing the post-deferred scene; it does not implement the missing material shading.
 
@@ -253,7 +253,7 @@ The validator now inventories the documented Iris fallback chain for the remaini
 | `gbuffers_textured_lit` | Most lit particles | `gbuffers_textured` | Fallback used by some non-dedicated geometry |
 | `gbuffers_textured` | World border/unlit particles | `gbuffers_basic` | Fallback chain |
 
-`gbuffers_entities_translucent` and `gbuffers_block_translucent` are now enabled through `separateEntityDraws=true`, as documented by Iris. The validator requires both dedicated program pairs and checks the optional `ENTITY_TRANSLUCENT` feature query. This inventory is driven by the official Iris fallback table.
+`gbuffers_textured_lit` now has a dedicated G-buffer fallback pair for lit particles and generic lit geometry. `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` intentionally retain Iris' documented fallback to `gbuffers_terrain`: Iris exposes `mc_Entity` in `gbuffers_terrain.vsh`, and keeping the common terrain path preserves stable block-ID/fluid classification rather than duplicating the shader under split-program names.
 
 ## Shadow cutout threshold correction — 2026-11-23
 The shadow fragment shader now combines Iris' per-program `alphaTestRef` with the Serene user-controlled `SHADOW_ALPHA_CUTOFF` using the stricter threshold. This preserves Iris' render-layer cutout behavior while retaining the pack's adjustable shadow cutout control.
