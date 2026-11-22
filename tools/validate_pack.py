@@ -265,7 +265,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
 if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity emission must default to zero unless an emissive blockEntityId is detected")
 opaque_particles = sources.get("gbuffers_particles.fsh", "")
-for token in ("PARTICLE_MATERIAL_FEATURES", "textureSize(gtexture, 0).x < 1100.0",
+for token in ("PARTICLE_MATERIAL_FEATURES", "float(textureSize(gtexture, 0).x) < 1100.0",
               "emissionStrength = clamp(particle.r * 8.0, 1.6, 5.0)",
               "emissionStrength = 2.0", "suppressLightmap",
               "outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0)"):
