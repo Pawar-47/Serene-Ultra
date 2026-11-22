@@ -72,7 +72,7 @@ The pipeline now writes deferred-lit opaque output directly to logical colortex0
 - G-buffer alpha discard uses Iris `alphaTestRef`; entity tint uses Iris `entityColor`.
 - Deferred reconstruction/AO uses `depthtex2` to exclude transparent and hand geometry.
 - `particles.ordering=mixed` explicitly separates opaque particles before deferred from translucent particles after deferred.
-- `separateEntityDraws` remains disabled due Iris' documented warning about newer versions.
+- `separateEntityDraws=true` is enabled according to the current Iris ordering documentation; `ENTITY_TRANSLUCENT` is queried through `iris.features.optional`.
 
 ### Deferred depth-mask refinement
 The deferred pass reconstructs opaque world positions from `depthtex2` and compares it against `depthtex0` before shading. This prevents a hand or transparent fragment already present in scene color from being shaded using the opaque surface behind it.
@@ -127,15 +127,15 @@ Iris routes sky/horizon, stars and void through `gbuffers_skybasic`, and sun/moo
 The post-deferred `gbuffers_particles_translucent` path forward-shades particles using vanilla lightmap data, player-space normals/positions, the active celestial source, one hardware-filtered shadow lookup and Iris fog. The one-tap shadow lookup is the low-cost integrated-GPU baseline. Special particle material/emission handling remains future work.
 
 ## Iris entity-translucency compatibility
-The separate translucent entity/block passes are retained as dormant forward implementations. They are not enabled because current Iris documentation warns that `separateEntityDraws` is broken in newer versions. The active configuration keeps `separateEntityDraws=false`, and the validator prevents accidental activation.
+The separate translucent entity/block passes are active forward implementations. Current Iris ordering documentation explicitly states that `separateEntityDraws=true` moves translucent entities and block entities to these post-deferred programs. The pack also queries `ENTITY_TRANSLUCENT` through `iris.features.optional`. Runtime sorting, blending and version compatibility remain unverified.
 
 ## Translucent entity and particle pipeline
 When Iris supports `ENTITY_TRANSLUCENT`, `separateEntityDraws=true` moves translucent entities and block entities after deferred. Serene Ultra implements dedicated forward-only programs for both. They preserve fractional alpha, sample the vanilla lightmap, apply the celestial shadow map and Iris fog, and blend into scene color only. The entity path uses Iris `entityColor` with its alpha blend factor.
 
-The translucent-particle path uses Complementary Reimagined's material-color heuristics as reference, guarded by particle-atlas width so the block atlas is not misclassified. It recognizes water splashes, Physics-mod rain/snow, underwater particles, campfire smoke, Ender/Crying Obsidian/Redstone particles and lava particles. It uses Iris `noisetex` for the water-splash dither, shares the weather opacity control, and gates rain/snow handling on `hasSkylight` and `rainStrength`. Emissive Ender-family particles suppress lightmap/celestial lighting and skip shadow sampling. These are baseline heuristics and require visual validation against the supplied working shader.
+Opaque and translucent particle paths now use a shared `PARTICLE_MATERIAL_FEATURES` boolean option with identical declarations. The translucent path ports Complementary-guided water-splash, Physics-mod rain/snow, underwater, campfire-smoke and emissive Ender/Crying Obsidian/Redstone/lava heuristics; it uses Iris `noisetex`, and rain/snow is gated by `hasSkylight` and `rainStrength`. Opaque particles write emissive strength into the R8 G-buffer channel. `WEATHER_TEX_OPACITY` is identically declared in the weather and translucent-particle programs. These remain baseline heuristics requiring visual calibration.
 
 ## Particle material path
-The translucent particle path has an optional Complementary-guided material classifier for water splashes, physics rain/snow, underwater particles, campfire smoke and emissive ender/redstone/lava particles. It uses Iris `noisetex` for water-particle dithering and runtime skylight/rain uniforms for weather gating. Emission is added after surface lighting and avoids a shadow lookup. Opaque particle classification remains future work.
+The opaque and translucent particle paths both use the shared `PARTICLE_MATERIAL_FEATURES` option. Opaque particles store emissive material strength in colortex3; translucent particles are forward-lit and classify water splashes, physics rain/snow, underwater particles, campfire smoke and emissive ender/redstone/lava particles. The weather opacity option is identically declared in both `gbuffers_weather` and `gbuffers_particles_translucent`.
 
 ## Emissive material buffer
 Opaque G-buffer programs write a dedicated single-channel R8 emissive target in `colortex3`. Terrain classification uses Iris `mc_Entity` and `block.properties` IDs; deferred adds tinted emission after AO/direct lighting and before fog. Lava is emitted directly in the post-deferred fluid pass. The target is read-only during deferred and does not participate in scene-color flips. Full material/emission maps and bloom are not yet implemented.
