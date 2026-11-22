@@ -166,7 +166,7 @@ float calculateWaterThickness(out vec3 opaqueViewPosition, out float opaqueDepth
 // The deferred1 pass writes a separate half-resolution opaque/sky color snapshot to colortex4.
 // depthtex2 excludes both translucent geometry and first-person hand geometry,
 // so this forward pass never samples colortex0 while writing to it.
-vec3 sampleWaterScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
+vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
     const float maxDistance = 24.0;
     float stepLength = maxDistance / float(WATER_REFLECTION_QUALITY);
     vec3 incidentDirection = normalize(viewPosition);
@@ -248,9 +248,9 @@ void main() {
     vec4 translucentAlbedo = texture(gtexture, vTexCoord) * vVertexColor;
     if (translucentAlbedo.a < alphaTestRef) discard;
 
-    // Iris routes translucent terrain through gbuffers_water. Only fluid
-    // material IDs receive water depth/refraction/reflection effects; glass
-    // and other translucent terrain retain the generic forward-lit path.
+    // Iris routes all translucent terrain through gbuffers_water. Fluid IDs
+    // receive water depth/refraction/foam; glass and portals use separate
+    // material branches while other translucent terrain stays generic.
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
