@@ -220,3 +220,6 @@ Iris documents `gbuffers_water` as post-deferred translucent terrain, with `gbuf
 - Writes color only to `colortex0`; it does not sample forbidden `colortex0–3` in a gbuffers program.
 - Uses the existing source-alpha blend directive.
 This is a forward-lit baseline, not full Ultra water parity. Refraction, Fresnel/reflection, absorption/depth tint, wave normals, rain ripples and water-specific reference tuning remain outstanding pending line-by-line source comparison and runtime testing.
+
+## Dedicated weather forward path — 2026-11-23
+Iris documents `gbuffers_weather` as post-deferred rain/snow geometry, with `gbuffers_textured_lit` as its fallback. Added a dedicated color-only `gbuffers_weather.vsh/.fsh` pair. It samples Iris `gtexture` and `lightmap`, preserves the vanilla lightmap response, applies the Iris fog uniforms (`fogColor`, `fogStart`, `fogEnd`, `fogDensity`, `fogMode`, `fogShape`), and writes only colortex0 with the existing source-alpha blend rule. `rain.depth=false` is explicit so weather does not alter depth used by other scene stages. Rain splash particles remain handled by the particle programs. This is a forward baseline, not volumetric weather, rain streak reconstruction, wet-surface response or reference Ultra parity.
