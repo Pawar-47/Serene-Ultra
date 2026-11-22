@@ -39,3 +39,6 @@ The shader now sets Iris' `shadowDistanceRenderMul` to 1.0, enabling geometry cu
 
 ## Emissive attachment format
 `colortex3Format=R8` stores only the scalar emission strength. The deferred pass reuses colortex0 albedo as the emission tint, avoiding duplicated RGB. This cuts the attachment from RGBA8 to R8 (75% less per-pixel storage/bandwidth). Current discrete strengths are quantized with under 0.005 absolute error, which is negligible relative to the lighting calibration still required.
+
+### Translucent shadow transmission cost
+The water/glass shadow system enables Iris `shadowTranslucent` and stores RGBA8 transmission in `shadowcolor0` at shadow-map resolution. Deferred retains four PCF taps and adds a center opaque/translucent comparison plus a conditional shadow-color fetch. This preserves colored shadows and water caustics without a second PCF kernel, but adds shadow-pass geometry and memory/bandwidth. The RGBA8 attachment is approximately 16 MiB at 2048². Profile tuning and runtime measurement on Intel HD 5500 are required; do not infer FPS from GLSL compile success.
