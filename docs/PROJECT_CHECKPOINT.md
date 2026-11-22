@@ -115,7 +115,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Applied Iris `entityColor` tint to entity albedo using the documented alpha blend factor.
 - Changed deferred world reconstruction and contact AO from `depthtex0` to `depthtex2`, which excludes transparent and first-person hand geometry.
 - Explicitly set `particles.ordering=mixed` so opaque particles run before deferred and translucent particles after deferred.
-- `separateEntityDraws` remains disabled because Iris warns it may not work in newer versions.
+- The earlier decision to disable `separateEntityDraws` was based on an incorrect interpretation of the docs; current Iris documentation explicitly supports the true setting and dedicated translucent entity/block-entity passes. The active config now enables it and queries `ENTITY_TRANSLUCENT`.
 - Updated the validator to require these Iris contracts and reject the prior incorrect settings.
 - These are source-level corrections; CI compilation/structural checks and runtime validation remain separate.
 
@@ -161,7 +161,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - The pass writes color to colortex0 and a zero deferred-validity mask to colortex2, preventing opaque entity normals behind spider/enderman/dragon eyes from darkening the emissive overlay.
 - Added `blend.gbuffers_spidereyes.colortex2=off` and structural validation for the mask.
 
-- Refined validator reporting so `gbuffers_entities_translucent` and `gbuffers_block_translucent` are only reported as missing when `separateEntityDraws=true`; that Iris option remains intentionally disabled due the current docs warning. Translucent entity compatibility remains a runtime test item.
+- The validator now requires the dedicated `gbuffers_entities_translucent` and `gbuffers_block_translucent` pairs because the documented Iris `separateEntityDraws=true` route is enabled. Translucent entity sorting and compatibility remain runtime test items.
 
 ## Dedicated water forward path — 2026-11-23
 - Added `gbuffers_water.vsh/.fsh` as a dedicated post-deferred forward renderer.
@@ -215,7 +215,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Dedicated post-deferred programs now exist for water, weather and hand-water. Opaque/translucent particle programs are dedicated; spider eyes have an emissive path that invalidates deferred normal data and still applies fog.
 - Deferred and forward passes use Iris fog uniforms; water/weather/hand-water/translucent particles apply fog in their forward programs.
 - Existing code corrections include Iris gtexture sampler naming, alphaTestRef, entityColor, lightmap UV normalization, depthtex0/depthtex2 masking, shadow constants, shadow-distance culling, dimension/End-flash lighting, and linear-space lightmap/tint/fog operations.
-- The validator tracks the broader Iris gbuffers fallback table. Remaining special paths include armor glint, beacon beams, clouds, skybasic/skytextured, lightning, line, damaged-block and other fallback programs. Translucent entity/block-entity split programs remain conditional and disabled while Iris warns about separateEntityDraws.
+- The validator tracks the broader Iris gbuffers fallback table. Remaining special paths include armor glint, beacon beams, clouds, skybasic/skytextured, lightning, line and damaged-block. Dedicated translucent entity/block-entity programs are now enabled through `separateEntityDraws=true`.
 - The supplied Complementary Reimagined and Vanilla-stock inventories remain the source-reference baseline. This continuation has not claimed a fresh byte-for-byte/line-by-line archive comparison; reference-dependent advanced water/material decisions must still be traced against those archives before finalizing.
 - CI passing proves standalone GLSL compile/link and structural checks only. Minecraft 26.3 + Iris loading, visual correctness, feature parity and Intel HD 5500 performance remain unverified.
 - No release is ready or being declared.
@@ -309,10 +309,10 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Particle-specific emissive classification, campfire smoke, underwater particles and material-specific water/rain/snow effects remain pending.
 
 ## Iris compatibility correction — 2026-11-23
-- Rechecked the current Iris documentation and disabled `separateEntityDraws` again (`separateEntityDraws=false`).
-- Removed `iris.features.optional=ENTITY_TRANSLUCENT` from active configuration.
+- Rechecked the current Iris ordering documentation: it explicitly documents `separateEntityDraws=true` for post-deferred translucent entities and block entities. The prior decision to disable it was incorrect and has been reversed.
+- Added `iris.features.optional=ENTITY_TRANSLUCENT` to query Iris support for the translucent entity program.
 - Retained the forward `gbuffers_entities_translucent` and `gbuffers_block_translucent` source pairs, but they are inactive until a fixed Iris version is runtime-verified.
-- Validator now rejects `separateEntityDraws=true` or the optional feature flag and does not require inactive programs.
+- Validator now requires `separateEntityDraws=true`, the optional feature query and both dedicated forward program pairs.
 - CI run [45068091455](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45068091455) passed GLSL compile, macro-branch compile, vertex/fragment linking and structural validation.
 
 ## New post-deferred geometry and particle update — 2026-11-23
