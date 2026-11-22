@@ -455,3 +455,12 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - CI exposed undeclared `isEyeInWater` in `gbuffers_water.fsh`.
 - Checked current Iris Player Status Uniforms documentation: it is `uniform int isEyeInWater`, with 0 none, 1 water, 2 lava, 3 powdered snow.
 - Added the exact integer uniform declaration; underwater logic tests `isEyeInWater == 1`. Validator now requires the declaration. Re-run full GLSL and structural CI before treating the current HEAD as passing.
+
+
+## Unbound translucent material dispatch checkpoint — 2026-11-23
+- Reviewed Unbound's `translucentMaterials.glsl`, glass/stained-glass/nether-portal handlers and `block.properties` material IDs.
+- Verified Iris `mc_Entity.x` is valid in `gbuffers_water.vsh` and reads IDs assigned by `block.properties`; `mc_Entity.y` remains the separate fluid render-type check.
+- Added IDs for clear glass, glass panes, all stained-glass colours/panes, tinted glass and nether portal.
+- Added material dispatch: water retains depth/refraction/foam; clear/stained/tinted glass receive material-scaled Fresnel SSR using the existing opaque scene snapshot; nether portal receives a warm nonlinear tint and self-emission.
+- Added `GLASS_REFLECTION_STRENGTH` and `PORTAL_EMISSION_STRENGTH` to the Quality menu and slider list. Validator checks the block IDs and shader branches.
+- This is not full Unbound parity: portal UV raymarch/edge effects, connected-glass behavior, absorption, and in-game visual/alpha sorting checks remain pending.
