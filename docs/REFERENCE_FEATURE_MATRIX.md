@@ -25,7 +25,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Atmospheric scattering | Sky color, horizon and atmospheric depth | Analytic atmosphere with shared sky/lighting parameters | Pending |
 | Fog | Distance, height and dimension-aware fog | Unified fog model with per-world tuning | Pending |
 | Clouds | Procedural/cloud-layer appearance and lighting | Procedural cloud system with adaptive sampling | Pending |
-| Water surface | Water tint, transparency, normals and lighting | Dedicated translucent/water material path | Pending |
+| Water surface | Water tint, transparency, normals and forward lighting | Dedicated `gbuffers_water` forward path with lightmap and shadow sampling | Basic path implemented; advanced effects/runtime parity pending |
 | Water reflections | Reflected scene/sky and Fresnel response | Screen-space reflection plus fallback hierarchy | Pending |
 | Block reflections | Reflective material response | Material masks and screen-space/fallback reflections | Pending |
 | Rain/wetness | Rain response and wet surfaces | Weather/material masks and roughness response | Pending |
@@ -66,7 +66,7 @@ The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB pl
 
 
 ## Iris program coverage audit (2026-11-23)
-The current source contains terrain, entities, hand and shadow programs, but it does not yet explicitly implement the Iris post-deferred programs `gbuffers_water`, `gbuffers_weather` or `gbuffers_hand_water`. Iris documents these as translucent-stage programs executed after deferred; absent files use fallback programs. Because Serene currently copies colortex3 back to colortex0 in composite, this requires a dedicated attachment/blending design and runtime validation before water/weather/hand-water can be marked supported. See [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md).
+The current source now explicitly implements `gbuffers_water`, `gbuffers_particles`, `gbuffers_particles_translucent` and `gbuffers_spidereyes`. Water is forward-lit after deferred and writes only colortex0. `gbuffers_weather` and `gbuffers_hand_water` still use Iris fallbacks; advanced water effects and all runtime/visual parity checks remain pending. See [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md).
 
 Do not equate Iris fallback coverage with correct feature implementation. The matrix must track both the native geometry category and the actual Iris program that receives it.
 
