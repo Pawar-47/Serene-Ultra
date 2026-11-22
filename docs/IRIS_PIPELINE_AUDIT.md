@@ -369,3 +369,7 @@ The water pass reuses the documented opaque-only `depthtex1` sample and `gbuffer
 
 ### Water foam depth signal correction — 2026-11-23
 The foam mask now uses the existing `calculateWaterThickness` result, derived from Iris `depthtex1` and `gbufferProjectionInverse`, rather than comparing world-Y coordinates. The mask is `1 - smoothstep(0.035, 0.42, waterThickness)` and only runs on top-facing water fragments with valid opaque depth. This reuses the depth reconstruction already performed for refraction/absorption and adds no new depth texture fetch. The foam threshold is a first-pass world/view-space approximation and needs runtime visual calibration.
+
+
+## Iris eye-fluid uniform declaration fix — 2026-11-23
+A CI compile exposed that `gbuffers_water.fsh` referenced `isEyeInWater` without declaring it. Iris' current Player Status Uniforms reference defines it as `uniform int isEyeInWater` with values 0 (none), 1 (water), 2 (lava), and 3 (powdered snow). The water pass now declares the exact documented integer type and tests `== 1` for underwater-camera behavior. Structural validation now checks this declaration. Source: https://shaders.properties/current/reference/uniforms/status/.
