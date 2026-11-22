@@ -388,8 +388,8 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
         errors.append(f"Water screen-space reflection path is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
-if "in vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
-    errors.append("Water vertex path must pass the Iris view-space normal for Fresnel reflection")
+if "out vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
+    errors.append("Water vertex stage must output the Iris view-space normal used by Fresnel reflection")
 water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH")
 lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
 for option in water_options:
