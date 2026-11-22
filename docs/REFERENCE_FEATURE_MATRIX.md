@@ -175,3 +175,11 @@ Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` ma
 
 ## Entity translucent gate — 2026-11-23
 `separateEntityDraws=false` is explicitly retained because current Iris documentation warns the feature is broken in newer versions. Dedicated translucent entity/block shader pairs remain in the repository but are inactive until the Iris feature is verified. The validator rejects accidental activation.
+
+## Translucent entity coverage — 2026-11-23
+| Iris program | Geometry | Current implementation |
+|---|---|---|
+| `gbuffers_entities_translucent` | Translucent entities (when Iris supports `ENTITY_TRANSLUCENT`) | Forward lightmap + celestial shadow + Iris fog; applies `entityColor`; source-alpha blend |
+| `gbuffers_block_translucent` | Translucent block entities | Forward lightmap + celestial shadow + Iris fog; source-alpha blend |
+
+Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANSLUCENT`. The programs write only colortex0 after deferred; runtime compatibility remains to be checked.
