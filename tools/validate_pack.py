@@ -12,6 +12,8 @@ REQUIRED = (
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
+    "gbuffers_particles.vsh", "gbuffers_particles.fsh",
+    "gbuffers_particles_translucent.vsh", "gbuffers_particles_translucent.fsh",
     "shadow.vsh", "shadow.fsh",
     "deferred.vsh", "deferred.fsh",
     "composite.vsh", "composite.fsh",
@@ -108,7 +110,8 @@ for declaration in (
 if "shadowHardwareFiltering=" in props or "shadowIntervalSize=" in props:
     errors.append("Iris GLSL constants must not be declared as shaders.properties directives")
 
-for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh"):
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
+             "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh"):
     source = sources.get(name, "")
     if "uniform float alphaTestRef" not in source or "albedo.a < alphaTestRef" not in source:
         errors.append(f"{name} must use Iris alphaTestRef for alpha discard")
@@ -142,7 +145,7 @@ if "#define SHADOW_ALPHA_CUTOFF " not in shadow_fragment:
 if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
     errors.append("Shadow pass must enable Iris shadow-distance culling")
 
-for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particles.fsh"):
     source = sources.get(name, "")
     if "/* RENDERTARGETS: 0,1,2 */" not in source:
         errors.append(f"{name} must write albedo, lightmap and normal attachments")
@@ -155,6 +158,15 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
         errors.append(f"{name} must use Iris alphaTestRef instead of a hardcoded alpha cutoff")
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
+
+particles = sources.get("gbuffers_particles.fsh", "")
+if "/* RENDERTARGETS: 0,1,2 */" not in particles:
+    errors.append("Opaque particles must write color, lightmap and normal G-buffer attachments")
+translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
+if "/* RENDERTARGETS: 0 */" not in translucent_particles:
+    errors.append("Translucent particles must use a forward color-only output")
+if "texture(lightmap" not in translucent_particles:
+    errors.append("Translucent particles must preserve the vanilla lightmap response")
 
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
@@ -206,6 +218,7 @@ for directive in (
     "blend.gbuffers_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_particles_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
 ):
     if directive not in props:
         errors.append(f"Missing Iris translucent-scene pipeline directive: {directive}")
