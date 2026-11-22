@@ -73,23 +73,23 @@ Missing files do not mean geometry is necessarily omitted: Iris applies document
 
 ## High-priority attachment/order hazard to resolve
 
-Serene previously wrote deferred-lit opaque output to `colortex3` and copied it over `colortex0` in composite. That design risked overwriting geometry rendered after deferred.
+Serene previously wrote deferred-lit opaque output to `colortex3` and copied it over `colortex0` in composite. That design risked overwriting geometry rendered after deferred. This design has since been replaced with Iris main/alternate buffer flipping; the remainder of this section is retained as the historical diagnosis.
 
-Iris documents that translucent terrain/water, weather and hand-water are among the gbuffers programs that execute after deferred. In the current pack, those program names are absent, so Iris can route them through fallback shaders such as `gbuffers_terrain` or `gbuffers_hand`. Those existing fallback shaders write scene color/G-buffer data, while the later composite copy-back takes its source from the opaque deferred result in `colortex3`.
+Iris documents that translucent terrain/water, weather and hand-water are among the gbuffers programs that execute after deferred. In the current pack, those program names are absent, so Iris routes them through fallback shaders: `gbuffers_water` → `gbuffers_terrain`, `gbuffers_weather` → `gbuffers_textured_lit`, and `gbuffers_hand_water` → `gbuffers_hand`. These fallback shaders are not tailored to the full water/weather material requirements.
 
-This created a likely overwrite hazard: post-deferred geometry rendered into the scene-color path could be replaced by the subsequent composite copy. The exact visual manifestation still requires runtime confirmation.
+This created a likely overwrite hazard: post-deferred geometry rendered into the scene-color path could be replaced by the subsequent composite copy. The source-level hazard was addressed in the pipeline correction below; in-game behaviour remains to be confirmed.
 
-Do not patch this by guesswork. Before implementing the fix:
+Historical investigation checklist (the attachment-flow correction is now committed). Before adding feature-specific water/weather shading:
 1. Inspect Complementary's actual `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, relevant composite passes and their `shaders.properties` blending/ordering/target directives.
 2. Inspect the matching Minecraft 26.3 stock shader paths to understand water/weather/hand-water native inputs and blending expectations.
 3. Trace Iris target flips and blending for the selected implementation.
-4. Design explicit post-deferred forward paths or isolated translucent accumulation targets; preserve correct alpha/depth ordering and avoid sampling forbidden colortex0–3 from gbuffers.
+4. Design dedicated forward paths that preserve correct alpha/depth ordering and avoid sampling forbidden colortex0–3 from gbuffers.
 5. Add static checks and Iris runtime scene tests for water, rain/snow and first-person water.
 6. Compare each result to Complementary Ultra and vanilla behavior.
 
 ## Required next implementation sequence
 
-1. Resolve and test the post-deferred water/weather/hand-water path.
+1. Implement dedicated forward water/weather/hand-water shading and test their post-deferred behavior.
 2. Add explicit block/entity/particle/terrain program coverage based on the reference program inventory and Iris fallback table.
 3. Establish sky/cloud and vanilla UI/text/particle compatibility paths.
 4. Only then extend material classification and the higher-cost Ultra systems (POM, reflections, colored-light propagation, volumetrics, temporal AA and dimension-specific rendering).
@@ -148,3 +148,16 @@ The first pipeline correction is now committed:
 - Water fallback auxiliary G-buffer attachments 1 and 2 are explicitly unblended. They are not consumed by a later deferred pass.
 
 This corrects the identified attachment-flow hazard at source level. It does not yet provide dedicated forward lighting, refraction, Fresnel, absorption or reflections for water; nor does it prove runtime correctness. Iris runtime tests remain required for water, weather, particles and first-person translucent items. The working Complementary and Vanilla-stock ZIP files still need direct source-level comparison before the reference audit can be marked complete.
+## Corrected fallback coverage inventory
+| Iris program | Geometry | Iris fallback | Serene dedicated implementation |
+|---|---|---|---|
+| gbuffers_water | Translucent terrain, including water | gbuffers_terrain | Missing; current terrain fallback is not water-lit |
+| gbuffers_weather | Falling rain and snow (not particles) | gbuffers_textured_lit | Missing; basic fallback only |
+| gbuffers_hand_water | Translucent first-person items | gbuffers_hand | Missing; basic hand fallback only |
+| gbuffers_block | Block entities and sign text | gbuffers_terrain | Missing; fallback coverage only |
+| gbuffers_entities_translucent | Translucent entities | gbuffers_entities | Missing; Iris additional-program fallback |
+| gbuffers_block_translucent | Translucent block entities | gbuffers_block | Missing; Iris additional-program fallback |
+| gbuffers_particles | Particles | gbuffers_textured_lit | Missing; fallback coverage only |
+| gbuffers_particles_translucent | Translucent particles (requires particles.ordering=mixed) | gbuffers_particles | Missing; fallback coverage only |
+
+Important distinction: Iris fallback routing prevents some geometry from simply disappearing, but does not guarantee that its material data is compatible with Serene's G-buffer or that it receives the intended lighting. The attachment-flow fix prevents the old composite copy-back from replacing the post-deferred scene; it does not implement the missing material shading.
