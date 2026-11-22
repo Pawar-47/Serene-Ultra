@@ -128,3 +128,8 @@ The post-deferred `gbuffers_particles_translucent` path forward-shades particles
 
 ## Iris entity-translucency compatibility
 The separate translucent entity/block passes are retained as dormant forward implementations. They are not enabled because current Iris documentation warns that `separateEntityDraws` is broken in newer versions. The active configuration keeps `separateEntityDraws=false`, and the validator prevents accidental activation.
+
+## Translucent entity and particle pipeline
+When Iris supports `ENTITY_TRANSLUCENT`, `separateEntityDraws=true` moves translucent entities and block entities after deferred. Serene Ultra implements dedicated forward-only programs for both. They preserve fractional alpha, sample the vanilla lightmap, apply the celestial shadow map and Iris fog, and blend into scene color only. The entity path uses Iris `entityColor` with its alpha blend factor.
+
+The translucent-particle path uses Complementary Reimagined's material-color heuristics as reference, guarded by particle-atlas width so the block atlas is not misclassified. It recognizes water splashes, Physics-mod rain/snow, underwater particles, campfire smoke, Ender/Crying Obsidian/Redstone particles and lava particles. It uses Iris `noisetex` for the water-splash dither, shares the weather opacity control, and gates rain/snow handling on `hasSkylight` and `rainStrength`. Emissive Ender-family particles suppress lightmap/celestial lighting and skip shadow sampling. These are baseline heuristics and require visual validation against the supplied working shader.
