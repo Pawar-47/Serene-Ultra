@@ -26,7 +26,9 @@ void main() {
     outColor = albedo;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
     outLightmapData = vec4(vanillaLight, skyLight);
-    outEncodedNormal = vec4(normalize(vPlayerNormal) * 0.5 + 0.5, 1.0);
+    vec3 surfaceNormal = normalize(vPlayerNormal);
+    if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
+    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 1.0);
 
     // Store a compact emissive material channel for the deferred pass.
     // Strength is normalized to [0,1] in alpha; RGB keeps the surface tint.
