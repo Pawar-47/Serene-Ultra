@@ -140,7 +140,7 @@ if props_path.is_file():
             errors.append(f"Missing menu configuration: {screen}")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
-                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH"):
+                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
     slider_options_line = next((line for line in props.splitlines() if line.startswith("sliders = ")), "")
@@ -786,8 +786,22 @@ if "uniform sampler2D colortex0" not in composite:
     errors.append("Composite must preserve the accumulated scene from colortex0")
 if "/* RENDERTARGETS: 0 */" not in composite:
     errors.append("Composite must write the final scene back to colortex0")
-if "texture(colortex0" not in composite and "texture2D(colortex0" not in composite:
+if "texelFetch(colortex0" not in composite and "texture(colortex0" not in composite and "texture2D(colortex0" not in composite:
     errors.append("Composite does not preserve the accumulated scene")
+for token in ("uniform sampler2D colortex2", "uniform sampler2D colortex3",
+              "uniform sampler2D colortex4", "uniform sampler2D depthtex0",
+              "uniform sampler2D depthtex2", "uniform mat4 gbufferProjectionInverse",
+              "uniform mat4 gbufferModelViewInverse", "PBR_REFLECTION_STRENGTH",
+              "PBR_REFLECTION_QUALITY", "sampleOpaqueScreenReflection",
+              "sampleOpaqueEnvironmentReflection", "normalData.a <= 0.525",
+              "abs(currentDepthAll - depth) > 0.000001",
+              "sceneSample.a < 0.5", "textureSize(colortex4, 0)",
+              "MC_TEXTURE_FORMAT_LAB_PBR", "materialReflectance >= (230.0 / 255.0)",
+              "vec3 fresnelColor = f0Color + (1.0 - f0Color) * fresnelFactor",
+              "vec3 reflectionWeight = clamp(",
+              "outColor = vec4(pow(max(resultLinear, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a)"):
+    if token not in composite:
+        errors.append(f"Opaque PBR reflection composite is missing: {token}")
 if "/* RENDERTARGETS: 3 */" in deferred:
     errors.append("Deferred must read, not write, the emissive colortex3 buffer")
 if "copies colortex3 back to colortex0" in deferred:
