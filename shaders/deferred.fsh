@@ -239,15 +239,13 @@ void main() {
     vec3 albedoLinear = pow(max(scene.rgb, vec3(0.0)), vec3(2.2));
     float materialReflectance = clamp(emissionData.g, 0.0, 1.0);
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
-    float labDielectricF0 = clamp(materialReflectance * (255.0 / 229.0), 0.0, 1.0) * 0.08;
+    float labDielectricF0 = materialReflectance;
     vec3 specularColor = (materialReflectance >= (230.0 / 255.0))
         ? albedoLinear
         : vec3(labDielectricF0);
 #else
     vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
 #endif
-    float materialAO = clamp(emissionData.b, 0.0, 1.0);
-    float materialAOFactor = mix(1.0, materialAO, MATERIAL_AO_STRENGTH * 0.01);
     vec3 litLinear = albedoLinear * (ambient * materialAOFactor + direct);
 
     // Low-cost GGX direct specular. The branch is skipped for non-glossy
