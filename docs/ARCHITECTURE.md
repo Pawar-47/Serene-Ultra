@@ -139,3 +139,6 @@ The translucent particle path has an optional Complementary-guided material clas
 
 ## Emissive material buffer
 Opaque G-buffer programs write a dedicated RGBA8 emissive target in `colortex3`. Terrain classification uses Iris `mc_Entity` and `block.properties` IDs; deferred adds tinted emission after AO/direct lighting and before fog. Lava is emitted directly in the post-deferred fluid pass. The target is read-only during deferred and does not participate in scene-color flips. Full material/emission maps and bloom are not yet implemented.
+
+## Basic overlays, block entities and damage cracks
+`gbuffers_basic` handles leash/debug overlays as vertex-colored, fogged forward geometry and clears the deferred-validity mask. `gbuffers_damagedblock` handles the crack texture as a color-only overlay with Iris `alphaTestRef` at the Complementary-matched 0.004 threshold; it intentionally inherits the opaque block's underlying G-buffer lighting. `gbuffers_block` handles block entities and sign text using Iris `blockEntityId`. Sign text is fogged in this stage and marked as deferred-bypass so it does not inherit wooden-sign lighting. End portal/gateway IDs receive an emissive G-buffer value. Sign and portal IDs are assigned in `block.properties`. These paths are source/CI verified but still need runtime and visual checks.
