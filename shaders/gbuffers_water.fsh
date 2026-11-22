@@ -33,6 +33,8 @@ uniform int fogMode;
 uniform int fogShape;
 
 in vec2 vTexCoord;
+flat in vec2 vMidTexCoord;
+flat in vec2 vTexHalfSize;
 in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vPlayerNormal;
@@ -57,6 +59,7 @@ flat in float vFluidRenderType;
 #define WATER_ABSORPTION_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Depth-dependent water light absorption
 #define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Glass and stained-glass screen-space reflection
 #define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
+#define PORTAL_DISTORTION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Atlas-safe animated portal distortion
 layout(location = 0) out vec4 outColor;
 
 // Reconstruct a stable, periodic world position from Iris' unshifted integer
@@ -436,9 +439,42 @@ void main() {
     }
 
     if (isPortal) {
-        // The animated vanilla portal texture supplies the pattern. This
-        // Unbound-inspired colour/emission treatment avoids atlas-crossing
-        // ray samples while keeping the effect independent of deferred data.
+        // Use Iris' per-quad midpoint attribute to keep every ray sample inside
+        // the current portal sprite; never let distortion bleed into adjacent
+        // atlas tiles. Four taps are a bounded low-cost approximation.
+        if (PORTAL_DISTORTION_STRENGTH > 0) {
+            vec2 atlasTexel = 1.0 / vec2(textureSize(gtexture, 0));
+            vec2 portalMinUV = vMidTexCoord - vTexHalfSize + atlasTexel;
+            vec2 portalMaxUV = vMidTexCoord + vTexHalfSize - atlasTexel;
+            float portalPhase = frameTimeCounter * 0.8;
+            vec2 portalView = clamp(
+                vViewPosition.xy / max(abs(vViewPosition.z), 0.25),
+                vec2(-1.0), vec2(1.0)
+            );
+            vec2 portalSwirl = vec2(
+                sin(vTexCoord.y * 20.0 + portalPhase),
+                cos(vTexCoord.x * 20.0 - portalPhase)
+            ) * 0.003;
+            vec2 portalOffset = (
+                portalView * 0.006 + portalSwirl
+            ) * (PORTAL_DISTORTION_STRENGTH * 0.01);
+
+            vec4 portalAccum = vec4(0.0);
+            float portalWeightSum = 0.0;
+            for (int i = 0; i < 4; ++i) {
+                float portalStep = (float(i) + 0.5) * 0.25;
+                vec2 portalUV = clamp(
+                    vTexCoord + portalOffset * portalStep,
+                    portalMinUV, portalMaxUV
+                );
+                vec4 portalTap = textureLod(gtexture, portalUV, 0.0) * vVertexColor;
+                float portalWeight = pow(1.0 - portalStep, 0.1);
+                portalAccum += portalTap * portalWeight;
+                portalWeightSum += portalWeight;
+            }
+            translucentAlbedo = portalAccum / max(portalWeightSum, 0.0001);
+        }
+        // Warm nonlinear tint and emission preserve the reference's portal glow.
         translucentAlbedo.rgb *= translucentAlbedo.rgb * vec3(1.25, 1.0, 0.65);
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0)) * 0.8;
     }
