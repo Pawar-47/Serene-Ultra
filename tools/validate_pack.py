@@ -449,6 +449,13 @@ for token in ("uniform vec3 skyColor;", "vec3 sampleEnvironmentReflection(vec3 v
         errors.append(f"Translucent environment-reflection fallback is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
+for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
+              "vec3 sampleTranslucentShadow(", "float centerShadow0 = texture(shadowtex0",
+              "float centerShadow1 = texture(shadowtex1",
+              "vec4 casterColor = texture(shadowcolor0, shadowPosition.xy)",
+              "vec3 shadow = vec3(1.0)"):
+    if token not in water:
+        errors.append(f"Forward translucent colored-shadow path is missing component: {token}")
 for token in ("WATER_ABSORPTION_STRENGTH", "vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)",
               "vec3 transmission = exp(-absorptionCoefficient * waterThickness)",
               "waterAbsorptionTintLinear * (1.0 - transmission)"):
