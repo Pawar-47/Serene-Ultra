@@ -547,3 +547,10 @@ Iris docs consulted: `noisetex` is a square generated RGB white-noise texture wi
 The latest source checkpoint also wires `WATER_WAVE_SCALE` into all three analytic wave frequencies. The exposed scale values (50, 75, 100, 125, 150, 200 percent) are quarter-step multiples, so each frequency continues to tile the 256-block stable-world domain. The option is present in the Iris Quality screen, slider list and English labels.
 
 GitHub Actions run [45076104051](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45076104051) for commit `c1bdc86575e6944e99efd0b30e3ae4d5509cebad` completed successfully. GLSL compilation, Iris render-stage macro compilation, vertex/fragment linking and structural validation all passed for that exact source state. This is not Minecraft/Iris runtime or visual validation.
+
+
+## Iris resource-pack water normal maps — 2026-11-23
+
+The dedicated water vertex/fragment pair now consumes Iris' documented `at_tangent` attribute and `normals` atlas. The tangent and handedness are transformed into player space; water top-face normal maps are decoded in tangent space and blended into the analytic wave normal before Fresnel/refraction/SSR. The original geometric normal is retained for shadow-map bias and shoreline orientation. A `WATER_NORMAL_MAP_STRENGTH` Quality slider controls the contribution.
+
+Iris documents `at_tangent` as available in `gbuffers_*.vsh`, and `normals` as the resource-pack PBR normal atlas. When no `_n` texture exists, Iris returns the neutral normal (127,127,255), so the feature is effectively flat and does not invent surface detail. This is resource-pack PBR integration, not a replacement for Unbound's own generated multi-scale water normal texture. The implementation adds one normal-atlas lookup only for top-facing water fragments when the option is enabled. Runtime behavior with actual LabPBR/oldPBR packs and Intel HD 5500 cost remain unverified.
