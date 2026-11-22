@@ -381,3 +381,7 @@ The water vertex stage already receives Iris `mc_Entity.x` and forwards it to th
 
 ## Translucent ice ID — 2026-11-23
 Added `block.32004` for Minecraft ice/frosted ice using the documented `block.properties` to `mc_Entity.x` mapping. The water fragment stage treats ID 32004 as a reflective translucent material, not as water, so it receives Fresnel SSR but not water depth opacity/refraction/foam. Runtime render-layer routing and alpha behavior still need verification.
+
+
+## G-buffer smoothness packing — 2026-11-23
+The `colortex2` normal attachment now packs both deferred validity and a scalar smoothness value in alpha without adding another attachment. Alpha 0 is invalid (sky/overlay/sign text); 0.5 is valid non-smooth geometry; 0.5–1.0 encodes smoothness. The deferred validity test remains `normalData.a < 0.5`, so existing overlay masks remain deterministic. Terrain assigns smoothness only to the Iris `mc_Entity.x` IDs for slime and honey; entities, block entities, and lit particles use the valid zero-smoothness value. Deferred decodes the value and computes a specular half-vector only when smoothness is nonzero. This is an internal pack-owned G-buffer contract, not an Iris-provided alpha semantic.
