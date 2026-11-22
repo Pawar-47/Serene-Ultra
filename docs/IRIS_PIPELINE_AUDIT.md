@@ -205,3 +205,6 @@ Iris routes `gbuffers_hand` to a textured-lit fallback when no custom shader exi
 - Enabled Iris `endFlashShadows=true`. In the End, Iris redirects `shadowLightPosition` to `endFlashPosition`; deferred uses `endFlashIntensity` as the direct-light gate when `hasSkylight` is false.
 - Shadow sampling is skipped when the surface faces away from the active light or the celestial gate is zero, avoiding four shadow comparisons for pixels that cannot receive direct celestial light.
 - Nether receives no direct celestial term from this path; End-flash illumination is supported at source level. Runtime verification in Nether/End remains outstanding.
+
+## Emissive eye overlay handling — 2026-11-23
+Iris identifies `gbuffers_spidereyes` as the spider/enderman/dragon eye pass, falling back to `gbuffers_textured` when absent. That fallback writes color but no Serene normal-validity data. If deferred then sees the underlying entity normal, it can incorrectly apply body lighting to the emissive eye texture. Added a dedicated `gbuffers_spidereyes` pair that writes the eye color and clears the deferred-validity alpha in colortex2 for those pixels. The per-buffer blend directive disables blending on that mask so the invalid marker is deterministic. This is a source-level emissive-preservation correction; verify eye layering and depth behavior in Iris runtime.
