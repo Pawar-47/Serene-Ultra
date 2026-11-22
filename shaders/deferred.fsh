@@ -14,6 +14,8 @@ uniform sampler2D colortex3;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 uniform sampler2DShadow shadowtex0;
+uniform sampler2DShadow shadowtex1;
+uniform sampler2D shadowcolor0;
 
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
@@ -79,7 +81,19 @@ float sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5, -0.5), shadowPosition.z));
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5,  0.5), shadowPosition.z));
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5,  0.5), shadowPosition.z));
-    return visibility * 0.25;
+    visibility *= 0.25;
+
+    // shadowtex1 excludes translucent geometry. If the center sample is
+    // blocked in shadowtex0 but visible in shadowtex1, the blocker is water
+    // (or another translucent caster). shadowcolor0 carries its transmission.
+    float centerShadow0 = texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
+    float centerShadow1 = texture(shadowtex1, vec3(shadowPosition.xy, shadowPosition.z));
+    if (centerShadow1 > centerShadow0 + 0.5) {
+        float waterTransmission = texture(shadowcolor0, shadowPosition.xy).r;
+        float translucentVisibility = waterTransmission * centerShadow1;
+        visibility = mix(visibility, translucentVisibility, 1.0 - visibility);
+    }
+    return clamp(visibility, 0.0, 1.0);
 }
 
 float calculateFogFactor(float distanceToCamera) {
