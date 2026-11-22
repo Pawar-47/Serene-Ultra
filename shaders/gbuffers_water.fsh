@@ -56,6 +56,7 @@ flat in float vFluidRenderType;
 #define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack water normal-map detail
+#define GLASS_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack glass/ice normal-map detail
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
 #define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
@@ -80,13 +81,13 @@ vec3 getStableWaterWorldPosition(vec3 playerPosition) {
 
 // Three analytic wave bands provide stable multi-scale surface normals without
 // a full-screen texture fetch or an additional normal-map asset.
-vec3 calculateWaterNormalMap(vec3 geometricNormal) {
+vec3 calculateTranslucentNormalMap(vec3 geometricNormal, float normalMapStrength) {
     vec3 tangentNormal = textureLod(normals, vTexCoord, 0.0).xyz * 2.0 - 1.0;
     // LabPBR uses DirectX Y- normals; oldPBR retains the legacy Y+ convention.
     #ifdef MC_TEXTURE_FORMAT_LAB_PBR
         tangentNormal.y = -tangentNormal.y;
     #endif
-    tangentNormal.xy *= WATER_NORMAL_MAP_STRENGTH * 0.01;
+    tangentNormal.xy *= normalMapStrength * 0.01;
     tangentNormal = normalize(tangentNormal);
 
     vec3 tangent = normalize(vPlayerTangent - geometricNormal * dot(vPlayerTangent, geometricNormal));
@@ -351,13 +352,18 @@ void main() {
         stableWaterWorldPosition = getStableWaterWorldPosition(vPlayerPosition);
         #if WATER_NORMAL_MAP_STRENGTH > 0
             if (abs(normal.y) > 0.72) {
-                normal = calculateWaterNormalMap(normal);
+                normal = calculateTranslucentNormalMap(normal, WATER_NORMAL_MAP_STRENGTH);
             }
         #endif
         normal = calculateWaterWaveNormal(normal, stableWaterWorldPosition);
         // Iris documents gbufferModelView as player-space to view-space.
         // Transform the perturbed normal for Fresnel, refraction and SSR.
         viewNormal = normalize(mat3(gbufferModelView) * normal);
+    } else if (isClearGlass || isStainedGlass || isTintedGlass || isIce) {
+        #if GLASS_NORMAL_MAP_STRENGTH > 0
+            normal = calculateTranslucentNormalMap(normal, GLASS_NORMAL_MAP_STRENGTH);
+            viewNormal = normalize(mat3(gbufferModelView) * normal);
+        #endif
     }
     vec3 viewLightDirection = normalize(shadowLightPosition);
     vec3 worldLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
