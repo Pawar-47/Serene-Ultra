@@ -258,7 +258,7 @@ for token in ("block.32000=minecraft:water",):
         errors.append(f"Missing stable Iris block material mapping: {token}")
 sky_textured = sources.get("gbuffers_skytextured.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SUN", "MC_RENDER_STAGE_MOON",
-              "sunPosition", "moonPosition", "isEyeInWater", "outDeferredValidity = vec4(0.0)"):
+              "alphaTestRef", "sunPosition", "moonPosition", "isEyeInWater", "outDeferredValidity = vec4(0.0)"):
     if token not in sky_textured:
         errors.append(f"Sky-texture program is missing Iris stage/material handling: {token}")
 textured = sources.get("gbuffers_textured.fsh", "")
