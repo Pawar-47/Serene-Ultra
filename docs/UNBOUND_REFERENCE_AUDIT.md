@@ -125,13 +125,14 @@ Key constraints applied to Serene:
 - Depth-validity masking using `depthtex0` versus `depthtex2` so first-person hand/translucent pixels do not contaminate the scene copy.
 - Screen-space refraction with depth rejection and scene-snapshot validity checks.
 - Screen-space water reflection using full-resolution `depthtex2` and correctly scaled/clamped half-resolution `colortex4` coordinates.
+- Three-band analytic water-normal waves anchored to absolute player/world XZ coordinates, transformed into view space with Iris `gbufferModelView`; wave speed uses integer cycles per Iris `frameTimeCounter` hour to avoid phase jumps at the documented timer wrap.
 - Fresnel-weighted reflection blending with a bounded user strength.
 - Forward lightmap/celestial/shadow/fog treatment.
 - View-space and player-space normal orientation correction; refraction depth is fetched at an exact clamped texel and reconstructed using that texel's centre UV.
 
 ### Still missing or incomplete relative to Unbound
 
-- Animated multi-scale water normals and configurable wave speed/scale/bumpiness.
+- Texture-driven multi-scale normal maps, configurable wave scale/bumpiness and the upstream reference's normal-map parallax refinement. Serene currently uses a lower-bandwidth analytic three-wave approximation, not the same texture-based method.
 - Water noise-colour variation.
 - Surface foam.
 - Full Unbound water colour and underwater-specific response.
@@ -155,3 +156,7 @@ These are parity gaps, not approved omissions. Low-end optimisation must preserv
 7. Validate each change against Iris documentation first, then compile, run structural checks, load in Iris/Minecraft 26.3, compare scenes against Unbound and measure on the target Intel HD 5500 system.
 
 **Validation status:** Current water source and structural validator compile/link successfully in CI at the recorded checkpoint, but this is not Iris runtime proof, visual parity, or measured performance. Do not claim those until tested in-game.
+
+
+## Analytic water-wave milestone — 2026-11-23
+Serene now has three animated analytic wave bands in `gbuffers_water.fsh`. The waves use absolute player/world coordinates (`vPlayerPosition + cameraPosition`) so the pattern remains stable as the camera moves. The perturbed normal is transformed with Iris `gbufferModelView` for Fresnel/refraction/SSR while the player-space normal is used for lighting and shadowing. `WATER_WAVE_STRENGTH` and `WATER_WAVE_SPEED` are exposed in the Quality menu. Speed is expressed as an integer number of complete cycles per 3600-second `frameTimeCounter` interval, avoiding a phase discontinuity when Iris' documented timer wraps. This is an original low-bandwidth approximation of Unbound's animated multi-scale normal map; texture-driven normals, parallax refinement and calibrated wave appearance remain outstanding.
