@@ -108,3 +108,6 @@ A dedicated `gbuffers_spidereyes` program now writes emissive eye color and mark
 
 ## Water program update — 2026-11-23
 Dedicated `gbuffers_water` now replaces the terrain fallback. It forward-shades translucent water after deferred using the Iris atlas, vanilla lightmap, world normal, shadow map and dimension-aware celestial source. It writes color only and blends with the configured source-alpha factors. This fixes the unlit fallback path but is not yet full Ultra water: refraction, reflections/Fresnel, absorption, wave normals and rain interaction remain pending.
+
+## Weather program update — 2026-11-23
+Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-shades rain/snow using the Iris lightmap and fog uniforms, writes only colortex0, and retains source-alpha blending. `rain.depth=false` keeps it out of scene depth. Volumetric rain/snow, wind-aware streaks, wetness interaction and reference parity remain pending.
