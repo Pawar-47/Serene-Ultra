@@ -13,7 +13,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 |---|---|---|---|
 | Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Albedo, sampled vanilla lightmap RGB and world-aligned normal G-buffer capture; material classification remains next | Partial |
 | Entity rendering | Entity-specific shading and shadows | Entity albedo, sampled lightmap and normal capture with alpha cutoff | Partial |
-| Hand/item rendering | Correct first-person hand/item rendering | Dedicated hand pipeline and parity tests | Foundation |
+| Hand/item rendering | Correct first-person hand/item rendering | Hand lightmap path, dedicated post-deferred hand-water path and held-item light follow-up | Partial |
 | Shadow mapping | Sun/moon directional shadows | Depth reconstruction and directional shadow comparison | Partial |
 | Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
 | Shadow filtering | Soft filtered shadows and quality controls | Four hardware-filtered comparison taps with slope-aware bias; stability/quality tuning remains | Partial |
@@ -23,7 +23,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Indirect lighting / GI | Bounced/indirect illumination appearance | Screen-space/temporal approximation; preserve visual contribution | Pending |
 | Volumetric lighting | Light shafts and volumetric scattering | Depth-aware low-resolution integration and reconstruction | Pending |
 | Atmospheric scattering | Sky color, horizon and atmospheric depth | Analytic atmosphere with shared sky/lighting parameters | Pending |
-| Fog | Distance, height and dimension-aware fog | Unified fog model with per-world tuning | Pending |
+| Fog | Distance, height and dimension-aware fog | Iris fog modes/shape in deferred and forward water/weather/particle/hand-water paths | Partial; source paths implemented, runtime tuning pending |
 | Clouds | Procedural/cloud-layer appearance and lighting | Procedural cloud system with adaptive sampling | Pending |
 | Water surface | Water tint, transparency, normals and forward lighting | Dedicated `gbuffers_water` forward path with lightmap and shadow sampling | Basic path implemented; advanced effects/runtime parity pending |
 | Water reflections | Reflected scene/sky and Fresnel response | Screen-space reflection plus fallback hierarchy | Pending |
@@ -40,15 +40,15 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Motion blur | Motion-dependent post-processing if present | Velocity-aware path; avoid ghosting | Pending |
 | Lens/post effects | Any enabled Ultra lens and post-processing effects | Individually inventoried and switchable | Pending |
 | Text rendering | Correct text/UI treatment and compatibility | Preserve vanilla UI/text; no destructive post-processing | Pending |
-| Weather | Rain/snow and weather-dependent material/lighting | Weather-aware material and atmosphere paths | Pending |
-| Dimension support | Overworld, Nether, End and special dimensions | World-specific shader programs/configuration | Pending |
+| Weather | Rain/snow and weather-dependent material/lighting | Dedicated forward weather path with Iris lightmap/fog; volumetric and wetness effects remain | Partial |
+| Dimension support | Overworld, Nether, End and special dimensions | Iris hasSkylight gating plus End-flash shadow source; full per-dimension atmosphere/material tuning remains | Partial |
 | Night vision/potions | Correct vanilla effect interactions | Explicit effect compatibility tests | Pending |
-| Emissive entities/blocks | Correct emissive response | Emissive classification and lighting path | Pending |
-| Translucent materials | Glass, foliage, water and particles | Ordered/appropriate translucent passes and alpha rules | Pending |
+| Emissive entities/blocks | Correct emissive response | Dedicated spider/enderman/dragon eye pass bypasses deferred lighting; broader emissive classification remains | Partial |
+| Translucent materials | Glass, foliage, water and particles | Dedicated water/weather/hand-water/translucent-particle forward paths; glass/other translucent entity handling remains | Partial |
 | Foliage | Alpha-tested leaves/grass and wind response if present | Alpha-aware shadow casters are started; material animation and parity remain | Partial |
 | Voxelization/SSBO-dependent effects | Reference's voxel/structured-buffer features | Determine visible Ultra contribution; implement a hardware-compatible alternative where needed | Pending |
 | Profiles/settings | Full reference Ultra quality controls | Serene Ultra master profile plus scalable implementation controls | Foundation |
-| Iris compatibility | Shaderpack lifecycle and supported uniforms/programs | Current Iris 26.3 validation | Pending |
+| Iris compatibility | Shaderpack lifecycle and supported uniforms/programs | Iris source contracts, GLSL compile, vertex/fragment link and structural CI | Source validation passing; Minecraft/Iris runtime pending |
 
 ## Audit follow-up required
 
@@ -80,9 +80,9 @@ The old colortex3-to-colortex0 copy-back has been removed. Deferred and composit
 | Shadow update interval | GLSL `const float shadowIntervalSize = 2.0` | Runtime update cadence |
 | Vertex AO alpha | `separateAo=false` to preserve material alpha | Revisit only when AO has a separate G-buffer channel |
 | Cutout alpha | `alphaTestRef` uniform in terrain/entities/hand | Runtime cutout edge checks |
-| Entity tint | `entityColor` RGB mixed by its alpha | Damage/team/potion tint checks |
-| Deferred depth | `depthtex2` excludes transparent and hand geometry | Verify all target-version depth stages in game |
-| Particle ordering | `particles.ordering=mixed` | Dedicated particle programs and visual order checks |
+| Entity tint | `entityColor` tint blended in linear space using its alpha | Damage/team/potion tint checks |
+| Deferred depth | `depthtex2` opaque-world reconstruction plus `depthtex0` hand/translucent mask | Verify all target-version depth stages in game |
+| Particle ordering | `particles.ordering=mixed` | Dedicated opaque G-buffer and translucent forward particle programs |
 
 Do not mark these as fully validated until Iris/Minecraft runtime checks are performed.
 
