@@ -37,3 +37,5 @@ Dedicated forward paths now exist for water, weather and first-person hand-water
 The `gbuffers_water` program handles all translucent terrain (including water and stained glass), so the current implementation is described as a generic forward-lit translucent-surface baseline rather than a complete water renderer.
 
 Water material handling now distinguishes water/water-cauldron from other translucent terrain using Iris `mc_Entity` and `block.properties`, and applies depth-dependent opacity from `depthtex1`. Advanced water effects and runtime validation remain pending.
+
+Water handling now uses Iris' documented `mc_Entity` ID/fluid fields, opaque-only `depthtex1` and inverse-projection reconstruction for thickness. The water alpha threshold follows Iris `alphaTestRef`; depth opacity follows the Complementary reference's exponential thickness model. Advanced water effects and in-game verification remain outstanding.
