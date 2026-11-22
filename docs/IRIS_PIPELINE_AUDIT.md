@@ -409,3 +409,7 @@ The post-deferred `gbuffers_water` pass now uses the same Iris `shadowtex0`/`sha
 
 ## Resource-pack tangent-space water normals — 2026-11-23
 Verified Iris `at_tangent` documentation: the attribute is valid in `gbuffers_*.vsh`, stores an approximate model-space tangent in xyz and a handedness sign in w. The water vertex shader transforms the tangent with `gl_NormalMatrix` and back into player space with `gbufferModelViewInverse`. The fragment shader samples Iris' `normals` atlas; `MC_TEXTURE_FORMAT_LAB_PBR` controls the DirectX Y inversion, while oldPBR retains Y+. The bitangent uses `cross(tangent, geometricNormal) * handedness`. Iris supplies a neutral `(127,127,255)` normal when no `_n` map exists, so packs without PBR normals retain the analytic wave normal. This uses documented Iris attributes/samplers and does not assume the resource pack supplies a normal map.
+
+
+## Iris PBR specular atlas decoding — 2026-11-23
+Verified Iris' `specular` sampler and `MC_TEXTURE_FORMAT_LAB_PBR` macro. Terrain samples the resource-pack specular atlas once per fragment. Red is smoothness in both formats; oldPBR green/blue are metalness/emissive, while LabPBR green is dielectric F0 or metal code and alpha is emissive (255 means none). The resulting reflectance scalar is stored in `colortex3.g`, with emission in `.r`; `colortex3Format=RG8` preserves the data with half the default RGBA8 storage. Deferred reads the scalar and uses albedo-coloured F0 for metal or dielectric F0 for non-metal. CI now compiles both default oldPBR and explicit LabPBR macro branches.
