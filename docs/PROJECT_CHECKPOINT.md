@@ -449,3 +449,9 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Reviewed the first foam implementation and rejected its world-Y/block-height gate because it was not a robust signal for sloped shorelines and could invert depending on vertical offset.
 - Replaced it with a shallow-water mask derived from the already reconstructed opaque-view thickness: `1 - smoothstep(0.035, 0.42, waterThickness)`, gated to top-facing water and valid opaque depth.
 - This reuses the existing Iris `depthtex1` reconstruction and adds no extra texture fetch. It remains an initial approximation; runtime calibration and foam breakup remain outstanding.
+
+
+## Iris water uniform compile correction — 2026-11-23
+- CI exposed undeclared `isEyeInWater` in `gbuffers_water.fsh`.
+- Checked current Iris Player Status Uniforms documentation: it is `uniform int isEyeInWater`, with 0 none, 1 water, 2 lava, 3 powdered snow.
+- Added the exact integer uniform declaration; underwater logic tests `isEyeInWater == 1`. Validator now requires the declaration. Re-run full GLSL and structural CI before treating the current HEAD as passing.
