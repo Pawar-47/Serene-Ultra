@@ -25,6 +25,7 @@ REQUIRED = (
     "gbuffers_skytextured.vsh", "gbuffers_skytextured.fsh",
     "gbuffers_skybasic.vsh", "gbuffers_skybasic.fsh",
     "gbuffers_line.vsh", "gbuffers_line.fsh",
+    "gbuffers_line.vsh", "gbuffers_line.fsh",
     "gbuffers_beaconbeam.vsh", "gbuffers_beaconbeam.fsh",
     "shadow.vsh", "shadow.fsh",
     "deferred.vsh", "deferred.fsh",
@@ -263,6 +264,12 @@ for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLINE", "MC_RENDER_
               "fogColor", "fogDensity", "outDeferredValidity = vec4(0.0)"):
     if token not in line_overlay:
         errors.append(f"Line overlay is missing Iris render-stage component: {token}")
+line_shader = sources.get("gbuffers_line.fsh", "")
+for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLINE",
+              "MC_RENDER_STAGE_DEBUG", "renderStage", "fogColor",
+              "outDeferredValidity = vec4(0.0)"):
+    if token not in line_shader:
+        errors.append(f"Iris line-overlay program is missing required component: {token}")
 sky_basic = sources.get("gbuffers_skybasic.fsh", "")
 sky_basic_vertex = sources.get("gbuffers_skybasic.vsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAGE_SUNSET",
@@ -383,6 +390,7 @@ for directive in (
     "blend.gbuffers_textured.colortex2=off",
     "blend.gbuffers_skytextured.colortex2=off",
     "blend.gbuffers_skybasic.colortex2=off",
+    "blend.gbuffers_line.colortex2=off",
     "blend.gbuffers_line.colortex2=off",
 ):
     if directive not in props:
