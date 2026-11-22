@@ -531,3 +531,12 @@ This preserves animation continuity when Iris resets the timer. The validator ch
 
 ### Water wave scale option — 2026-11-23
 Added `WATER_WAVE_SCALE` to control spatial frequency independently from normal strength and temporal speed. It is exposed in the Quality menu and slider list and is required by structural validation.
+
+
+## Unbound water-noise and foam-breakup refinement — 2026-11-23
+
+The water tint now uses a world-height-aware noise coordinate inspired by the pinned Unbound water source. Foam now uses a second, higher-frequency `noisetex` sample to break up the shallow-water mask; the threshold is noise-driven, and foam strength above 100 increases the foam tint while values below 100 reduce coverage. This adds one additional noise lookup on water pixels when foam is enabled.
+
+A source review caught a periodicity mismatch in the initial coordinate scale: Unbound's `0.032` scale multiplied by Serene's 256-block stable-world period gives 8.192 texture repeats, which would not meet at the modulo boundary. Serene now uses `0.03125` (1/32), giving exactly 8 repeats per 256 blocks; the tint path at quarter scale gives 2 repeats and the foam path at 4× scale gives 32 repeats. This small scale adjustment preserves world-coordinate continuity while closely approximating Unbound's coordinate density.
+
+Iris docs consulted: `noisetex` is a square generated RGB white-noise texture with default 256×256 resolution; `frameTimeCounter` resets after 3600 seconds. The validator checks the stable-world tiling coefficient. Visual comparison, water/foam calibration and Intel HD 5500 performance measurements remain pending.
