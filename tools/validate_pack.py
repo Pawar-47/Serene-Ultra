@@ -118,8 +118,8 @@ if props_path.is_file():
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
         errors.append("Weather must remain a post-deferred color-only path without depth writes")
-    if "alphaTest.gbuffers_water=GREATER 0.0001" not in props:
-        errors.append("Translucent terrain must use the Iris water alpha-test reference")
+    if "alphaTest.gbuffers_water=" in props:
+        errors.append("Do not override Iris' recommended gbuffers_water alphaTestRef")
     if "WATER_FOG_MULT" not in props:
         errors.append("Water depth-opacity control must be exposed in the Quality menu")
     if "WEATHER_TEX_OPACITY" not in props:
@@ -229,14 +229,16 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleTranslucentShadow",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
               "texture(gtexture", "texture(lightmap", "depthtex1", "calculateWaterThickness",
-              "WATER_FOG_MULT", "vMaterialId == 32000", "outColor = vec4(litColor, translucentAlbedo.a)"):
+              "WATER_FOG_MULT", "uniform float alphaTestRef",
+              "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
+              "opaqueDepth) * 2.0 - 1.0", "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
 for token in ("in vec2 mc_Entity", "vMaterialId = int(mc_Entity.x + 0.5)", "vFluidRenderType = mc_Entity.y"):
     if token not in water_vertex:
         errors.append(f"Translucent-terrain vertex stage is missing Iris material attribute: {token}")
 block_props = (SHADERS / "block.properties").read_text(encoding="utf-8") if (SHADERS / "block.properties").is_file() else ""
-for token in ("block.32000=minecraft:water", "block.32001=minecraft:water_cauldron"):
+for token in ("block.32000=minecraft:water",):
     if token not in block_props:
         errors.append(f"Missing stable Iris block material mapping: {token}")
 spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
