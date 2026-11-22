@@ -234,7 +234,9 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "texture(gtexture", "texture(lightmap", "depthtex1", "calculateWaterThickness",
               "WATER_FOG_MULT", "uniform float alphaTestRef",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
-              "opaqueDepth) * 2.0 - 1.0", "outColor = vec4(litColor, translucentAlbedo.a)"):
+              "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)",
+              "sqrt(max(translucentAlbedo.a, 0.0))",
+              "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
 for token in ("in vec2 mc_Entity", "vMaterialId = int(mc_Entity.x + 0.5)", "vFluidRenderType = mc_Entity.y"):
