@@ -281,3 +281,8 @@ Iris documents armor glint, beacon beams and lightning as separate gbuffers prog
 
 ### Reference parity refinement
 A further source comparison confirmed Complementary Reimagined sets `alphaTest.gbuffers_water=GREATER 0.0001` and shapes water alpha with `sqrt(alpha)` before applying the depth-opacity term. Serene Ultra now deliberately uses the same low Iris alpha-test reference, reads it through `alphaTestRef`, applies the square-root alpha shaping, and uses `texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)` to sample the exact opaque-depth pixel without filtering. This supersedes the earlier mistaken note that the alpha-test directive had been removed.
+
+## Weather and vanilla-cloud corrections — 2026-11-23
+The Complementary reference's weather path uses different baseline alpha multipliers for rain and snow, rejects very faint weather texels, and suppresses the weather pass when the camera is in powdered snow. Added the same rain/snow classification (`r+g < 1.5`), default opacity factors (0.25 rain / 0.5 snow), adjustable `WEATHER_TEX_OPACITY` control, `alphaTestRef` handling and Iris `isEyeInWater==3` behavior. Added optional `WAVING_RAIN` vertex motion using Iris `rainStrength`, `eyeBrightnessSmooth` and `frameTimeCounter`.
+
+Iris routes vanilla clouds through `gbuffers_clouds` before deferred. Added a dedicated pass that preserves the vanilla texture/vertex color, applies Iris fog, hides clouds while the camera is in fluid, and clears the deferred-normal validity mask so the clouds are not shaded using terrain normals underneath. This is vanilla-cloud compatibility, not the full custom volumetric/cloud system from Complementary.
