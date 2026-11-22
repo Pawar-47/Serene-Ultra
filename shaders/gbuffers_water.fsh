@@ -53,6 +53,7 @@ flat in float vFluidRenderType;
 #define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
 #define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
 #define WATER_UNDERWATER_STRENGTH 100 // [0 25 50 75 100 125 150] Underwater tint and surface response
+#define WATER_ABSORPTION_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Depth-dependent water light absorption
 #define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Glass and stained-glass screen-space reflection
 #define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
 layout(location = 0) out vec4 outColor;
@@ -321,10 +322,28 @@ void main() {
     vec2 waterRefractionOffset = vec2(0.0);
     float refractionConfidence = 0.0;
     vec3 refractedSceneLinear = vec3(0.0);
+    vec3 waterAbsorptionTintLinear = vec3(0.0);
 
     if (isWater) {
         float nDotV = clamp(dot(viewNormal, normalize(-vViewPosition)), 0.0, 1.0);
         waterFresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
+
+        // Apply the Unbound-inspired water tint before sampling/refraction so
+        // the same material colour also becomes the Beer-Lambert absorption tint.
+        vec3 unboundWaterColor = calculateWaterBaseColor(vVertexColor.rgb, stableWaterWorldPosition);
+        translucentAlbedo.rgb = mix(
+            translucentAlbedo.rgb,
+            unboundWaterColor,
+            clamp(WATER_COLOR_STRENGTH * 0.01, 0.0, 1.0)
+        );
+        if (cameraUnderwater) {
+            translucentAlbedo.rgb *= mix(
+                vec3(1.0),
+                vec3(0.78, 0.90, 1.05),
+                clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.0)
+            );
+        }
+        waterAbsorptionTintLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
 
         vec3 opaqueViewPosition;
         float opaqueDepth;
@@ -389,6 +408,13 @@ void main() {
                         max(refractedScene.rgb, vec3(0.0)),
                         vec3(2.2)
                     );
+                    // Beer-Lambert absorption: red light attenuates fastest,
+                    // followed by green and blue, so deeper water becomes blue.
+                    vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)
+                        * (WATER_ABSORPTION_STRENGTH * 0.01);
+                    vec3 transmission = exp(-absorptionCoefficient * waterThickness);
+                    refractedSceneLinear = refractedSceneLinear * transmission
+                        + waterAbsorptionTintLinear * (1.0 - transmission);
                 } else {
                     refractionConfidence = 0.0;
                 }
@@ -402,22 +428,6 @@ void main() {
         // ray samples while keeping the effect independent of deferred data.
         translucentAlbedo.rgb *= translucentAlbedo.rgb * vec3(1.25, 1.0, 0.65);
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0)) * 0.8;
-    }
-
-    if (isWater) {
-        vec3 unboundWaterColor = calculateWaterBaseColor(vVertexColor.rgb, stableWaterWorldPosition);
-        translucentAlbedo.rgb = mix(
-            translucentAlbedo.rgb,
-            unboundWaterColor,
-            clamp(WATER_COLOR_STRENGTH * 0.01, 0.0, 1.0)
-        );
-        if (cameraUnderwater) {
-            translucentAlbedo.rgb *= mix(
-                vec3(1.0),
-                vec3(0.78, 0.90, 1.05),
-                clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.0)
-            );
-        }
     }
 
     if (isWater && waterFoam > 0.0) {
