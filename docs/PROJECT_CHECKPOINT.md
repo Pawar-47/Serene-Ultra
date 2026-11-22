@@ -384,3 +384,7 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Corrected over-escaped validator regular expressions so duplicate uniform declarations and forbidden G-buffer sampling are actually detected.
 - CI run [45072296773](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45072296773) passed vertex/fragment compilation, Iris render-stage macro compilation, program linking and structural validation. The only program-coverage notices are the intentional Iris fallbacks `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` → `gbuffers_terrain`.
 - This is an Iris contract/source audit, not an in-game runtime, visual-parity or performance result.
+
+
+## Latest particle-reference correction — 2026-11-23
+After the interruption, resumed the particle audit at the live `main` state. Verified Iris' documented `noisetex` sampler contract and re-opened Complementary Reimagined's `gbuffers_textured.glsl` material-classification source. Corrected Serene's water-splash dither sampling to match the reference expression `textureLod(noisetex, gl_FragCoord.xy / 128.0, 0.0).b` rather than a custom modulo/`texelFetch` tile. Updated structural validation to require this exact Iris-compatible/reference-matched path. CI result for the complete commit chain is pending; no runtime or visual claim is made.
