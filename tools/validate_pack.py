@@ -109,7 +109,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
         errors.append(f"{name} must capture the vanilla colored lightmap")
 
 deferred = sources.get("deferred.fsh", "")
-for token in ("/* RENDERTARGETS: 3 */", "sampler2D colortex0",
+for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2",
               "sampler2D depthtex0", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
@@ -136,12 +136,22 @@ if "outColor = scene;" not in deferred or "outColor = vec4(litColor, scene.a);" 
     errors.append("Deferred pass must preserve uncovered pixels and output shaded pixels")
 
 composite = sources.get("composite.fsh", "")
-if "uniform sampler2D colortex3" not in composite:
-    errors.append("Composite must read deferred output from colortex3")
+if "uniform sampler2D colortex0" not in composite:
+    errors.append("Composite must preserve the accumulated scene from colortex0")
 if "/* RENDERTARGETS: 0 */" not in composite:
     errors.append("Composite must write the final scene back to colortex0")
-if "texture(colortex3" not in composite and "texture2D(colortex3" not in composite:
-    errors.append("Composite does not sample the deferred output")
+if "texture(colortex0" not in composite and "texture2D(colortex0" not in composite:
+    errors.append("Composite does not preserve the accumulated scene")
+if "/* RENDERTARGETS: 3 */" in deferred:
+    errors.append("Deferred must write the lit scene to colortex0 so post-deferred geometry is preserved")
+for directive in (
+    "flip.deferred.colortex0=true", "flip.composite.colortex0=true",
+    "blend.gbuffers_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+):
+    if directive not in props:
+        errors.append(f"Missing Iris translucent-scene pipeline directive: {directive}")
 
 lang_path = SHADERS / "lang" / "en_us.lang"
 if lang_path.is_file():
