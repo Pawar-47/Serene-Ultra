@@ -23,7 +23,7 @@ layout(location = 3) out vec4 outEmissionData;
 #define OPAQUE_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack PBR normal-map detail
 
 vec3 calculateOpaquePbrNormal(vec3 geometricNormal) {
-    vec4 normalTexel = textureLod(normals, vTexCoord, 0.0);
+    vec4 normalTexel = texture(normals, vTexCoord);
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     tangentNormal.xy = normalTexel.rg * 2.0 - 1.0;

@@ -82,7 +82,7 @@ vec3 getStableWaterWorldPosition(vec3 playerPosition) {
 // Three analytic wave bands provide stable multi-scale surface normals without
 // a full-screen texture fetch or an additional normal-map asset.
 vec3 calculateTranslucentNormalMap(vec3 geometricNormal, float normalMapStrength) {
-    vec4 normalTexel = textureLod(normals, vTexCoord, 0.0);
+    vec4 normalTexel = texture(normals, vTexCoord);
     vec3 tangentNormal;
     #ifdef MC_TEXTURE_FORMAT_LAB_PBR
         // LabPBR stores XY in RG, AO in B, and height in A. Reconstruct Z.
