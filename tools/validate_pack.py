@@ -176,6 +176,8 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh
         errors.append(f"{name} must sample the Iris block/entity atlas through gtexture")
 if "#define SHADOW_ALPHA_CUTOFF " not in shadow_fragment:
     errors.append("Shadow alpha cutoff must be an active shader option")
+if "uniform float alphaTestRef" not in shadow_fragment or "max(alphaTestRef, SHADOW_ALPHA_CUTOFF)" not in shadow_fragment:
+    errors.append("Shadow cutouts must respect Iris alphaTestRef as well as the pack's cutoff control")
 if "const int shadowMapResolution" not in shadow_vertex or "const float shadowDistance" not in shadow_vertex:
     errors.append("Shadow pass must declare Iris shadowMapResolution and shadowDistance constants")
 if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
