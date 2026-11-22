@@ -124,3 +124,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - If `depthtex0` and `depthtex2` differ at a pixel, deferred preserves the accumulated scene color rather than applying the opaque background's lighting to hand/translucent pixels.
 - Validator now requires this mask and confirms world reconstruction uses `depthtex2`.
 - Runtime verification remains pending, especially first-person hand and translucent entity edge cases.
+
+## Atlas and lightmap correction — 2026-11-23
+- Replaced the reserved `texture` sampler alias with Iris' documented `gtexture` atlas sampler in terrain, entity, hand and shadow fragments; switched to modern `texture()` calls.
+- Removed the unused terrain view-position varying.
+- Normalized the Iris transformed sky-light coordinate before storing the direct-light mask in terrain/entity G-buffers. The vanilla lightmap sample still uses the unmodified transformed UV.
+- Extended structural validation to enforce the atlas sampler and lightmap normalization contracts.
