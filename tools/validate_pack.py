@@ -55,7 +55,7 @@ for path in SHADERS.rglob("*"):
         errors.append(f"{path.relative_to(ROOT)}: expected an explicit GLSL 330 version")
     if source.count("{") != source.count("}"):
         errors.append(f"{path.relative_to(ROOT)}: unbalanced brace count")
-    uniform_names = re.findall(r"^\\s*uniform\\s+\\w+\\s+(\\w+)\\s*;", source, re.MULTILINE)
+    uniform_names = re.findall(r"^\s*uniform\s+\w+\s+(\w+)\s*;", source, re.MULTILINE)
     duplicate_uniforms = sorted({name for name in uniform_names if uniform_names.count(name) > 1})
     if duplicate_uniforms:
         errors.append(f"{path.relative_to(ROOT)}: duplicate uniform declarations: {', '.join(duplicate_uniforms)}")
@@ -294,7 +294,7 @@ for name, source in (("gbuffers_entities_translucent", entity_translucent),
             errors.append(f"{name} is missing forward translucent component: {token}")
     if "alphaTestRef" in source or "albedo.a <= 0.001" not in source:
         errors.append(f"{name} must preserve fractional alpha instead of applying cutout alphaTestRef")
-    if re.search(r"\\buniform\\s+sampler\\w*\\s+colortex[0-3]\\b", source):
+    if re.search(r"\buniform\s+sampler\w*\s+colortex[0-3]\b", source):
         errors.append(f"{name} must not sample colortex0-3 after deferred")
 if "uniform vec4 entityColor" not in entity_translucent or "mix(albedoLinear, tintLinear, entityColor.a)" not in entity_translucent:
     errors.append("Translucent entity path must preserve Iris entityColor tint")
