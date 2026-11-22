@@ -122,3 +122,6 @@ Iris routes sky/horizon, stars and void through `gbuffers_skybasic`, and sun/moo
 
 ## Line overlays
 `gbuffers_line` is a dedicated forward overlay. It preserves vertex color, applies Iris fog to ordinary lines, skips fog for selection outlines and debug lines using Iris render-stage macros, and clears the deferred-normal validity mask.
+
+## Translucent particle lighting
+The post-deferred `gbuffers_particles_translucent` path forward-shades particles using vanilla lightmap data, player-space normals/positions, the active celestial source, one hardware-filtered shadow lookup and Iris fog. The one-tap shadow lookup is the low-cost integrated-GPU baseline. Special particle material/emission handling remains future work.
