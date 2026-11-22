@@ -347,3 +347,9 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Added `gbuffers_block` for block entities/sign text. It writes albedo/lightmap/normal/emission attachments, uses documented `blockEntityId`, fogs sign text in the forward stage and marks it as deferred-bypass; portal/gateway IDs have a dedicated emission strength.
 - Added `block.properties` mappings for sign families (5004) and End portal/gateway (5025), plus blend/alpha-test directives and structural checks.
 - Runtime validation remains pending for signs, portal animation, block-entity rendering and block-breaking overlays.
+
+## Low-end bandwidth optimization — emissive attachment
+- Changed colortex3 from default RGBA8 to Iris-supported `R8`.
+- Terrain and block-entity G-buffers write emission strength into red only; deferred reuses scene albedo as emission tint.
+- This reduces the emissive attachment from 4 bytes/pixel to 1 byte/pixel (75% less storage/bandwidth) with under 0.005 quantization error for current emission strengths.
+- `flip.deferred.colortex3=false` and disabled blending on all emissive G-buffer writers remain required.
