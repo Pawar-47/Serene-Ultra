@@ -641,7 +641,7 @@ GitHub Actions run 919 (`bc0dd3d`) passed all stages: shader compilation, Iris r
 
 
 ## LabPBR material AO and subsurface scattering — 2026-11-23
-The opaque G-buffers now store LabPBR normal-map blue-channel AO in `colortex3.b`, reusing the normal-map sample. Deferred applies this AO once to indirect/block-light ambient only; direct celestial lighting remains unchanged. `PBR_AO_STRENGTH` controls map influence and `MATERIAL_AO_STRENGTH` controls lighting impact. oldPBR and missing-map fallbacks remain neutral. LabPBR specular blue values 65–255 are decoded as subsurface scattering in `colortex3.a`; the deferred pass adds a low-cost backlighting approximation controlled by `MATERIAL_SSS_STRENGTH`. Values 0–64 remain reserved for porosity and are not yet used for wet-surface response. The material attachment is now RGBA8, so no new render target is added but the extra channels cost more bandwidth than the former RG8 intermediate. Runtime visual validation and Intel HD 5500 profiling remain outstanding.
+The opaque G-buffers now store LabPBR normal-map blue-channel AO in `colortex3.b`, reusing the normal-map sample. Deferred applies this AO once to indirect/block-light ambient only; direct celestial lighting remains unchanged. `PBR_AO_STRENGTH` controls map influence and `MATERIAL_AO_STRENGTH` controls lighting impact. oldPBR and missing-map fallbacks remain neutral. LabPBR specular blue values 65–255 are decoded as subsurface scattering in `colortex3.a`; the deferred pass adds a low-cost backlighting approximation controlled by `MATERIAL_SSS_STRENGTH`. Values 0–64 are now decoded as porosity: porous LabPBR surfaces darken and lose reflectance/smoothness when wet, while porosity also reduces puddle pooling. The material attachment is RGBA8, so no new render target is added but the extra channels cost more bandwidth than the former RG8 intermediate. Runtime visual validation and Intel HD 5500 profiling remain outstanding.
 
 
 ## Opaque PBR screen-space reflections — 2026-11-23
@@ -656,3 +656,10 @@ Restored `outLightmapData = vec4(vanillaLight, skyLight);` in terrain, entity an
 
 
 The combined material AO/SSS, opaque PBR normals, GGX direct specular, opaque SSR and corrected G-buffer lightmap state passed exact-source GLSL compilation, LabPBR macro-branch compilation, program linking and structural validation in GitHub Actions run [45079135476](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45079135476), commit `d07e45b3e95e3e728c3a98c450174fbf874b9960`. Minecraft/Iris runtime, visual parity and Intel HD 5500 performance remain unverified.
+
+
+## Porosity-driven wetness and rain puddles — 2026-11-23
+
+The terrain G-buffer now decodes LabPBR specular-blue codes 0–64 as porosity (0–1); codes 65–255 remain SSS data. Porous materials darken and lose reflectance/smoothness under wet conditions, controlled by `MATERIAL_WETNESS_STRENGTH`. The puddle mask follows the Unbound-style exposure model: rain-only biome precipitation, biome rainfall, sky exposure, low block light and upward-facing normals. Three noise samples provide breakup and ripple normals; the tangent basis follows Iris' documented `cross(tangent, normal)` handedness. `RAIN_PUDDLE_STRENGTH` controls pooling, and LabPBR porosity reduces it. Leaves/farmland are excluded by material ID. A 60-second periodic noise drift avoids a phase jump when Iris' `frameTimeCounter` wraps at 3600 seconds. No 3D voxel map or new render target is used.
+
+Known limits: this is a screen-space/terrain-G-buffer approximation rather than Unbound's full material/voxel pipeline; it does not wet entities or block entities, and still needs in-game weather/biome visual calibration and HD 5500 performance testing.
