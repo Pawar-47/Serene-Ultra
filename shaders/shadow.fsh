@@ -66,7 +66,7 @@ void main() {
     // Opaque blockers are distinguished by shadowtex1 in deferred.
     outShadowColor = vec4(1.0, 1.0, 1.0, 0.0);
 
-    if (vShadowMaterialId == 32000 && vShadowFluidRenderType > 0.5) {
+    if ((vShadowMaterialId == 32000 && vShadowFluidRenderType > 0.5) || vShadowMaterialId == 32001) {
         vec3 absoluteWorldPosition = getStableShadowWorldPosition(vShadowPlayerPosition);
         float caustic = calculateWaterCaustics(absoluteWorldPosition);
         outShadowColor = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12);
