@@ -35,6 +35,27 @@ for path in SHADERS.rglob("*"):
     if source.count("{") != source.count("}"):
         errors.append(f"{path.relative_to(ROOT)}: unbalanced brace count")
 
+# Iris does not permit gbuffers programs to sample colortex0-3. They may
+# write those attachments, but sampling them from geometry passes is invalid.
+for path in SHADERS.rglob("gbuffers_*"):
+    if path.suffix not in {".vsh", ".fsh", ".gsh"}:
+        continue
+    source = path.read_text(encoding="utf-8")
+    if re.search(r"\buniform\s+sampler\w*\s+colortex[0-3]\b", source):
+        errors.append(
+            f"{path.relative_to(ROOT)}: Iris gbuffers programs cannot sample colortex0-3"
+        )
+
+# Keep missing post-deferred geometry paths visible in CI without failing the
+# baseline while their dedicated implementations are still pending.
+POST_DEFERRED_PROGRAMS = (
+    "gbuffers_water", "gbuffers_weather", "gbuffers_hand_water",
+)
+missing_post_deferred = [
+    name for name in POST_DEFERRED_PROGRAMS
+    if not (SHADERS / f"{name}.fsh").is_file()
+]
+
 audit = ROOT / "docs" / "REFERENCE_ULTRA_AUDIT.md"
 if not audit.is_file():
     errors.append("Missing source-derived Ultra reference audit")
@@ -124,4 +145,9 @@ if errors:
     sys.exit(1)
 
 print("Serene Ultra structural validation passed.")
+if missing_post_deferred:
+    print(
+        "Iris coverage warning: dedicated post-deferred programs still pending: "
+        + ", ".join(missing_post_deferred)
+    )
 print("Note: GLSL compilation and in-game Iris compatibility require runtime testing.")
