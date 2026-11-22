@@ -160,3 +160,6 @@ This pipeline is source/GLSL/structural validated, not in-game proven. It remain
 
 ### Translucent shadow data
 The shadow pass writes material transmission into Iris `shadowcolor0` (RGBA8). `shadowtex0` contains all shadow casters; `shadowtex1` contains opaque casters only. Deferred uses their center comparison to detect translucent blockers and applies the stored RGB transmission to direct/specular light. Recognized materials include water caustics, glass variants, ice and nether portal. The shadow color buffer is separate from the screen-space `colortex` G-buffer.
+
+
+All opaque G-buffer families explicitly write `colortex1` as `vec4(vanillaLight, skyLight)`: sampled vanilla lightmap RGB plus a separately decoded sky-light factor. Deferred lighting consumes this attachment for ambient/block illumination and direct celestial-light gating.
