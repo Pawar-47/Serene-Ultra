@@ -34,16 +34,8 @@ jobs:
               *.fsh) stage=frag ;;
               *) continue ;;
             esac
-            compile_source="$shader"
-            # glslang's compatibility profile exposes at_tangent as a built-in.
-            # Iris requires the documented declaration, so remove it only from
-            # temporary validator copies, never from the shaderpack source.
-            if [[ "$stage" == "vert" ]] && grep -q '^in vec4 at_tangent;$' "$shader"; then
-              compile_source="$tmpdir/$(basename "$shader")"
-              sed '/^in vec4 at_tangent;$/d' "$shader" > "$compile_source"
-            fi
             echo "Compiling $shader"
-            glslangValidator -S "$stage" "$compile_source"
+            glslangValidator -S "$stage" "$shader"
           done < <(find shaders -type f \( -name '*.vsh' -o -name '*.fsh' \) -print0)
       - name: Compile Iris render-stage macro branches
         shell: bash
