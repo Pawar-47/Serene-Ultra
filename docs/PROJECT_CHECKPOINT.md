@@ -540,3 +540,10 @@ The water tint now uses a world-height-aware noise coordinate inspired by the pi
 A source review caught a periodicity mismatch in the initial coordinate scale: Unbound's `0.032` scale multiplied by Serene's 256-block stable-world period gives 8.192 texture repeats, which would not meet at the modulo boundary. Serene now uses `0.03125` (1/32), giving exactly 8 repeats per 256 blocks; the tint path at quarter scale gives 2 repeats and the foam path at 4× scale gives 32 repeats. This small scale adjustment preserves world-coordinate continuity while closely approximating Unbound's coordinate density.
 
 Iris docs consulted: `noisetex` is a square generated RGB white-noise texture with default 256×256 resolution; `frameTimeCounter` resets after 3600 seconds. The validator checks the stable-world tiling coefficient. Visual comparison, water/foam calibration and Intel HD 5500 performance measurements remain pending.
+
+
+## Water-noise, foam and wave-scale validation — 2026-11-23
+
+The latest source checkpoint also wires `WATER_WAVE_SCALE` into all three analytic wave frequencies. The exposed scale values (50, 75, 100, 125, 150, 200 percent) are quarter-step multiples, so each frequency continues to tile the 256-block stable-world domain. The option is present in the Iris Quality screen, slider list and English labels.
+
+GitHub Actions run [45076104051](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45076104051) for commit `c1bdc86575e6944e99efd0b30e3ae4d5509cebad` completed successfully. GLSL compilation, Iris render-stage macro compilation, vertex/fragment linking and structural validation all passed for that exact source state. This is not Minecraft/Iris runtime or visual validation.
