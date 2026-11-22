@@ -36,3 +36,6 @@ The target is the complete visual feature set of the supplied reference shader's
 
 ## Shadow submission budget
 The shader now sets Iris' `shadowDistanceRenderMul` to 1.0, enabling geometry culling outside the configured shadow distance instead of only scaling the shadow projection. This should reduce unnecessary shadow-pass work on low-end GPUs; measure actual frame-time benefit on the target Intel HD 5500 system.
+
+## Emissive attachment format
+`colortex3Format=R8` stores only the scalar emission strength. The deferred pass reuses colortex0 albedo as the emission tint, avoiding duplicated RGB. This cuts the attachment from RGBA8 to R8 (75% less per-pixel storage/bandwidth). Current discrete strengths are quantized with under 0.005 absolute error, which is negligible relative to the lighting calibration still required.
