@@ -22,28 +22,38 @@ layout(location = 3) out vec4 outEmissionData;
 
 #define OPAQUE_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack PBR normal-map detail
 
-vec3 calculateOpaquePbrNormal(vec3 geometricNormal) {
+vec3 calculateOpaquePbrNormal(vec3 geometricNormal, out float materialAO) {
     vec4 normalTexel = texture(normals, vTexCoord);
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    // LabPBR blue stores material AO; XY are the DirectX Y- tangent normal.
+    materialAO = clamp(normalTexel.b, 0.0, 1.0);
     tangentNormal.xy = normalTexel.rg * 2.0 - 1.0;
     tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0));
     tangentNormal.y = -tangentNormal.y;
 #else
+    materialAO = 1.0;
     tangentNormal = normalTexel.rgb * 2.0 - 1.0;
 #endif
+#if OPAQUE_NORMAL_MAP_STRENGTH > 0
     tangentNormal.xy *= OPAQUE_NORMAL_MAP_STRENGTH * 0.01;
     tangentNormal = normalize(tangentNormal);
 
-    vec3 tangent = normalize(vPlayerTangent - geometricNormal * dot(vPlayerTangent, geometricNormal));
+    vec3 tangentCandidate = vPlayerTangent - geometricNormal * dot(vPlayerTangent, geometricNormal);
+    float tangentLengthSquared = dot(tangentCandidate, tangentCandidate);
+    if (tangentLengthSquared < 0.000001) return geometricNormal;
+
+    vec3 tangent = tangentCandidate * inversesqrt(tangentLengthSquared);
     vec3 bitangent = normalize(cross(tangent, geometricNormal)) * vTangentHandedness;
     return normalize(
         tangent * tangentNormal.x +
         bitangent * tangentNormal.y +
         geometricNormal * tangentNormal.z
     );
+#else
+    return geometricNormal;
+#endif
 }
-
 
 
 void main() {
@@ -62,14 +72,15 @@ void main() {
     outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
-#if OPAQUE_NORMAL_MAP_STRENGTH > 0
-    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal);
-#endif
+    float materialAO = 1.0;
+    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO);
     vec4 pbrSpecular = texture(specular, vTexCoord);
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
     float materialReflectance = 0.0;
     float pbrEmission = 0.0;
+    float materialSurfaceData = 0.0;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    materialSurfaceData = clamp(pbrSpecular.b, 0.0, 1.0);
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
     float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
     if (pbrMapPresent < 0.5) {
@@ -86,5 +97,5 @@ void main() {
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5 + 0.5 * materialSmoothness);
-    outEmissionData = vec4(pbrEmission, materialReflectance, 0.0, 1.0);
+    outEmissionData = vec4(pbrEmission, materialReflectance, materialAO, materialSurfaceData);
 }
