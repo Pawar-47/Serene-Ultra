@@ -34,3 +34,4 @@
 
 ## Performance
 Capture repeatable runs at fixed resolution and settings. Record average FPS, 1% low, frame-time distribution and scene conditions. Never compare different scenes or settings as if they were controlled tests.
+undefined
