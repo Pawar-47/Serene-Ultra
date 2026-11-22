@@ -148,3 +148,10 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added `lightmap` sampling to `gbuffers_hand.fsh`, restoring the vanilla colored lightmap response that the Iris `gbuffers_textured_lit` fallback provides.
 - Validator now requires hand lightmap sampling.
 - Iris `heldBlockLightValue` and `heldBlockLightValue2` dynamic held-item lighting is not yet implemented.
+
+## Dimension-aware lighting correction — 2026-11-23
+- Added Iris `hasSkylight` and `endFlashIntensity` uniforms to deferred lighting.
+- Gated sun/moon direct light to dimensions with skylight; dimensions without skylight no longer receive the Overworld solar cycle.
+- Enabled `endFlashShadows=true` so Iris can set `shadowLightPosition` to the End flash. End direct light is gated by `endFlashIntensity`.
+- Added an early condition to avoid shadow-map sampling when `nDotL` or the active celestial gate is zero.
+- Validator now requires the Iris dimension and End-flash contracts. Runtime dimension testing remains pending.
