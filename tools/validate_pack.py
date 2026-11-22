@@ -22,6 +22,7 @@ REQUIRED = (
     "gbuffers_lightning.vsh", "gbuffers_lightning.fsh",
     "gbuffers_clouds.vsh", "gbuffers_clouds.fsh",
     "gbuffers_textured.vsh", "gbuffers_textured.fsh",
+    "gbuffers_skytextured.vsh", "gbuffers_skytextured.fsh",
     "gbuffers_beaconbeam.vsh", "gbuffers_beaconbeam.fsh",
     "shadow.vsh", "shadow.fsh",
     "deferred.vsh", "deferred.fsh",
@@ -255,6 +256,11 @@ block_props = (SHADERS / "block.properties").read_text(encoding="utf-8") if (SHA
 for token in ("block.32000=minecraft:water",):
     if token not in block_props:
         errors.append(f"Missing stable Iris block material mapping: {token}")
+sky_textured = sources.get("gbuffers_skytextured.fsh", "")
+for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SUN", "MC_RENDER_STAGE_MOON",
+              "sunPosition", "moonPosition", "isEyeInWater", "outDeferredValidity = vec4(0.0)"):
+    if token not in sky_textured:
+        errors.append(f"Sky-texture program is missing Iris stage/material handling: {token}")
 textured = sources.get("gbuffers_textured.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "texture(gtexture", "alphaTestRef",
               "fogColor", "fogDensity", "fogMode", "fogShape",
@@ -361,6 +367,7 @@ for directive in (
     "blend.gbuffers_beaconbeam.colortex2=off",
     "blend.gbuffers_clouds.colortex2=off",
     "blend.gbuffers_textured.colortex2=off",
+    "blend.gbuffers_skytextured.colortex2=off",
 ):
     if directive not in props:
         errors.append(f"Missing Iris translucent-scene pipeline directive: {directive}")
