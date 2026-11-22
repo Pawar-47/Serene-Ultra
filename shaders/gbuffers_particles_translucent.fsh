@@ -1,9 +1,11 @@
 #version 330 compatibility
 
 #define PARTICLE_MATERIAL_FEATURES // Detect emissive, water, rain, snow and smoke particles
+#define WEATHER_TEX_OPACITY 100 //[25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Weather particle opacity
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform sampler2D noisetex;
 uniform sampler2DShadow shadowtex0;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
@@ -67,6 +69,14 @@ void main() {
     if (particle.a < 0.01) discard;
 
     float emission = 0.0;
+    bool suppressLightmap = false;
+    float rainTexOpacity = 0.25;
+    float snowTexOpacity = 0.5;
+    #if WEATHER_TEX_OPACITY != 100
+        float opacityExponent = 100.0 / WEATHER_TEX_OPACITY;
+        rainTexOpacity = pow(0.25, opacityExponent);
+        snowTexOpacity = pow(0.5, opacityExponent);
+    #endif
 
     // This is a post-deferred forward path: retain Minecraft's colored
     // lightmap response without sampling forbidden colortex0-3 attachments.
@@ -76,21 +86,24 @@ void main() {
                 particle.g > particle.r * 1.25 && particle.g < 0.425 && particle.b > 0.75) {
                 // Water splash/drop particles: reduce saturation and opacity.
                 particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.0 / 3.0)) * 0.7;
-                particle.a *= 0.6;
+                float particleDither = textureLod(noisetex, gl_FragCoord.xy / 128.0, 0.0).b;
+                if (particleDither > 0.4) discard;
+            #ifdef OVERWORLD
             } else if (particle.b > 0.7 && particle.r < 0.28 &&
                        particle.g < 0.425 && particle.g > particle.r * 1.4) {
-                // Physics-mod rain particles.
+                // Physics-mod rain particles; only classify these in the Overworld.
                 if (particle.a < 0.1 || isEyeInWater == 3) discard;
-                particle.a *= 0.25;
+                particle.a *= rainTexOpacity;
                 particle.rgb = sqrt(max(particle.rgb, vec3(0.0)));
-            } else if (all(equal(particleTexture.rgb, vec3(1.0))) &&
+            } else if (all(equal(particle.rgb, vec3(1.0))) &&
                        particle.a < 0.765 && particle.a > 0.605) {
                 // Physics-mod snow particles.
                 if (particle.a < 0.1 || isEyeInWater == 3) discard;
-                particle.a *= 0.5;
+                particle.a *= snowTexOpacity;
                 particle.rgb = sqrt(max(particle.rgb, vec3(0.0)));
-            } else if (abs(particleTexture.r - particleTexture.g) < 0.001 &&
-                       particleTexture.r - 0.5 * particleTexture.b < 0.06) {
+            #endif
+            } else if (abs(particle.r - particle.g) < 0.001 &&
+                       particle.r - 0.5 * particle.b < 0.06) {
                 // Underwater particle sprites are suppressed outside water.
                 if (isEyeInWater == 1) {
                     particle.rgb = sqrt(max(particle.rgb, vec3(0.0))) * 0.35;
@@ -107,6 +120,7 @@ void main() {
                      particle.r > (particle.g + particle.b) * 3.0)) {
                     // Ender, crying-obsidian and redstone particles.
                     emission = clamp(particle.r * 8.0, 1.6, 5.0);
+                    suppressLightmap = true;
                     particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.5));
                 } else if (particle.r > 0.83 && particle.g > 0.23 && particle.b < 0.4) {
                     // Lava particles.
@@ -120,6 +134,10 @@ void main() {
 
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
+    if (suppressLightmap) {
+        vanillaLight = vec3(0.0);
+        skyLight = 0.0;
+    }
 
     vec3 normal = normalize(vPlayerNormal);
     vec3 viewLightDirection = normalize(shadowLightPosition);
