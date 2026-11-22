@@ -247,6 +247,14 @@ if "const int shadowMapResolution" not in shadow_vertex or "const float shadowDi
 if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
     errors.append("Shadow pass must enable Iris shadow-distance culling")
 deferred_options = sources.get("deferred.fsh", "")
+for token in ("/* RENDERTARGETS: 0,4 */", "outOpaqueReflectionScene",
+              "outOpaqueReflectionScene = vec4(scene.rgb, reflectionSceneValid)",
+              "outOpaqueReflectionScene = vec4(litColor, 1.0)",
+              "abs(sceneDepth - opaqueWorldDepth) <= 0.000001"):
+    if token not in deferred_options:
+        errors.append(f"Deferred opaque-reflection snapshot is missing component: {token}")
+if "flip.deferred.colortex4=true" not in props:
+    errors.append("Deferred opaque-reflection snapshot must flip colortex4 into the main buffer")
 ao_strength_line = next((line for line in deferred_options.splitlines() if line.startswith("#define AO_STRENGTH ")), "")
 if "0.65" not in ao_strength_line:
     errors.append("AO_STRENGTH option values must include the 0.65 profile preset")
