@@ -15,6 +15,7 @@ uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 uniform vec3 cameraPosition;
 uniform float frameTimeCounter;
+uniform int isEyeInWater;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 
