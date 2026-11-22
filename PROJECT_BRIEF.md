@@ -3,7 +3,7 @@
 This is the authoritative cumulative requirements brief. Update it whenever the user provides new instructions. Preserve previous requirements unless the user explicitly changes them.
 
 ## Product goal
-Create an original, full-featured Minecraft Java shaderpack for Iris. Use the supplied Good Working Shader as the visual and feature reference, with its Ultra profile as the principal parity target. Use the supplied **Vanilla-stock .zip as the actual stock Minecraft Java 26.3 shader source** for engine-behavior cross-checking—not merely as generic vanilla inspiration and not as a ready-made Iris shaderpack skeleton.
+Create an original, full-featured Minecraft Java shaderpack for Iris. Use **Complementary Unbound** as the primary visual/material reference, especially for water and the broader material system. Use the supplied Good Working Shader (Complementary Reimagined) as the proven working Iris implementation reference and for its Ultra feature/quality expectations. Use the supplied **Vanilla-stock .zip as the actual stock Minecraft Java 26.3 shader source** for engine-behavior cross-checking—not merely as generic vanilla inspiration and not as a ready-made Iris shaderpack skeleton.
 
 ## Primary hardware target
 - Intel Core i3-5005U
@@ -80,3 +80,7 @@ Existing code is being audited against Iris' published contracts before new effe
 
 ## Updated post-deferred coverage — 2026-11-23
 Dedicated forward programs now exist for all three Iris post-deferred translucent paths: `gbuffers_water`, `gbuffers_weather`, and `gbuffers_hand_water`. Each writes only scene color, uses the appropriate Iris atlas/lightmap inputs, applies the documented fog model, and relies on explicit source-alpha blending. Water additionally samples the Iris shadow map and applies dimension-aware celestial lighting. Advanced water effects, volumetric weather, dynamic held-item lighting, and runtime/visual validation remain outstanding.
+
+
+## Complementary Unbound reference update — 2026-11-23
+The user's latest direction makes Complementary Unbound the primary visual/material reference. Its Unbound water style is `WATER_STYLE == 3` in the official r5.10 Complementary source repository; Unbound and Reimagined are default-setting styles in the same source family. The supplied working Reimagined archive remains required for file-by-file Iris implementation guidance. Do not discard either reference. Iris documentation must be consulted before every code implementation/change, and Vanilla-stock must be consulted for Minecraft-native behavior. The file-level findings and parity gaps are maintained in [docs/UNBOUND_REFERENCE_AUDIT.md](docs/UNBOUND_REFERENCE_AUDIT.md).
