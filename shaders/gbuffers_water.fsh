@@ -106,17 +106,29 @@ vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 stableWorldPosition) {
 // Unbound-style water base colour: retain biome influence, but move the
 // surface away from the flat vanilla atlas tint. A single Iris noise lookup
 // adds slow, low-amplitude colour variation without a second custom texture.
+vec2 calculateWaterNoiseDrift() {
+    float noiseTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
+    return vec2(cos(noiseTime), sin(noiseTime)) * 0.025;
+}
+
+vec2 calculateWaterNoisePosition(vec3 stableWorldPosition) {
+    // Match Unbound's world-height-aware water coordinates. The stable
+    // 256-block Iris camera coordinate period maps to integer noisetex repeats.
+    return 0.032 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);
+}
+
 vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
     vec3 biomeTint = sqrt(max(vertexColor, vec3(0.0))) * vec3(1.0, 0.85, 0.8);
     vec3 waterTint = mix(vec3(0.43, 0.60, 0.80), biomeTint, 0.5);
     vec3 baseColor = 0.375 * waterTint;
 
     if (WATER_NOISE_COLOR_STRENGTH > 0) {
-        float noiseTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
-        vec2 noiseDrift = vec2(cos(noiseTime), sin(noiseTime)) * 0.025;
-        vec2 noiseUV = stableWorldPosition.xz * (1.0 / 128.0) + noiseDrift;
+        vec2 waterPosition = calculateWaterNoisePosition(stableWorldPosition);
+        vec2 noiseUV = (waterPosition + calculateWaterNoiseDrift()) * 0.25;
         float noise = textureLod(noisetex, noiseUV, 0.0).g - 0.5;
-        baseColor *= 1.0 + noise * 0.25 * (WATER_NOISE_COLOR_STRENGTH * 0.01);
+        noise *= 0.25 * (WATER_NOISE_COLOR_STRENGTH * 0.01);
+        // Unbound perturbs the water tint through a small colour exponent.
+        baseColor = pow(max(baseColor, vec3(0.0)), vec3(1.0 + noise));
     }
 
     return baseColor;
@@ -336,6 +348,7 @@ void main() {
     float waterFog = 0.0;
     float waterFresnel = 0.0;
     float waterFoam = 0.0;
+    vec3 waterFoamColor = vec3(0.90, 0.95, 1.05);
     vec2 waterRefractionOffset = vec2(0.0);
     float refractionConfidence = 0.0;
     vec3 refractedSceneLinear = vec3(0.0);
@@ -374,9 +387,18 @@ void main() {
         // the sign of the opaque surface's vertical offset.
         if (WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999 &&
             abs(vPlayerNormal.y) > 0.99) {
-            float shallowFoam = 1.0 - smoothstep(0.035, 0.42, waterThickness);
-            waterFoam = shallowFoam * (0.4 + 0.25 * skyLight);
-            waterFoam = clamp(waterFoam * (WATER_FOAM_STRENGTH * 0.01), 0.0, 1.0);
+            vec2 foamNoiseUV = calculateWaterNoisePosition(stableWaterWorldPosition) * 4.0
+                + calculateWaterNoiseDrift() * 0.5;
+            float foamNoise = textureLod(noisetex, foamNoiseUV, 0.0).g;
+            float foamThreshold = mix(0.06, 0.42, foamNoise * foamNoise);
+            float shallowFoam = 1.0 - smoothstep(0.035, foamThreshold, waterThickness);
+            waterFoam = shallowFoam * (hasSkylight ? (0.4 + 0.25 * skyLight) : 0.6);
+            #if WATER_FOAM_STRENGTH < 100
+                waterFoam *= WATER_FOAM_STRENGTH * 0.01;
+            #elif WATER_FOAM_STRENGTH > 100
+                waterFoamColor *= WATER_FOAM_STRENGTH * 0.01;
+            #endif
+            waterFoam = clamp(waterFoam, 0.0, 1.0);
         }
 
         // Match the working reference's depth-based opacity and add a modest
@@ -487,7 +509,7 @@ void main() {
     if (isWater && waterFoam > 0.0) {
         translucentAlbedo.rgb = mix(
             translucentAlbedo.rgb,
-            vec3(0.90, 0.95, 1.05),
+            waterFoamColor,
             waterFoam
         );
     }
