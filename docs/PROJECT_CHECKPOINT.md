@@ -605,7 +605,7 @@ A deeper check against the shaderLABS LabPBR 1.3 specification found that the bl
 
 ## Terrain oldPBR/LabPBR checkpoint — 2026-11-23
 - Added Iris `specular` atlas sampling to `gbuffers_terrain.fsh`, `gbuffers_entities.fsh` and `gbuffers_block.fsh`. Smoothness is decoded from red for both oldPBR and LabPBR. oldPBR green/blue decode metalness/emission; LabPBR green decodes dielectric F0 or metal code (230–255), and alpha decodes emission with 255 treated as no emission.
-- `colortex3` is now RG8: red stores normalized emission, green stores reflectance/metalness. Deferred uses this value for dielectric F0 or albedo-coloured metal F0, and the smoothness-gated specular lobe now uses material colour.
+- `colortex3` is now RGBA8: red stores normalized emission, green stores reflectance/metal code, blue stores material AO and alpha stores LabPBR porosity/SSS data. Deferred uses this value for dielectric F0 or albedo-coloured metal F0, and the smoothness-gated specular lobe now uses material colour.
 - Slime/honey block-ID smoothness remains as a fallback when resource-pack PBR maps are absent. Terrain, entities and block entities also decode Iris `normals` atlas maps using their `at_tangent` handedness basis. The new resource-pack path does not add another render target.
 - CI now compiles the LabPBR macro branches for terrain, water and deferred in addition to the default branch. Runtime checks with actual oldPBR and LabPBR resource packs remain pending.
 
