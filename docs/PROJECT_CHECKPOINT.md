@@ -478,3 +478,16 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Updated terrain, entity, block-entity, particle and lit-texture G-buffer writers to use the new validity encoding. Sign text and dedicated overlays remain invalid for deferred surface lighting.
 - Deferred decodes smoothness and computes a specular half-vector only for nonzero-smoothness materials. Added `MATERIAL_SPECULAR_STRENGTH` to the Quality menu and slider list.
 - Structural validation checks the block IDs, G-buffer encoding and deferred specular path. Full GLSL/CI and runtime verification are still required.
+
+
+## Deferred glossy-material specular correction — 2026-11-23
+
+A source review of the new slime/honey specular path found that deriving the view vector as `normalize(-playerPosition)` assumes the player-space origin is exactly the camera origin. Iris distinguishes feet/player and eye/player coordinate spaces, so this assumption can shift highlights with camera-relative offsets. The deferred pass now transforms the normalized view-space camera-to-surface direction through the rotational part of `gbufferModelViewInverse`:
+
+```glsl
+vec3 viewDirectionPlayer = normalize(mat3(gbufferModelViewInverse) * normalize(-viewPosition));
+```
+
+This transforms a direction without applying matrix translation. Iris documents `gbufferModelViewInverse` as view-to-player space and `gbufferModelView` as player-to-view space. The validator now guards this expression.
+
+The latest CI run at this checkpoint is `45075658130` for commit `d42ab0940fd54ca2228c0e664802bfe72f283307`; it was queued when recorded. Do not mark it passed until its final job conclusion is checked. The previous run `45075562637` compiled and linked all shader programs but failed structural validation on two stale expectations: the validator did not recognize the textured-lit fallback's zero-default emission scalar and still expected the old block-entity smoothness alpha value. The current validator source now checks the revised encoding; confirm this with the new CI run.
