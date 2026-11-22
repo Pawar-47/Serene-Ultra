@@ -179,3 +179,10 @@ Important distinction: Iris fallback routing prevents some geometry from simply 
 
 ### Follow-up: hand/translucent depth masking
 `depthtex2` is the correct depth source for opaque-world reconstruction because it excludes transparent and hand geometry, but it cannot by itself identify pixels where `colortex0` already contains first-person hand color. The deferred pass now also samples `depthtex0` and compares it with `depthtex2`. When they differ, it passes the current scene color through instead of applying the opaque surface's normal/light data to the hand or transparent overlay. This is an Iris-depth-contract source correction; verify with first-person scenes and transparent entity cases in-game.
+
+## Atlas sampler and lightmap-coordinate correction — 2026-11-23
+- Replaced the GLSL sampler identifier `texture` with Iris' documented `gtexture` atlas sampler in terrain, entities, hand and shadow shaders. Iris warns that `texture` is a reserved built-in name in newer GLSL and is not a valid sampler alias to rely on; the official shadow guide also uses `gtexture`.
+- Replaced legacy `texture2D()` calls with `texture()` in the affected shaders.
+- Removed an unused terrain view-position varying to avoid unnecessary vertex output/interpolation.
+- Iris' lightmap guide notes that transformed lightmap coordinates are approximately [0.033, 0.97], not exact [0,1]. Terrain/entity G-buffers now normalize the sky coordinate with `lmcoord.y / (30.0 / 32.0) - (1.0 / 32.0)` before storing it as the direct-celestial-light mask. The original transformed coordinate remains the sampler coordinate for the vanilla lightmap texture.
+- The validator now rejects the reserved sampler alias and requires the Iris `gtexture` sampler and normalized sky coordinate.
