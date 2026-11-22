@@ -1,6 +1,7 @@
 #version 330 compatibility
 
 uniform sampler2D gtexture;
+uniform float alphaTestRef;
 uniform int isEyeInWater;
 uniform vec3 fogColor;
 uniform float fogStart;
@@ -34,8 +35,10 @@ float calculateCloudFog(float distanceToCamera) {
 void main() {
     if (isEyeInWater != 0) discard;
 
-    vec4 cloudColor = texture(gtexture, vTexCoord) * vVertexColor;
-    if (cloudColor.a <= 0.001) discard;
+    // Match the reference path: texture RGB is retained; vertex alpha modulates
+    // cloud opacity without tinting the cloud atlas a second time.
+    vec4 cloudColor = texture(gtexture, vTexCoord) * vec4(vec3(1.0), vVertexColor.a);
+    if (cloudColor.a < alphaTestRef) discard;
 
     // Keep vanilla cloud texture/vertex lighting intact. Clouds are an overlay,
     // not an opaque surface; do not reuse the terrain normal beneath them.
