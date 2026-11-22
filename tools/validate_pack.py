@@ -93,7 +93,14 @@ if props_path.is_file():
     for screen in ("screen = <profile>", "screen.QUALITY =", "screen.COLOR ="):
         if screen not in props:
             errors.append(f"Missing menu configuration: {screen}")
-    for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
+    # These two Iris additional programs are only activated by separateEntityDraws.
+# Keep them out of the missing-program warning while that option is intentionally
+# disabled because current Iris documentation warns it may be broken.
+if "separateEntityDraws=true" not in props:
+    missing_iris_programs.pop("gbuffers_entities_translucent", None)
+    missing_iris_programs.pop("gbuffers_block_translucent", None)
+
+for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
     if "separateAo=false" not in props:
