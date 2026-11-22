@@ -377,3 +377,7 @@ A CI compile exposed that `gbuffers_water.fsh` referenced `isEyeInWater` without
 
 ## Translucent block material classification — 2026-11-23
 The water vertex stage already receives Iris `mc_Entity.x` and forwards it to the fragment stage; Iris documents this attribute as valid in `gbuffers_water.vsh`, with IDs assigned by `block.properties`, while `mc_Entity.y` independently reports fluid render type. Added stable IDs for clear glass/panes, all stained-glass colours/panes, tinted glass and nether portal. The fragment stage now dispatches water-only depth/refraction/foam separately from glass reflection and portal emission. The glass reflection path reuses the existing `depthtex2`/`colortex4` screen-space reflection helper; it does not sample the current output attachment. The portal path uses the already animated vanilla atlas texture and adds self-emission without custom atlas raymarch. All mappings and branches are structurally validated; actual block routing, alpha sorting and visual response still require in-game checks.
+
+
+## Translucent ice ID — 2026-11-23
+Added `block.32004` for Minecraft ice/frosted ice using the documented `block.properties` to `mc_Entity.x` mapping. The water fragment stage treats ID 32004 as a reflective translucent material, not as water, so it receives Fresnel SSR but not water depth opacity/refraction/foam. Runtime render-layer routing and alpha behavior still need verification.
