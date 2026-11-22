@@ -57,3 +57,10 @@ Translucent particles now receive forward celestial lighting, vanilla lightmap r
 
 
 The separate entity-translucency feature remains disabled due to the current Iris compatibility warning. Forward shader pairs are retained but inactive; CI enforces the safe configuration.
+
+Test after Iris runtime loading:
+- Enable/disable `ENTITY_TRANSLUCENT` support and verify translucent mobs/items remain sorted and correctly blended after deferred.
+- Verify translucent block entities (glass-like block entities, signs/containers where applicable) use the dedicated forward pass without corrupting colortex0.
+- Check entity hurt tint (`entityColor`) on translucent entities.
+- Compare water splash, Physics-mod rain/snow, underwater particles, campfire smoke, Ender/Crying Obsidian/Redstone and lava particles against Complementary Reimagined; test both default and changed `WEATHER_TEX_OPACITY`.
+- Confirm particle material heuristics are bypassed for larger resource-pack atlases.
