@@ -2,6 +2,7 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform sampler2D specular;
 uniform float alphaTestRef;
 
 in vec2 vTexCoord;
@@ -28,18 +29,41 @@ void main() {
     outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
-    // colortex2 alpha packs deferred validity and smoothness: 0 is invalid,
-    // 0.5 is a valid non-specular surface, and 1.0 is fully smooth.
-    float materialSmoothness = 0.0;
+    // Iris exposes the resource-pack specular atlas for oldPBR and LabPBR.
+    // Both formats store smoothness in red; green is metalness (oldPBR) or
+    // dielectric F0 / metal code (LabPBR).
+    vec4 pbrSpecular = texture(specular, vTexCoord);
+    float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
+    float materialReflectance = 0.0;
+    float pbrEmission = 0.0;
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
+    float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
+    if (pbrMapPresent < 0.5) {
+        materialReflectance = 0.04;
+    } else if (labF0Code >= 230.0) {
+        materialReflectance = 1.0; // Metal: use albedo as F0 in deferred.
+    } else {
+        materialReflectance = (labF0Code / 229.0) * 0.08;
+    }
+    float labEmissionCode = floor(pbrSpecular.a * 255.0 + 0.5);
+    if (labEmissionCode < 254.5) pbrEmission = labEmissionCode / 254.0;
+#else
+    materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0); // oldPBR metalness
+    pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);        // oldPBR emissiveness
+#endif
+
+    // Pack material smoothness into the normal attachment alpha without
+    // allocating another render target. Block IDs provide a fallback when
+    // resource packs do not supply PBR maps for slime/honey.
     if (vMaterialId == 30012) {
-        materialSmoothness = 0.62; // Slime block
+        materialSmoothness = max(materialSmoothness, 0.62); // Slime block
     } else if (vMaterialId == 30016) {
-        materialSmoothness = 0.48; // Honey block
+        materialSmoothness = max(materialSmoothness, 0.48); // Honey block
     }
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5 + 0.5 * materialSmoothness);
 
-    // Store a compact emissive material channel for the deferred pass.
-    // Strength is normalized to [0,1] in alpha; RGB keeps the surface tint.
+    // Store emission in R and material reflectance/metalness in G.
     float emissionStrength = 0.0;
     if (vMaterialId == 32100 || vMaterialId == 32101 ||
         vMaterialId == 32109 || vMaterialId == 32113 ||
@@ -57,5 +81,6 @@ void main() {
         emissionStrength = 0.25;
     }
 
-    outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
+    emissionStrength = max(emissionStrength, pbrEmission * 5.0);
+    outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, 0.0, 1.0);
 }
