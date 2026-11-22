@@ -653,3 +653,6 @@ Because composite runs after translucent gbuffers, it compares current `depthtex
 
 ## colortex1 lightmap output correction — 2026-11-23
 Restored `outLightmapData = vec4(vanillaLight, skyLight);` in terrain, entity and block-entity fragment programs. The source was computing these values but had omitted the actual colortex1 write, which would leave deferred ambient/direct light inputs undefined. Structural validation now requires colortex1 writes in all five opaque G-buffer fragment families.
+
+
+The combined material AO/SSS, opaque PBR normals, GGX direct specular, opaque SSR and corrected G-buffer lightmap state passed exact-source GLSL compilation, LabPBR macro-branch compilation, program linking and structural validation in GitHub Actions run [45079135476](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45079135476), commit `d07e45b3e95e3e728c3a98c450174fbf874b9960`. Minecraft/Iris runtime, visual parity and Intel HD 5500 performance remain unverified.
