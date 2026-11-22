@@ -73,3 +73,6 @@ The pipeline now writes deferred-lit opaque output directly to logical colortex0
 - Deferred reconstruction/AO uses `depthtex2` to exclude transparent and hand geometry.
 - `particles.ordering=mixed` explicitly separates opaque particles before deferred from translucent particles after deferred.
 - `separateEntityDraws` remains disabled due Iris' documented warning about newer versions.
+
+### Deferred depth-mask refinement
+The deferred pass reconstructs opaque world positions from `depthtex2` and compares it against `depthtex0` before shading. This prevents a hand or transparent fragment already present in scene color from being shaded using the opaque surface behind it.
