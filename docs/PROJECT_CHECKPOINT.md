@@ -371,3 +371,16 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - CI run [45071600491](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45071600491) passed after adding the generic lit fallback and its structural checks.
 - CI run [45071787808](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45071787808) passed after synchronizing the shared weather-opacity option and validating its identical declarations.
 - These runs validate GLSL compilation, macro-branch compilation, vertex/fragment linking and structural checks only. Iris/Minecraft runtime sorting, visuals and Intel HD 5500 performance remain unverified.
+
+
+## Iris uniform, attribute and depth contract audit — 2026-11-23
+- Verified `mc_Entity` is valid in `gbuffers_terrain.vsh`, `gbuffers_water.vsh` and `shadow.vsh`; its `x` component is the `block.properties` ID and `y` is `1.0` for fluids / `-1.0` otherwise. The water program's fluid/material-ID test therefore uses the documented attribute in a valid program.
+- Verified `blockEntityId` is the documented `gbuffers_block` uniform and that `block.properties` uses `block.<ID>` entries for both block and block-entity IDs.
+- Verified `entityColor`, `alphaTestRef`, `renderStage`, `sunPosition`, `moonPosition`, `shadowLightPosition`, `sunAngle`, `rainStrength`, `hasSkylight`, `endFlashIntensity`, `isEyeInWater`, fog uniforms and `gbufferModelViewInverse` against current Iris uniform documentation.
+- Verified `depthtex1` excludes transparent geometry and first becomes meaningful in deferred. `gbuffers_water` executes after deferred, so using `depthtex1` to reconstruct opaque depth for water thickness is correctly staged.
+- Verified `shadowtex0` includes all geometry and `shadowHardwareFiltering=true` enables comparison sampling as `sampler2DShadow`; the forward water/entity/particle paths use that contract.
+- Verified `noisetex` is a generated square RGB8 texture (default 256×256); the particle dither path queries its actual size and uses `texelFetch`, avoiding a hardcoded resolution.
+- Normalized the `WATER_FOG_MULT` value-list comment to Iris shader-option syntax. `WEATHER_TEX_OPACITY` is declared identically in weather and translucent-particle shaders; `PARTICLE_MATERIAL_FEATURES` is declared identically in opaque, translucent and generic lit-fallback programs. The validator now checks these declarations.
+- Corrected over-escaped validator regular expressions so duplicate uniform declarations and forbidden G-buffer sampling are actually detected.
+- CI run [45072296773](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45072296773) passed vertex/fragment compilation, Iris render-stage macro compilation, program linking and structural validation. The only program-coverage notices are the intentional Iris fallbacks `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` → `gbuffers_terrain`.
+- This is an Iris contract/source audit, not an in-game runtime, visual-parity or performance result.
