@@ -381,7 +381,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
 
 for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
               "uniform mat4 gbufferProjectionInverse", "WATER_REFLECTION_QUALITY",
-              "sampleWaterScreenReflection(", "texelFetch(depthtex2, depthPixel, 0)",
+              "sampleTranslucentScreenReflection(", "texelFetch(depthtex2, depthPixel, 0)",
               "texelFetch(colortex4, reflectionPixel, 0)",
               "float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0)",
               "float reflectionWeight = clamp(",
@@ -391,7 +391,7 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
 for token in ("uniform int isEyeInWater", "bool cameraUnderwater = (isEyeInWater == 1)",
-              "if (isWater && cameraUnderwater) direct = vec3(0.0)",
+              "if ((isWater && cameraUnderwater) || isPortal) direct = vec3(0.0)",
               "(cameraUnderwater ? 0.5 : 1.0)", "WATER_UNDERWATER_STRENGTH"):
     if token not in water:
         errors.append(f"Unbound-guided underwater water response is missing component: {token}")
@@ -402,7 +402,7 @@ for token in ("WATER_FOAM_STRENGTH",
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
 for token in ("vMaterialId == 32008", "vMaterialId >= 31000 && vMaterialId <= 31031",
               "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
-              "sampleWaterScreenReflection(", "GLASS_REFLECTION_STRENGTH",
+              "sampleTranslucentScreenReflection(", "GLASS_REFLECTION_STRENGTH",
               "PORTAL_EMISSION_STRENGTH", "float portalEmission = isPortal"):
     if token not in water:
         errors.append(f"Unbound-guided translucent material path is missing component: {token}")
