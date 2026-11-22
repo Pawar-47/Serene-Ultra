@@ -69,3 +69,10 @@ The renderer now uses Iris composite-style buffer flipping for the scene-color a
 
 ## Iris source audit corrections — 2026-11-23
 Existing code is being audited against Iris' published contracts before new effects are added. The latest corrections move shadow sampler/update settings into GLSL constants, disable `separateAo` to preserve material alpha, use `alphaTestRef`, apply `entityColor`, reconstruct opaque world depth from `depthtex2`, and explicitly set `particles.ordering=mixed`. See `docs/IRIS_PIPELINE_AUDIT.md`.
+
+## Current Iris-validated implementation state — 2026-11-23
+- Dedicated `gbuffers_water` now forward-shades post-deferred water with Iris atlas/lightmap inputs and the active shadow source. Advanced refraction, Fresnel/reflections, absorption/depth tint, wave normals and rain interaction remain pending.
+- Dedicated opaque/translucent particle programs and an emissive spider-eyes program are present.
+- First-person hand now uses the Iris lightmap; dynamic held-item light remains pending.
+- Deferred lighting uses Iris `hasSkylight` and End-flash uniforms; `endFlashShadows=true` is enabled.
+- CI compiles all stages, links each vertex/fragment pair, and runs structural Iris-contract validation. This is still not a substitute for Minecraft 26.3 + Iris runtime or visual validation.
