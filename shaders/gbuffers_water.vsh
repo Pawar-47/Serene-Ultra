@@ -3,6 +3,8 @@
 uniform mat4 gbufferModelViewInverse;
 
 out vec2 vTexCoord;
+flat out vec2 vMidTexCoord;
+flat out vec2 vTexHalfSize;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
 out vec3 vPlayerNormal;
@@ -13,10 +15,13 @@ flat out int vMaterialId;
 flat out float vFluidRenderType;
 
 in vec2 mc_Entity;
+in vec2 mc_midTexCoord;
 
 void main() {
     gl_Position = ftransform();
     vTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+    vMidTexCoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord, 0.0, 1.0)).xy;
+    vTexHalfSize = abs(vTexCoord - vMidTexCoord);
     vLightmapCoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
     vVertexColor = gl_Color;
 
