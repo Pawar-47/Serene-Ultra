@@ -575,3 +575,8 @@ The shadow color target is RGBA8 because it now carries RGB transmission and alp
 - Added `block.10049=minecraft:water_cauldron`, then remapped ID 10049 to 32001 in both `gbuffers_water.vsh` and `shadow.vsh`, following the shared r5.10 material mapping.
 - Water cauldron surfaces now enter the water material path even though they do not rely on the ordinary fluid render-type flag. They receive the water depth/refraction/absorption/foam/underwater treatment and caustic shadow transmission.
 - Structural validation requires the block mapping and both vertex-stage remaps. Empty cauldrons remain unaffected.
+
+
+## Water cauldron material routing — 2026-11-23
+
+Mapped `minecraft:water_cauldron` to a dedicated water material ID in `block.properties`, then remapped that ID in both the gbuffers-water and shadow vertex stages. The water fragment path treats the translucent water surface as water even though it is a block model rather than an Iris fluid render type. The shadow pass applies caustic transmission to the cauldron surface only when its sampled material alpha is below 0.999, preventing the opaque cauldron shell from receiving water-caustic transmission. This relies on Minecraft 26.1+ per-sprite cutout/translucent block-model routing; runtime behavior on the target 26.3 build remains to be verified.
