@@ -212,13 +212,17 @@ void main() {
 
     // Use Minecraft's own sampled lightmap RGB as the ambient/block-light
     // foundation so its existing colored light response is retained.
+    vec4 emissionData = texture(colortex3, vTexCoord);
+    float materialAO = clamp(emissionData.b, 0.0, 1.0);
+    float materialAOFactor = mix(1.0, materialAO, MATERIAL_AO_STRENGTH * 0.01);
     vec3 vanillaAmbient = pow(max(lightData.rgb, vec3(0.0)), vec3(2.2));
     vec3 ambient = vec3(0.018) + vanillaAmbient * 0.72;
 
-    // Eight depth taps add local contact shading. Only ambient light is
-    // occluded, so direct celestial illumination is not unnaturally darkened.
+    // Contact and LabPBR material AO attenuate indirect/block light only;
+    // direct celestial illumination remains separate and unaffected.
     float contactAO = sampleContactAO(viewPosition, viewNormal);
     ambient *= contactAO;
+    ambient *= materialAOFactor;
 
     vec3 celestialColor = endFlashActive
         ? vec3(1.0)
@@ -233,7 +237,6 @@ void main() {
     // Decode sampled sRGB albedo for lighting, then encode it again for the
     // existing color-grading/final pass. This keeps the output contract intact.
     vec3 albedoLinear = pow(max(scene.rgb, vec3(0.0)), vec3(2.2));
-    vec4 emissionData = texture(colortex3, vTexCoord);
     float materialReflectance = clamp(emissionData.g, 0.0, 1.0);
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     float labDielectricF0 = materialReflectance;
