@@ -11,6 +11,8 @@ REQUIRED = (
     "shaders.properties", "block.properties",
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
+    "gbuffers_entities_translucent.vsh", "gbuffers_entities_translucent.fsh",
+    "gbuffers_block_translucent.vsh", "gbuffers_block_translucent.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
     "gbuffers_water.vsh", "gbuffers_water.fsh",
     "gbuffers_hand_water.vsh", "gbuffers_hand_water.fsh",
@@ -123,6 +125,10 @@ if props_path.is_file():
         errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
+    if "separateEntityDraws=true" not in props:
+        errors.append("Translucent entities and block entities must render after deferred")
+    if "iris.features.optional=ENTITY_TRANSLUCENT" not in props:
+        errors.append("Iris ENTITY_TRANSLUCENT support must be queried before using the additional entity pass")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
@@ -222,6 +228,21 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
 
+entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
+block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
+for name, source in (("gbuffers_entities_translucent", entity_translucent),
+                     ("gbuffers_block_translucent", block_translucent)):
+    for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
+                  "sampler2DShadow shadowtex0", "shadowModelView", "shadowProjection",
+                  "calculateForwardLighting", "calculateForwardFog", "outColor = vec4("):
+        if token not in source:
+            errors.append(f"{name} is missing forward translucent component: {token}")
+    if "alphaTestRef" in source or "albedo.a <= 0.001" not in source:
+        errors.append(f"{name} must preserve fractional alpha instead of applying cutout alphaTestRef")
+    if re.search(r"\\buniform\\s+sampler\\w*\\s+colortex[0-3]\\b", source):
+        errors.append(f"{name} must not sample colortex0-3 after deferred")
+if "uniform vec4 entityColor" not in entity_translucent or "mix(albedoLinear, tintLinear, entityColor.a)" not in entity_translucent:
+    errors.append("Translucent entity path must preserve Iris entityColor tint")
 weather_vertex = sources.get("gbuffers_weather.vsh", "")
 if "#define WAVING_RAIN" not in weather_vertex or "eyeBrightnessSmooth" not in weather_vertex or "rainStrength" not in weather_vertex:
     errors.append("Weather vertex path must implement the Iris-aware waving rain/snow option")
@@ -386,6 +407,8 @@ for directive in (
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_particles_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_entities_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_block_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_spidereyes.colortex2=off",
     "blend.gbuffers_armor_glint.colortex2=off",
     "blend.gbuffers_lightning.colortex2=off",
