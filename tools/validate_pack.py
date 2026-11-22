@@ -348,7 +348,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
     if "if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;" not in source:
         errors.append(f"{name} must orient back-face normals before deferred lighting")
-    if name not in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh") and "outEmissionData = vec4(0.0)" not in source:
+    if name not in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh") and "outEmissionData = vec4(0.0)" not in source:
         errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
 if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity emission must default to zero unless an emissive blockEntityId is detected")
@@ -358,10 +358,21 @@ for token in ("vMaterialId == 30012", "vMaterialId == 30016",
         errors.append(f"Terrain smoothness packing is missing component: {token}")
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
     source = sources.get(name, "")
-    if "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5)" not in source and name != "gbuffers_block.fsh":
+    if "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5 + 0.5 * materialSmoothness)" not in source and name == "gbuffers_entities.fsh":
         errors.append(f"{name} must encode valid zero-smoothness geometry as colortex2 alpha 0.5")
-if "signText ? 0.0 : 0.5" not in sources.get("gbuffers_block.fsh", ""):
+if "signText ? 0.0 : 0.5 + 0.5 * materialSmoothness" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity validity/smoothness alpha must keep sign text invalid and normal geometry at 0.5")
+for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    for token in ("uniform sampler2D specular;", "texture(specular, vTexCoord)",
+                  "float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0)",
+                  "materialReflectance", "pbrEmission",
+                  "outEmissionData = vec4("):
+        if token not in source:
+            errors.append(f"{name} is missing resource-pack PBR specular support: {token}")
+if "materialReflectance = labF0Code / 255.0" not in terrain_fragment:
+    errors.append("Terrain LabPBR F0 must use the standard linear 0-229/255 range")
+
 opaque_particles = sources.get("gbuffers_particles.fsh", "")
 for token in ("PARTICLE_MATERIAL_FEATURES", "float(textureSize(gtexture, 0).x) < 1100.0",
               "emissionStrength = clamp(particle.r * 8.0, 1.6, 5.0)",
@@ -697,7 +708,7 @@ for token in ("materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0)"
               "litLinear += celestialColor * shadow * specularColor * specularStrength",
               "vec4 emissionData = texture(colortex3, vTexCoord)",
               "materialReflectance = clamp(emissionData.g, 0.0, 1.0)",
-              "MC_TEXTURE_FORMAT_LAB_PBR", "materialReflectance > 0.5",
+              "MC_TEXTURE_FORMAT_LAB_PBR", "materialReflectance >= (230.0 / 255.0)",
               "mix(vec3(0.04), albedoLinear, materialReflectance)"):
     if token not in deferred:
         errors.append(f"Deferred material specular path is missing component: {token}")
