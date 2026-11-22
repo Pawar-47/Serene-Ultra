@@ -382,8 +382,8 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
               "sampleWaterScreenReflection(", "texelFetch(depthtex2, depthPixel, 0)",
               "texelFetch(colortex4, reflectionPixel, 0)",
               "float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0)",
-              "float reflectionWeight = min(fresnel * 2.5, 0.85)",
-              "* reflectionConfidence * WATER_REFLECTION_STRENGTH;"):
+              "float reflectionWeight = clamp(",
+              "min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH",):
     if token not in water:
         errors.append(f"Water screen-space reflection path is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
