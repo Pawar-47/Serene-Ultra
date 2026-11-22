@@ -1,5 +1,12 @@
 #version 330 compatibility
 
+/*
+const int colortex2Format = RGBA16F;
+*/
+/*
+const int colortex3Format = R8;
+*/
+
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
