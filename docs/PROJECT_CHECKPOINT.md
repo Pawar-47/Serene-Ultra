@@ -280,3 +280,12 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Added `gbuffers_skytextured`; uses `renderStage` macros for sun/moon, dims by rain and underwater state, and preserves other sky textures.
 - Added `gbuffers_skybasic`; uses `skyColor`/`fogColor`, render-stage macros for sky/sunset/stars/void, and reconstructs direction only for sky/sunset fragments.
 - These are lightweight baseline sky paths, not Complementary's full atmospheric scattering, stars or volumetric clouds. Textured particle lighting remains incomplete.
+
+## Sky and unlit textured geometry — 2026-11-23
+- Added dedicated `gbuffers_skybasic`, `gbuffers_skytextured` and `gbuffers_textured` programs rather than relying on generic fallbacks.
+- Sky-basic uses Iris render-stage macros for sky, sunset, stars and void; sky-textured distinguishes sun and moon render stages and uses Iris view-space celestial positions.
+- Sky colors are linearized in the vertex stage; sky direction reconstruction is limited to sky/sunset fragments to avoid unnecessary per-fragment matrix work for stars/void.
+- Sky and overlay paths write a zero deferred-validity mask; colortex2 blending is disabled for each relevant program.
+- The textured fallback preserves atlas/vertex color and applies Iris fog without sampling forbidden G-buffer color attachments.
+- Added CI compilation of Iris render-stage macro branches using injected GLSL preprocessor defines.
+- Current checks are source/GLSL/structural only; sky gradient, twilight, celestial tint and weather transitions still need in-game visual calibration.
