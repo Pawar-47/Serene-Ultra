@@ -11,6 +11,8 @@ REQUIRED = (
     "shaders.properties", "block.properties",
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
+    "gbuffers_entities_translucent.vsh", "gbuffers_entities_translucent.fsh",
+    "gbuffers_block_translucent.vsh", "gbuffers_block_translucent.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
     "gbuffers_water.vsh", "gbuffers_water.fsh",
     "gbuffers_hand_water.vsh", "gbuffers_hand_water.fsh",
@@ -153,12 +155,8 @@ if props_path.is_file():
     if "option.PARTICLE_MATERIAL_FEATURES =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
         errors.append("Particle material effects option needs a user-facing label")
 
-# These two Iris additional programs are only activated by separateEntityDraws.
-# Keep them out of the missing-program warning while that option is intentionally
-# disabled because current Iris documentation warns it may be broken.
-if props and "separateEntityDraws=true" not in props:
-    missing_iris_programs.pop("gbuffers_entities_translucent", None)
-    missing_iris_programs.pop("gbuffers_block_translucent", None)
+# Iris routes translucent entities and block entities through these dedicated
+# programs when separateEntityDraws is enabled. Both pairs are required above.
 
 # Iris shader constants are GLSL declarations, not shaders.properties keys.
 all_glsl = "\n".join(sources.values())
@@ -365,8 +363,8 @@ for token in ("gbufferModelViewInverse", "vPlayerPosition", "vPlayerNormal"):
     if token not in translucent_particle_vertex:
         errors.append(f"Translucent particle vertex stage is missing player-space lighting input: {token}")
 particles = sources.get("gbuffers_particles.fsh", "")
-if "/* RENDERTARGETS: 0,1,2 */" not in particles:
-    errors.append("Opaque particles must write color, lightmap and normal G-buffer attachments")
+if "/* RENDERTARGETS: 0,1,2,3 */" not in particles:
+    errors.append("Opaque particles must write color, lightmap, normal and emissive G-buffer attachments")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
 if "/* RENDERTARGETS: 0 */" not in translucent_particles:
     errors.append("Translucent particles must use a forward color-only output")
@@ -431,6 +429,8 @@ for directive in (
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_particles_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_entities_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_block_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_spidereyes.colortex2=off",
     "blend.gbuffers_armor_glint.colortex2=off",
     "blend.gbuffers_lightning.colortex2=off",
