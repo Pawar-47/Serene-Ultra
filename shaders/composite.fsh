@@ -1,6 +1,6 @@
 #version 330 compatibility
 
-uniform sampler2D colortex3;
+uniform sampler2D colortex0;
 
 in vec2 vTexCoord;
 
@@ -8,7 +8,8 @@ in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    // Deferred lighting writes to colortex3; this pass safely transfers the
-    // completed result into colortex0 for the final post-processing stage.
-    outColor = texture(colortex3, vTexCoord);
+    // Deferred writes the lit opaque scene to colortex0 through Iris' main/alt
+    // buffer flip. Post-deferred translucent gbuffers blend onto that scene.
+    // This pass preserves the accumulated scene instead of copying stale data.
+    outColor = texture(colortex0, vTexCoord);
 }
