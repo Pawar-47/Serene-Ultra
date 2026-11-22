@@ -3,9 +3,13 @@
 ## Repository
 https://github.com/Pawar-47/Serene-Ultra
 
-## Source archive roles
-- Minecraft 26.3 Vanilla-stock archive: authoritative stock engine shader source for interface and behavior cross-checking.
-- Good working shader (Complementary Reimagined): Ultra visual/feature/menu reference; independently implement and do not copy licensed source/assets.
+## Source archive roles and mandatory comparison rule
+## Two-reference engineering rule (mandatory)
+Both supplied shader archives are active technical references, not merely one engine reference plus one visual mood board. Consult both when designing, reviewing, debugging or validating a rendering feature. When uncertain whether an approach, formula, interface, shader stage, texture lookup, buffer, pass order or code path is correct, inspect the corresponding/relevant files in **both** archives, compare how each achieves or expects the behavior, and record the evidence before choosing an implementation. If the files are not directly equivalent, trace the related stages and shared inputs/outputs rather than forcing a one-file match. Use Vanilla-stock to establish Minecraft 26.3's native contracts and behavior; use the working shader to understand proven feature implementation, visual treatment, quality controls and Ultra expectations. Then write an original Serene Ultra implementation that respects the stock engine contract while pursuing the reference's visual contribution, adapted for Intel HD 5500 without dropping Ultra features. Do not blindly copy either source, and do not claim a comparison was performed unless the relevant files were actually inspected.
+
+- Minecraft 26.3 Vanilla-stock archive: stock engine source and native behavior/interface reference.
+- Good working shader (Complementary Reimagined): technical implementation and visual/feature/menu reference, especially Ultra.
+- For every uncertain implementation decision, inspect relevant files in both archives, compare contracts and techniques, then implement independently. Neither archive is optional; do not claim comparisons without inspecting the files.
 - Serene Ultra repository: implementation source of truth.
 
 The Vanilla-stock archive contains 89 shader source files (42 fragment, 30 vertex and 17 GLSL includes). The next audit pass must record exact stock paths and cross-check the current pipeline. Do not claim this has been completed until the archive source has actually been inspected.
