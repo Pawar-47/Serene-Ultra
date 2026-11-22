@@ -57,3 +57,8 @@ option.WATER_WAVE_STRENGTH = Water Wave Strength
 option.WATER_WAVE_STRENGTH.comment = Controls the strength of three animated water-normal scales. Set to 0 to disable surface waves.
 option.WATER_WAVE_SPEED = Water Wave Speed
 option.WATER_WAVE_SPEED.comment = Controls the number of complete wave cycles per real-time hour. The cycle-based timing stays continuous when Iris frameTimeCounter wraps.
+
+option.WATER_COLOR_STRENGTH = Water Style Tint
+option.WATER_COLOR_STRENGTH.comment = Blends the Unbound-style water base tint with the sampled water atlas colour. Set to 0 to preserve the atlas colour.
+option.WATER_NOISE_COLOR_STRENGTH = Water Colour Variation
+option.WATER_NOISE_COLOR_STRENGTH.comment = Adds subtle animated colour variation using Iris noisetex. Set to 0 to disable the noise lookup.
