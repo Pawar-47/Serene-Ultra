@@ -2,7 +2,8 @@
 
 uniform sampler2D gtexture;
 uniform float alphaTestRef;
-uniform vec3 cameraPosition;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
 uniform float frameTimeCounter;
 
 in vec2 vShadowTexCoord;
@@ -22,15 +23,22 @@ layout(location = 0) out vec4 outShadowColor;
 #define WATER_CAUSTICS_STRENGTH 100 // [0 25 50 75 100 125 150] Water caustic contrast
 #define WATER_CAUSTICS_SCALE 100 // [50 75 100 125 150 200] Water caustic spatial frequency
 
-float calculateWaterCaustics(vec3 absoluteWorldPosition) {
-    vec2 p = absoluteWorldPosition.xz * (WATER_CAUSTICS_SCALE * 0.01);
+vec3 getStableShadowWorldPosition(vec3 playerPosition) {
+    ivec3 cameraModulo = cameraPositionInt % ivec3(256);
+    vec3 cameraOffset = mod(vec3(cameraModulo), vec3(256.0));
+    return mod(cameraOffset + cameraPositionFract + playerPosition, vec3(256.0));
+}
+
+float calculateWaterCaustics(vec3 stableWorldPosition) {
+    vec2 p = stableWorldPosition.xz;
     float timePhase = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
-    vec2 dirA = normalize(vec2(0.83, 0.55));
-    vec2 dirB = normalize(vec2(-0.42, 0.91));
-    vec2 dirC = normalize(vec2(0.18, -0.98));
-    float phaseA = dot(p, dirA) * 0.075 + timePhase;
-    float phaseB = dot(p, dirB) * 0.16 - timePhase * 2.0;
-    float phaseC = dot(p, dirC) * 0.34 + timePhase * 3.0;
+    float causticsScale = WATER_CAUSTICS_SCALE * 0.01;
+    float frequencyA = (6.28318530718 / 64.0) * causticsScale;
+    float frequencyB = (6.28318530718 / 32.0) * causticsScale;
+    float frequencyC = (6.28318530718 / 16.0) * causticsScale;
+    float phaseA = dot(p, vec2(1.0, 2.0)) * frequencyA + timePhase;
+    float phaseB = dot(p, vec2(-2.0, 1.0)) * frequencyB - timePhase * 2.0;
+    float phaseC = dot(p, vec2(1.0, -1.0)) * frequencyC + timePhase * 3.0;
     float interference = abs(
         sin(phaseA) * sin(phaseB) +
         sin(phaseB) * sin(phaseC) +
@@ -38,7 +46,9 @@ float calculateWaterCaustics(vec3 absoluteWorldPosition) {
     );
     float causticLines = smoothstep(0.15, 0.85, interference);
     float causticPattern = mix(0.55, 1.0, causticLines);
-    return mix(0.85, causticPattern, clamp(WATER_CAUSTICS_STRENGTH * 0.01, 0.0, 1.0));
+    float causticsStrength = WATER_CAUSTICS_STRENGTH * 0.01;
+    // Zero strength is neutral transmission; values above 100 increase contrast.
+    return clamp(1.0 + (causticPattern - 1.0) * causticsStrength, 0.0, 1.0);
 }
 
 void main() {
