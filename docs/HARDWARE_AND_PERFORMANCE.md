@@ -32,3 +32,7 @@ The target is the complete visual feature set of the supplied reference shader's
 - Do not optimize by redefining Ultra.
 - Do not claim a performance result based on GPU specifications alone.
 - Do not mark runtime compatibility complete from source inspection alone.
+
+
+## Shadow submission budget
+The shader now sets Iris' `shadowDistanceRenderMul` to 1.0, enabling geometry culling outside the configured shadow distance instead of only scaling the shadow projection. This should reduce unnecessary shadow-pass work on low-end GPUs; measure actual frame-time benefit on the target Intel HD 5500 system.
