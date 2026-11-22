@@ -456,7 +456,10 @@ for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcol
               "vec3 shadow = vec3(1.0)"):
     if token not in water:
         errors.append(f"Forward translucent colored-shadow path is missing component: {token}")
-for token in ("WATER_ABSORPTION_STRENGTH", "vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)",
+for token in ("WATER_ABSORPTION_STRENGTH", "waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)",
+              "float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01)",
+              "exp(-waterFogThickness * 0.075)",
+              "vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)",
               "vec3 transmission = exp(-absorptionCoefficient * waterThickness)",
               "waterAbsorptionTintLinear * (1.0 - transmission)"):
     if token not in water:
