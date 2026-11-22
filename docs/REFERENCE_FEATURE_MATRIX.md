@@ -183,3 +183,6 @@ Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` ma
 | `gbuffers_block_translucent` | Translucent block entities | Forward lightmap + celestial shadow + Iris fog; source-alpha blend |
 
 Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANSLUCENT`. The programs write only colortex0 after deferred; runtime compatibility remains to be checked.
+
+## Particle material effects — 2026-11-23
+`PARTICLE_MATERIAL_FEATURES` now ports the key Complementary heuristics into the Iris translucent particle path: water splashes, physics rain/snow opacity, underwater particle suppression, campfire smoke softening, and emissive ender/redstone/lava particles. It uses Iris `noisetex` via `textureSize`/`texelFetch`, and rain/snow detection is gated by runtime `hasSkylight` and `rainStrength` rather than a dimension macro unavailable in the base program. Opaque particle material classification remains pending.
