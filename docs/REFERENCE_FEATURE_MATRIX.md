@@ -124,3 +124,6 @@ Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-
 
 ## Hand-water program update — 2026-11-23
 Dedicated `gbuffers_hand_water` now replaces the ordinary hand fallback for post-deferred first-person translucent geometry. It samples the Iris atlas and lightmap, applies Iris fog and writes color only with source-alpha blending.
+
+## Translucent terrain scope correction — 2026-11-23
+Iris' `gbuffers_water` program handles all translucent terrain, including but not limited to water. The current implementation is a generic forward-lit translucent surface baseline; it does not yet implement fluid-only behavior. Iris' `mc_Entity.y` attribute (available in `gbuffers_water.vsh`) distinguishes fluids (`1.0`) from other translucent terrain (`-1.0`) and must be used for future water-only effects.
