@@ -125,3 +125,6 @@ Iris routes sky/horizon, stars and void through `gbuffers_skybasic`, and sun/moo
 
 ## Translucent particle lighting
 The post-deferred `gbuffers_particles_translucent` path forward-shades particles using vanilla lightmap data, player-space normals/positions, the active celestial source, one hardware-filtered shadow lookup and Iris fog. The one-tap shadow lookup is the low-cost integrated-GPU baseline. Special particle material/emission handling remains future work.
+
+## Iris entity-translucency compatibility
+The separate translucent entity/block passes are retained as dormant forward implementations. They are not enabled because current Iris documentation warns that `separateEntityDraws` is broken in newer versions. The active configuration keeps `separateEntityDraws=false`, and the validator prevents accidental activation.
