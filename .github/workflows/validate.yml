@@ -1,4 +1,4 @@
-name: Shaderpack structural validation
+name: Shaderpack structural and GLSL validation
 
 on:
   push:
@@ -20,5 +20,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: Install GLSL validator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
+      - name: Compile vertex and fragment shaders
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' shader; do
+            case "$shader" in
+              *.vsh) stage=vert ;;
+              *.fsh) stage=frag ;;
+              *) continue ;;
+            esac
+            echo "Compiling $shader"
+            glslangValidator -S "$stage" "$shader"
+          done < <(find shaders -type f \( -name '*.vsh' -o -name '*.fsh' \) -print0)
       - name: Validate shaderpack structure
         run: python tools/validate_pack.py
