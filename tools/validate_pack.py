@@ -422,6 +422,11 @@ for token in ("WATER_FOAM_STRENGTH",
               "(1.0 - waterFoam)"):
     if token not in water:
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
+for token in ("flat in vec2 vMidTexCoord", "flat in vec2 vTexHalfSize",
+              "PORTAL_DISTORTION_STRENGTH", "textureSize(gtexture, 0)",
+              "portalMinUV", "portalMaxUV", "textureLod(gtexture, portalUV, 0.0)"):
+    if token not in water:
+        errors.append(f"Atlas-safe portal distortion path is missing component: {token}")
 for token in ("vMaterialId == 32008", "vMaterialId >= 31000 && vMaterialId <= 31031",
               "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
               "sampleTranslucentScreenReflection(", "GLASS_REFLECTION_STRENGTH",
@@ -440,7 +445,7 @@ if "uniform int isEyeInWater;" not in water:
     errors.append("Water pass must declare Iris isEyeInWater as int")
 
 for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureLod(noisetex, noiseUV, 0.0)",
-              "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "WATER_ABSORPTION_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH"):
+              "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "WATER_ABSORPTION_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
     if token not in water:
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 
