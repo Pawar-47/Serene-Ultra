@@ -275,6 +275,7 @@ for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = RGBA8",
               "outShadowColor = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12)",
               "outShadowColor = vec4(1.0, 1.0, 1.0, 0.0)",
               "vShadowMaterialId == 30008", "vShadowMaterialId == 32001", "vShadowMaterialId >= 31000 && vShadowMaterialId <= 31031",
+              "vShadowMaterialId == 32001 && materialAlpha < 0.999",
               "vShadowMaterialId == 32008 || vShadowMaterialId == 32012",
               "vShadowMaterialId == 32004", "vShadowMaterialId == 30020"):
     if token not in shadow_fragment:
