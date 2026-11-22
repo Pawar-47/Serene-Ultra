@@ -263,3 +263,12 @@ The post-deferred `gbuffers_particles_translucent` program no longer uses Iris `
 
 ## Correction: `gbuffers_water` covers all translucent terrain — 2026-11-23
 Iris' program table defines `gbuffers_water` as **translucent terrain, including water**, not water blocks alone. This includes other translucent block surfaces such as stained glass. The dedicated program is therefore a generic forward-lit translucent-terrain baseline; its variables and comments have been renamed accordingly so they do not imply that water-only refraction, Fresnel, or absorption is already active. Iris exposes `mc_Entity.y` in `gbuffers_water.vsh` (`1.0` for fluids, `-1.0` for other terrain), which is the documented discriminator to use when implementing fluid-only effects. That classification and material-specific behavior remain pending until the supplied Complementary reference implementation can be traced. The current shader still uses a shared diffuse/lightmap/shadow/fog baseline for all translucent terrain.
+
+## Reference-guided fluid classification and depth opacity — 2026-11-23
+Cross-checked the current Complementary Reimagined `gbuffers_water.glsl`, `translucentMaterials.glsl`, `water.glsl`, `block.properties` and Iris attribute/depth documentation. The reference classifies translucent terrain with `mc_Entity.x` material IDs and `mc_Entity.y` fluid render type, then uses `depthtex1` to estimate opaque geometry behind the water surface and attenuate alpha with depth. Implemented the compatible subset:
+- Added stable `block.properties` IDs for water, water cauldrons, lava, lava cauldrons and nether portals.
+- `gbuffers_water.vsh` now reads Iris' documented `mc_Entity` attribute and passes material ID and fluid type to the fragment stage.
+- Water and water-cauldron only receive depth-based opacity; glass and other translucent blocks keep their original alpha.
+- The water thickness calculation reads `depthtex1` (opaque-only depth, meaningful after deferred), reconstructs view position with `gbufferProjectionInverse`, and uses the reference Beer-Lambert-style `1-exp(-thickness*0.075)` response.
+- Added `WATER_FOG_MULT` with the reference control range, plus Iris `alphaTestRef` handling and `alphaTest.gbuffers_water` configuration.
+This is not full Complementary water parity: water normal maps, animated waves, Fresnel reflections, refraction, foam, caustics, underwater-specific response and PBR/material handling remain outstanding. Iris depth and attribute semantics are documented in the links below.
