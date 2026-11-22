@@ -64,9 +64,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 4. Expand tests to detect missing post-deferred program coverage and invalid attachment contracts.
 5. Run Iris runtime tests in scenes containing water, rain/snow, first-person hand water, particles, entities, signs/text and all dimensions.
 
-- Latest repository HEAD after this audit: `26d5aafb525029b31739f56e70ea5625571e0304`.
-- Latest CI run on that exact HEAD: `45060856038`, conclusion `success`; both standalone GLSL compilation and structural validation completed successfully.
-- Structural validation now rejects gbuffers shaders that declare sampler reads from Iris-forbidden colortex0–3 and prints a non-failing warning while the dedicated post-deferred water/weather/hand-water programs remain absent.
+- Historical repository HEAD at this earlier checkpoint: `26d5aafb525029b31739f56e70ea5625571e0304` (superseded by the later audit and implementation commits below).
+- Historical CI run on that exact HEAD: `45060856038`, conclusion `success`; later source and validator changes are tracked by the newer run IDs recorded below.
+- At that earlier checkpoint the validator used an overbroad blanket ban on colortex0–3 reads in gbuffers and the dedicated water/weather/hand-water programs were absent. Both conditions were superseded: the current validator rejects only same-attachment read/write conflicts, and all three dedicated post-deferred programs are now implemented.
 
 
 ## Lighting correction — 2026-11-23
@@ -198,7 +198,7 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Water uses Iris gtexture/lightmap/shadow map, dimension-aware celestial lighting and fog.
 - Weather uses Iris gtexture/lightmap and fog; `rain.depth=false` remains explicit.
 - Hand-water uses Iris gtexture/lightmap and fog.
-- All use explicit source-alpha blending and do not sample colortex0–3 from gbuffers programs.
+- All use explicit source-alpha blending and avoid sampling `colortex0`, the attachment they write. Iris permits sampling a different, non-output colortex attachment; the validator checks only same-attachment conflicts.
 - Advanced water effects, volumetric weather, dynamic held-item illumination, special geometry and runtime/visual parity remain outstanding.
 
 
