@@ -585,7 +585,7 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "alphaTestRef",
 block_shader = sources.get("gbuffers_block.fsh", "")
 for token in ("/* RENDERTARGETS: 0,1,2,3 */", "uniform int blockEntityId",
               "blockEntityId == 5004", "blockEntityId == 5025",
-              "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5)",
+              "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5 + 0.5 * materialSmoothness)",
               "calculateBlockFog", "outEmissionData"):
     if token not in block_shader:
         errors.append(f"Block-entity shader is missing Iris blockEntityId component: {token}")
