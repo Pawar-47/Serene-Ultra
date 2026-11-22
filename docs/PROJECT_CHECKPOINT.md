@@ -227,3 +227,5 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 4. Keep CI green after each coherent change; then perform actual Iris runtime and target-hardware tests.
 
 - Shadow caster alpha testing now uses the stricter of Iris `alphaTestRef` and the Serene `SHADOW_ALPHA_CUTOFF` option; validator enforces both.
+
+- Translucent particle shader now preserves fractional alpha and only discards near-zero alpha; Iris `alphaTestRef` remains on opaque/cutout particle paths.
