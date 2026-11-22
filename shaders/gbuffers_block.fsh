@@ -2,6 +2,7 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform sampler2D specular;
 uniform float alphaTestRef;
 uniform int blockEntityId;
 uniform vec3 fogColor;
@@ -69,6 +70,27 @@ void main() {
     outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
-    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5); // Sign text invalid; other block entities non-specular
-    outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
+    vec4 pbrSpecular = texture(specular, vTexCoord);
+    float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
+    float materialReflectance = 0.0;
+    float pbrEmission = 0.0;
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
+    float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
+    if (pbrMapPresent < 0.5) {
+        materialReflectance = 0.04;
+    } else if (labF0Code >= 230.0) {
+        materialReflectance = 1.0;
+    } else {
+        materialReflectance = labF0Code / 255.0;
+    }
+    float labEmissionCode = floor(pbrSpecular.a * 255.0 + 0.5);
+    if (labEmissionCode < 254.5) pbrEmission = labEmissionCode / 254.0;
+#else
+    materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0);
+    pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
+#endif
+    emissionStrength = max(emissionStrength, pbrEmission * 5.0);
+    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5 + 0.5 * materialSmoothness);
+    outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, 0.0, 1.0);
 }
