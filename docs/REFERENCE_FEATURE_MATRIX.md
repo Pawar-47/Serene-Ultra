@@ -99,3 +99,6 @@ The two particle programs are now implemented:
 - Opaque `gbuffers_particles` writes the three G-buffer attachments for deferred lighting.
 - Translucent `gbuffers_particles_translucent` is a post-deferred forward path with vanilla lightmap response and explicit alpha blending.
 This replaces the earlier 'missing particle programs' entry. Material-specific particle behavior and runtime parity still require testing.
+
+## First-person hand path update — 2026-11-23
+The hand fragment shader now samples the Iris `lightmap` texture using `gl_TextureMatrix[1]`-transformed lightmap coordinates and applies its RGB response. This corrects the earlier albedo-only hand path. Dynamic held-item emission using Iris `heldBlockLightValue` and `heldBlockLightValue2` remains outstanding.
