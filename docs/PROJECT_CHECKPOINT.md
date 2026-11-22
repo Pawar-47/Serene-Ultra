@@ -314,3 +314,11 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Retained the forward `gbuffers_entities_translucent` and `gbuffers_block_translucent` source pairs, but they are inactive until a fixed Iris version is runtime-verified.
 - Validator now rejects `separateEntityDraws=true` or the optional feature flag and does not require inactive programs.
 - CI run [45068091455](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45068091455) passed GLSL compile, macro-branch compile, vertex/fragment linking and structural validation.
+
+## New post-deferred geometry and particle update — 2026-11-23
+- Enabled Iris `separateEntityDraws=true` and optional `ENTITY_TRANSLUCENT` support.
+- Added dedicated forward `gbuffers_entities_translucent` and `gbuffers_block_translucent` pairs. Both write only colortex0, preserve fractional alpha, use vanilla lightmap, celestial shadowing and Iris fog; the entity path also honors Iris `entityColor`.
+- Particle material heuristics now follow the current Complementary Reimagined `gbuffers_textured.glsl` reference: water splashes, Physics-mod rain/snow, underwater particles, campfire smoke, Ender/Crying Obsidian/Redstone emission and lava emission.
+- Particle atlas-size guard uses the Complementary 1.20+ threshold (1100 px), preventing classification against the block atlas. Water-splash dither uses Iris `noisetex`; rain/snow opacity shares the `WEATHER_TEX_OPACITY` option and only activates when Iris reports skylight plus active rain.
+- Ender/Crying Obsidian/Redstone particles suppress lightmap and celestial lighting while retaining their additive emission; emissive particles skip shadow-map lookup.
+- Source-level and GLSL/structural CI checks are not a substitute for in-game validation of translucent sorting, particles or FPS.
