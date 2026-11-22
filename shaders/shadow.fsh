@@ -12,7 +12,10 @@ in vec4 vShadowVertexColor;
 
 void main() {
     float materialAlpha = texture(gtexture, vShadowTexCoord).a * vShadowVertexColor.a;
-    if (materialAlpha < SHADOW_ALPHA_CUTOFF) {
+    // Iris may raise alphaTestRef for a particular cutout render layer.
+    // Retain the pack's user cutoff without bypassing Iris' per-layer threshold.
+    float effectiveAlphaCutoff = max(alphaTestRef, SHADOW_ALPHA_CUTOFF);
+    if (materialAlpha < effectiveAlphaCutoff) {
         discard;
     }
 
