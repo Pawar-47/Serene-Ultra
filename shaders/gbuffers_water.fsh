@@ -50,6 +50,7 @@ flat in float vFluidRenderType;
 #define WATER_COLOR_STRENGTH 100 // [0 25 50 75 100] Unbound-style water base tint blend
 #define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
 #define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
+#define WATER_UNDERWATER_STRENGTH 100 // [0 25 50 75 100 125 150] Underwater tint and surface response
 layout(location = 0) out vec4 outColor;
 
 // Three analytic wave bands provide stable multi-scale surface normals without
@@ -273,8 +274,9 @@ void main() {
         ? clamp(endFlashIntensity, 0.0, 1.0)
         : (hasSkylight ? skyLight : 0.0);
 
+    bool cameraUnderwater = (isEyeInWater == 1);
     float shadow = 1.0;
-    if (nDotL > 0.001 && celestialGate > 0.001) {
+    if (nDotL > 0.001 && celestialGate > 0.001 && !(isWater && cameraUnderwater)) {
         shadow = sampleTranslucentShadow(vPlayerPosition, normal, worldLightDirection);
     }
 
@@ -288,6 +290,7 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
+    if (isWater && cameraUnderwater) direct = vec3(0.0);
 
     float waterThickness = 0.0;
     float waterFog = 0.0;
@@ -330,6 +333,16 @@ void main() {
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0));
         float waterAlpha = translucentAlbedo.a * (0.25 + 0.75 * waterFog);
         waterAlpha = mix(waterAlpha, 1.0, waterFresnel * 0.25);
+        // Complementary Unbound uses a distinct underwater branch: soften
+        // water opacity, cool the surface tint and suppress directional light.
+        if (cameraUnderwater) {
+            waterAlpha *= mix(1.0, 0.75, clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.5));
+            translucentAlbedo.rgb *= mix(
+                vec3(1.0),
+                vec3(0.78, 0.90, 1.05),
+                clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.0)
+            );
+        }
         translucentAlbedo.a = clamp(waterAlpha, 0.0, 1.0);
 
         // deferred1 snapshots the opaque scene into half-resolution colortex4.
@@ -428,7 +441,8 @@ void main() {
         );
         vec3 reflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
         float reflectionWeight = clamp(
-            min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH * (1.0 - waterFoam),
+            min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH
+            * (1.0 - waterFoam) * (cameraUnderwater ? 0.5 : 1.0),
             0.0, 0.95
         );
         litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
