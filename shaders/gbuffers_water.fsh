@@ -581,7 +581,7 @@ void main() {
         vec3 glassReflectionLinear = mix(
             glassEnvironmentLinear, glassScreenReflectionLinear, glassReflectionConfidence
         );
-        float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : (isClearGlass ? 0.50 : 0.32));
+        float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : ((isClearGlass || isStainedGlass) ? 0.50 : 0.32));
         float glassReflectionWeight = clamp(
             glassFresnel * materialReflectionScale * (GLASS_REFLECTION_STRENGTH * 0.01),
             0.0, 0.85
