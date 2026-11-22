@@ -32,7 +32,8 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 
 ## Validation status
 - Shader, menu, validator and documentation changes are committed to main.
-- GitHub Actions structural validation passed on the latest checkpoint commit 8db1632740078a8fedf896dfec31ef40abb78987 (run 45059986709, job validate).
+- GitHub Actions passed on latest checkpoint commit 0aa56289cc8ff55d1fd4dc489eaa27b2fb0190b3 (run 45060098775, job validate).
+- CI now installs glslang-tools, compiles every .vsh/.fsh stage, and then runs the structural validator; both compiler and structural steps passed.
 - No GLSL compiler or Minecraft/Iris runtime test has confirmed these passes.
 - No visual parity comparison or target-machine performance measurement has been performed.
 - The AO implementation is an initial screen-space approximation; depth bias, view-space reconstruction, camera stability, edge artifacts and GPU cost need calibration.
