@@ -7,15 +7,15 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 
 | Feature family | Required Ultra capability | Serene implementation plan | Status |
 |---|---|---|---|
-| Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Albedo, lightmap UV and world-aligned normal G-buffer capture; material classification remains next | Partial |
-| Entity rendering | Entity-specific shading and shadows | Entity albedo, lightmap UV and normal capture with alpha cutoff | Partial |
+| Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Albedo, sampled vanilla lightmap RGB and world-aligned normal G-buffer capture; material classification remains next | Partial |
+| Entity rendering | Entity-specific shading and shadows | Entity albedo, sampled lightmap and normal capture with alpha cutoff | Partial |
 | Hand/item rendering | Correct first-person hand/item rendering | Dedicated hand pipeline and parity tests | Foundation |
-| Shadow mapping | Sun/moon directional shadows | Depth map, position reconstruction and directional comparison | Partial |
+| Shadow mapping | Sun/moon directional shadows | Depth reconstruction and directional shadow comparison | Partial |
 | Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
 | Shadow filtering | Soft filtered shadows and quality controls | Four hardware-filtered comparison taps with slope-aware bias; stability/quality tuning remains | Partial |
 | Ambient occlusion | Contact/local occlusion | Horizon/contact approximation with edge-aware filtering | Pending |
-| Direct lighting | Directional lighting and block light response | Day/night celestial diffuse term combined with lightmap-derived ambient | Partial |
-| Colored lighting | Colored block/emissive light response | Efficient light sampling and material response | Pending |
+| Direct lighting | Directional lighting and block light response | Day/night celestial diffuse term combined with sampled vanilla lightmap ambient | Partial |
+| Colored lighting | Colored block/emissive light response | Preserve vanilla lightmap RGB; custom colored-light propagation and emissive response remain | Partial |
 | Indirect lighting / GI | Bounced/indirect illumination appearance | Screen-space/temporal approximation; preserve visual contribution | Pending |
 | Volumetric lighting | Light shafts and volumetric scattering | Depth-aware low-resolution integration and reconstruction | Pending |
 | Atmospheric scattering | Sky color, horizon and atmospheric depth | Analytic atmosphere with shared sky/lighting parameters | Pending |
@@ -58,4 +58,4 @@ Next audit pass must extract the actual Ultra profile values and enumerate every
 
 ## Latest implementation note
 
-The G-buffer preserves base albedo in colortex0, lightmap coordinates in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. The deferred pass reconstructs player-space positions, evaluates directional celestial diffuse lighting and samples the shadow map with four hardware-filtered comparison taps. The hand and sky remain unchanged by deferred world lighting. These paths are initial implementations only; visual parity and runtime stability remain unverified.
+The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB plus sky-light factor in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. The deferred pass reconstructs player-space positions, evaluates directional celestial diffuse lighting and samples the shadow map with four hardware-filtered comparison taps. It uses the game's lightmap tint as the ambient/block-light foundation. The hand and sky remain unchanged by deferred world lighting. These paths are initial implementations only; visual parity and runtime stability remain unverified.
