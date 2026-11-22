@@ -310,7 +310,7 @@ void main() {
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
-    bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
+    bool isWater = ((vMaterialId == 32000) && (vFluidRenderType > 0.5)) || (vMaterialId == 32001);
     bool isClearGlass = (vMaterialId == 32008 || vMaterialId == 32012);
     bool isStainedGlass = (vMaterialId >= 31000 && vMaterialId <= 31031);
     bool isTintedGlass = (vMaterialId == 30008);
