@@ -202,3 +202,7 @@ The portal material now uses Iris' documented `mc_midTexCoord` per-quad UV cente
 
 
 The analytic wave approximation now also exposes `WATER_WAVE_SCALE`, allowing spatial frequency to be tuned independently of strength and animation speed. This is a procedural substitute for the reference's multi-scale normal-map size controls.
+
+
+## Colored translucent shadows and water caustics — 2026-11-23
+Serene now follows Iris' transparent-shadow contract using `shadowtex0`, `shadowtex1` and `shadowcolor0`. The shadow pass stores material-specific transmission: animated analytic water caustics, neutral clear-glass transmission, stained-glass tint, darker tinted-glass transmission, blue ice tint and purple portal tint. Deferred combines the RGB transmission with four-tap opaque PCF. This mirrors the reference's colored-shadow/material behavior at a lower sample count and with original analytic caustic math; it is not a line-for-line reproduction of Unbound's water-normal caustic projection. Runtime validation and HD 5500 performance calibration remain outstanding.
