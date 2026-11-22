@@ -226,3 +226,7 @@ The dedicated `gbuffers_entities_translucent` and `gbuffers_block_translucent` s
 
 ## Water colour feature update — 2026-11-23
 The water-only branch now applies an Unbound-inspired biome-aware base tint and a single-sample animated `noisetex` colour variation. Both effects are user-adjustable; noise animation is periodic across Iris' `frameTimeCounter` wrap. Underwater tint/absorption and visual calibration remain pending.
+
+
+## Water foam feature update — 2026-11-23
+A first shoreline foam approximation now uses Iris opaque depth reconstruction to estimate the vertical intersection behind top-facing water surfaces. Foam is applied before lighting and suppresses SSR locally. It is adjustable and source-validated; in-game appearance and performance remain unverified.
