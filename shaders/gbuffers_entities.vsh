@@ -13,6 +13,6 @@ void main() {
     vLightmapCoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
     vVertexColor = gl_Color;
 
-    vec3 viewNormal = normalize(gl_NormalMatrix * gl_Normal);
+    vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
 }
