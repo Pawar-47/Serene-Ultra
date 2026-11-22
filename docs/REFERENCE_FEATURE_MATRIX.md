@@ -120,3 +120,7 @@ Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-
 | Weather | Forward Iris fog in `gbuffers_weather` | Implemented at source level |
 | Translucent particles | Forward Iris fog in `gbuffers_particles_translucent` | Implemented at source level |
 | Hand-water | Current hand fallback; no dedicated fog treatment | Pending |
+
+
+## Hand-water program update — 2026-11-23
+Dedicated `gbuffers_hand_water` now replaces the ordinary hand fallback for post-deferred first-person translucent geometry. It samples the Iris atlas and lightmap, applies Iris fog and writes color only with source-alpha blending.
