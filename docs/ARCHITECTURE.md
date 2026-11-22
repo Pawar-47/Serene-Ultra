@@ -113,3 +113,6 @@ The current water baseline additionally matches the Complementary reference's lo
 
 ## Weather and cloud paths
 `gbuffers_weather` uses the reference's rain/snow texture classification and default alpha multipliers, with a user opacity control. It uses Iris `alphaTestRef`, `isEyeInWater`, `rainStrength` and `eyeBrightnessSmooth` for powdered-snow suppression and optional vertex motion. `gbuffers_clouds` is a dedicated pre-deferred overlay that preserves vanilla cloud texture/vertex tint, applies Iris fog, hides clouds while the camera is submerged, and clears the deferred normal mask. Custom volumetric clouds remain a later feature.
+
+## Textured fallback and sky
+The `gbuffers_textured` path preserves unlit texture/vertex color and Iris fog while clearing deferred-normal validity. `gbuffers_skytextured` uses Iris render-stage macros to identify sun/moon textures, applying rain and underwater dimming. `gbuffers_skybasic` builds a lightweight sky gradient from Iris `skyColor` and `fogColor`, with distinct sunset, stars and void handling. These baseline paths keep overlays out of opaque deferred lighting; full atmospheric scattering and custom sky systems remain future work.
