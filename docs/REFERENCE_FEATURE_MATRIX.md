@@ -130,3 +130,13 @@ Iris' `gbuffers_water` program handles all translucent terrain, including but no
 
 ## Water depth-opacity update — 2026-11-23
 The generic `gbuffers_water` translucent-terrain path now uses Iris `mc_Entity` material IDs to isolate actual water/water-cauldron from glass and portals. It reads opaque-only `depthtex1` and reconstructs the underlying view-space distance to apply depth-dependent water opacity. `WATER_FOG_MULT` exposes the reference-style 25–900% control range. This is a first reference-guided water-material feature; it is not yet full water parity.
+
+## Water path update — 2026-11-23
+| Iris contract | Implementation |
+|---|---|
+| `mc_Entity.x` maps to `block.properties` ID; `.y` is fluid render type | Water branch requires ID 32000 and fluid type `> 0.5` |
+| `depthtex1` excludes transparent geometry and is valid from deferred onward | Water thickness samples it in post-deferred `gbuffers_water` |
+| `far` is render distance, not the projection far plane | Clear depth and opaque depth are reconstructed through `gbufferProjectionInverse` |
+| Iris recommends using `alphaTestRef` | Water shader uses the uniform without overriding it in `shaders.properties` |
+
+The depth-opacity calculation follows the same thickness/exponential form used by Complementary Reimagined. Advanced water materials remain pending.
