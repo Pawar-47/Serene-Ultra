@@ -64,6 +64,18 @@ SUN_DEFINES
             tail -n +2 shaders/gbuffers_skytextured.fsh
           } > "$tmpdir/skytextured.frag"
 
+          {
+            head -n 1 shaders/gbuffers_line.fsh
+            cat <<'LINE_DEFINES'
+#define MC_RENDER_STAGE_OUTLINE 7
+#define MC_RENDER_STAGE_DEBUG 8
+LINE_DEFINES
+            tail -n +2 shaders/gbuffers_line.fsh
+          } > "$tmpdir/line.frag"
+
+          glslangValidator -S frag "$tmpdir/skybasic.frag"
+          glslangValidator -S frag "$tmpdir/skytextured.frag"
+          glslangValidator -S frag "$tmpdir/line.frag"
       - name: Link vertex and fragment shader programs
         shell: bash
         run: |
