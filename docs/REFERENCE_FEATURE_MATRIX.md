@@ -265,3 +265,7 @@ Nether portals now receive a four-tap animated UV distortion, with each sample c
 
 ## Colored translucent shadows — 2026-11-23
 The shadow pass now writes RGBA8 transmission data for water, clear/stained/tinted glass, ice and Nether portals. Deferred combines `shadowtex0` PCF with the opaque-only `shadowtex1` test and `shadowcolor0` material transmission, producing colored translucent shadows and animated water caustics. Runtime and performance validation remain pending.
+
+
+## Water cauldron material coverage — 2026-11-23
+Filled water cauldrons now map to material ID 32001 and use the water surface pipeline (refraction, absorption, waves, foam, underwater response and caustic shadow transmission). Empty cauldrons remain unaffected.
