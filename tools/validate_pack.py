@@ -255,10 +255,17 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
     if "if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;" not in source:
         errors.append(f"{name} must orient back-face normals before deferred lighting")
-    if name not in ("gbuffers_terrain.fsh", "gbuffers_block.fsh") and "outEmissionData = vec4(0.0)" not in source:
+    if name not in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh") and "outEmissionData = vec4(0.0)" not in source:
         errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
 if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity emission must default to zero unless an emissive blockEntityId is detected")
+opaque_particles = sources.get("gbuffers_particles.fsh", "")
+for token in ("PARTICLE_MATERIAL_FEATURES", "textureSize(gtexture, 0).x < 1100.0",
+              "emissionStrength = clamp(particle.r * 8.0, 1.6, 5.0)",
+              "emissionStrength = 2.0", "suppressLightmap",
+              "outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0)"):
+    if token not in opaque_particles:
+        errors.append(f"Opaque particle emissive path is missing component: {token}")
 
 entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
 block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
