@@ -23,10 +23,12 @@ for rel in REQUIRED:
     if not path.is_file():
         errors.append(f"Missing required shaderpack file: shaders/{rel}")
 
+sources = {}
 for path in SHADERS.rglob("*"):
     if path.suffix not in {".vsh", ".fsh", ".csh", ".glsl"}:
         continue
     source = path.read_text(encoding="utf-8")
+    sources[path.name] = source
     if not re.search(r"^\s*#version\s+330\b", source, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: expected an explicit GLSL 330 version")
     if source.count("{") != source.count("}"):
@@ -54,26 +56,29 @@ if props_path.is_file():
     if "SHADOW_ALPHA_CUTOFF" not in props:
         errors.append("Shadow alpha cutoff is not exposed in the Quality menu")
 
-final_path = SHADERS / "final.fsh"
-if final_path.is_file():
-    final = final_path.read_text(encoding="utf-8")
-    for option in ("RED_GAIN", "GREEN_GAIN", "BLUE_GAIN", "GAMMA", "EXPOSURE",
-                   "CONTRAST", "SATURATION", "HDR_LOOK"):
-        if f"#define {option} " not in final:
-            errors.append(f"Missing active color control: {option}")
+final = sources.get("final.fsh", "")
+for option in ("RED_GAIN", "GREEN_GAIN", "BLUE_GAIN", "GAMMA", "EXPOSURE",
+               "CONTRAST", "SATURATION", "HDR_LOOK"):
+    if f"#define {option} " not in final:
+        errors.append(f"Missing active color control: {option}")
 
-shadow_vertex = SHADERS / "shadow.vsh"
-shadow_fragment = SHADERS / "shadow.fsh"
-if shadow_vertex.is_file() and shadow_fragment.is_file():
-    vertex = shadow_vertex.read_text(encoding="utf-8")
-    fragment = shadow_fragment.read_text(encoding="utf-8")
-    for varying in ("vShadowTexCoord", "vShadowVertexColor"):
-        if varying not in vertex or varying not in fragment:
-            errors.append(f"Shadow alpha-test varying is missing or mismatched: {varying}")
-    if "uniform sampler2D texture" not in fragment or "discard" not in fragment:
-        errors.append("Shadow pass must sample the material texture and discard transparent texels")
-    if "#define SHADOW_ALPHA_CUTOFF " not in fragment:
-        errors.append("Shadow alpha cutoff must be an active shader option")
+shadow_vertex = sources.get("shadow.vsh", "")
+shadow_fragment = sources.get("shadow.fsh", "")
+for varying in ("vShadowTexCoord", "vShadowVertexColor"):
+    if varying not in shadow_vertex or varying not in shadow_fragment:
+        errors.append(f"Shadow alpha-test varying is missing or mismatched: {varying}")
+if "uniform sampler2D texture" not in shadow_fragment or "discard" not in shadow_fragment:
+    errors.append("Shadow pass must sample the material texture and discard transparent texels")
+if "#define SHADOW_ALPHA_CUTOFF " not in shadow_fragment:
+    errors.append("Shadow alpha cutoff must be an active shader option")
+
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
+    source = sources.get(name, "")
+    if "/* RENDERTARGETS: 0,1,2 */" not in source:
+        errors.append(f"{name} must write albedo, lightmap and normal attachments")
+    for output in ("outColor", "outLightmapData", "outEncodedNormal"):
+        if output not in source:
+            errors.append(f"{name} is missing G-buffer output {output}")
 
 brief = ROOT / "PROJECT_BRIEF.md"
 if not brief.is_file():
