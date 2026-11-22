@@ -372,7 +372,9 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
               "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)",
               "gl_FragCoord.xy / vec2(textureSize(depthtex1, 0))",
-              "refractedScene.a >= 0.5", "sqrt(max(translucentAlbedo.a, 0.0))",
+              "refractedScene.a >= 0.5", "texelFetch(depthtex1, refractedPixel, 0)",
+              "if (isWater && dot(normalize(vViewPosition), viewNormal) > 0.0)",
+              "sqrt(max(translucentAlbedo.a, 0.0))",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
