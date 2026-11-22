@@ -52,3 +52,5 @@ Dedicated Iris textured, sky-textured and sky-basic programs are now present. Th
 Dedicated Iris sky-basic, sky-textured and textured-fallback programs now handle sky/horizon/stars/void, sun/moon textures, and unlit textured geometry. Their render-stage macros and celestial uniforms were checked against Iris documentation, and their deferred-validity masks are protected from blending. CI compiles the conditional render-stage branches; visual calibration and runtime validation remain outstanding.
 
 Line geometry now has a dedicated Iris program that keeps selection/debug outlines crisp, fogs ordinary lines and bypasses deferred terrain lighting.
+
+Translucent particles now receive forward celestial lighting, vanilla lightmap response, Iris fog and a single hardware-filtered shadow lookup. Specialized emissive and smoke/water particle effects remain pending.
