@@ -66,7 +66,7 @@ The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB pl
 
 
 ## Iris program coverage audit (2026-11-23)
-The current source now explicitly implements `gbuffers_water`, `gbuffers_particles`, `gbuffers_particles_translucent` and `gbuffers_spidereyes`. Water is forward-lit after deferred and writes only colortex0. `gbuffers_weather` and `gbuffers_hand_water` still use Iris fallbacks; advanced water effects and all runtime/visual parity checks remain pending. See [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md).
+The current source explicitly implements `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, `gbuffers_particles`, `gbuffers_particles_translucent` and `gbuffers_spidereyes`. All three post-deferred translucent programs use color-only forward outputs with Iris lightmap/fog handling; water also samples the shadow map. Advanced water/weather effects and all runtime/visual parity checks remain pending. See [IRIS_PIPELINE_AUDIT.md](IRIS_PIPELINE_AUDIT.md).
 
 Do not equate Iris fallback coverage with correct feature implementation. The matrix must track both the native geometry category and the actual Iris program that receives it.
 
@@ -119,7 +119,7 @@ Dedicated `gbuffers_weather` now replaces the textured-lit fallback. It forward-
 | Water | Forward Iris fog in `gbuffers_water` | Implemented at source level |
 | Weather | Forward Iris fog in `gbuffers_weather` | Implemented at source level |
 | Translucent particles | Forward Iris fog in `gbuffers_particles_translucent` | Implemented at source level |
-| Hand-water | Current hand fallback; no dedicated fog treatment | Pending |
+| Hand-water | Dedicated forward color-only path with lightmap and Iris fog | Implemented at source level; runtime check pending |
 
 
 ## Hand-water program update — 2026-11-23
