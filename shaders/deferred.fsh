@@ -16,6 +16,12 @@ uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
+uniform vec3 fogColor;
+uniform float fogStart;
+uniform float fogEnd;
+uniform float fogDensity;
+uniform int fogMode;
+uniform int fogShape;
 
 // Iris shader constants belong in GLSL, not shaders.properties.
 const bool shadowHardwareFiltering = true;
@@ -65,6 +71,20 @@ float sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5,  0.5), shadowPosition.z));
     visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5,  0.5), shadowPosition.z));
     return visibility * 0.25;
+}
+
+float calculateFogFactor(float distanceToCamera) {
+    if (fogMode == 9729) {
+        return clamp((distanceToCamera - fogStart) / max(fogEnd - fogStart, 0.0001), 0.0, 1.0);
+    }
+    if (fogMode == 2048) {
+        return clamp(1.0 - exp(-fogDensity * distanceToCamera), 0.0, 1.0);
+    }
+    if (fogMode == 2049) {
+        float densityDistance = fogDensity * distanceToCamera;
+        return clamp(1.0 - exp(-densityDistance * densityDistance), 0.0, 1.0);
+    }
+    return 0.0;
 }
 
 float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
@@ -183,6 +203,12 @@ void main() {
     // existing color-grading/final pass. This keeps the output contract intact.
     vec3 albedoLinear = pow(max(scene.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
+
+    float fogDistance = (fogShape == 1) ? length(viewPosition.xz) : length(viewPosition);
+    float fogFactor = calculateFogFactor(fogDistance);
+    vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
+    litLinear = mix(litLinear, fogColorLinear, fogFactor);
+
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
 
     outColor = vec4(litColor, scene.a);
