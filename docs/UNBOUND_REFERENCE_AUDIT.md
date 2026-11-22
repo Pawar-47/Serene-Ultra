@@ -128,6 +128,7 @@ Key constraints applied to Serene:
 - Three-band analytic water-normal waves anchored to absolute player/world XZ coordinates, transformed into view space with Iris `gbufferModelView`; wave speed uses integer cycles per Iris `frameTimeCounter` hour to avoid phase jumps at the documented timer wrap.
 - Unbound-style base water tint retaining biome influence, plus animated one-sample `noisetex` colour variation with a wrap-safe periodic drift.
 - Shoreline/shallow-surface foam estimated from opaque depth reconstructed through Iris `depthtex1` and `gbufferProjectionInverse`, converted back to player space with `gbufferModelViewInverse`; foam is restricted to top-facing water and attenuates the SSR contribution.
+- A distinct underwater camera branch based on Iris `isEyeInWater`: reduces water-surface opacity, applies a cool tint after the base water colour, suppresses directional celestial lighting, and lowers the SSR contribution.
 - Fresnel-weighted reflection blending with a bounded user strength.
 - Forward lightmap/celestial/shadow/fog treatment.
 - View-space and player-space normal orientation correction; refraction depth is fetched at an exact clamped texel and reconstructed using that texel's centre UV.
@@ -137,7 +138,7 @@ Key constraints applied to Serene:
 - Texture-driven multi-scale normal maps, configurable wave scale/bumpiness and the upstream reference's normal-map parallax refinement. Serene currently uses a lower-bandwidth analytic three-wave approximation, not the same texture-based method.
 - More advanced water noise-colour variation and per-biome colour calibration. Serene currently uses a single-sample low-amplitude tint variation.
 - More complete foam shaping/calibration. Serene now has a first depth-intersection foam approximation, but does not yet match the reference's complete surface/foam logic.
-- Full Unbound water colour and underwater-specific response.
+- Full Unbound water colour and underwater-specific response. Serene now has a first-pass base tint/noise treatment and a distinct underwater branch, but needs colour/lighting calibration and the full absorption model.
 - Sky/environment reflection fallback when SSR misses, plus optional world-space reflections.
 - More robust SSR refinement, edge handling, temporal stability and quality scaling.
 - Full material dispatch for glass, stained glass, portal and other translucent surfaces.
@@ -174,3 +175,7 @@ The water pass now reconstructs the opaque scene position behind water using Iri
 
 ### Foam calculation correction — 2026-11-23
 The first implementation used a world-Y difference and a block-height gate. Source review showed this was not a robust shoreline signal: it could miss sloped shorelines and depended on the sign of the vertical offset. It was replaced with a shallow-water mask derived from the already reconstructed opaque-view thickness: `1.0 - smoothstep(0.035, 0.42, waterThickness)`, restricted to top-facing water. This avoids another texture sample and reuses the existing depth reconstruction. It remains a simple screen-space foam approximation; foam breakup, wave interaction and visual tuning against Unbound are still pending.
+
+
+## Underwater water-surface response — 2026-11-23
+The water pass now consumes Iris `isEyeInWater` (water state `1`) to select a separate underwater response. It softens water opacity, applies a cool surface tint after the Unbound-inspired base tint, removes direct celestial shading for water surfaces viewed underwater, and reduces the SSR contribution. `WATER_UNDERWATER_STRENGTH` is exposed as a Quality slider. This does not replace Minecraft's underwater fog and is not yet the full Unbound absorption/underwater colour model; validate with first-person underwater scenes.
