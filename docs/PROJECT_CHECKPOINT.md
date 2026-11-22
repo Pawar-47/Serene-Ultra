@@ -591,3 +591,8 @@ Mapped `minecraft:water_cauldron` to a dedicated water material ID in `block.pro
 ## Water depth/fog control separation — 2026-11-23
 
 A source comparison with the pinned Unbound water path showed that `WATER_FOG_MULT` scales the depth term used for the water opacity/fog response, not the physical distance used by every other water effect. Serene now keeps `waterThickness` as the reconstructed geometric distance and derives a separate `waterFogThickness` for `waterFog`. Beer-Lambert absorption, refraction offset and foam breakup use physical thickness; only the water opacity/fog term responds to `WATER_FOG_MULT`. This avoids a fog-menu adjustment unintentionally changing refraction, absorption and shoreline foam.
+
+
+## Glass and ice PBR normal-map support — 2026-11-23
+
+The shared Iris tangent-space normal-map decoder now also applies to clear glass, stained glass, tinted glass and ice. A separate `GLASS_NORMAL_MAP_STRENGTH` slider controls these materials independently from water. LabPBR flips the DirectX Y- channel while oldPBR retains its legacy Y+ convention; tangent handedness follows Iris' documented `cross(tangent, normal)` basis. The original geometric normal remains in use for shadow bias. Neutral Iris fallback normals leave materials unchanged when no resource-pack normal map is present.
