@@ -127,6 +127,12 @@ if props_path.is_file():
         errors.append("Translucent water must use the reference-matched low alphaTestRef")
     if "WATER_FOG_MULT" not in props:
         errors.append("Water depth-opacity control must be exposed in the Quality menu")
+    for program in ("gbuffers_beaconbeam", "gbuffers_clouds", "gbuffers_spidereyes"):
+        if f"alphaTest.{program}=GREATER 0.0001" not in props:
+            errors.append(f"{program} must use the low alpha threshold from the reference shader")
+    for program in ("gbuffers_armor_glint", "gbuffers_beaconbeam", "gbuffers_lightning", "gbuffers_clouds", "gbuffers_spidereyes"):
+        if f"blend.{program}.colortex2=off" not in props:
+            errors.append(f"{program} must disable blending on the deferred-validity mask")
     if "WEATHER_TEX_OPACITY" not in props:
         errors.append("Weather particle opacity control must be exposed in the Quality menu")
 
@@ -276,6 +282,11 @@ if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0
     errors.append("Spider-eye pass must preserve emissive pixels from deferred lighting")
 if "fogColor" not in spidereyes or "calculateEyeFog" not in spidereyes:
     errors.append("Spider-eye pass must preserve Iris fog while bypassing deferred lighting")
+clouds = sources.get("gbuffers_clouds.fsh", "")
+for token in ("uniform float alphaTestRef", "texture(gtexture", "vec4(vec3(1.0), vVertexColor.a)",
+              "cloudColor.a < alphaTestRef", "outDeferredValidity = vec4(0.0)"):
+    if token not in clouds:
+        errors.append(f"Cloud shader is missing Iris/reference component: {token}")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
 if "particle.a <= 0.001" not in translucent_particles or "alphaTestRef" in translucent_particles:
     errors.append("Translucent particles must preserve fractional alpha instead of applying cutout alphaTestRef")
