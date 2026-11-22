@@ -411,3 +411,11 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Remaining Unbound parity gaps: animated multi-scale normal maps/waves, water noise colour, foam, full underwater response, sky/environment and optional world-space reflection fallback, advanced SSR refinement, and complete glass/stained-glass/portal material dispatch. These are feature gaps, not approved removals.
 - Latest full CI run [45074371926](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45074371926) passed GLSL compilation, Iris render-stage macro compilation, vertex/fragment linking and structural validation on repository HEAD `f80577ff2e81ad94cba24ce3a21c1bb334e28537`.
 - Validation boundary: no Iris/Minecraft runtime loading, visual parity, or Intel HD 5500 FPS has been verified. Continue to distinguish source/CI correctness from in-game proof.
+
+
+## Iris translucent entity routing correction — 2026-11-23
+- Rechecked the current Iris `Programs / Ordering` documentation before further implementation. It documents `separateEntityDraws=true` for routing translucent entities and block entities into dedicated post-deferred programs, but explicitly warns that the feature may be broken in newer Iris versions.
+- Corrected earlier project notes that described this route as unconditionally active. Dedicated shader pairs remain in the repository, but post-deferred execution is conditional until verified against the exact target Iris build.
+- Removed the unused `iris.features.optional=ENTITY_TRANSLUCENT` declaration. Iris feature flags expose compile-time capability defines; they do not activate the separate-entity routing directive, and no shader consumed the define.
+- `particles.ordering=mixed` remains a separate, documented Iris mechanism for opaque-before-deferred and translucent-after-deferred particle ordering.
+- Source/CI success is not proof that translucent entity/block-entity routing works in-game. Keep this limitation visible in future checkpoints.
