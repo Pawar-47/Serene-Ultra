@@ -264,9 +264,14 @@ for token in ("uniform mat4 shadowModelViewInverse", "in vec2 mc_Entity",
     if token not in shadow_vertex:
         errors.append(f"Iris shadow material/position interface is missing component: {token}")
 for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = R8",
-              "uniform vec3 cameraPosition", "uniform float frameTimeCounter",
+              "uniform ivec3 cameraPositionInt;", "uniform vec3 cameraPositionFract;",
+              "uniform float frameTimeCounter", "getStableShadowWorldPosition",
+              "mod(cameraOffset + cameraPositionFract + playerPosition, vec3(256.0))",
               "vShadowMaterialId == 32000", "calculateWaterCaustics",
-              "outShadowColor = vec4(calculateWaterCaustics(absoluteWorldPosition), 1.0, 1.0, 1.0)"):
+              "float causticsStrength = WATER_CAUSTICS_STRENGTH * 0.01",
+              "return clamp(1.0 + (causticPattern - 1.0) * causticsStrength, 0.0, 1.0)",
+              "stableWorldPosition = getStableShadowWorldPosition(vShadowPlayerPosition)",
+              "outShadowColor = vec4(calculateWaterCaustics(stableWorldPosition), 1.0, 1.0, 1.0)"):
     if token not in shadow_fragment:
         errors.append(f"Iris shadowcolor water caustics path is missing component: {token}")
 for token in ("shadowTranslucent=true", "blend.shadow.shadowcolor0=off", "flip.shadow.shadowcolor0=false"):
@@ -638,9 +643,14 @@ for token in ("uniform mat4 shadowModelViewInverse", "in vec2 mc_Entity",
     if token not in shadow_vertex:
         errors.append(f"Iris shadow material/position interface is missing component: {token}")
 for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = R8",
-              "uniform vec3 cameraPosition", "uniform float frameTimeCounter",
+              "uniform ivec3 cameraPositionInt;", "uniform vec3 cameraPositionFract;",
+              "uniform float frameTimeCounter", "getStableShadowWorldPosition",
+              "mod(cameraOffset + cameraPositionFract + playerPosition, vec3(256.0))",
               "vShadowMaterialId == 32000", "calculateWaterCaustics",
-              "outShadowColor = vec4(calculateWaterCaustics(absoluteWorldPosition), 1.0, 1.0, 1.0)"):
+              "float causticsStrength = WATER_CAUSTICS_STRENGTH * 0.01",
+              "return clamp(1.0 + (causticPattern - 1.0) * causticsStrength, 0.0, 1.0)",
+              "stableWorldPosition = getStableShadowWorldPosition(vShadowPlayerPosition)",
+              "outShadowColor = vec4(calculateWaterCaustics(stableWorldPosition), 1.0, 1.0, 1.0)"):
     if token not in shadow_fragment:
         errors.append(f"Iris shadowcolor water caustics path is missing component: {token}")
 for token in ("shadowTranslucent=true", "blend.shadow.shadowcolor0=off", "flip.shadow.shadowcolor0=false"):
