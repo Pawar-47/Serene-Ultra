@@ -134,7 +134,7 @@ void main() {
         : (hasSkylight ? skyLight : 0.0);
 
     float shadow = 1.0;
-    if (nDotL > 0.001 && celestialGate > 0.001) {
+    if (emission <= 0.001 && nDotL > 0.001 && celestialGate > 0.001) {
         shadow = sampleParticleShadow(vPlayerPosition, normal, playerLightDirection);
     }
 
