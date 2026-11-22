@@ -35,3 +35,6 @@ profile.comment = Ultra-Light: lower shadow cost while retaining effects. Smooth
 
 option.WATER_FOG_MULT = Water depth opacity
 option.WATER_FOG_MULT.comment = Controls how quickly water becomes opaque with depth.
+
+option.WEATHER_TEX_OPACITY = Weather particle opacity
+option.WEATHER_TEX_OPACITY.comment = Adjusts the opacity of vanilla rain and snow textures.
