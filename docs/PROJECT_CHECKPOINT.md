@@ -436,3 +436,10 @@ The user has selected Complementary Unbound as the primary visual/material refer
 - Noise UVs are anchored to absolute world XZ and drift with a periodic integer-cycle phase derived from `frameTimeCounter`, avoiding a jump at Iris' 3600-second timer wrap.
 - Added `WATER_COLOR_STRENGTH` and `WATER_NOISE_COLOR_STRENGTH` controls to the Quality menu and sliders. Structural validation requires both controls and the documented sampler path.
 - Remaining water work includes foam, absorption/depth tint calibration, underwater-specific colour/lighting, caustics, sky/environment reflection fallback and stronger SSR refinement. No runtime or visual parity claim is made.
+
+
+## Unbound water foam checkpoint — 2026-11-23
+- Added a first shoreline/shallow-surface foam approximation using the opaque surface position reconstructed from Iris `depthtex1` and `gbufferProjectionInverse`, then transformed through `gbufferModelViewInverse` into player space.
+- Foam is restricted to top-facing water near the top of the block, blended into water albedo before lighting, and attenuates the SSR contribution.
+- Added `WATER_FOAM_STRENGTH` to the Quality menu and sliders. The validator checks the depth reconstruction, surface gating and reflection attenuation path.
+- This is a low-cost approximation, not full Unbound foam parity. Runtime/visual calibration, caustics and complete underwater response remain outstanding.
