@@ -12,6 +12,7 @@ REQUIRED = (
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
+    "gbuffers_water.vsh", "gbuffers_water.fsh",
     "gbuffers_particles.vsh", "gbuffers_particles.fsh",
     "gbuffers_particles_translucent.vsh", "gbuffers_particles_translucent.fsh",
     "gbuffers_spidereyes.vsh", "gbuffers_spidereyes.fsh",
@@ -184,6 +185,12 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
 
+water = sources.get("gbuffers_water.fsh", "")
+for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
+              "shadowModelView", "shadowProjection", "sampleWaterShadow",
+              "texture(gtexture", "texture(lightmap", "outColor = vec4(litColor, waterAlbedo.a)"):
+    if token not in water:
+        errors.append(f"Forward water shader is missing Iris-compatible component: {token}")
 spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
 if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0.0)" not in spidereyes:
     errors.append("Spider-eye pass must preserve emissive pixels from deferred lighting")
