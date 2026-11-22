@@ -302,7 +302,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
     if "if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;" not in source:
         errors.append(f"{name} must orient back-face normals before deferred lighting")
-    if name not in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh") and "outEmissionData = vec4(0.0)" not in source:
+    if name not in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh") and "outEmissionData = vec4(0.0)" not in source:
         errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
 if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity emission must default to zero unless an emissive blockEntityId is detected")
@@ -480,7 +480,7 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "alphaTestRef",
 block_shader = sources.get("gbuffers_block.fsh", "")
 for token in ("/* RENDERTARGETS: 0,1,2,3 */", "uniform int blockEntityId",
               "blockEntityId == 5004", "blockEntityId == 5025",
-              "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 1.0)",
+              "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5)",
               "calculateBlockFog", "outEmissionData"):
     if token not in block_shader:
         errors.append(f"Block-entity shader is missing Iris blockEntityId component: {token}")
