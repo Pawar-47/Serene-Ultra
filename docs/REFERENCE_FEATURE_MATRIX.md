@@ -127,3 +127,6 @@ Dedicated `gbuffers_hand_water` now replaces the ordinary hand fallback for post
 
 ## Translucent terrain scope correction — 2026-11-23
 Iris' `gbuffers_water` program handles all translucent terrain, including but not limited to water. The current implementation is a generic forward-lit translucent surface baseline; it does not yet implement fluid-only behavior. Iris' `mc_Entity.y` attribute (available in `gbuffers_water.vsh`) distinguishes fluids (`1.0`) from other translucent terrain (`-1.0`) and must be used for future water-only effects.
+
+## Water depth-opacity update — 2026-11-23
+The generic `gbuffers_water` translucent-terrain path now uses Iris `mc_Entity` material IDs to isolate actual water/water-cauldron from glass and portals. It reads opaque-only `depthtex1` and reconstructs the underlying view-space distance to apply depth-dependent water opacity. `WATER_FOG_MULT` exposes the reference-style 25–900% control range. This is a first reference-guided water-material feature; it is not yet full water parity.
