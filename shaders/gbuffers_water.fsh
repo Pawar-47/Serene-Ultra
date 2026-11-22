@@ -52,6 +52,7 @@ flat in float vFluidRenderType;
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
+#define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
 #define WATER_COLOR_STRENGTH 100 // [0 25 50 75 100] Unbound-style water base tint blend
 #define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
 #define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
