@@ -139,6 +139,8 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh
         errors.append(f"{name} must sample the Iris block/entity atlas through gtexture")
 if "#define SHADOW_ALPHA_CUTOFF " not in shadow_fragment:
     errors.append("Shadow alpha cutoff must be an active shader option")
+if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
+    errors.append("Shadow pass must enable Iris shadow-distance culling")
 
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
     source = sources.get(name, "")
