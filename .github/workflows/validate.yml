@@ -46,32 +46,35 @@ jobs:
 
           {
             head -n 1 shaders/gbuffers_skybasic.fsh
-            printf '#define MC_RENDER_STAGE_SKY 1\n#define MC_RENDER_STAGE_SUNSET 2\n#define MC_RENDER_STAGE_STARS 3\n#define MC_RENDER_STAGE_VOID 4\n'
+            cat <<'SKY_DEFINES'
+#define MC_RENDER_STAGE_SKY 1
+#define MC_RENDER_STAGE_SUNSET 2
+#define MC_RENDER_STAGE_STARS 3
+#define MC_RENDER_STAGE_VOID 4
+SKY_DEFINES
             tail -n +2 shaders/gbuffers_skybasic.fsh
           } > "$tmpdir/skybasic.frag"
 
           {
             head -n 1 shaders/gbuffers_skytextured.fsh
-            printf '#define MC_RENDER_STAGE_SUN 5\n#define MC_RENDER_STAGE_MOON 6\n'
+            cat <<'SUN_DEFINES'
+#define MC_RENDER_STAGE_SUN 5
+#define MC_RENDER_STAGE_MOON 6
+SUN_DEFINES
             tail -n +2 shaders/gbuffers_skytextured.fsh
           } > "$tmpdir/skytextured.frag"
 
           {
             head -n 1 shaders/gbuffers_line.fsh
-            printf '%s\n' '#define MC_RENDER_STAGE_OUTLINE 7' '#define MC_RENDER_STAGE_DEBUG 8'
+            cat <<'LINE_DEFINES'
+#define MC_RENDER_STAGE_OUTLINE 7
+#define MC_RENDER_STAGE_DEBUG 8
+LINE_DEFINES
             tail -n +2 shaders/gbuffers_line.fsh
           } > "$tmpdir/line.frag"
 
           glslangValidator -S frag "$tmpdir/skybasic.frag"
           glslangValidator -S frag "$tmpdir/skytextured.frag"
-
-          {
-            head -n 1 shaders/gbuffers_line.fsh
-            printf '#define MC_RENDER_STAGE_OUTLINE 1\\n#define MC_RENDER_STAGE_DEBUG 2\\n'
-            tail -n +2 shaders/gbuffers_line.fsh
-          } > "$tmpdir/line.frag"
-
-          glslangValidator -S frag "$tmpdir/line.frag"
           glslangValidator -S frag "$tmpdir/line.frag"
       - name: Link vertex and fragment shader programs
         shell: bash
