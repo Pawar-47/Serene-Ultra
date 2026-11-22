@@ -331,3 +331,12 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Emissive particles add light after ambient/direct shading and skip shadow sampling for lower cost.
 - The feature is exposed in the Quality menu and shares `WEATHER_TEX_OPACITY` with the weather path.
 - Current coverage is the translucent particle program; opaque particle material emission and additional modded-particle types remain to audit.
+
+## Emissive G-buffer checkpoint — 2026-11-23
+- Added `format.colortex3=RGBA8` and `flip.deferred.colortex3=false`; the attachment is read-only in deferred.
+- Extended terrain/entities/opaque-particle G-buffers to `RENDERTARGETS: 0,1,2,3`.
+- Added Iris `mc_Entity` (`in vec2`, valid in `gbuffers_terrain.vsh`) and stable `block.properties` IDs for emissive blocks.
+- Terrain writes emission RGB plus normalized strength; entities and opaque particles explicitly write zero until their material classification is implemented.
+- Deferred adds emission after contact AO/direct lighting and before fog, keeping it independent of AO/shadow attenuation.
+- Added lava self-emission to the post-deferred water/fluid shader.
+- This is a compact block-ID emission baseline; PBR emission maps, entity emissive classification, bloom and runtime visual tuning remain pending.
