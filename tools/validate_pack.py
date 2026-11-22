@@ -210,6 +210,8 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
 spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
 if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0.0)" not in spidereyes:
     errors.append("Spider-eye pass must preserve emissive pixels from deferred lighting")
+if "fogColor" not in spidereyes or "calculateEyeFog" not in spidereyes:
+    errors.append("Spider-eye pass must preserve Iris fog while bypassing deferred lighting")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
 for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog"):
     if token not in translucent_particles:
