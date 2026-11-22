@@ -266,3 +266,5 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Added per-program `colortex2=off` mask blending and structural checks.
 - CI run 45066097345 passed GLSL compilation, vertex/fragment linking and structural validation.
 - Runtime blend/depth behavior is not yet verified in Minecraft 26.3 + Iris.
+
+Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is intentionally retained to match the working Complementary reference. The fragment shader reads the resulting Iris `alphaTestRef`; it does not hardcode the threshold. Water alpha now also uses the reference `sqrt(alpha)` shaping and exact-pixel `texelFetch` from `depthtex1`.
