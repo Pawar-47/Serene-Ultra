@@ -27,6 +27,7 @@ REQUIRED = (
     "gbuffers_lightning.vsh", "gbuffers_lightning.fsh",
     "gbuffers_clouds.vsh", "gbuffers_clouds.fsh",
     "gbuffers_textured.vsh", "gbuffers_textured.fsh",
+    "gbuffers_textured_lit.vsh", "gbuffers_textured_lit.fsh",
     "gbuffers_skytextured.vsh", "gbuffers_skytextured.fsh",
     "gbuffers_skybasic.vsh", "gbuffers_skybasic.fsh",
     "gbuffers_line.vsh", "gbuffers_line.fsh",
@@ -404,6 +405,17 @@ translucent_particle_vertex = sources.get("gbuffers_particles_translucent.vsh", 
 for token in ("gbufferModelViewInverse", "vPlayerPosition", "vPlayerNormal"):
     if token not in translucent_particle_vertex:
         errors.append(f"Translucent particle vertex stage is missing player-space lighting input: {token}")
+textured_lit = sources.get("gbuffers_textured_lit.fsh", "")
+for token in ("/* RENDERTARGETS: 0,1,2,3 */", "texture(gtexture", "texture(lightmap",
+              "alphaTestRef", "outLightmapData", "outEncodedNormal",
+              "outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0)"):
+    if token not in textured_lit:
+        errors.append(f"Iris lit-texture fallback is missing G-buffer component: {token}")
+for name in ("gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh", "gbuffers_textured_lit.fsh"):
+    if "#define PARTICLE_MATERIAL_FEATURES // Detect water, rain, snow, smoke and emissive particle textures" not in sources.get(name, ""):
+        errors.append(f"{name} must declare the shared PARTICLE_MATERIAL_FEATURES boolean identically")
+if "alphaTest.gbuffers_textured_lit=GREATER 0.01" not in props or "blend.gbuffers_textured_lit=off" not in props:
+    errors.append("Iris lit-texture fallback must preserve the 0.01 alpha threshold and disable opaque G-buffer blending")
 particles = sources.get("gbuffers_particles.fsh", "")
 if "/* RENDERTARGETS: 0,1,2,3 */" not in particles:
     errors.append("Opaque particles must write color, lightmap, normal and emissive G-buffer attachments")
