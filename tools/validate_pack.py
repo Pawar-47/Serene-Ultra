@@ -13,6 +13,7 @@ REQUIRED = (
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
     "gbuffers_hand.vsh", "gbuffers_hand.fsh",
     "gbuffers_water.vsh", "gbuffers_water.fsh",
+    "gbuffers_weather.vsh", "gbuffers_weather.fsh",
     "gbuffers_particles.vsh", "gbuffers_particles.fsh",
     "gbuffers_particles_translucent.vsh", "gbuffers_particles_translucent.fsh",
     "gbuffers_spidereyes.vsh", "gbuffers_spidereyes.fsh",
@@ -104,6 +105,8 @@ if props_path.is_file():
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
+    if "rain.depth=false" not in props:
+        errors.append("Weather must remain a post-deferred color-only path without depth writes")
 
 # These two Iris additional programs are only activated by separateEntityDraws.
 # Keep them out of the missing-program warning while that option is intentionally
@@ -186,6 +189,11 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
     if "vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0)" not in source:
         errors.append(f"{name} must normalize Iris lightmap sky coordinates before storing the direct-light mask")
 
+weather = sources.get("gbuffers_weather.fsh", "")
+for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
+              "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape"):
+    if token not in weather:
+        errors.append(f"Forward weather shader is missing Iris fog/light component: {token}")
 water = sources.get("gbuffers_water.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleWaterShadow",
