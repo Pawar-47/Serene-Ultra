@@ -41,3 +41,6 @@ Water material handling now distinguishes water/water-cauldron from other transl
 Water handling now uses Iris' documented `mc_Entity` ID/fluid fields, opaque-only `depthtex1` and inverse-projection reconstruction for thickness. The water alpha threshold follows Iris `alphaTestRef`; depth opacity follows the Complementary reference's exponential thickness model. Advanced water effects and in-game verification remain outstanding.
 
 Special geometry now includes dedicated armor-glint, beacon-beam and lightning overlay programs with deferred-normal bypass masks. Their blend/depth behavior still requires in-game validation.
+
+
+The water baseline now retains Complementary's `alphaTest.gbuffers_water=GREATER 0.0001`, uses Iris `alphaTestRef`, applies reference-style square-root alpha shaping, and fetches opaque depth with exact-pixel `texelFetch`.
