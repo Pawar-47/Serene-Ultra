@@ -161,3 +161,18 @@ This corrects the identified attachment-flow hazard at source level. It does not
 | gbuffers_particles_translucent | Translucent particles (requires particles.ordering=mixed) | gbuffers_particles | Missing; fallback coverage only |
 
 Important distinction: Iris fallback routing prevents some geometry from simply disappearing, but does not guarantee that its material data is compatible with Serene's G-buffer or that it receives the intended lighting. The attachment-flow fix prevents the old composite copy-back from replacing the post-deferred scene; it does not implement the missing material shading.
+
+## Full-source Iris contract correction pass — 2026-11-23
+
+### Corrections made after reviewing current Iris reference pages
+- `shadowHardwareFiltering` and `shadowIntervalSize` are GLSL constants, not `shaders.properties` directives. They are now declared in `deferred.fsh`; the validator checks the declarations and rejects the misplaced properties keys.
+- `separateAo=true` moves vanilla AO into `gl_Color.a`. The current G-buffer multiplies texture alpha by the vertex color and uses that alpha for cutout/scene transparency, so enabling `separateAo` corrupts material alpha. It is now disabled until the G-buffer explicitly stores AO separately.
+- G-buffer terrain/entity/hand shaders now use Iris `alphaTestRef` rather than hard-coded 0.1 cutoffs, because Iris documents that this threshold can vary by render case and is affected by the `alphaTest` directive.
+- Entity G-buffer now applies Iris `entityColor` tint with its alpha blend factor.
+- Deferred world reconstruction and contact AO now use `depthtex2`, which Iris documents as excluding transparent and hand geometry. This prevents first-person hand depth and translucent depth from being treated as opaque world surfaces.
+- `particles.ordering=mixed` is now explicit: opaque particles are scheduled before deferred and translucent particles after it, enabling Iris' separate translucent-particle program when present.
+
+### Known constraints retained deliberately
+- `separateEntityDraws` is not enabled: Iris documentation warns it may be broken in newer Iris versions. Translucent entities/block entities therefore remain a separate compatibility item requiring version-specific runtime verification.
+- Dedicated `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, particle, and translucent entity/block-entity implementations are still not present. Iris fallback routing is coverage, not material parity.
+- These source corrections are grounded in current Iris documentation but are not substitutes for loading the pack in the target Iris/Minecraft build.
