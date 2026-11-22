@@ -197,12 +197,17 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
 water = sources.get("gbuffers_water.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleWaterShadow",
+              "uniform vec3 fogColor", "uniform float fogDensity", "calculateWaterFog",
               "texture(gtexture", "texture(lightmap", "outColor = vec4(litColor, waterAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward water shader is missing Iris-compatible component: {token}")
 spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
 if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0.0)" not in spidereyes:
     errors.append("Spider-eye pass must preserve emissive pixels from deferred lighting")
+translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
+for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog"):
+    if token not in translucent_particles:
+        errors.append(f"Translucent particle shader is missing Iris fog component: {token}")
 particles = sources.get("gbuffers_particles.fsh", "")
 if "/* RENDERTARGETS: 0,1,2 */" not in particles:
     errors.append("Opaque particles must write color, lightmap and normal G-buffer attachments")
@@ -219,6 +224,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
               "uniform bool hasSkylight", "uniform float endFlashIntensity", "celestialGate",
+              "uniform vec3 fogColor", "uniform float fogDensity", "fogMode", "fogShape", "calculateFogFactor",
               "sampleContactAO", "AO_STRENGTH", "AO_RADIUS",
               "sin(sunAngle * 6.28318530718)",
               "smoothstep(0.0, 0.30, solarElevation)"):
