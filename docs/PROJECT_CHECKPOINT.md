@@ -615,3 +615,10 @@ A deeper check against the shaderLABS LabPBR 1.3 specification found that the bl
 Iris' `specular` atlas is now consumed by the terrain, entity and block-entity G-buffers. All three paths pack perceptual smoothness into `colortex2.a`, emission into `colortex3.r`, and reflectance/metalness into `colortex3.g`; the existing RG8 attachment is retained, so no new render target or full-resolution memory allocation is introduced. Entities and block entities now receive the same resource-pack smoothness/emission support as terrain.
 
 A standards review corrected LabPBR F0 decoding: non-metal green-channel values 0–229 are stored linearly as `code / 255`; values 230–255 are metal identifiers and use albedo-tinted reflection. Deferred now tests the exact 230/255 boundary instead of treating high-F0 dielectrics as metals. oldPBR continues to use green as metalness and blue as emissiveness. The shader uses the specular atlas fallback of zero when no `_s` map is present, with a 0.04 dielectric F0 fallback for LabPBR. This path is source-validated; visual calibration with actual LabPBR and oldPBR resource packs remains outstanding.
+
+
+## Opaque terrain/entity/block-entity PBR normals — 2026-11-23
+
+The opaque terrain, entity and block-entity vertex/fragment pairs now pass Iris' `at_tangent` basis and sample the `normals` atlas. LabPBR reconstructs Z from RG, reads AO from B (not used yet), and flips Y for DirectX orientation; oldPBR decodes RGB directly. Tangent handedness follows Iris' documented `cross(tangent, normal)` convention. Sign text deliberately bypasses normal perturbation. `OPAQUE_NORMAL_MAP_STRENGTH` controls the feature independently of translucent water/glass normal controls.
+
+This adds one normal-atlas lookup per opaque G-buffer fragment when enabled, with no extra render target or additional full-resolution buffer. Iris' neutral fallback normal leaves geometry unchanged without resource-pack `_n` maps. Runtime validation with real LabPBR/oldPBR packs and Intel HD 5500 performance remain outstanding.
