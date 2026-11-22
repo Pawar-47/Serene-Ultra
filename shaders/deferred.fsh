@@ -235,7 +235,7 @@ void main() {
     vec4 emissionData = texture(colortex3, vTexCoord);
     float materialReflectance = clamp(emissionData.g, 0.0, 1.0);
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
-    float labDielectricF0 = clamp(materialReflectance * (255.0 / 229.0), 0.0, 1.0) * 0.08;
+    float labDielectricF0 = materialReflectance;
     vec3 specularColor = (materialReflectance >= (230.0 / 255.0))
         ? albedoLinear
         : vec3(labDielectricF0);
