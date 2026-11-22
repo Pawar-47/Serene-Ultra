@@ -60,15 +60,27 @@ for path in SHADERS.rglob("*"):
     if duplicate_uniforms:
         errors.append(f"{path.relative_to(ROOT)}: duplicate uniform declarations: {', '.join(duplicate_uniforms)}")
 
-# Iris does not permit gbuffers programs to sample colortex0-3. They may
-# write those attachments, but sampling them from geometry passes is invalid.
-for path in SHADERS.rglob("gbuffers_*"):
-    if path.suffix not in {".vsh", ".fsh", ".gsh"}:
-        continue
+# Iris gbuffers read from and write to the main buffers. Sampling a
+# different colortex attachment is allowed; sampling an attachment that the
+# same gbuffers pass writes can create a read/write race condition.
+for path in SHADERS.rglob("gbuffers_*.fsh"):
     source = path.read_text(encoding="utf-8")
-    if re.search(r"\buniform\s+sampler\w*\s+colortex[0-3]\b", source):
+    target_match = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", source)
+    if target_match:
+        write_targets = {int(value) for value in re.findall(r"\d+", target_match.group(1))}
+    else:
+        legacy_match = re.search(r"/\*\s*DRAWBUFFERS:\s*([0-9]+)\s*\*/", source)
+        write_targets = {int(value) for value in legacy_match.group(1)} if legacy_match else set()
+    sampled_targets = {
+        int(value) for value in re.findall(
+            r"\buniform\s+sampler\w*\s+colortex(\d+)\b", source
+        )
+    }
+    conflicts = sorted(write_targets & sampled_targets)
+    if conflicts:
         errors.append(
-            f"{path.relative_to(ROOT)}: Iris gbuffers programs cannot sample colortex0-3"
+            f"{path.relative_to(ROOT)}: gbuffers pass samples and writes the same colortex attachment(s): "
+            + ", ".join(f"colortex{value}" for value in conflicts)
         )
 
 # Track Iris program coverage explicitly. Missing files use the documented
@@ -312,8 +324,6 @@ for name, source in (("gbuffers_entities_translucent", entity_translucent),
             errors.append(f"{name} is missing forward translucent component: {token}")
     if "alphaTestRef" in source or "albedo.a <= 0.001" not in source:
         errors.append(f"{name} must preserve fractional alpha instead of applying cutout alphaTestRef")
-    if re.search(r"\buniform\s+sampler\w*\s+colortex[0-3]\b", source):
-        errors.append(f"{name} must not sample colortex0-3 after deferred")
 if "uniform vec4 entityColor" not in entity_translucent or "mix(albedoLinear, tintLinear, entityColor.a)" not in entity_translucent:
     errors.append("Translucent entity path must preserve Iris entityColor tint")
 weather_vertex = sources.get("gbuffers_weather.vsh", "")
