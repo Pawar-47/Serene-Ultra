@@ -91,19 +91,19 @@ void main() {
     float materialPorosity = 0.0;
     float materialSurfaceData = 0.0;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
-    materialSurfaceData = clamp(pbrSpecular.b, 0.0, 1.0);
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
     float labSurfaceCode = floor(pbrSpecular.b * 255.0 + 0.5);
     float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
-    if (pbrMapPresent > 0.5 && labSurfaceCode < 65.0) {
-        materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0);
-    }
     if (pbrMapPresent < 0.5) {
         materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
     } else if (labF0Code >= 230.0) {
         materialReflectance = 1.0; // Metal: use albedo as F0 in deferred.
+        materialPorosity = 0.0;
+        materialSurfaceData = 0.0; // LabPBR reserves blue for future use on metals.
     } else {
         materialReflectance = labF0Code / 255.0;
+        materialSurfaceData = clamp(pbrSpecular.b, 0.0, 1.0);
+        if (labSurfaceCode < 65.0) materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0);
     }
     float labEmissionCode = floor(pbrSpecular.a * 255.0 + 0.5);
     if (labEmissionCode < 254.5) pbrEmission = labEmissionCode / 254.0;
