@@ -16,17 +16,14 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-
       - name: Install GLSL validator
         run: |
           sudo apt-get update
           sudo apt-get install -y glslang-tools
-
       - name: Compile vertex and fragment shaders
         shell: bash
         run: |
@@ -40,9 +37,9 @@ jobs:
               *) continue ;;
             esac
             compile_source="$shader"
-            # Iris documents and requires the explicit at_tangent declaration.
-            # glslang's compatibility compiler reports a duplicate symbol for
-            # that name, so omit only that declaration in temporary test copies.
+            # glslang's compatibility profile exposes at_tangent as a built-in.
+            # Iris requires the documented declaration, so remove it only from
+            # temporary validator copies, never from the shaderpack source.
             if [[ "$stage" == "vert" ]] && grep -q '^in vec4 at_tangent;$' "$shader"; then
               compile_source="$tmpdir/$(basename "$shader")"
               sed '/^in vec4 at_tangent;$/d' "$shader" > "$compile_source"
@@ -50,7 +47,6 @@ jobs:
             echo "Compiling $shader"
             glslangValidator -S "$stage" "$compile_source"
           done < <(find shaders -type f \( -name '*.vsh' -o -name '*.fsh' \) -print0)
-
       - name: Compile Iris render-stage macro branches
         shell: bash
         run: |
@@ -60,26 +56,26 @@ jobs:
 
           {
             head -n 1 shaders/gbuffers_skybasic.fsh
-            printf '%s\\n' \
-              '#define MC_RENDER_STAGE_SKY 1' \
-              '#define MC_RENDER_STAGE_SUNSET 2' \
-              '#define MC_RENDER_STAGE_STARS 3' \
+            printf '%s\\n' \\
+              '#define MC_RENDER_STAGE_SKY 1' \\
+              '#define MC_RENDER_STAGE_SUNSET 2' \\
+              '#define MC_RENDER_STAGE_STARS 3' \\
               '#define MC_RENDER_STAGE_VOID 4'
             tail -n +2 shaders/gbuffers_skybasic.fsh
           } > "$tmpdir/skybasic.frag"
 
           {
             head -n 1 shaders/gbuffers_skytextured.fsh
-            printf '%s\\n' \
-              '#define MC_RENDER_STAGE_SUN 5' \
+            printf '%s\\n' \\
+              '#define MC_RENDER_STAGE_SUN 5' \\
               '#define MC_RENDER_STAGE_MOON 6'
             tail -n +2 shaders/gbuffers_skytextured.fsh
           } > "$tmpdir/skytextured.frag"
 
           {
             head -n 1 shaders/gbuffers_line.fsh
-            printf '%s\\n' \
-              '#define MC_RENDER_STAGE_OUTLINE 7' \
+            printf '%s\\n' \\
+              '#define MC_RENDER_STAGE_OUTLINE 7' \\
               '#define MC_RENDER_STAGE_DEBUG 8'
             tail -n +2 shaders/gbuffers_line.fsh
           } > "$tmpdir/line.frag"
@@ -87,7 +83,6 @@ jobs:
           glslangValidator -S frag "$tmpdir/skybasic.frag"
           glslangValidator -S frag "$tmpdir/skytextured.frag"
           glslangValidator -S frag "$tmpdir/line.frag"
-
       - name: Compile LabPBR material branches
         shell: bash
         run: |
@@ -102,6 +97,8 @@ jobs:
             local vertex_out="$tmpdir/$name.vert"
             local fragment_out="$tmpdir/$name.frag"
 
+            # Inject the Iris format define after #version. Strip at_tangent
+            # only from the temporary vertex copy for glslang compatibility.
             awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } $0 != "in vec4 at_tangent;" { print }' "$vertex" > "$vertex_out"
             awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } { print }' "$fragment" > "$fragment_out"
 
@@ -110,11 +107,10 @@ jobs:
           }
 
           compile_labpbr_pair terrain shaders/gbuffers_terrain.vsh shaders/gbuffers_terrain.fsh
+          compile_labpbr_pair water shaders/gbuffers_water.vsh shaders/gbuffers_water.fsh
           compile_labpbr_pair entities shaders/gbuffers_entities.vsh shaders/gbuffers_entities.fsh
           compile_labpbr_pair block_entities shaders/gbuffers_block.vsh shaders/gbuffers_block.fsh
-          compile_labpbr_pair water shaders/gbuffers_water.vsh shaders/gbuffers_water.fsh
           compile_labpbr_pair deferred shaders/deferred.vsh shaders/deferred.fsh
-
       - name: Link vertex and fragment shader programs
         shell: bash
         run: |
@@ -133,6 +129,5 @@ jobs:
             echo "Linking $vertex + $fragment"
             glslangValidator -l "$tmpdir/$key.vert" "$tmpdir/$key.frag"
           done < <(find shaders -type f -name '*.vsh' -print0)
-
       - name: Validate shaderpack structure
         run: python tools/validate_pack.py
