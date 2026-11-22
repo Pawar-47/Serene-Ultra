@@ -22,6 +22,7 @@ void main() {
     // and skylight color) plus a separate sky-light factor for direct sun.
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     outColor = albedo;
-    outLightmapData = vec4(vanillaLight, vLightmapCoord.y);
+    float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
+    outLightmapData = vec4(vanillaLight, skyLight);
     outEncodedNormal = vec4(normalize(vPlayerNormal) * 0.5 + 0.5, 1.0);
 }
