@@ -76,3 +76,7 @@ Existing code is being audited against Iris' published contracts before new effe
 - First-person hand now uses the Iris lightmap; dynamic held-item light remains pending.
 - Deferred lighting uses Iris `hasSkylight` and End-flash uniforms; `endFlashShadows=true` is enabled.
 - CI compiles all stages, links each vertex/fragment pair, and runs structural Iris-contract validation. This is still not a substitute for Minecraft 26.3 + Iris runtime or visual validation.
+
+
+## Updated post-deferred coverage — 2026-11-23
+Dedicated forward programs now exist for all three Iris post-deferred translucent paths: `gbuffers_water`, `gbuffers_weather`, and `gbuffers_hand_water`. Each writes only scene color, uses the appropriate Iris atlas/lightmap inputs, applies the documented fog model, and relies on explicit source-alpha blending. Water additionally samples the Iris shadow map and applies dimension-aware celestial lighting. Advanced water effects, volumetric weather, dynamic held-item lighting, and runtime/visual validation remain outstanding.
