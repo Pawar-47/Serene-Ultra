@@ -118,3 +118,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - `separateEntityDraws` remains disabled because Iris warns it may not work in newer versions.
 - Updated the validator to require these Iris contracts and reject the prior incorrect settings.
 - These are source-level corrections; CI compilation/structural checks and runtime validation remain separate.
+
+### Deferred depth-mask refinement
+- Added `depthtex0` as an all-geometry mask alongside `depthtex2` for opaque-world reconstruction.
+- If `depthtex0` and `depthtex2` differ at a pixel, deferred preserves the accumulated scene color rather than applying the opaque background's lighting to hand/translucent pixels.
+- Validator now requires this mask and confirms world reconstruction uses `depthtex2`.
+- Runtime verification remains pending, especially first-person hand and translucent entity edge cases.
