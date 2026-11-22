@@ -49,6 +49,7 @@ flat in float vFluidRenderType;
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
 #define WATER_COLOR_STRENGTH 100 // [0 25 50 75 100] Unbound-style water base tint blend
 #define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
+#define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
 layout(location = 0) out vec4 outColor;
 
 // Three analytic wave bands provide stable multi-scale surface normals without
@@ -291,6 +292,7 @@ void main() {
     float waterThickness = 0.0;
     float waterFog = 0.0;
     float waterFresnel = 0.0;
+    float waterFoam = 0.0;
     vec2 waterRefractionOffset = vec2(0.0);
     float refractionConfidence = 0.0;
     vec3 refractedSceneLinear = vec3(0.0);
@@ -304,6 +306,24 @@ void main() {
         waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)
             * (WATER_FOG_MULT * 0.01);
         waterFog = clamp(1.0 - exp(-waterThickness * 0.075), 0.0, 1.0);
+
+        // Unbound-inspired shoreline foam: compare the opaque surface behind
+        // water with the water plane in player space. Restrict it to top-facing
+        // water near the upper part of its block to avoid foam on waterfalls.
+        if (WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999 &&
+            abs(vPlayerNormal.y) > 0.99) {
+            vec3 opaquePlayerPosition =
+                (gbufferModelViewInverse * vec4(opaqueViewPosition, 1.0)).xyz;
+            float verticalDepth = opaquePlayerPosition.y - vPlayerPosition.y;
+            float foamThreshold = 0.06;
+            float heightFoam = pow(
+                clamp((foamThreshold + verticalDepth) / foamThreshold, 0.0, 1.0),
+                2.0
+            );
+            float surfaceGate = clamp((fract((vPlayerPosition + cameraPosition).y) - 0.7) * 10.0, 0.0, 1.0);
+            waterFoam = heightFoam * (0.4 + 0.25 * skyLight) * surfaceGate;
+            waterFoam = clamp(waterFoam * (WATER_FOAM_STRENGTH * 0.01), 0.0, 1.0);
+        }
 
         // Match the working reference's depth-based opacity and add a modest
         // Fresnel opacity increase at grazing angles.
@@ -363,6 +383,14 @@ void main() {
         );
     }
 
+    if (isWater && waterFoam > 0.0) {
+        translucentAlbedo.rgb = mix(
+            translucentAlbedo.rgb,
+            vec3(0.90, 0.95, 1.05),
+            waterFoam
+        );
+    }
+
     vec3 albedoLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
     // Lava shares the post-deferred fluid pass but retains its self-emission.
@@ -400,7 +428,7 @@ void main() {
         );
         vec3 reflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
         float reflectionWeight = clamp(
-            min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH,
+            min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH * (1.0 - waterFoam),
             0.0, 0.95
         );
         litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
