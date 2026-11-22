@@ -241,3 +241,7 @@ Water foam is driven by the already reconstructed opaque-view thickness (`deptht
 - Clear/stained/tinted glass receive material-scaled Fresnel SSR from the existing opaque scene snapshot.
 - Nether portal receives warm nonlinear colour treatment and self-emission.
 - Full Unbound portal distortion/edge effect, glass absorption/connected-glass treatment, and visual/runtime validation remain outstanding.
+
+
+## Translucent ice feature update — 2026-11-23
+Ice/frosted ice now has a dedicated Iris material ID and shares the Fresnel SSR path with glass, with a distinct reflection scale. Water-only depth/refraction/foam remain isolated to the water ID. Ice-specific roughness, thickness and visual calibration remain pending.
