@@ -18,7 +18,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
 | Shadow filtering | Soft filtered shadows and quality controls | Four hardware-filtered comparison taps with slope-aware bias; stability/quality tuning remains | Partial |
 | Ambient occlusion | Contact/local occlusion | Eight-neighbor depth-based screen-space contact AO; edge-aware and temporal refinement remains | Partial |
-| Direct lighting | Directional lighting and block light response | Day/night celestial diffuse term combined with sampled vanilla lightmap ambient | Partial |
+| Direct lighting | Directional lighting and block light response | Iris sunAngle cyclic solar-elevation curve (dawn/noon/sunset/night) for celestial diffuse, combined with sampled vanilla lightmap ambient | Partial; source correction committed, runtime/parity pending |
 | Colored lighting | Colored block/emissive light response | Preserve vanilla lightmap RGB; custom colored-light propagation and emissive response remain | Partial |
 | Indirect lighting / GI | Bounced/indirect illumination appearance | Screen-space/temporal approximation; preserve visual contribution | Pending |
 | Volumetric lighting | Light shafts and volumetric scattering | Depth-aware low-resolution integration and reconstruction | Pending |
