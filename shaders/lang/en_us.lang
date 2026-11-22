@@ -81,7 +81,7 @@ option.MATERIAL_AO_STRENGTH = Material AO Lighting Strength
 option.MATERIAL_AO_STRENGTH.comment = Controls how strongly stored material AO attenuates indirect/block lighting; direct celestial illumination remains unchanged.
 
 option.MATERIAL_SSS_STRENGTH = Subsurface Scattering Strength
-option.MATERIAL_SSS_STRENGTH.comment = Adds a low-cost backlighting approximation from LabPBR's subsurface channel. LabPBR porosity values remain reserved for wet-surface response.
+option.MATERIAL_SSS_STRENGTH.comment = Adds a low-cost backlighting approximation from LabPBR's subsurface channel. Porosity values are handled separately by wet-surface response.
 
 option.WATER_ABSORPTION_STRENGTH = Water Absorption
 option.WATER_ABSORPTION_STRENGTH.comment = Controls depth-dependent Beer-Lambert colour absorption in refracted water. Higher values attenuate red and green light more strongly, producing deeper blue water.
@@ -115,3 +115,6 @@ option.PBR_REFLECTION_QUALITY.comment = Screen-space reflection ray steps. Zero 
 
 option.RAIN_PUDDLE_STRENGTH = Rain Puddle Strength
 option.RAIN_PUDDLE_STRENGTH.comment = Controls lightweight rain puddles on sky-exposed upward-facing terrain. LabPBR porosity reduces pooling, while leaves and farmland are excluded. Uses no 3D voxel map or extra render target.
+
+option.MATERIAL_WETNESS_STRENGTH = Material Wetness Strength
+option.MATERIAL_WETNESS_STRENGTH.comment = Controls porosity-driven darkening and reflectance loss on LabPBR materials when rain leaves surfaces wet.
