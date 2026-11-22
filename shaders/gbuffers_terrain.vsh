@@ -7,6 +7,7 @@ in vec4 at_tangent;
 out vec2 vTexCoord;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
+out vec3 vPlayerPosition;
 out vec3 vPlayerNormal;
 out vec3 vPlayerTangent;
 flat out float vTangentHandedness;
