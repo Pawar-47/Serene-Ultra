@@ -18,7 +18,7 @@ The objective is to optimize the reference shader's Ultra experience for the tar
 - **Good working shader archive:** visual/feature/menu reference, with its Ultra profile as the target feature inventory. Do not copy or redistribute its licensed source/assets.
 - **Serene Ultra repository:** sole source of truth for our own implementation, decisions, code and checkpoints.
 
-The Vanilla-stock archive contains 89 shader source files (42 fragment, 30 vertex and 17 GLSL include files) from the supplied Minecraft 26.3 stock source set. Treat those files as real source material to inspect and compare—not as optional reading. When useful, document exact vanilla file paths and the behavior/interface each one establishes.
+The Vanilla-stock archive contains 89 shader source files (42 fragment shaders, 30 vertex shaders and 17 GLSL include files) from the supplied Minecraft 26.3 stock source set. Treat those files as real source material to inspect and compare—not as optional reading. When useful, document exact vanilla file paths and the behavior/interface each one establishes.
 
 ## Reference audit and licensing
 - Maintain a feature-by-feature audit of the reference, including Ultra profile values, programs, libraries, menu controls, dimensions and special rendering paths.
@@ -37,9 +37,11 @@ Provide independent red, green and blue channel adjustments, gamma, exposure, co
 ## Rendering implementation status
 - The shadow vertex stage forwards base texture coordinates and vertex alpha; the shadow fragment stage discards transparent texels using a user-adjustable alpha cutoff.
 - Terrain and entity G-buffer passes capture base albedo, sampled vanilla lightmap RGB plus sky-light factor, and encoded player-aligned normals into colortex0, colortex1 and colortex2.
-- The deferred pass reconstructs player-space position, computes a day/night celestial diffuse term, preserves vanilla lightmap color for ambient/block light, and applies four hardware-filtered shadow comparison taps with a slope-aware depth bias.
-- The first-person hand and sky are passed through unchanged by deferred world lighting. The composite pass remains an identity copy.
-- This is an early lighting implementation, not reference parity. Light balance, advanced colored light, AO, indirect light, shadow stability, dimension behavior, material classification and runtime validation remain required.
+- Deferred reads the G-buffer and depth, reconstructs player-space position, computes a day/night celestial diffuse term, preserves vanilla lightmap color for ambient/block light, and applies four hardware-filtered shadow comparison taps with a slope-aware depth bias.
+- Deferred writes lit output to colortex3; composite copies colortex3 to colortex0. Never sample and write the same color attachment in one pass.
+- An initial eight-neighbor depth-based screen-space contact AO attenuates ambient light only. AO strength and radius are exposed in the Quality menu. This is an early approximation requiring edge, temporal, lighting and performance calibration.
+- The first-person hand and sky are passed through unchanged by deferred world lighting.
+- This is an early lighting implementation, not reference parity. Light balance, advanced colored light, AO refinement, indirect light, shadow stability, dimension behavior, material classification and runtime validation remain required.
 - Cross-check every affected path against the supplied Minecraft 26.3 stock shader source before treating its interfaces or behavior as correct. Do not infer vanilla behavior from memory when the actual stock source is available.
 - Do not mark a rendering subsystem complete based only on structural source checks.
 
