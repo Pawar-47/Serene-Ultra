@@ -28,7 +28,15 @@ void main() {
     outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
-    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 1.0);
+    // colortex2 alpha packs deferred validity and smoothness: 0 is invalid,
+    // 0.5 is a valid non-specular surface, and 1.0 is fully smooth.
+    float materialSmoothness = 0.0;
+    if (vMaterialId == 30012) {
+        materialSmoothness = 0.62; // Slime block
+    } else if (vMaterialId == 30016) {
+        materialSmoothness = 0.48; // Honey block
+    }
+    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5 + 0.5 * materialSmoothness);
 
     // Store a compact emissive material channel for the deferred pass.
     // Strength is normalized to [0,1] in alpha; RGB keeps the surface tint.
