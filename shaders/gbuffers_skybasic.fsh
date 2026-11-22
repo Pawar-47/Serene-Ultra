@@ -1,8 +1,6 @@
 #version 330 compatibility
 
 uniform int renderStage;
-uniform vec3 fogColor;
-uniform vec3 skyColor;
 uniform float sunAngle;
 uniform float rainStrength;
 uniform bool hasSkylight;
@@ -11,7 +9,10 @@ uniform float viewHeight;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
 
-flat in vec4 vVertexColor;
+in vec3 vVertexColorLinear;
+in float vVertexAlpha;
+flat in vec3 vFogLinear;
+flat in vec3 vSkyLinear;
 
 /* RENDERTARGETS: 0,2 */
 layout(location = 0) out vec4 outColor;
@@ -26,8 +27,8 @@ vec3 reconstructPlayerDirection() {
 }
 
 void main() {
-    vec3 colorLinear = pow(max(vVertexColor.rgb, vec3(0.0)), vec3(2.2));
-    float alpha = vVertexColor.a;
+    vec3 colorLinear = vVertexColorLinear;
+    float alpha = vVertexAlpha;
 
     vec3 playerDirection = reconstructPlayerDirection();
     float upDot = clamp(playerDirection.y, -1.0, 1.0);
@@ -63,18 +64,16 @@ void main() {
         float nightFactor = 1.0 - smoothstep(-0.15, 0.20, solarElevation);
         colorLinear *= nightFactor * (1.0 - 0.9 * rainStrength);
     } else if (isSky || isSunset) {
-        vec3 fogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
-        vec3 skyLinear = pow(max(skyColor, vec3(0.0)), vec3(2.2));
-        colorLinear = mix(fogLinear, skyLinear, horizonBlend);
+        colorLinear = mix(vFogLinear, vSkyLinear, horizonBlend);
         if (isSunset) {
             float horizonBand = exp(-abs(upDot) * 10.0);
             float dawnSide = step(0.0, cos(sunAngle * 6.28318530718));
-            vec3 dawnColor = pow(vec3(1.0, 0.48, 0.28), vec3(2.2));
-            vec3 duskColor = pow(vec3(0.82, 0.32, 0.42), vec3(2.2));
+            vec3 dawnColor = vec3(1.0, 0.195, 0.055);
+            vec3 duskColor = vec3(0.64, 0.083, 0.144);
             vec3 twilightColor = mix(duskColor, dawnColor, dawnSide);
             colorLinear = mix(colorLinear, twilightColor, horizonBand * twilight * 0.18);
         }
-        colorLinear = mix(colorLinear, fogLinear, 0.35 * rainStrength);
+        colorLinear = mix(colorLinear, vFogLinear, 0.35 * rainStrength);
         alpha = 1.0;
     }
 
