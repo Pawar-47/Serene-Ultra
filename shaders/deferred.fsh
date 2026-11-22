@@ -64,7 +64,7 @@ void main() {
         return;
     }
 
-    vec2 lightmap = texture(colortex1, vTexCoord).rg;
+    vec4 lightData = texture(colortex1, vTexCoord);
     vec3 normal = normalize(normalData.rgb * 2.0 - 1.0);
 
     vec3 ndcPosition = vec3(vTexCoord, depth) * 2.0 - 1.0;
@@ -76,13 +76,13 @@ void main() {
     float nDotL = max(dot(normal, worldLightDirection), 0.0);
     float shadow = sampleShadow(playerPosition, normal, worldLightDirection);
 
-    float blockLight = clamp(lightmap.r, 0.0, 1.0);
-    float skyLight = clamp(lightmap.g, 0.0, 1.0);
+    float skyLight = clamp(lightData.a, 0.0, 1.0);
     float dayFactor = 1.0 - smoothstep(0.45, 0.55, sunAngle);
 
-    vec3 ambient = vec3(0.025)
-        + vec3(1.0, 0.48, 0.18) * pow(blockLight, 1.7) * 0.45
-        + vec3(0.26, 0.34, 0.48) * pow(skyLight, 1.2) * 0.28;
+    // Use Minecraft's own sampled lightmap RGB as the ambient/block-light
+    // foundation so its existing colored light response is retained.
+    vec3 vanillaAmbient = pow(max(lightData.rgb, vec3(0.0)), vec3(2.2));
+    vec3 ambient = vec3(0.018) + vanillaAmbient * 0.72;
 
     vec3 celestialColor = mix(vec3(0.36, 0.44, 0.68), vec3(1.0, 0.94, 0.82), dayFactor);
     float celestialIntensity = mix(0.10, 0.70, dayFactor);
