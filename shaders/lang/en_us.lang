@@ -85,3 +85,8 @@ option.PORTAL_DISTORTION_STRENGTH.comment = Controls the four-tap animated porta
 
 option.WATER_WAVE_SCALE = Water Wave Scale
 option.WATER_WAVE_SCALE.comment = Controls the spatial frequency of the three animated wave bands. Higher values create shorter, more frequent waves.
+
+option.WATER_CAUSTICS_STRENGTH = Water Caustics Strength
+option.WATER_CAUSTICS_STRENGTH.comment = Controls the contrast of projected water caustics on terrain receiving sunlight.
+option.WATER_CAUSTICS_SCALE = Water Caustics Scale
+option.WATER_CAUSTICS_SCALE.comment = Controls the spatial frequency of the projected water-light pattern.
