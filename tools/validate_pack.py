@@ -694,7 +694,11 @@ for token in ("materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0)"
               "MATERIAL_SPECULAR_STRENGTH", "float specularPower = mix(12.0, 96.0, materialSmoothness)",
               "normalize(mat3(gbufferModelViewInverse) * normalize(-viewPosition))",
               "halfVectorLengthSquared > 0.000001", "inversesqrt(halfVectorLengthSquared)",
-              "litLinear += celestialColor * shadow * specularColor * specularStrength"):
+              "litLinear += celestialColor * shadow * specularColor * specularStrength",
+              "vec4 emissionData = texture(colortex3, vTexCoord)",
+              "materialReflectance = clamp(emissionData.g, 0.0, 1.0)",
+              "MC_TEXTURE_FORMAT_LAB_PBR", "materialReflectance > 0.5",
+              "mix(vec3(0.04), albedoLinear, materialReflectance)"):
     if token not in deferred:
         errors.append(f"Deferred material specular path is missing component: {token}")
 
