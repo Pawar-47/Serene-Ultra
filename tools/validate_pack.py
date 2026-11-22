@@ -129,10 +129,10 @@ if props_path.is_file():
             errors.append(f"{option} is not exposed in the Quality menu")
     if "separateAo=false" not in props:
         errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
-    if "separateEntityDraws=false" not in props:
-        errors.append("separateEntityDraws must remain explicitly disabled for current Iris compatibility")
-    if "iris.features.optional=ENTITY_TRANSLUCENT" in props:
-        errors.append("Do not request ENTITY_TRANSLUCENT while separateEntityDraws remains disabled")
+    if "separateEntityDraws=true" not in props:
+        errors.append("Iris translucent entity/block-entity passes require separateEntityDraws=true")
+    if "iris.features.optional=ENTITY_TRANSLUCENT" not in props:
+        errors.append("Query Iris ENTITY_TRANSLUCENT support through iris.features.optional")
     deferred_format_source = sources.get("deferred.fsh", "")
     if "const int colortex2Format = RGBA16F;" not in deferred_format_source:
         errors.append("Iris colortex2 normal target must declare RGBA16F using the documented GLSL buffer-format directive")
