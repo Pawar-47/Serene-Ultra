@@ -390,9 +390,16 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
         errors.append(f"Water screen-space reflection path is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
+for token in ("uniform mat4 gbufferModelView;", "uniform vec3 cameraPosition",
+              "uniform float frameTimeCounter", "calculateWaterWaveNormal",
+              "float phaseA =", "float phaseB =", "float phaseC =",
+              "viewNormal = normalize(mat3(gbufferModelView) * normal)"):
+    if token not in water:
+        errors.append(f"Unbound-guided animated water normal path is missing component: {token}")
 if "out vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
     errors.append("Water vertex stage must output the Iris view-space normal used by Fresnel reflection")
-water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH")
+water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
+                 "WATER_WAVE_STRENGTH", "WATER_WAVE_SPEED")
 lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
 for option in water_options:
     if option not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
