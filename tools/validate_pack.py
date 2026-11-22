@@ -113,9 +113,13 @@ for token in ("/* RENDERTARGETS: 3 */", "sampler2D colortex0",
               "sampler2D depthtex0", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
-              "sampleContactAO", "AO_STRENGTH", "AO_RADIUS"):
+              "sampleContactAO", "AO_STRENGTH", "AO_RADIUS",
+              "sin(sunAngle * 6.28318530718)",
+              "smoothstep(0.0, 0.30, solarElevation)"):
     if token not in deferred:
         errors.append(f"Deferred lighting is missing required component: {token}")
+if "1.0 - smoothstep(0.45, 0.55, sunAngle)" in deferred:
+    errors.append("Deferred day/night curve incorrectly treats Iris sunrise as full daylight")
 if "outColor = scene;" not in deferred or "outColor = vec4(litColor, scene.a);" not in deferred:
     errors.append("Deferred pass must preserve uncovered pixels and output shaded pixels")
 
