@@ -396,9 +396,15 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
               "texelFetch(colortex4, reflectionPixel, 0)",
               "float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0)",
               "float reflectionWeight = clamp(",
-              "min(fresnel * 2.5, 0.85) * reflectionConfidence * WATER_REFLECTION_STRENGTH",):
+              "min(fresnel * 2.5, 0.85) * WATER_REFLECTION_STRENGTH",):
     if token not in water:
         errors.append(f"Water screen-space reflection path is missing component: {token}")
+for token in ("uniform vec3 skyColor;", "vec3 sampleEnvironmentReflection(vec3 viewReflectionDirection)",
+              "mix(fogColor, skyColor, skyBlend)", "glassReflectionLinear = mix(",
+              "glassEnvironmentLinear, glassScreenReflectionLinear, glassReflectionConfidence",
+              "environmentReflectionLinear, screenReflectionLinear, reflectionConfidence"):
+    if token not in water:
+        errors.append(f"Translucent environment-reflection fallback is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
 for token in ("WATER_ABSORPTION_STRENGTH", "vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)",
