@@ -376,6 +376,10 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
             errors.append(f"{name} is missing resource-pack PBR specular support: {token}")
 for vertex_name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_block.vsh"):
     source = sources.get(vertex_name, "")
+    if source.count("in vec4 at_tangent;") != 1:
+        errors.append(f"{vertex_name} must declare at_tangent exactly once")
+    if source.count("vPlayerTangent = normalize") != 1:
+        errors.append(f"{vertex_name} must transform the tangent exactly once")
     for token in ("in vec4 at_tangent;", "out vec3 vPlayerTangent;", "flat out float vTangentHandedness;",
                   "vPlayerTangent = normalize(mat3(gbufferModelViewInverse) * viewTangent)",
                   "vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0"):
