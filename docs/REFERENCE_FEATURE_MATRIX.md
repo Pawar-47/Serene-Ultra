@@ -218,3 +218,7 @@ Water currently includes fluid-gated depth opacity, exact-texel depth validation
 
 ## Iris translucent entity routing caveat — 2026-11-23
 The dedicated `gbuffers_entities_translucent` and `gbuffers_block_translucent` shader pairs remain implemented, but the route that schedules them after deferred (`separateEntityDraws=true`) is documented by Iris with a warning that it may be broken in newer Iris versions. Treat this as conditional coverage, not guaranteed active rendering, until verified against the exact target Iris build. The unused `iris.features.optional=ENTITY_TRANSLUCENT` declaration was removed: it only exposes a compile-time capability define and does not enable the routing directive. Do not remove the shader pairs; retain them for compatible Iris versions and future routing fixes.
+
+
+## Water-wave feature update — 2026-11-23
+`gbuffers_water` now applies three world-anchored analytic wave bands to water-surface normals, with user controls for strength and cycle rate. The implementation uses Iris-documented `cameraPosition`, `frameTimeCounter` and `gbufferModelView`. It is an original low-bandwidth substitute for the reference's texture-driven multi-scale normal maps; visual parity and runtime performance remain unverified.
