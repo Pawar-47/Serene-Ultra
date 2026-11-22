@@ -138,8 +138,8 @@ hand_fragment = sources.get("gbuffers_hand.fsh", "")
 if "uniform sampler2D lightmap" not in hand_fragment or "texture(lightmap" not in hand_fragment:
     errors.append("Hand shader must preserve the vanilla lightmap response")
 entities = sources.get("gbuffers_entities.fsh", "")
-if "uniform vec4 entityColor" not in entities or "mix(albedo.rgb, entityColor.rgb, entityColor.a)" not in entities:
-    errors.append("Entity shader must apply Iris entityColor tint using its alpha blend factor")
+if "uniform vec4 entityColor" not in entities or "mix(entityAlbedoLinear, entityTintLinear, entityColor.a)" not in entities:
+    errors.append("Entity shader must apply Iris entityColor tint in linear space using its alpha blend factor")
 
 final = sources.get("final.fsh", "")
 for option in ("RED_GAIN", "GREEN_GAIN", "BLUE_GAIN", "GAMMA", "EXPOSURE",
