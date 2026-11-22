@@ -191,7 +191,7 @@ Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANS
 `gbuffers_textured_lit` now has a dedicated G-buffer vertex/fragment pair, matching the Iris fallback table for most lit particles. It writes albedo, lightmap, player-space normal and scalar emission to colortex0–3, applies Iris `alphaTestRef` at 0.01, and disables blending on the opaque G-buffer attachments. The generic path reuses the same atlas-size-guarded particle material classifier. `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` deliberately retain the documented fallback to `gbuffers_terrain`, which is also the program where Iris exposes `mc_Entity` for stable block/fluid IDs.
 
 ## Emissive materials — 2026-11-23
-A compact single-channel R8 `colortex3` emission buffer is now written by opaque G-buffer programs. Terrain uses Iris `mc_Entity` plus `block.properties` IDs to classify luminous blocks; deferred adds their tinted emission after AO/direct lighting and before fog. Opaque particle paths use the Complementary grayscale-texture, channel-ratio and lava predicates to write emissive strength. Richer entity/resource-pack material maps and bloom remain pending.
+An RG8 `colortex3` material buffer is now written by opaque G-buffer programs: red stores emission strength and green stores oldPBR metalness or LabPBR dielectric F0/metal classification. Terrain uses Iris `specular` atlas data for smoothness and emissive decoding; deferred adds tinted emission after AO/direct lighting and uses material F0 for specular response. Opaque particle paths retain their emissive heuristics. Porosity/SSS, opaque-terrain normal maps and bloom remain pending.
 
 ## Core overlay/block-entity coverage — 2026-11-23
 | Iris program | Geometry | Current implementation |
@@ -202,7 +202,7 @@ A compact single-channel R8 `colortex3` emission buffer is now written by opaque
 
 `block.properties` maps sign families to ID 5004 and End portal/gateway to 5025, read through Iris `blockEntityId`.
 
-Emissive data is now a single R8 scalar in colortex3; deferred reuses scene albedo for its color. This reduces the emissive attachment footprint/bandwidth by 75% compared with default RGBA8, with negligible quantization error for the current material levels.
+Emission remains a scalar in colortex3 red and reuses scene albedo for tint; green now stores material reflectance. RG8 reduces attachment storage/bandwidth by 50% compared with default RGBA8 while supporting the added PBR material channel.
 
 ## Complementary Unbound water/material parity — 2026-11-23
 The primary visual/material reference is now Complementary Unbound (Unbound water style branch `WATER_STYLE == 3`) in the official r5.10 upstream codebase. The supplied working Reimagined ZIP remains the functioning Iris implementation reference. The upstream Unbound water target includes animated multi-scale normals, water noise colouring, depth-based opacity, foam, underwater response, Fresnel/specular highlights, screen-space reflections and sky/world-space reflection fallbacks. The broader material reference includes IntegratedPBR+ terrain/entity/translucent classification, material-specific emission/smoothness, normal maps, generated normals, coated textures, POM and parallax self-shadow.
