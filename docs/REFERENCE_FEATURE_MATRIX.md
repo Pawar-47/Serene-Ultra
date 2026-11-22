@@ -105,3 +105,6 @@ The hand fragment shader now samples the Iris `lightmap` texture using `gl_Textu
 
 ## Emissive eye path update — 2026-11-23
 A dedicated `gbuffers_spidereyes` program now writes emissive eye color and marks those pixels as ineligible for opaque deferred lighting, preventing the body normal behind the eyes from shading the emissive overlay.
+
+## Water program update — 2026-11-23
+Dedicated `gbuffers_water` now replaces the terrain fallback. It forward-shades translucent water after deferred using the Iris atlas, vanilla lightmap, world normal, shadow map and dimension-aware celestial source. It writes color only and blends with the configured source-alpha factors. This fixes the unlit fallback path but is not yet full Ultra water: refraction, reflections/Fresnel, absorption, wave normals and rain interaction remain pending.
