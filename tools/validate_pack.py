@@ -127,10 +127,6 @@ if props_path.is_file():
         errors.append("Do not enable separateEntityDraws: current Iris documentation warns this feature is broken in newer versions")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
-    if "separateEntityDraws=true" not in props:
-        errors.append("Translucent entities and block entities must render after deferred")
-    if "iris.features.optional=ENTITY_TRANSLUCENT" not in props:
-        errors.append("Iris ENTITY_TRANSLUCENT support must be queried before using the additional entity pass")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
@@ -338,7 +334,7 @@ for token in ("uniform float alphaTestRef", "texture(gtexture", "vec4(vec3(1.0),
     if token not in clouds:
         errors.append(f"Cloud shader is missing Iris/reference component: {token}")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
-if "particle.a <= 0.001" not in translucent_particles or "alphaTestRef" in translucent_particles:
+if "particle.a < 0.01" not in translucent_particles or "alphaTestRef" in translucent_particles:
     errors.append("Translucent particles must preserve fractional alpha instead of applying cutout alphaTestRef")
 for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog"):
     if token not in translucent_particles:
@@ -409,8 +405,6 @@ for directive in (
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_particles_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
-    "blend.gbuffers_entities_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
-    "blend.gbuffers_block_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_spidereyes.colortex2=off",
     "blend.gbuffers_armor_glint.colortex2=off",
     "blend.gbuffers_lightning.colortex2=off",
