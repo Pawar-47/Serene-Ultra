@@ -76,3 +76,6 @@ option.PORTAL_EMISSION_STRENGTH.comment = Controls the self-emission of nether p
 
 option.MATERIAL_SPECULAR_STRENGTH = Material Specular Strength
 option.MATERIAL_SPECULAR_STRENGTH.comment = Controls deferred highlights for classified smooth terrain materials such as slime and honey blocks.
+
+option.WATER_ABSORPTION_STRENGTH = Water Absorption
+option.WATER_ABSORPTION_STRENGTH.comment = Controls depth-dependent Beer-Lambert colour absorption in refracted water. Higher values attenuate red and green light more strongly, producing deeper blue water.
