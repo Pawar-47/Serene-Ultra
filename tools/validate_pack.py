@@ -393,16 +393,16 @@ for vertex_name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_b
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(fragment_name, "")
     for token in ("uniform sampler2D normals;", "in vec3 vPlayerTangent;", "flat in float vTangentHandedness;",
-                  "calculateOpaquePbrNormal", "texture(normals, vTexCoord)",
+                  "calculateOpaquePbrNormal", "texture(normals, vTexCoord)", "PBR_AO_STRENGTH", "normalTexel.b", "materialAO = mix(1.0, clamp(normalTexel.b, 0.0, 1.0)", "vanillaLight *= pow(max(materialAO, 0.0), 1.0 / 2.2)",
                   "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
                   "cross(tangent, geometricNormal)", "OPAQUE_NORMAL_MAP_STRENGTH"):
         if token not in source:
             errors.append(f"{fragment_name} is missing opaque PBR normal-map component: {token}")
-if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get("gbuffers_terrain.fsh", ""):
+if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO)" not in sources.get("gbuffers_terrain.fsh", ""):
     errors.append("Terrain must apply resource-pack tangent-space normal maps")
-if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get("gbuffers_entities.fsh", ""):
+if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO)" not in sources.get("gbuffers_entities.fsh", ""):
     errors.append("Entities must apply resource-pack tangent-space normal maps")
-if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal)" not in sources.get("gbuffers_block.fsh", ""):
+if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO)" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")
 
 

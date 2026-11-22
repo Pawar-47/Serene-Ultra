@@ -638,3 +638,7 @@ The exact-source GLSL and structural validation for the GGX/PBR material state p
 
 ## Dual-format PBR CI validation — 2026-11-23
 GitHub Actions run 919 (`bc0dd3d`) passed all stages: shader compilation, Iris render-stage macro branches, LabPBR macro compilation/linking for terrain/entities/block entities/water/deferred, full vertex-fragment program linking and structural validation. The source keeps Iris' documented `in vec4 at_tangent;` declarations; the earlier duplicate-symbol failure was transient and the direct-source workflow now passes. Minecraft 26.3 runtime loading, real resource-pack decoding and Intel HD 5500 performance remain unverified.
+
+
+## LabPBR material AO — 2026-11-23
+Implemented the optional LabPBR normal-map blue-channel AO for terrain, entities and block entities. The G-buffer applies the material AO to existing lightmap RGB with inverse-gamma compensation; sky-light alpha remains separate so direct celestial lighting is preserved. This reuses the normal-map sample and existing attachments, adds no render target, and has an independent Iris quality slider. oldPBR remains unchanged. Porosity/SSS, actual resource-pack visual validation and Intel HD 5500 profiling remain outstanding.

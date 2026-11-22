@@ -28,6 +28,7 @@ layout(location = 2) out vec4 outEncodedNormal;
 layout(location = 3) out vec4 outEmissionData;
 
 #define OPAQUE_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack PBR normal-map detail
+#define PBR_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material ambient occlusion
 
 vec3 calculateOpaquePbrNormal(vec3 geometricNormal, out float materialAO) {
     vec4 normalTexel = texture(normals, vTexCoord);
@@ -106,7 +107,6 @@ void main() {
     }
 
     outColor = albedo;
-    outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     float materialAO = 1.0;

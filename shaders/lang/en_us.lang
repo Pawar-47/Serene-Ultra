@@ -105,3 +105,5 @@ option.GLASS_NORMAL_MAP_STRENGTH.comment = Applies resource-pack PBR normal maps
 
 option.OPAQUE_NORMAL_MAP_STRENGTH = Opaque Normal Map Strength
 option.OPAQUE_NORMAL_MAP_STRENGTH.comment = Applies resource-pack PBR normal maps to terrain, entities and block entities. Neutral when no normal map is supplied.
+option.PBR_AO_STRENGTH = LabPBR Material AO Strength
+option.PBR_AO_STRENGTH.comment = Uses the LabPBR normal-map blue channel to attenuate indirect and block lighting. Neutral with oldPBR or missing AO data.
