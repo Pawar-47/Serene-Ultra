@@ -207,7 +207,9 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_particle
 
 weather = sources.get("gbuffers_weather.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
-              "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape"):
+              "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape",
+              "uniform int isEyeInWater", "uniform float alphaTestRef",
+              "weatherColor.a < max(0.1, alphaTestRef)", "isEyeInWater == 3"):
     if token not in weather:
         errors.append(f"Forward weather shader is missing Iris fog/light component: {token}")
 hand_water = sources.get("gbuffers_hand_water.fsh", "")
