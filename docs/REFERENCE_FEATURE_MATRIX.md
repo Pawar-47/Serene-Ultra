@@ -13,7 +13,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Shadow mapping | Sun/moon directional shadows | Depth reconstruction and directional shadow comparison | Partial |
 | Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
 | Shadow filtering | Soft filtered shadows and quality controls | Four hardware-filtered comparison taps with slope-aware bias; stability/quality tuning remains | Partial |
-| Ambient occlusion | Contact/local occlusion | Horizon/contact approximation with edge-aware filtering | Pending |
+| Ambient occlusion | Contact/local occlusion | Eight-neighbor depth-based screen-space contact AO; edge-aware and temporal refinement remains | Partial |
 | Direct lighting | Directional lighting and block light response | Day/night celestial diffuse term combined with sampled vanilla lightmap ambient | Partial |
 | Colored lighting | Colored block/emissive light response | Preserve vanilla lightmap RGB; custom colored-light propagation and emissive response remain | Partial |
 | Indirect lighting / GI | Bounced/indirect illumination appearance | Screen-space/temporal approximation; preserve visual contribution | Pending |
@@ -58,4 +58,4 @@ Next audit pass must extract the actual Ultra profile values and enumerate every
 
 ## Latest implementation note
 
-The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB plus sky-light factor in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. The deferred pass reconstructs player-space positions, evaluates directional celestial diffuse lighting and samples the shadow map with four hardware-filtered comparison taps. It uses the game's lightmap tint as the ambient/block-light foundation. The hand and sky remain unchanged by deferred world lighting. These paths are initial implementations only; visual parity and runtime stability remain unverified.
+The G-buffer preserves base albedo in colortex0, sampled vanilla lightmap RGB plus sky-light factor in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. Deferred reads those buffers and depth, then writes lit output to colortex3. Composite transfers colortex3 back to colortex0, avoiding read/write feedback in the deferred stage. The deferred pass includes directional celestial lighting, four hardware-filtered shadow comparison taps and eight-neighbor contact AO that attenuates ambient only. The hand and sky remain unchanged by deferred world lighting. These paths are initial implementations only; visual parity and runtime stability remain unverified.
