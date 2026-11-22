@@ -73,3 +73,6 @@ option.GLASS_REFLECTION_STRENGTH = Glass / Ice Reflections
 option.GLASS_REFLECTION_STRENGTH.comment = Controls screen-space reflections on clear, stained and tinted glass, plus translucent ice. Reflection quality follows the Water / Glass Reflection Quality setting.
 option.PORTAL_EMISSION_STRENGTH = Nether Portal Emission
 option.PORTAL_EMISSION_STRENGTH.comment = Controls the self-emission of nether portal surfaces.
+
+option.MATERIAL_SPECULAR_STRENGTH = Material Specular Strength
+option.MATERIAL_SPECULAR_STRENGTH.comment = Controls deferred highlights for classified smooth terrain materials such as slime and honey blocks.
