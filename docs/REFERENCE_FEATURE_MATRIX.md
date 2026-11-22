@@ -143,3 +143,5 @@ The depth-opacity calculation follows the same thickness/exponential form used b
 
 ## Special overlay coverage — 2026-11-23
 Dedicated paths now exist for armor glint, beacon beams and lightning. Each writes color and clears the deferred-normal validity mask so overlays are not shaded using the opaque surface beneath them. Armor-glint color blending remains under Minecraft/Iris' active render state. Beacon beams and lightning receive Iris fog. Runtime depth/blend validation remains pending.
+
+Reference refinement: retained `alphaTest.gbuffers_water=GREATER 0.0001` (matching Complementary Reimagined), used Iris `alphaTestRef` in the shader, applied the reference `sqrt(alpha)` water shaping, and switched to exact-pixel `texelFetch` for opaque depth.
