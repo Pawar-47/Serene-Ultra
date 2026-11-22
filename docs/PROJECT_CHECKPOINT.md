@@ -268,3 +268,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Runtime blend/depth behavior is not yet verified in Minecraft 26.3 + Iris.
 
 Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is intentionally retained to match the working Complementary reference. The fragment shader reads the resulting Iris `alphaTestRef`; it does not hardcode the threshold. Water alpha now also uses the reference `sqrt(alpha)` shaping and exact-pixel `texelFetch` from `depthtex1`.
+
+## Weather and cloud checkpoint — 2026-11-23
+- `gbuffers_weather` now classifies rain vs snow using the Complementary reference's texture-color test and applies reference defaults (0.25 rain / 0.5 snow) with a 25–900% `WEATHER_TEX_OPACITY` control.
+- Weather uses Iris `alphaTestRef`, discards when `isEyeInWater==3` (powdered snow), and has optional `WAVING_RAIN` vertex motion driven by `rainStrength`, `eyeBrightnessSmooth` and `frameTimeCounter`.
+- Added dedicated `gbuffers_clouds`; it preserves vanilla cloud texture/vertex color, applies Iris fog, discards while the camera is in fluid, and bypasses deferred lighting via colortex2 validity mask.
+- These are baseline paths, not custom cloud/volumetric parity. Runtime depth, blend and visual behavior remains pending.
