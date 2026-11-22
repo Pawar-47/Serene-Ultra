@@ -77,12 +77,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "Linking terrain oldPBR/LabPBR variants"
-          glslangValidator -DMC_TEXTURE_FORMAT_LAB_PBR=1 -l shaders/gbuffers_terrain.vsh shaders/gbuffers_terrain.fsh
-          echo "Linking water oldPBR/LabPBR variants"
-          glslangValidator -DMC_TEXTURE_FORMAT_LAB_PBR=1 -l shaders/gbuffers_water.vsh shaders/gbuffers_water.fsh
-          echo "Linking deferred oldPBR/LabPBR variants"
-          glslangValidator -DMC_TEXTURE_FORMAT_LAB_PBR=1 -l shaders/deferred.vsh shaders/deferred.fsh
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          compile_labpbr_pair() {
+            local name="$1"
+            local vertex="$2"
+            local fragment="$3"
+            local vertex_out="$tmpdir/$name.vert"
+            local fragment_out="$tmpdir/$name.frag"
+
+            # Insert the Iris format define after #version. This avoids relying
+            # on glslang's CLI -D option while compiling GLSL (where -D also
+            # selects HLSL input when passed without a macro argument).
+            awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } { print }' "$vertex" > "$vertex_out"
+            awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } { print }' "$fragment" > "$fragment_out"
+
+            echo "Linking $name LabPBR variant"
+            glslangValidator -l "$vertex_out" "$fragment_out"
+          }
+
+          compile_labpbr_pair terrain shaders/gbuffers_terrain.vsh shaders/gbuffers_terrain.fsh
+          compile_labpbr_pair water shaders/gbuffers_water.vsh shaders/gbuffers_water.fsh
+          compile_labpbr_pair deferred shaders/deferred.vsh shaders/deferred.fsh
       - name: Link vertex and fragment shader programs
         shell: bash
         run: |
