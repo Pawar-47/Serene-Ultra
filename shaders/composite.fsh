@@ -1,8 +1,6 @@
 #version 330 compatibility
 
-uniform sampler2D colortex0;
-uniform float viewWidth;
-uniform float viewHeight;
+uniform sampler2D colortex3;
 
 in vec2 vTexCoord;
 
@@ -10,7 +8,7 @@ in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    // Until deferred lighting is integrated, preserve the captured scene
-    // exactly while keeping this pass explicitly bound to colortex0.
-    outColor = texture2D(colortex0, vTexCoord);
+    // Deferred lighting writes to colortex3; this pass safely transfers the
+    // completed result into colortex0 for the final post-processing stage.
+    outColor = texture(colortex3, vTexCoord);
 }
