@@ -405,7 +405,7 @@ translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
 if "particle.a < 0.01" not in translucent_particles or "alphaTestRef" in translucent_particles:
     errors.append("Translucent particles must preserve fractional alpha instead of applying cutout alphaTestRef")
 for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog",
-              "uniform sampler2D noisetex", "textureSize(noisetex", "texelFetch(noisetex",
+              "uniform sampler2D noisetex", "textureLod(noisetex, gl_FragCoord.xy / 128.0, 0.0)",
               "WEATHER_TEX_OPACITY", "rainTexOpacity", "snowTexOpacity",
               "suppressLightmap", "PARTICLE_MATERIAL_FEATURES",
               "uniform float rainStrength", "hasSkylight && rainStrength > 0.001"):
