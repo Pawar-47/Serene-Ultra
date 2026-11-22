@@ -642,3 +642,10 @@ GitHub Actions run 919 (`bc0dd3d`) passed all stages: shader compilation, Iris r
 
 ## LabPBR material AO — 2026-11-23
 Implemented the optional LabPBR normal-map blue-channel AO for terrain, entities and block entities. The G-buffer applies the material AO to existing lightmap RGB with inverse-gamma compensation; sky-light alpha remains separate so direct celestial lighting is preserved. This reuses the normal-map sample and existing attachments, adds no render target, and has an independent Iris quality slider. oldPBR remains unchanged. Porosity/SSS, actual resource-pack visual validation and Intel HD 5500 profiling remain outstanding.
+
+
+## Opaque PBR screen-space reflections — 2026-11-23
+
+The `composite` pass now adds Fresnel-weighted reflections to glossy opaque terrain, entities and block entities. It uses the existing half-resolution opaque/sky snapshot from `deferred1` (`colortex4`), full-resolution `depthtex2`, the PBR normal/smoothness G-buffer and decoded material F0/metal response. A short 4/6/8-step view-space ray march finds screen-space hits; sky/horizon colors provide the fallback. `PBR_REFLECTION_STRENGTH` and `PBR_REFLECTION_QUALITY` are exposed in the quality menu.
+
+Because composite runs after translucent gbuffers, it compares current `depthtex0` with opaque-only `depthtex2` and skips pixels covered by water/glass/particles/hand, avoiding reflections being blended onto translucent overlays. The pass reuses the existing half-resolution scene snapshot and does not add a new render target. Known limitations: reflections do not include translucent objects, roughness blur or temporal accumulation; metallic F0 tint uses the lit scene color as an albedo proxy; environment fallback is sky/horizon only. Runtime visual and Intel HD 5500 performance checks remain outstanding.
