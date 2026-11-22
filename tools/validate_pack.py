@@ -133,8 +133,13 @@ if props_path.is_file():
         errors.append("separateEntityDraws must remain explicitly disabled for current Iris compatibility")
     if "iris.features.optional=ENTITY_TRANSLUCENT" in props:
         errors.append("Do not request ENTITY_TRANSLUCENT while separateEntityDraws remains disabled")
-    if "format.colortex2=RGBA16F" not in props or "format.colortex3=RGBA8" not in props:
-        errors.append("G-buffer normal/emission targets must use the declared formats")
+    deferred_format_source = sources.get("deferred.fsh", "")
+    if "const int colortex2Format = RGBA16F;" not in deferred_format_source:
+        errors.append("Iris colortex2 normal target must declare RGBA16F using the documented GLSL buffer-format directive")
+    if "const int colortex3Format = R8;" not in deferred_format_source:
+        errors.append("Iris colortex3 emission target must declare R8 using the documented GLSL buffer-format directive")
+    if "format.colortex2=" in props or "format.colortex3=" in props or "colortex3Format=" in props:
+        errors.append("Buffer formats must use Iris GLSL const directives, not shaders.properties key/value syntax")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
     if "endFlashShadows=true" not in props:
@@ -462,7 +467,7 @@ if "colortex3" not in deferred:
     errors.append("Deferred must sample the emissive G-buffer before fogging the final lit scene")
 for directive in (
     "flip.deferred.colortex0=true", "flip.composite.colortex0=true",
-    "flip.deferred.colortex3=false", "colortex3Format=R8",
+    "flip.deferred.colortex3=false",
     "blend.gbuffers_terrain.colortex3=off",
     "blend.gbuffers_entities.colortex3=off",
     "blend.gbuffers_particles.colortex3=off",
