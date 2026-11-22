@@ -64,6 +64,14 @@ jobs:
 
           glslangValidator -S frag "$tmpdir/skybasic.frag"
           glslangValidator -S frag "$tmpdir/skytextured.frag"
+
+          {
+            head -n 1 shaders/gbuffers_line.fsh
+            printf '#define MC_RENDER_STAGE_OUTLINE 1\\n#define MC_RENDER_STAGE_DEBUG 2\\n'
+            tail -n +2 shaders/gbuffers_line.fsh
+          } > "$tmpdir/line.frag"
+
+          glslangValidator -S frag "$tmpdir/line.frag"
           glslangValidator -S frag "$tmpdir/line.frag"
       - name: Link vertex and fragment shader programs
         shell: bash
