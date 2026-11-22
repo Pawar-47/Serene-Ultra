@@ -16,7 +16,14 @@ uniform float sunAngle;
 
 in vec2 vTexCoord;
 
-/* RENDERTARGETS: 0 */
+// Screen-space contact occlusion controls. AO attenuates ambient light only;
+// direct sun/moon lighting and emissive/block-light contribution are retained.
+#define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00] Contact occlusion strength
+#define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
+
+// Deferred reads colortex0 and writes a different attachment. Composite later
+// copies colortex3 back to colortex0, avoiding read/write feedback on one image.
+/* RENDERTARGETS: 3 */
 layout(location = 0) out vec4 outColor;
 
 vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
@@ -52,6 +59,52 @@ float sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
     return visibility * 0.25;
 }
 
+float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
+    const vec2 samplePattern[8] = vec2[8](
+        vec2(-1.0, -1.0), vec2( 0.0, -1.0),
+        vec2( 1.0, -1.0), vec2( 1.0,  0.0),
+        vec2( 1.0,  1.0), vec2( 0.0,  1.0),
+        vec2(-1.0,  1.0), vec2(-1.0,  0.0)
+    );
+
+    vec2 texelSize = 1.0 / vec2(textureSize(depthtex0, 0));
+    float occlusion = 0.0;
+    float validSamples = 0.0;
+
+    for (int i = 0; i < 8; ++i) {
+        vec2 sampleUV = vTexCoord + samplePattern[i] * texelSize * 2.0;
+        if (sampleUV.x <= 0.0 || sampleUV.x >= 1.0 ||
+            sampleUV.y <= 0.0 || sampleUV.y >= 1.0) {
+            continue;
+        }
+
+        float sampleDepth = texture(depthtex0, sampleUV).r;
+        if (sampleDepth >= 0.999999) {
+            continue;
+        }
+
+        vec3 sampleNdc = vec3(sampleUV, sampleDepth) * 2.0 - 1.0;
+        vec3 sampleViewPosition = projectAndDivide(gbufferProjectionInverse, sampleNdc);
+        vec3 delta = sampleViewPosition - viewPosition;
+        float distanceToSample = length(delta);
+
+        if (distanceToSample < 0.0001 || distanceToSample >= AO_RADIUS) {
+            continue;
+        }
+
+        vec3 sampleDirection = delta / distanceToSample;
+        float facing = max(dot(viewNormal, sampleDirection), 0.0);
+        float nearerSurface = step(viewPosition.z + 0.015, sampleViewPosition.z);
+        float distanceWeight = 1.0 - smoothstep(AO_RADIUS * 0.35, AO_RADIUS, distanceToSample);
+
+        occlusion += facing * nearerSurface * distanceWeight;
+        validSamples += 1.0;
+    }
+
+    float normalizedOcclusion = occlusion / max(validSamples, 1.0);
+    return clamp(1.0 - normalizedOcclusion * AO_STRENGTH * 1.8, 0.55, 1.0);
+}
+
 void main() {
     vec4 scene = texture(colortex0, vTexCoord);
     float depth = texture(depthtex0, vTexCoord).r;
@@ -70,6 +123,7 @@ void main() {
     vec3 ndcPosition = vec3(vTexCoord, depth) * 2.0 - 1.0;
     vec3 viewPosition = projectAndDivide(gbufferProjectionInverse, ndcPosition);
     vec3 playerPosition = (gbufferModelViewInverse * vec4(viewPosition, 1.0)).xyz;
+    vec3 viewNormal = normalize(transpose(mat3(gbufferModelViewInverse)) * normal);
 
     vec3 viewLightDirection = normalize(shadowLightPosition);
     vec3 worldLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
@@ -83,6 +137,11 @@ void main() {
     // foundation so its existing colored light response is retained.
     vec3 vanillaAmbient = pow(max(lightData.rgb, vec3(0.0)), vec3(2.2));
     vec3 ambient = vec3(0.018) + vanillaAmbient * 0.72;
+
+    // Eight depth taps add local contact shading. Only ambient light is
+    // occluded, so direct celestial illumination is not unnaturally darkened.
+    float contactAO = sampleContactAO(viewPosition, viewNormal);
+    ambient *= contactAO;
 
     vec3 celestialColor = mix(vec3(0.36, 0.44, 0.68), vec3(1.0, 0.94, 0.82), dayFactor);
     float celestialIntensity = mix(0.10, 0.70, dayFactor);
