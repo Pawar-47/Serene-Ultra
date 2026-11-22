@@ -198,3 +198,5 @@ A compact `colortex3` RGBA8 emission buffer is now written by opaque G-buffer pr
 | `gbuffers_block` | Block entities and sign text | Four-target G-buffer; sign text fogged and bypasses deferred lighting; portal/gateway emission ID |
 
 `block.properties` maps sign families to ID 5004 and End portal/gateway to 5025, read through Iris `blockEntityId`.
+
+Emissive data is now a single R8 scalar in colortex3; deferred reuses scene albedo for its color. This reduces the emissive attachment footprint/bandwidth by 75% compared with default RGBA8, with negligible quantization error for the current material levels.
