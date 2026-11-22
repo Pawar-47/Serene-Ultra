@@ -7,8 +7,8 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 
 | Feature family | Required Ultra capability | Serene implementation plan | Status |
 |---|---|---|---|
-| Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Explicit material classification and shared material functions | Pending |
-| Entity rendering | Entity-specific shading and shadows | Entity material path with alpha handling | Pending |
+| Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Albedo, lightmap UV and world-aligned normal G-buffer capture; material classification remains next | Partial |
+| Entity rendering | Entity-specific shading and shadows | Entity albedo, lightmap UV and normal capture with alpha cutoff | Partial |
 | Hand/item rendering | Correct first-person hand/item rendering | Dedicated hand pipeline and parity tests | Foundation |
 | Shadow mapping | Sun/moon directional shadows | Depth map, cascade/clip strategy if needed, culling | Foundation |
 | Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
@@ -49,8 +49,8 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 ## Audit follow-up required
 
 The initial archive inventory recorded:
-- 446 files total, 437 under `shaders/`.
-- Render-target usage across `colortex0–8`, `colortex12–14`, and `colortex18–19`.
+- 446 files total, 437 under shaders/.
+- Render-target usage across colortex0–8, colortex12–14, and colortex18–19.
 - Dedicated world/dimension folders, material libraries, voxelization/SSBO code, antialiasing, atmospheric, lighting, reflection, text and utility modules.
 - Quality profiles including POTATO through ULTRA and COMPLEMENTARY.
 
@@ -58,4 +58,4 @@ Next audit pass must extract the actual Ultra profile values and enumerate every
 
 ## Latest implementation note
 
-The shadow vertex stage now forwards base texture coordinates and vertex alpha. The shadow fragment stage samples the material texture and discards texels below `SHADOW_ALPHA_CUTOFF`, so cutout materials can cast shaped shadows. This is a first shadow-quality step only: filtered shadow sampling, bias tuning, lighting integration and in-game verification remain incomplete.
+The G-buffer now preserves base albedo in colortex0, lightmap coordinates in colortex1, and encoded player-aligned normals in colortex2 for terrain and entities. The hand remains color-only. The composite pass intentionally remains an identity copy until the deferred lighting result can be tested against the neutral baseline; this avoids changing the image with a speculative lighting approximation.
