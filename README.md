@@ -54,3 +54,6 @@ Dedicated Iris sky-basic, sky-textured and textured-fallback programs now handle
 Line geometry now has a dedicated Iris program that keeps selection/debug outlines crisp, fogs ordinary lines and bypasses deferred terrain lighting.
 
 Translucent particles now receive forward celestial lighting, vanilla lightmap response, Iris fog and a single hardware-filtered shadow lookup. Specialized emissive and smoke/water particle effects remain pending.
+
+
+The separate entity-translucency feature remains disabled due to the current Iris compatibility warning. Forward shader pairs are retained but inactive; CI enforces the safe configuration.
