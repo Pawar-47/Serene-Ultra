@@ -64,3 +64,5 @@ Test after Iris runtime loading:
 - Check entity hurt tint (`entityColor`) on translucent entities.
 - Compare water splash, Physics-mod rain/snow, underwater particles, campfire smoke, Ender/Crying Obsidian/Redstone and lava particles against Complementary Reimagined; test both default and changed `WEATHER_TEX_OPACITY`.
 - Confirm particle material heuristics are bypassed for larger resource-pack atlases.
+
+The optional particle-material path now handles water splash, modded rain/snow, underwater particles, campfire smoke and emissive ender/redstone/lava effects using Complementary's reference heuristics and Iris runtime uniforms.
