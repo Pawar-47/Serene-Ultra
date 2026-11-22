@@ -230,3 +230,7 @@ The water-only branch now applies an Unbound-inspired biome-aware base tint and 
 
 ## Water foam feature update — 2026-11-23
 A first shoreline foam approximation now uses Iris opaque depth reconstruction to estimate the vertical intersection behind top-facing water surfaces. Foam is applied before lighting and suppresses SSR locally. It is adjustable and source-validated; in-game appearance and performance remain unverified.
+
+
+## Foam implementation correction — 2026-11-23
+Water foam is driven by the already reconstructed opaque-view thickness (`depthtex1` plus inverse projection), restricted to top-facing water. The earlier world-Y/block-height approximation was discarded because it was not robust for sloped shorelines. Runtime appearance and threshold calibration remain pending.
