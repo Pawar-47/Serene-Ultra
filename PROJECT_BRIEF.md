@@ -48,6 +48,7 @@ Provide independent red, green and blue channel adjustments, gamma, exposure, co
 ## Quality and engineering
 - Target Minecraft Java 26.3 and a current Iris release; verify exact runtime compatibility.
 - Keep a working shaderpack baseline and run structural checks on each change.
+- Compile every vertex/fragment stage with glslangValidator in CI; treat this as GLSL syntax validation, not proof of Iris runtime compatibility.
 - Test actual Iris compilation/runtime, not just static structure.
 - Compare fixed scenes against both the vanilla stock pipeline (for engine behavior) and the reference Ultra profile (for visual feature goals).
 - Measure frame times and FPS on the target machine; never invent performance claims.
