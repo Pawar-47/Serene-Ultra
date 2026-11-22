@@ -326,7 +326,7 @@ for token in ("flat in int vMaterialId", "emissionStrength", "materialAO", "mate
 for token in ("in vec3 vPlayerPosition", "uniform sampler2D noisetex",
               "uniform ivec3 cameraPositionInt", "uniform vec3 cameraPositionFract",
               "uniform float frameTimeCounter", "uniform float wetness", "uniform float rainStrength",
-              "uniform float rainfall", "uniform int biome_precipitation", "biome_precipitation == PPT_RAIN",
+              "uniform float rainfall", "uniform int biome_precipitation", "biome_precipitation == 1",
               "#define RAIN_PUDDLE_STRENGTH 70", "#define MATERIAL_WETNESS_STRENGTH 100",
               "materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0)",
               "float porousWetness = clamp(", "materialReflectance *= 1.0 - porousWetness * 0.45",
