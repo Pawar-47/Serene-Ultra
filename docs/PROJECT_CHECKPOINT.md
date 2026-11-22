@@ -631,3 +631,6 @@ Normal-atlas sampling uses implicit-derivative `texture(normals, vTexCoord)` rat
 Replaced the earlier Blinn-Phong highlight with a compact GGX microfacet direct-specular term, guided by the pinned Unbound `ggx.glsl` reference. The implementation uses the PBR smoothness map, a roughness floor for stable low-end rendering, GGX normal distribution, Schlick-Smith geometry, Schlick Fresnel with decoded oldPBR/LabPBR reflectance, and the existing colored shadow/direct-celestial radiance. A branch skips the BRDF on non-glossy pixels and when no direct celestial light is present; a soft peak compression controls extreme highlights on Intel HD 5500.
 
 This is direct-light GGX only. Full energy-conserving metal diffuse, image-based/environment specular, area-light sun approximation and runtime visual calibration remain outstanding.
+
+
+The exact-source GLSL and structural validation for the GGX/PBR material state passed in GitHub Actions run [45078017437](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45078017437), commit `b9fa362951f49a7b26870ce4110ca4ed97fa9aca`. This includes default and LabPBR macro-branch compilation, shader program linking and structural checks. It does not substitute for Iris/Minecraft 26.3 runtime or visual testing.
