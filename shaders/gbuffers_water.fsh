@@ -70,6 +70,7 @@ float calculateWaterThickness() {
     // depthtex1 is full-resolution; fetch the exact current pixel without
     // filtering or normalized-coordinate arithmetic.
     float opaqueDepth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
+    vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
     // depthtex1 clears to 1.0. Reconstruct that far-plane sample with the
     // inverse projection instead of using Iris' "far" uniform, which is
     // render distance in blocks rather than the projection far plane.
