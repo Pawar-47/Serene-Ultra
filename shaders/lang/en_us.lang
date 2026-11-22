@@ -3,6 +3,7 @@
 screen.QUALITY = Quality & Profiles
 screen.COLOR = Color & HDR Controls
 
+option.SHADOW_ALPHA_CUTOFF = Shadow Alpha Cutoff
 option.RED_GAIN = Red Channel
 option.GREEN_GAIN = Green Channel
 option.BLUE_GAIN = Blue Channel
@@ -12,6 +13,7 @@ option.CONTRAST = Contrast
 option.SATURATION = Saturation
 option.HDR_LOOK = HDR Tone Mapping
 
+option.SHADOW_ALPHA_CUTOFF.comment = Controls which transparent texels are removed from shadow casters. Lower values preserve finer foliage detail.
 option.RED_GAIN.comment = Adjust the red channel independently. 1.00 is neutral.
 option.GREEN_GAIN.comment = Adjust the green channel independently. 1.00 is neutral.
 option.BLUE_GAIN.comment = Adjust the blue channel independently. 1.00 is neutral.
