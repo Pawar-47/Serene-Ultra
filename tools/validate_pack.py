@@ -172,10 +172,12 @@ for declaration in (
 if "shadowHardwareFiltering=" in props or "shadowIntervalSize=" in props:
     errors.append("Iris GLSL constants must not be declared as shaders.properties directives")
 
-for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh",
+             "gbuffers_damagedblock.fsh", "gbuffers_hand.fsh",
              "gbuffers_particles.fsh", "gbuffers_spidereyes.fsh"):
     source = sources.get(name, "")
-    alpha_test_uses_ref = ("albedo.a < alphaTestRef" in source or "particle.a < alphaTestRef" in source or "emissiveColor.a < alphaTestRef" in source)
+    alpha_test_uses_ref = ("albedo.a < alphaTestRef" in source or "particle.a < alphaTestRef" in source or
+                           "emissiveColor.a < alphaTestRef" in source or "crackColor.a < alphaTestRef" in source)
     if "uniform float alphaTestRef" not in source or not alpha_test_uses_ref:
         errors.append(f"{name} must use Iris alphaTestRef for alpha discard")
 hand_fragment = sources.get("gbuffers_hand.fsh", "")
@@ -230,7 +232,8 @@ for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = 
     if token not in terrain_fragment:
         errors.append(f"Terrain G-buffer is missing emissive material output: {token}")
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
-for token in ("block.32100=minecraft:glowstone", "block.32118=minecraft:lava"):
+for token in ("block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
+              "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal"):
     if token not in block_properties:
         errors.append(f"Missing emissive block ID mapping: {token}")
 
@@ -455,6 +458,8 @@ for directive in (
     "blend.gbuffers_weather.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_particles_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_entities_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
+    "blend.gbuffers_block_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_spidereyes.colortex2=off",
     "blend.gbuffers_armor_glint.colortex2=off",
     "blend.gbuffers_lightning.colortex2=off",
