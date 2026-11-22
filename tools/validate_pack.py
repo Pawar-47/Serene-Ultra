@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Structural checks for Serene Ultra. This is not a GLSL compiler."""
 from pathlib import Path
+import math
 import re
 import sys
 
@@ -120,6 +121,17 @@ for token in ("/* RENDERTARGETS: 3 */", "sampler2D colortex0",
         errors.append(f"Deferred lighting is missing required component: {token}")
 if "1.0 - smoothstep(0.45, 0.55, sunAngle)" in deferred:
     errors.append("Deferred day/night curve incorrectly treats Iris sunrise as full daylight")
+# Numerically guard the documented Iris sunAngle cycle: dawn=0, noon=0.25,
+# sunset=0.5 and midnight=0.75. The daylight envelope must be continuous.
+def smoothstep01(x):
+    t = max(0.0, min(1.0, x))
+    return t * t * (3.0 - 2.0 * t)
+
+for phase, expected in ((0.0, 0.0), (0.25, 1.0), (0.5, 0.0), (0.75, 0.0)):
+    elevation = math.sin(phase * 2.0 * math.pi)
+    daylight = smoothstep01(elevation / 0.30)
+    if abs(daylight - expected) > 1e-6:
+        errors.append(f"Iris daylight cycle regression at sunAngle={phase}")
 if "outColor = scene;" not in deferred or "outColor = vec4(litColor, scene.a);" not in deferred:
     errors.append("Deferred pass must preserve uncovered pixels and output shaded pixels")
 
