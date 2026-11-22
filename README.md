@@ -48,3 +48,5 @@ The water baseline now retains Complementary's `alphaTest.gbuffers_water=GREATER
 Weather now includes reference-guided rain/snow opacity and optional wind motion, while vanilla clouds have a dedicated fogged forward pass that bypasses deferred terrain lighting. Custom volumetric clouds remain pending.
 
 Dedicated Iris textured, sky-textured and sky-basic programs are now present. They preserve unlit texture overlays, distinguish sun/moon stages, and build a lightweight sky gradient with deferred-normal bypass. Full atmospheric scattering and custom cloud systems remain pending.
+
+Dedicated Iris sky-basic, sky-textured and textured-fallback programs now handle sky/horizon/stars/void, sun/moon textures, and unlit textured geometry. Their render-stage macros and celestial uniforms were checked against Iris documentation, and their deferred-validity masks are protected from blending. CI compiles the conditional render-stage branches; visual calibration and runtime validation remain outstanding.
