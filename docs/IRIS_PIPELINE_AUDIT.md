@@ -257,3 +257,6 @@ The validator now inventories the documented Iris fallback chain for the remaini
 
 ## Shadow cutout threshold correction — 2026-11-23
 The shadow fragment shader now combines Iris' per-program `alphaTestRef` with the Serene user-controlled `SHADOW_ALPHA_CUTOFF` using the stricter threshold. This preserves Iris' render-layer cutout behavior while retaining the pack's adjustable shadow cutout control.
+
+## Translucent particle alpha correction — 2026-11-23
+The post-deferred `gbuffers_particles_translucent` program no longer uses Iris `alphaTestRef`. That uniform is a cutout threshold; applying it to blended particles could discard valid low-alpha smoke/spark/particle edges. The program now discards only effectively transparent texels (`alpha <= 0.001`) and retains fractional alpha for source-alpha blending. Opaque `gbuffers_particles` continues to use `alphaTestRef`.
