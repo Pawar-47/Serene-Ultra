@@ -99,3 +99,6 @@ Opaque world surfaces receive Iris fog in deferred using the documented `fogColo
 
 ## Translucent terrain scope
 The `gbuffers_water` program is Iris' post-deferred translucent-terrain program, not a water-only callback. It covers water and other translucent terrain (e.g. stained glass). The current forward shader therefore uses generic surface lighting, vanilla lightmap, shadowing and fog. Fluid-only effects must branch on Iris' `mc_Entity.y` attribute and will be implemented only after comparison with the supplied reference source.
+
+## Translucent material classification and water depth
+The `gbuffers_water` vertex stage consumes Iris `mc_Entity` and passes the material ID and fluid render type to the fragment stage. `shaders/block.properties` assigns stable IDs to water, water cauldrons, lava, lava cauldrons and nether portals. The forward fragment stage applies depth-dependent opacity only to water/water-cauldron, using Iris `depthtex1` and `gbufferProjectionInverse` to reconstruct the opaque surface behind the water. Other translucent terrain keeps its own alpha. `WATER_FOG_MULT` controls the depth response.
