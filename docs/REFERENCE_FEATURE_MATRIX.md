@@ -140,3 +140,6 @@ The generic `gbuffers_water` translucent-terrain path now uses Iris `mc_Entity` 
 | Iris recommends using `alphaTestRef` | Water shader uses the uniform without overriding it in `shaders.properties` |
 
 The depth-opacity calculation follows the same thickness/exponential form used by Complementary Reimagined. Advanced water materials remain pending.
+
+## Special overlay coverage — 2026-11-23
+Dedicated paths now exist for armor glint, beacon beams and lightning. Each writes color and clears the deferred-normal validity mask so overlays are not shaded using the opaque surface beneath them. Armor-glint color blending remains under Minecraft/Iris' active render state. Beacon beams and lightning receive Iris fog. Runtime depth/blend validation remains pending.
