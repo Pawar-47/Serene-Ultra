@@ -37,5 +37,23 @@ jobs:
             echo "Compiling $shader"
             glslangValidator -S "$stage" "$shader"
           done < <(find shaders -type f \( -name '*.vsh' -o -name '*.fsh' \) -print0)
+      - name: Link vertex and fragment shader programs
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          while IFS= read -r -d '' vertex; do
+            fragment="${vertex%.vsh}.fsh"
+            if [[ ! -f "$fragment" ]]; then
+              echo "Missing fragment stage for $vertex" >&2
+              exit 1
+            fi
+            key="$(printf '%s' "$vertex" | sed 's#[^A-Za-z0-9_]#_#g')"
+            cp "$vertex" "$tmpdir/$key.vert"
+            cp "$fragment" "$tmpdir/$key.frag"
+            echo "Linking $vertex + $fragment"
+            glslangValidator -l "$tmpdir/$key.vert" "$tmpdir/$key.frag"
+          done < <(find shaders -type f -name '*.vsh' -print0)
       - name: Validate shaderpack structure
         run: python tools/validate_pack.py
