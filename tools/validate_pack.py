@@ -347,7 +347,7 @@ for token in ("out vec3 vPlayerPosition", "vPlayerPosition = (gbufferModelViewIn
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     metal_branch = re.search(
-        r"else if \\(labF0Code >= 230\\.0\\) \\{([^}]*)\\}", source
+        r"else if \(labF0Code >= 230\.0\) \{([^}]*)\}", source
     )
     if not metal_branch or "materialSurfaceData = 0.0;" not in metal_branch.group(1):
         errors.append(f"{name} must clear reserved LabPBR blue-channel data for metals")
