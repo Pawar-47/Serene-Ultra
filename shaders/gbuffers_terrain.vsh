@@ -6,7 +6,6 @@ out vec2 vTexCoord;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
 out vec3 vPlayerNormal;
-out vec3 vViewPosition;
 
 void main() {
     gl_Position = ftransform();
@@ -16,7 +15,6 @@ void main() {
 
     // Store normals in player/world-aligned space so later deferred passes
     // can compare them consistently with world-space light directions.
-    vec3 viewNormal = normalize(gl_NormalMatrix * gl_Normal);
+    vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
-    vViewPosition = (gl_ModelViewMatrix * gl_Vertex).xyz;
 }
