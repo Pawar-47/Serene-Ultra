@@ -21,8 +21,9 @@ in vec2 vTexCoord;
 #define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00] Contact occlusion strength
 #define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
 
-// Deferred reads colortex0 and writes a different attachment. Composite later
-// copies colortex3 back to colortex0, avoiding read/write feedback on one image.
+// Deferred is a composite-style pass: it reads the main colortex0 image and
+// writes the alternate image. Iris flips the pair after this pass, so the
+// lit opaque scene becomes the main image for subsequent translucent gbuffers.
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
 
