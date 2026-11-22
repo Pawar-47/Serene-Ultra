@@ -11,8 +11,8 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 
 | Feature family | Required Ultra capability | Serene implementation plan | Status |
 |---|---|---|---|
-| Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Albedo, sampled vanilla lightmap RGB, player-space normal capture, oldPBR/LabPBR smoothness/F0/metalness/emission decode and slime/honey material overrides | Partial; opaque terrain PBR normal maps, AO/porosity/SSS and POM remain pending |
-| Entity rendering | Entity-specific shading and shadows | Entity albedo/tint, sampled lightmap, normal capture, oldPBR/LabPBR smoothness/F0/metalness/emission atlas decode and alpha cutoff | Partial; entity PBR normal maps and runtime calibration remain pending |
+| Terrain/material pipeline | Material-aware terrain rendering and material-specific behavior | Albedo, sampled vanilla lightmap RGB, player-space normal capture, oldPBR/LabPBR smoothness/F0/metalness/emission decode and slime/honey material overrides | Partial; material AO/porosity/SSS, POM and visual/runtime calibration remain pending |
+| Entity rendering | Entity-specific shading and shadows | Entity albedo/tint, sampled lightmap, normal capture, oldPBR/LabPBR smoothness/F0/metalness/emission atlas decode and alpha cutoff | Partial; entity PBR visual/runtime calibration remains pending |
 | Hand/item rendering | Correct first-person hand/item rendering | Hand lightmap path, dedicated post-deferred hand-water path and held-item light follow-up | Partial |
 | Shadow mapping | Sun/moon directional shadows | Depth reconstruction and directional shadow comparison | Partial |
 | Shadow caster alpha | Transparent texels discarded so foliage/fences cast shaped rather than solid shadows | Texture-aware shadow fragment test with user-adjustable alpha threshold | Implemented; runtime verification pending |
@@ -191,7 +191,7 @@ Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANS
 `gbuffers_textured_lit` now has a dedicated G-buffer vertex/fragment pair, matching the Iris fallback table for most lit particles. It writes albedo, lightmap, player-space normal and scalar emission to colortex0–3, applies Iris `alphaTestRef` at 0.01, and disables blending on the opaque G-buffer attachments. The generic path reuses the same atlas-size-guarded particle material classifier. `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` deliberately retain the documented fallback to `gbuffers_terrain`, which is also the program where Iris exposes `mc_Entity` for stable block/fluid IDs.
 
 ## Emissive materials — 2026-11-23
-An RG8 `colortex3` material buffer is written by opaque G-buffer programs: red stores emission strength and green stores oldPBR metalness or LabPBR dielectric F0/metal classification. Terrain, entities and block entities consume Iris `specular` atlas data for smoothness and emissive decoding; deferred adds tinted emission after AO/direct lighting and uses material F0 for specular response. Opaque particle paths retain their emissive heuristics. Opaque terrain/entity/block-entity normal maps, material AO/porosity/SSS and bloom remain pending.
+An RG8 `colortex3` material buffer is written by opaque G-buffer programs: red stores emission strength and green stores oldPBR metalness or LabPBR dielectric F0/metal classification. Terrain, entities and block entities consume Iris `specular` atlas data for smoothness and emissive decoding; deferred adds tinted emission after AO/direct lighting and uses material F0 for specular response. Opaque particle paths retain their emissive heuristics. Material AO/porosity/SSS and bloom remain pending; resource-pack tangent-space normal maps now cover opaque terrain, entities and block entities.
 
 ## Core overlay/block-entity coverage — 2026-11-23
 | Iris program | Geometry | Current implementation |
