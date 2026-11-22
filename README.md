@@ -46,3 +46,5 @@ Special geometry now includes dedicated armor-glint, beacon-beam and lightning o
 The water baseline now retains Complementary's `alphaTest.gbuffers_water=GREATER 0.0001`, uses Iris `alphaTestRef`, applies reference-style square-root alpha shaping, and fetches opaque depth with exact-pixel `texelFetch`.
 
 Weather now includes reference-guided rain/snow opacity and optional wind motion, while vanilla clouds have a dedicated fogged forward pass that bypasses deferred terrain lighting. Custom volumetric clouds remain pending.
+
+Dedicated Iris textured, sky-textured and sky-basic programs are now present. They preserve unlit texture overlays, distinguish sun/moon stages, and build a lightweight sky gradient with deferred-normal bypass. Full atmospheric scattering and custom cloud systems remain pending.
