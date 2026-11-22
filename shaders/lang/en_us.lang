@@ -69,7 +69,7 @@ option.WATER_FOAM_STRENGTH.comment = Controls foam at water and opaque-surface i
 option.WATER_UNDERWATER_STRENGTH = Underwater Water Response
 option.WATER_UNDERWATER_STRENGTH.comment = Controls the cool tint, reduced opacity and softened reflections when the camera is underwater.
 
-option.GLASS_REFLECTION_STRENGTH = Glass Reflections
-option.GLASS_REFLECTION_STRENGTH.comment = Controls screen-space reflections on clear, stained and tinted glass. Reflection quality follows the Water Reflections quality setting.
+option.GLASS_REFLECTION_STRENGTH = Glass / Ice Reflections
+option.GLASS_REFLECTION_STRENGTH.comment = Controls screen-space reflections on clear, stained and tinted glass, plus translucent ice. Reflection quality follows the Water / Glass Reflection Quality setting.
 option.PORTAL_EMISSION_STRENGTH = Nether Portal Emission
 option.PORTAL_EMISSION_STRENGTH.comment = Controls the self-emission of nether portal surfaces.
