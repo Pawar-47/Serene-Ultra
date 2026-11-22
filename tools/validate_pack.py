@@ -390,8 +390,13 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
         errors.append(f"Water screen-space reflection path is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
+for token in ("WATER_FOAM_STRENGTH", "opaquePlayerPosition",
+              "float verticalDepth =", "float surfaceGate =", "waterFoam = heightFoam",
+              "(1.0 - waterFoam)"):
+    if token not in water:
+        errors.append(f"Unbound-guided water foam path is missing component: {token}")
 for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureLod(noisetex, noiseUV, 0.0)",
-              "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH"):
+              "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH"):
     if token not in water:
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 
