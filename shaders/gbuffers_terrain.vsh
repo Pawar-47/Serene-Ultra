@@ -4,11 +4,14 @@ in vec4 at_tangent;
 
 uniform mat4 gbufferModelViewInverse;
 in vec2 mc_Entity;
+in vec4 at_tangent;
 
 out vec2 vTexCoord;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
 out vec3 vPlayerNormal;
+out vec3 vPlayerTangent;
+flat out float vTangentHandedness;
 out vec3 vPlayerTangent;
 flat out float vTangentHandedness;
 flat out int vMaterialId;
@@ -24,6 +27,9 @@ void main() {
     // can compare them consistently with world-space light directions.
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
+    vec3 viewTangent = normalize(gl_NormalMatrix * normalize(at_tangent.xyz));
+    vPlayerTangent = normalize(mat3(gbufferModelViewInverse) * viewTangent);
+    vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0;
     vec3 viewTangent = normalize(gl_NormalMatrix * normalize(at_tangent.xyz));
     vPlayerTangent = normalize(mat3(gbufferModelViewInverse) * viewTangent);
     vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0;
