@@ -83,7 +83,7 @@ Historical investigation checklist (the attachment-flow correction is now commit
 1. Inspect Complementary's actual `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, relevant composite passes and their `shaders.properties` blending/ordering/target directives.
 2. Inspect the matching Minecraft 26.3 stock shader paths to understand water/weather/hand-water native inputs and blending expectations.
 3. Trace Iris target flips and blending for the selected implementation.
-4. Design dedicated forward paths that preserve correct alpha/depth ordering and avoid sampling forbidden colortex0–3 from gbuffers.
+4. Design dedicated forward paths that preserve correct alpha/depth ordering and avoid same-attachment colortex feedback in gbuffers; sampling a different, non-output attachment is allowed by Iris.
 5. Add static checks and Iris runtime scene tests for water, rain/snow and first-person water.
 6. Compare each result to Complementary Ultra and vanilla behavior.
 
@@ -217,7 +217,7 @@ Iris documents `gbuffers_water` as post-deferred translucent terrain, with `gbuf
 - Uses Iris `gtexture`, transformed lightmap UVs and geometry normals.
 - Reconstructs player-space water position in the vertex stage and samples `shadowtex0` in the fragment stage.
 - Applies the same dimension-aware sun/moon/End-flash direct-light gate and hardware-filtered shadow taps as the opaque lighting path.
-- Writes color only to `colortex0`; it does not sample forbidden `colortex0–3` in a gbuffers program.
+- Writes color only to `colortex0`; it does not sample `colortex0`, the attachment it writes. Iris permits sampling a different attachment, but the current water path does not need one.
 - Uses the existing source-alpha blend directive.
 This is a forward-lit baseline, not full Ultra water parity. Refraction, Fresnel/reflection, absorption/depth tint, wave normals, rain ripples and water-specific reference tuning remain outstanding pending line-by-line source comparison and runtime testing.
 
@@ -338,3 +338,6 @@ The current Iris NoiseTex reference documents `noisetex` as a generated RGB8 squ
 
 ## Opaque particle emissive classifier corrected — 2026-11-23
 The Complementary Reimagined `gbuffers_textured.glsl` source was re-read around its particle-material block. Serene's opaque `gbuffers_particles` and `gbuffers_textured_lit` programs had a simplified classifier that treated nearly every bright grayscale texture as either an ender-family emitter or lava. This did not match the reference conditions and risked false positives. Replaced it with the source's actual grayscale-texture gate, color-energy and channel-ratio test for ender/crying-obsidian/redstone particles, and the separate red/orange lava test. Lava now also receives the reference RGB adjustment; the ender-family branch retains lightmap suppression and the 1.5 power adjustment. The validator checks the exact distinguishing predicates and rejects the superseded broad classifier. Iris contracts for `gtexture`, `lightmap`, `alphaTestRef`, `gl_Normal` and G-buffer outputs were checked before changing these stages.
+
+## Iris gbuffers colortex sampling rule correction — 2026-11-23
+Current Iris documentation says colortex samplers can be read from any program. The important distinction is buffer flipping: gbuffers and shadow programs read the main buffer and write the main buffer, so sampling an attachment that the same pass also writes can create a read/write race. Deferred/composite-style passes read main and write alt, then flip. The validator previously rejected every colortex0–3 sampler in every gbuffers shader; that was too broad and was not supported by the docs. It now parses each fragment shader's `RENDERTARGETS`/legacy `DRAWBUFFERS` targets and rejects only samplers that overlap the same pass's output attachments. Sampling a different, non-output colortex attachment is permitted by the validator, consistent with Iris documentation. The active water shader still avoids colortex sampling because it writes colortex0 and does not yet need a separate scene-color copy.
