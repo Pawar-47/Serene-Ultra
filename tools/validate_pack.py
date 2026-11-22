@@ -139,9 +139,14 @@ if props_path.is_file():
         if screen not in props:
             errors.append(f"Missing menu configuration: {screen}")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
-                   "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH"):
+                   "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
+                   "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
+    slider_options_line = next((line for line in props.splitlines() if line.startswith("sliders = ")), "")
+    for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
+        if option not in slider_options_line:
+            errors.append(f"{option} must be exposed as an Iris slider")
     if "separateAo=false" not in props:
         errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
     if "separateEntityDraws=true" not in props:
