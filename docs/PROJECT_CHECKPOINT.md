@@ -192,3 +192,11 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Runtime verification and dynamic held-item illumination remain pending.
 
 - Updated first-person hand lightmap multiplication and `entityColor` tint blending to occur in linear space, following Iris' fog guide's color conversion guidance. Source-buffer color-space assumptions remain subject to supplied reference-source comparison and runtime calibration.
+
+## Current post-deferred program state — 2026-11-23
+- `gbuffers_water`, `gbuffers_weather` and `gbuffers_hand_water` now all have dedicated forward color-only programs; none relies on its former Iris fallback.
+- Water uses Iris gtexture/lightmap/shadow map, dimension-aware celestial lighting and fog.
+- Weather uses Iris gtexture/lightmap and fog; `rain.depth=false` remains explicit.
+- Hand-water uses Iris gtexture/lightmap and fog.
+- All use explicit source-alpha blending and do not sample colortex0–3 from gbuffers programs.
+- Advanced water effects, volumetric weather, dynamic held-item illumination, special geometry and runtime/visual parity remain outstanding.
