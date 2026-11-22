@@ -169,3 +169,6 @@ Render-stage macro names and celestial uniforms were checked against current Iri
 
 ## Line overlays — 2026-11-23
 Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` macros to skip fog on selection outlines/debug lines while fogging ordinary lines. It clears deferred-normal validity and leaves color blending to the game.
+
+## Translucent particles — 2026-11-23
+`gbuffers_particles_translucent` now forward-lights post-deferred particles using player-space normals/positions, vanilla lightmap, day/night/End-flash direct light, one hardware-filtered shadow comparison and Iris fog. The one-tap shadow path is the low-cost baseline for integrated graphics. Particle-specific emission and smoke/water material heuristics remain pending.
