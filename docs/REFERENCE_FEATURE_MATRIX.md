@@ -277,3 +277,7 @@ The forward `gbuffers_water` pass now samples the same `shadowtex1`/`shadowcolor
 
 ## Resource-pack water normal maps — 2026-11-23
 The water path now supports Iris `normals` atlas maps via `at_tangent`, with LabPBR Y- inversion selected by Iris' `MC_TEXTURE_FORMAT_LAB_PBR` macro and tangent handedness applied to the bitangent. A neutral normal is supplied when no `_n` texture exists. The `WATER_NORMAL_MAP_STRENGTH` slider controls the contribution; resource-pack/runtime validation remains pending.
+
+
+## oldPBR/LabPBR terrain material decoding — 2026-11-23
+Terrain now samples Iris' `specular` atlas and decodes both oldPBR and LabPBR conventions. Smoothness comes from red; oldPBR green is metalness and blue is emissive; LabPBR green is dielectric F0/metal code and alpha is emissive. `colortex3` is now RG8 (emission red, reflectance green), and deferred uses material F0/albedo for colored specular highlights. PBR material decoding is compile-tested in both macro branches; in-game resource-pack validation remains pending.
