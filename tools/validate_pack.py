@@ -400,7 +400,7 @@ if "texture(lightmap" not in translucent_particles:
 deferred = sources.get("deferred.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2", "sampler2D colortex3",
-              "texture(colortex3, vTexCoord)", "emissionData.r * 5.0", "colortex3Format=R8",
+              "texture(colortex3, vTexCoord)", "emissionData.r * 5.0",
               "sampler2D depthtex0", "sampler2D depthtex2", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
               "sampleShadow", "vanillaAmbient", "lightData.a",
@@ -447,7 +447,7 @@ if "colortex3" not in deferred:
     errors.append("Deferred must sample the emissive G-buffer before fogging the final lit scene")
 for directive in (
     "flip.deferred.colortex0=true", "flip.composite.colortex0=true",
-    "flip.deferred.colortex3=false",
+    "flip.deferred.colortex3=false", "colortex3Format=R8",
     "blend.gbuffers_terrain.colortex3=off",
     "blend.gbuffers_entities.colortex3=off",
     "blend.gbuffers_particles.colortex3=off",
