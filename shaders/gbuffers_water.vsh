@@ -7,6 +7,7 @@ out vec2 vLightmapCoord;
 out vec4 vVertexColor;
 out vec3 vPlayerNormal;
 out vec3 vPlayerPosition;
+out vec3 vViewPosition;
 
 void main() {
     gl_Position = ftransform();
@@ -18,6 +19,7 @@ void main() {
     // Water runs after deferred, so it must be lit forward in this program.
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
     vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
+    vViewPosition = viewPosition.xyz;
 
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
