@@ -569,3 +569,9 @@ Iris documents `at_tangent` as available in `gbuffers_*.vsh`, and `normals` as t
 The shadow pass reconstructs stable world coordinates from Iris' split integer/fractional camera uniforms and shadow-view-to-player transform, then wraps them to a 256-block period. Three animated caustic interference bands use integer-lattice spatial frequencies and integer cycle counts over Iris' 3600-second timer, preventing both camera-wrap and timer-wrap seams. `WATER_CAUSTICS_SCALE` uses quarter-step values that preserve the 256-block period; `WATER_CAUSTICS_STRENGTH=0` returns neutral caustic modulation.
 
 The shadow color target is RGBA8 because it now carries RGB transmission and alpha for water, clear/stained/tinted glass, ice and portals. Deferred combines the existing four-tap `shadowtex0` PCF with the opaque-only `shadowtex1` comparison, and only samples `shadowcolor0` when a translucent blocker is detected. The resulting RGB transmission attenuates both direct diffuse and material specular light. This is source-validated only; the extra translucent shadow render and RGBA8 target need performance and visual checks on Intel HD 5500.
+
+
+## Water cauldron checkpoint — 2026-11-23
+- Added `block.10049=minecraft:water_cauldron`, then remapped ID 10049 to 32001 in both `gbuffers_water.vsh` and `shadow.vsh`, following the shared r5.10 material mapping.
+- Water cauldron surfaces now enter the water material path even though they do not rely on the ordinary fluid render-type flag. They receive the water depth/refraction/absorption/foam/underwater treatment and caustic shadow transmission.
+- Structural validation requires the block mapping and both vertex-stage remaps. Empty cauldrons remain unaffected.
