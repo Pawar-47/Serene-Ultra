@@ -174,18 +174,21 @@ Dedicated `gbuffers_line` now handles line geometry, using Iris `renderStage` ma
 `gbuffers_particles_translucent` now forward-lights post-deferred particles using player-space normals/positions, vanilla lightmap, day/night/End-flash direct light, one hardware-filtered shadow comparison and Iris fog. The one-tap shadow path is the low-cost baseline for integrated graphics. Particle-specific emission and smoke/water material heuristics remain pending.
 
 ## Entity translucent gate — 2026-11-23
-`separateEntityDraws=false` is explicitly retained because current Iris documentation warns the feature is broken in newer versions. Dedicated translucent entity/block shader pairs remain in the repository but are inactive until the Iris feature is verified. The validator rejects accidental activation.
+`separateEntityDraws=true` is active as documented by Iris. The pack queries `ENTITY_TRANSLUCENT` as an optional feature and uses dedicated forward entity/block-entity programs after deferred. Runtime sorting and blending still require testing.
 
 ## Translucent entity coverage — 2026-11-23
 | Iris program | Geometry | Current implementation |
 |---|---|---|
-| `gbuffers_entities_translucent` | Translucent entities (when Iris supports `ENTITY_TRANSLUCENT`) | Forward lightmap + celestial shadow + Iris fog; applies `entityColor`; source-alpha blend |
+| `gbuffers_entities_translucent` | Translucent entities | Active forward lightmap + celestial shadow + Iris fog; applies `entityColor`; source-alpha blend |
 | `gbuffers_block_translucent` | Translucent block entities | Forward lightmap + celestial shadow + Iris fog; source-alpha blend |
 
 Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANSLUCENT`. The programs write only colortex0 after deferred; runtime compatibility remains to be checked.
 
 ## Particle material effects — 2026-11-23
-`PARTICLE_MATERIAL_FEATURES` now ports the key Complementary heuristics into the Iris translucent particle path: water splashes, physics rain/snow opacity, underwater particle suppression, campfire smoke softening, and emissive ender/redstone/lava particles. It uses Iris `noisetex` via `textureSize`/`texelFetch`, and rain/snow detection is gated by runtime `hasSkylight` and `rainStrength` rather than a dimension macro unavailable in the base program. Opaque particle material classification remains pending.
+`PARTICLE_MATERIAL_FEATURES` is shared by opaque, translucent and generic lit-fallback particle paths. The opaque path writes emission into colortex3; the translucent path uses forward lightmap/shadow/fog and ports Complementary-guided water splash, physics rain/snow, underwater, campfire-smoke and emissive particle heuristics. It uses Iris `noisetex` via `textureSize`/`texelFetch`, and rain/snow detection is gated by runtime `hasSkylight` and `rainStrength`.
+
+## Iris generic lit-texture fallback — 2026-11-23
+`gbuffers_textured_lit` now has a dedicated G-buffer vertex/fragment pair, matching the Iris fallback table for most lit particles. It writes albedo, lightmap, player-space normal and scalar emission to colortex0–3, applies Iris `alphaTestRef` at 0.01, and disables blending on the opaque G-buffer attachments. The generic path reuses the same atlas-size-guarded particle material classifier. `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` deliberately retain the documented fallback to `gbuffers_terrain`, which is also the program where Iris exposes `mc_Entity` for stable block/fluid IDs.
 
 ## Emissive materials — 2026-11-23
 A compact single-channel R8 `colortex3` emission buffer is now written by opaque G-buffer programs. Terrain uses Iris `mc_Entity` plus `block.properties` IDs to classify luminous blocks; deferred adds their tinted emission after AO/direct lighting and before fog. Lava gets a forward emission term in `gbuffers_water`. Entity and opaque-particle paths currently initialize emission to zero; richer entity/particle material maps and bloom remain pending.
