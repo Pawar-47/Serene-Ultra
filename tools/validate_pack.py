@@ -396,7 +396,7 @@ for token in ("uniform int isEyeInWater", "bool cameraUnderwater = (isEyeInWater
     if token not in water:
         errors.append(f"Unbound-guided underwater water response is missing component: {token}")
 for token in ("WATER_FOAM_STRENGTH", "opaquePlayerPosition",
-              "float verticalDepth =", "float surfaceGate =", "waterFoam = heightFoam",
+              "float shallowFoam = 1.0 - smoothstep(0.035, 0.42, waterThickness)", "waterFoam = shallowFoam",
               "(1.0 - waterFoam)"):
     if token not in water:
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
