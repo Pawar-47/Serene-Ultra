@@ -278,14 +278,15 @@ for token in ("flat in int vMaterialId", "emissionStrength", "outEmissionData = 
     if token not in terrain_fragment:
         errors.append(f"Terrain G-buffer is missing emissive material output: {token}")
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
-for token in ("block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
+for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_block",
+              "block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
               "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal"):
     if token not in block_properties:
         errors.append(f"Missing emissive/block-entity ID mapping: {token}")
 if "minecraft:flowing_lava" in block_properties:
     errors.append("Remove legacy flowing_lava block ID; Minecraft 1.13+ uses minecraft:lava block states")
 
-for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh"):
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
     source = sources.get(name, "")
     if "/* RENDERTARGETS: 0,1,2,3 */" not in source:
         errors.append(f"{name} must write albedo, lightmap, normal and emissive attachments")
@@ -305,6 +306,16 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
         errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
 if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity emission must default to zero unless an emissive blockEntityId is detected")
+for token in ("vMaterialId == 30012", "vMaterialId == 30016",
+              "0.5 + 0.5 * materialSmoothness"):
+    if token not in terrain_fragment:
+        errors.append(f"Terrain smoothness packing is missing component: {token}")
+for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh", "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
+    source = sources.get(name, "")
+    if "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5)" not in source and name != "gbuffers_block.fsh":
+        errors.append(f"{name} must encode valid zero-smoothness geometry as colortex2 alpha 0.5")
+if "signText ? 0.0 : 0.5" not in sources.get("gbuffers_block.fsh", ""):
+    errors.append("Block-entity validity/smoothness alpha must keep sign text invalid and normal geometry at 0.5")
 opaque_particles = sources.get("gbuffers_particles.fsh", "")
 for token in ("PARTICLE_MATERIAL_FEATURES", "float(textureSize(gtexture, 0).x) < 1100.0",
               "emissionStrength = clamp(particle.r * 8.0, 1.6, 5.0)",
@@ -576,6 +587,11 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
         errors.append(f"Deferred lighting is missing required component: {token}")
 if "abs(sceneDepth - opaqueWorldDepth) > 0.000001" not in deferred:
     errors.append("Deferred must mask hand/translucent pixels by comparing depthtex0 with depthtex2")
+for token in ("materialSmoothness = clamp((normalData.a - 0.5) * 2.0, 0.0, 1.0)",
+              "MATERIAL_SPECULAR_STRENGTH", "float specularPower = mix(12.0, 96.0, materialSmoothness)",
+              "litLinear += celestialColor * specularStrength"):
+    if token not in deferred:
+        errors.append(f"Deferred material specular path is missing component: {token}")
 
 deferred1 = sources.get("deferred1.fsh", "")
 deferred1_vertex = sources.get("deferred1.vsh", "")
