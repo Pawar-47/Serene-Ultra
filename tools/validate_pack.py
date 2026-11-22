@@ -401,6 +401,11 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
         errors.append(f"Water screen-space reflection path is missing component: {token}")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
+for token in ("WATER_ABSORPTION_STRENGTH", "vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)",
+              "vec3 transmission = exp(-absorptionCoefficient * waterThickness)",
+              "waterAbsorptionTintLinear * (1.0 - transmission)"):
+    if token not in water:
+        errors.append(f"Unbound-guided depth absorption path is missing component: {token}")
 for token in ("uniform int isEyeInWater", "bool cameraUnderwater = (isEyeInWater == 1)",
               "if ((isWater && cameraUnderwater) || isPortal) direct = vec3(0.0)",
               "(cameraUnderwater ? 0.5 : 1.0)", "WATER_UNDERWATER_STRENGTH"):
@@ -429,7 +434,7 @@ if "uniform int isEyeInWater;" not in water:
     errors.append("Water pass must declare Iris isEyeInWater as int")
 
 for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureLod(noisetex, noiseUV, 0.0)",
-              "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH"):
+              "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "WATER_ABSORPTION_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH"):
     if token not in water:
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 
