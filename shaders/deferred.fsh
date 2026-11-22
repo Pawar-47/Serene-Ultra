@@ -4,7 +4,7 @@
 const int colortex2Format = RGBA8;
 */
 /*
-const int colortex3Format = R8;
+const int colortex3Format = RG8;
 */
 
 uniform sampler2D colortex0;
