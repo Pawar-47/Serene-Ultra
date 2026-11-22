@@ -211,3 +211,12 @@ Iris identifies `gbuffers_spidereyes` as the spider/enderman/dragon eye pass, fa
 
 ### Conditional translucent entity programs
 `gbuffers_entities_translucent` and `gbuffers_block_translucent` are only activated when `separateEntityDraws=true`. Serene intentionally leaves that option disabled because current Iris documentation warns the feature may be broken in newer Iris versions. The validator now excludes these two inactive programs from the missing-program warning unless the option is explicitly enabled. This does not mean translucent entity handling is complete; the current pre-deferred entity path still needs visual/runtime verification.
+
+## Dedicated forward water baseline — 2026-11-23
+Iris documents `gbuffers_water` as post-deferred translucent terrain, with `gbuffers_terrain` as its fallback. The old fallback therefore supplied G-buffer outputs that no later deferred pass consumed and left water without Serene's forward lighting. Added dedicated `gbuffers_water.vsh/.fsh`:
+- Uses Iris `gtexture`, transformed lightmap UVs and geometry normals.
+- Reconstructs player-space water position in the vertex stage and samples `shadowtex0` in the fragment stage.
+- Applies the same dimension-aware sun/moon/End-flash direct-light gate and hardware-filtered shadow taps as the opaque lighting path.
+- Writes color only to `colortex0`; it does not sample forbidden `colortex0–3` in a gbuffers program.
+- Uses the existing source-alpha blend directive.
+This is a forward-lit baseline, not full Ultra water parity. Refraction, Fresnel/reflection, absorption/depth tint, wave normals, rain ripples and water-specific reference tuning remain outstanding pending line-by-line source comparison and runtime testing.
