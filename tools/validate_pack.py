@@ -149,8 +149,8 @@ if props_path.is_file():
     if "iris.features.optional=ENTITY_TRANSLUCENT" not in props:
         errors.append("Query Iris ENTITY_TRANSLUCENT support through iris.features.optional")
     deferred_format_source = sources.get("deferred.fsh", "")
-    if "const int colortex2Format = RGBA16F;" not in deferred_format_source:
-        errors.append("Iris colortex2 normal target must declare RGBA16F using the documented GLSL buffer-format directive")
+    if "const int colortex2Format = RGBA8;" not in deferred_format_source:
+        errors.append("Iris colortex2 normal/smoothness target must use normalized RGBA8 to preserve bandwidth on low-end GPUs")
     if "const int colortex3Format = R8;" not in deferred_format_source:
         errors.append("Iris colortex3 emission target must declare R8 using the documented GLSL buffer-format directive")
     if "format.colortex2=" in props or "format.colortex3=" in props or "colortex3Format=" in props:
