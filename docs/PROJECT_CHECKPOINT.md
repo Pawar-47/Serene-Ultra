@@ -235,3 +235,9 @@ These remain preliminary. AO controls currently use the same defaults in all pro
 - Renamed water-specific local symbols to generic translucent-surface symbols and corrected the pipeline comments.
 - The current shader applies the same forward diffuse/lightmap/shadow/fog baseline to all geometry routed through this program; it does not claim fluid-specific refraction, Fresnel, or absorption.
 - Iris' `mc_Entity.y` is the documented fluid discriminator (`1.0` fluids, `-1.0` other terrain) and is reserved for the next reference-guided material-specific pass.
+
+## Latest verified HEAD — 2026-11-23
+- Current main HEAD: cb09a49bd55517a3d76f6eb7bed9d885e065e2cd.
+- CI run 45065219372 passed GLSL compilation, vertex/fragment linking for every program pair, and structural Iris-contract validation.
+- Final audit refinements in this checkpoint: shadow cutout uses max(Iris alphaTestRef, SHADOW_ALPHA_CUTOFF); translucent particles retain fractional alpha and discard only near-zero alpha; stale water-fallback comments and unused water auxiliary blend directives were removed.
+- No runtime, visual parity or Intel HD 5500 performance claims are made.
