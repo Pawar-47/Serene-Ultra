@@ -249,3 +249,7 @@ Ice/frosted ice now has a dedicated Iris material ID and shares the Fresnel SSR 
 
 ## Glossy terrain material update — 2026-11-23
 Iris IDs now classify slime and honey blocks in the terrain G-buffer. Smoothness is packed into the existing normal attachment alpha (validity remains distinguishable), and deferred adds a low-cost sun/moon specular highlight only for classified smooth materials. `MATERIAL_SPECULAR_STRENGTH` is adjustable. Broader PBR material classification, normal/roughness maps and runtime visual calibration remain pending.
+
+
+## Depth-dependent water absorption — 2026-11-23
+Water refraction now receives linear-space Beer-Lambert attenuation based on reconstructed opaque-scene thickness. Red/green/blue transmission coefficients create depth-dependent blue tint; the water's own base tint is the absorption colour. A strength slider is available. Coefficient tuning and in-game visual parity remain pending.
