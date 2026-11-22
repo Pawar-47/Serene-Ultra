@@ -124,8 +124,12 @@ if props_path.is_file():
             errors.append(f"{option} is not exposed in the Quality menu")
     if "separateAo=false" not in props:
         errors.append("G-buffer alpha must remain material opacity; separateAo must be false until AO is explicitly packed")
-    if "separateEntityDraws=true" in props or "iris.features.optional=ENTITY_TRANSLUCENT" in props:
-        errors.append("Do not enable separateEntityDraws: current Iris documentation warns this feature is broken in newer versions")
+    if "separateEntityDraws=false" not in props:
+        errors.append("separateEntityDraws must remain explicitly disabled for current Iris compatibility")
+    if "iris.features.optional=ENTITY_TRANSLUCENT" in props:
+        errors.append("Do not request ENTITY_TRANSLUCENT while separateEntityDraws remains disabled")
+    if "format.colortex2=RGBA16F" not in props or "format.colortex3=RGBA8" not in props:
+        errors.append("G-buffer normal/emission targets must use the declared formats")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
     if "endFlashShadows=true" not in props:
@@ -412,11 +416,9 @@ if "/* RENDERTARGETS: 0 */" not in composite:
 if "texture(colortex0" not in composite and "texture2D(colortex0" not in composite:
     errors.append("Composite does not preserve the accumulated scene")
 if "/* RENDERTARGETS: 3 */" in deferred:
-    errors.append("Deferred must write the lit scene to logical colortex0 through Iris buffer flipping")
+    errors.append("Deferred must read, not write, the emissive colortex3 buffer")
 if "copies colortex3 back to colortex0" in deferred:
     errors.append("Deferred source contains obsolete colortex3 copy-back commentary")
-if "/* RENDERTARGETS: 3 */" in deferred:
-    errors.append("Deferred must read, not write, the emissive colortex3 buffer")
 if "colortex3" not in deferred:
     errors.append("Deferred must sample the emissive G-buffer before fogging the final lit scene")
 for directive in (
