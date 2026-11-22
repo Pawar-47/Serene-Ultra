@@ -447,7 +447,9 @@ void main() {
             vec2 atlasTexel = 1.0 / vec2(textureSize(gtexture, 0));
             vec2 portalMinUV = vMidTexCoord - vTexHalfSize + atlasTexel;
             vec2 portalMaxUV = vMidTexCoord + vTexHalfSize - atlasTexel;
-            float portalPhase = frameTimeCounter * 0.8;
+            // Iris frameTimeCounter resets after 3600 seconds. Use an integer
+            // cycle count so the portal distortion phase is continuous at wrap.
+            float portalPhase = frameTimeCounter * (6.28318530718 * 458.0 / 3600.0);
             vec2 portalView = clamp(
                 vViewPosition.xy / max(abs(vViewPosition.z), 0.25),
                 vec2(-1.0), vec2(1.0)
