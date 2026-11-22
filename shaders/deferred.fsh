@@ -251,7 +251,7 @@ void main() {
                 * (MATERIAL_SPECULAR_STRENGTH * 0.01) * 0.18
                 * nDotL * celestialGate * celestialIntensity;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
-            vec3 specularColor = (materialReflectance > 0.5)
+            vec3 specularColor = (materialReflectance >= (230.0 / 255.0))
                 ? albedoLinear
                 : vec3(materialReflectance);
 #else
