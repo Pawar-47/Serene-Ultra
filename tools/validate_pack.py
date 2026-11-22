@@ -18,6 +18,7 @@ REQUIRED = (
     "gbuffers_particles.vsh", "gbuffers_particles.fsh",
     "gbuffers_particles_translucent.vsh", "gbuffers_particles_translucent.fsh",
     "gbuffers_spidereyes.vsh", "gbuffers_spidereyes.fsh",
+    "gbuffers_armor_glint.vsh", "gbuffers_armor_glint.fsh",
     "shadow.vsh", "shadow.fsh",
     "deferred.vsh", "deferred.fsh",
     "composite.vsh", "composite.fsh",
@@ -241,6 +242,11 @@ block_props = (SHADERS / "block.properties").read_text(encoding="utf-8") if (SHA
 for token in ("block.32000=minecraft:water",):
     if token not in block_props:
         errors.append(f"Missing stable Iris block material mapping: {token}")
+armor_glint = sources.get("gbuffers_armor_glint.fsh", "")
+for token in ("/* RENDERTARGETS: 0,2 */", "texture(gtexture", "glintColor.rgb *= vVertexColor.a",
+              "outDeferredValidity = vec4(0.0)", "discard"):
+    if token not in armor_glint:
+        errors.append(f"Armor-glint overlay is missing deferred-bypass component: {token}")
 spidereyes = sources.get("gbuffers_spidereyes.fsh", "")
 if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0.0)" not in spidereyes:
     errors.append("Spider-eye pass must preserve emissive pixels from deferred lighting")
@@ -315,6 +321,7 @@ for directive in (
     "blend.gbuffers_hand_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_particles_translucent.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
     "blend.gbuffers_spidereyes.colortex2=off",
+    "blend.gbuffers_armor_glint.colortex2=off",
 ):
     if directive not in props:
         errors.append(f"Missing Iris translucent-scene pipeline directive: {directive}")
