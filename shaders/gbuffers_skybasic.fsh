@@ -30,9 +30,8 @@ void main() {
     vec3 colorLinear = vVertexColorLinear;
     float alpha = vVertexAlpha;
 
-    vec3 playerDirection = reconstructPlayerDirection();
-    float upDot = clamp(playerDirection.y, -1.0, 1.0);
-    float horizonBlend = smoothstep(-0.12, 0.48, upDot);
+    float upDot = 0.0;
+    float horizonBlend = 0.0;
 
     float solarElevation = sin(sunAngle * 6.28318530718);
     float dayFactor = smoothstep(0.0, 0.30, solarElevation);
@@ -56,6 +55,12 @@ void main() {
     #ifdef MC_RENDER_STAGE_VOID
         isVoid = (renderStage == MC_RENDER_STAGE_VOID);
     #endif
+
+    if (isSky || isSunset) {
+        vec3 playerDirection = reconstructPlayerDirection();
+        upDot = clamp(playerDirection.y, -1.0, 1.0);
+        horizonBlend = smoothstep(-0.12, 0.48, upDot);
+    }
 
     if (isVoid) {
         colorLinear = vec3(0.0);
