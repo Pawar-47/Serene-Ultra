@@ -27,6 +27,11 @@ Provide a clean, multi-screen Iris settings menu with readable category names, m
 ## Color controls
 Provide independent red, green and blue channel adjustments, gamma, exposure, contrast, saturation and tone-mapping controls. Keep neutral defaults visually neutral. HDR-style output labels must not falsely claim true display HDR support.
 
+## Rendering implementation status
+- A GLSL 330-compatible shadow alpha-test path is implemented: shadow vertices forward texture UVs and vertex alpha; the fragment stage discards transparent texels using a user-adjustable cutoff.
+- This is not full shadow parity. Filtered shadow sampling, depth bias, direct-light integration, and runtime validation are still required.
+- Do not mark a rendering subsystem complete based only on structural source checks.
+
 ## Quality and engineering
 - Target Minecraft Java 26.3 and a current Iris release; verify exact runtime compatibility.
 - Keep a working shaderpack baseline and run structural checks on each change.
