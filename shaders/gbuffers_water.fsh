@@ -2,6 +2,10 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform sampler2D depthtex1;
+uniform float alphaTestRef;
+uniform float far;
+uniform mat4 gbufferProjectionInverse;
 uniform sampler2DShadow shadowtex0;
 
 uniform mat4 gbufferModelViewInverse;
@@ -25,8 +29,12 @@ in vec4 vVertexColor;
 in vec3 vPlayerNormal;
 in vec3 vPlayerPosition;
 in vec3 vViewPosition;
+flat in int vMaterialId;
+flat in float vFluidRenderType;
 
 /* RENDERTARGETS: 0 */
+
+#define WATER_FOG_MULT 100 // [50 75 100 125 150 200] Water depth opacity
 layout(location = 0) out vec4 outColor;
 
 float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
@@ -54,6 +62,24 @@ float sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirect
     return visibility * 0.25;
 }
 
+vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
+    vec4 homogeneous = projectionMatrix * vec4(position, 1.0);
+    return homogeneous.xyz / homogeneous.w;
+}
+
+float calculateWaterThickness(vec2 screenUV) {
+    float opaqueDepth = texture(depthtex1, screenUV).r;
+    float opaqueDistance = far;
+
+    if (opaqueDepth < 0.999999) {
+        vec3 opaqueNdc = vec3(screenUV, opaqueDepth) * 2.0 - 1.0;
+        vec3 opaqueViewPosition = projectAndDivide(gbufferProjectionInverse, opaqueNdc);
+        opaqueDistance = length(opaqueViewPosition);
+    }
+
+    return max(opaqueDistance - length(vViewPosition), 0.0);
+}
+
 float calculateTranslucentFog(float distanceToCamera) {
     if (fogMode == 9729) {
         return clamp((distanceToCamera - fogStart) / max(fogEnd - fogStart, 0.0001), 0.0, 1.0);
@@ -70,7 +96,7 @@ float calculateTranslucentFog(float distanceToCamera) {
 
 void main() {
     vec4 translucentAlbedo = texture(gtexture, vTexCoord) * vVertexColor;
-    if (translucentAlbedo.a <= 0.001) discard;
+    if (translucentAlbedo.a < alphaTestRef) discard;
 
     // Iris routes all translucent terrain through gbuffers_water, including
     // water and stained glass. Keep this a generic forward-lit surface path:
@@ -109,6 +135,17 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
+
+    // Iris mc_Entity.y identifies fluid geometry; block.properties supplies
+    // stable IDs so water-only attenuation never affects glass or portals.
+    bool isWater = (vMaterialId == 32000 || vMaterialId == 32001) &&
+                   (vFluidRenderType > 0.5 || vMaterialId == 32001);
+    if (isWater) {
+        vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
+        float thickness = calculateWaterThickness(screenUV) * (WATER_FOG_MULT * 0.01);
+        float waterFog = clamp(1.0 - exp(-thickness * 0.075), 0.0, 1.0);
+        translucentAlbedo.a *= 0.25 + 0.75 * waterFog;
+    }
 
     vec3 albedoLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
