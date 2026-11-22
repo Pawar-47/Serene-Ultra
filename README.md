@@ -50,3 +50,5 @@ Weather now includes reference-guided rain/snow opacity and optional wind motion
 Dedicated Iris textured, sky-textured and sky-basic programs are now present. They preserve unlit texture overlays, distinguish sun/moon stages, and build a lightweight sky gradient with deferred-normal bypass. Full atmospheric scattering and custom cloud systems remain pending.
 
 Dedicated Iris sky-basic, sky-textured and textured-fallback programs now handle sky/horizon/stars/void, sun/moon textures, and unlit textured geometry. Their render-stage macros and celestial uniforms were checked against Iris documentation, and their deferred-validity masks are protected from blending. CI compiles the conditional render-stage branches; visual calibration and runtime validation remain outstanding.
+
+Line geometry now has a dedicated Iris program that keeps selection/debug outlines crisp, fogs ordinary lines and bypasses deferred terrain lighting.
