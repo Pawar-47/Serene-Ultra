@@ -125,5 +125,5 @@ void main() {
     }
 
     emissionStrength = max(emissionStrength, pbrEmission * 5.0);
-    outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData);
+    outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialSurfaceData, 1.0);
 }
