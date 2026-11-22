@@ -634,3 +634,7 @@ This is direct-light GGX only. Full energy-conserving metal diffuse, image-based
 
 
 The exact-source GLSL and structural validation for the GGX/PBR material state passed in GitHub Actions run [45078017437](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45078017437), commit `b9fa362951f49a7b26870ce4110ca4ed97fa9aca`. This includes default and LabPBR macro-branch compilation, shader program linking and structural checks. It does not substitute for Iris/Minecraft 26.3 runtime or visual testing.
+
+
+## Dual-format PBR CI validation — 2026-11-23
+GitHub Actions run 919 (`bc0dd3d`) passed all stages: shader compilation, Iris render-stage macro branches, LabPBR macro compilation/linking for terrain/entities/block entities/water/deferred, full vertex-fragment program linking and structural validation. The source keeps Iris' documented `in vec4 at_tangent;` declarations; the earlier duplicate-symbol failure was transient and the direct-source workflow now passes. Minecraft 26.3 runtime loading, real resource-pack decoding and Intel HD 5500 performance remain unverified.
