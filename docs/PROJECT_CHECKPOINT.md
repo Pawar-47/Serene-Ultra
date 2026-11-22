@@ -516,3 +516,14 @@ The latest CI run at this checkpoint is `45075658130` for commit `d42ab0940fd54c
 - Portal emission is derived from the pre-tint texture signal; warm nonlinear colour tint is applied afterward.
 - Added `PORTAL_DISTORTION_STRENGTH` to the Quality menu and slider list. Structural validation checks the Iris attribute, UV bounds and sample path.
 - This is a four-tap low-cost approximation, not full Unbound portal raymarch/edge treatment. Runtime atlas, alpha and performance checks remain pending.
+
+
+## Portal animation timer-wrap correction — 2026-11-23
+
+The four-tap atlas-safe portal distortion now uses an integer number of complete cycles over Iris' 3600-second `frameTimeCounter` interval:
+
+```glsl
+float portalPhase = frameTimeCounter * (6.28318530718 * 458.0 / 3600.0);
+```
+
+This preserves animation continuity when Iris resets the timer. The validator checks the cycle expression. Iris' system-uniform documentation confirms that `frameTimeCounter` resets after 3600 seconds. The exact animation rate remains a visual-tuning parameter.
