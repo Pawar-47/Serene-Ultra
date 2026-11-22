@@ -3,6 +3,7 @@
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
+uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 uniform sampler2DShadow shadowtex0;
 
@@ -112,12 +113,17 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
 
 void main() {
     vec4 scene = texture(colortex0, vTexCoord);
-    float depth = texture(depthtex2, vTexCoord).r;
+    float sceneDepth = texture(depthtex0, vTexCoord).r;
+    float opaqueWorldDepth = texture(depthtex2, vTexCoord).r;
     vec4 normalData = texture(colortex2, vTexCoord);
 
-    // depthtex2 excludes translucent and first-person hand geometry, so this
-    // pass only reconstructs world surfaces with matching opaque G-buffer data.
-    if (depth >= 0.999999 || normalData.a < 0.5) {
+    // depthtex2 excludes translucent and first-person hand geometry, but
+    // colortex0 already contains the hand color. Compare against depthtex0
+    // (which includes all geometry) so hand/transparent pixels are passed
+    // through instead of shading their color with the opaque surface behind.
+    if (opaqueWorldDepth >= 0.999999 ||
+        abs(sceneDepth - opaqueWorldDepth) > 0.000001 ||
+        normalData.a < 0.5) {
         outColor = scene;
         return;
     }
@@ -125,7 +131,7 @@ void main() {
     vec4 lightData = texture(colortex1, vTexCoord);
     vec3 normal = normalize(normalData.rgb * 2.0 - 1.0);
 
-    vec3 ndcPosition = vec3(vTexCoord, depth) * 2.0 - 1.0;
+    vec3 ndcPosition = vec3(vTexCoord, opaqueWorldDepth) * 2.0 - 1.0;
     vec3 viewPosition = projectAndDivide(gbufferProjectionInverse, ndcPosition);
     vec3 playerPosition = (gbufferModelViewInverse * vec4(viewPosition, 1.0)).xyz;
     vec3 viewNormal = normalize(transpose(mat3(gbufferModelViewInverse)) * normal);
