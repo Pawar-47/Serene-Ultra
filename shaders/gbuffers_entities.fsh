@@ -84,7 +84,7 @@ void main() {
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
     float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
     if (pbrMapPresent < 0.5) {
-        materialReflectance = 0.45; // LabPBR code for dielectric F0 near 0.04
+        materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
     } else if (labF0Code >= 230.0) {
         materialReflectance = 1.0;
     } else {
