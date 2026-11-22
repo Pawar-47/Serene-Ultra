@@ -84,3 +84,6 @@ The deferred pass reconstructs opaque world positions from `depthtex2` and compa
 
 ## Dimension-aware lighting
 Deferred celestial lighting now uses Iris `hasSkylight` to avoid applying the Overworld sun/moon cycle in dimensions without skylight. The pack enables `endFlashShadows=true` and uses Iris `endFlashIntensity` when the End flash is the active shadow source. Shadow sampling is skipped when no direct-light contribution is possible.
+
+## Water rendering path
+`gbuffers_water` is now a dedicated post-deferred forward pass. It shades the water atlas color with the vanilla lightmap and Iris shadow map, uses the active dimension's celestial source, writes only the scene color attachment, and relies on the explicit source-alpha blend directive. This replaces the terrain G-buffer fallback, which was not appropriate after deferred. Advanced water effects remain future work.
