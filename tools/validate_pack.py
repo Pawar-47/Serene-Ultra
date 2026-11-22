@@ -274,7 +274,7 @@ for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = RGBA8",
               "float caustic = calculateWaterCaustics(absoluteWorldPosition)",
               "outShadowColor = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12)",
               "outShadowColor = vec4(1.0, 1.0, 1.0, 0.0)",
-              "vShadowMaterialId == 30008", "vShadowMaterialId >= 31000 && vShadowMaterialId <= 31031",
+              "vShadowMaterialId == 30008", "vShadowMaterialId == 32001", "vShadowMaterialId >= 31000 && vShadowMaterialId <= 31031",
               "vShadowMaterialId == 32008 || vShadowMaterialId == 32012",
               "vShadowMaterialId == 32004", "vShadowMaterialId == 30020"):
     if token not in shadow_fragment:
@@ -472,7 +472,7 @@ for token in ("flat in vec2 vMidTexCoord", "flat in vec2 vTexHalfSize",
               "portalMinUV", "portalMaxUV", "textureLod(gtexture, portalUV, 0.0)"):
     if token not in water:
         errors.append(f"Atlas-safe portal distortion path is missing component: {token}")
-for token in ("vMaterialId == 32008", "vMaterialId >= 31000 && vMaterialId <= 31031",
+for token in ("vMaterialId == 32008", "vMaterialId == 32001", "vMaterialId >= 31000 && vMaterialId <= 31031",
               "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
               "sampleTranslucentScreenReflection(", "GLASS_REFLECTION_STRENGTH",
               "PORTAL_EMISSION_STRENGTH", "float portalEmissionSignal = 0.0", "portalEmissionSignal = max(translucentAlbedo.r, 0.0)", "float portalEmission = isPortal"):
