@@ -7,6 +7,11 @@ const float shadowDistanceRenderMul = 1.0; // Cull shadow geometry outside shado
 
 out vec2 vShadowTexCoord;
 out vec4 vShadowVertexColor;
+out vec3 vShadowPlayerPosition;
+flat out int vShadowMaterialId;
+flat out float vShadowFluidRenderType;
+
+in vec2 mc_Entity;
 
 void main() {
     // Preserve the original block/entity texture coordinates so cutout
@@ -14,5 +19,9 @@ void main() {
     // shadows instead of opaque rectangular silhouettes.
     vShadowTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     vShadowVertexColor = gl_Color;
+    vec4 shadowViewPosition = gl_ModelViewMatrix * gl_Vertex;
+    vShadowPlayerPosition = (shadowModelViewInverse * shadowViewPosition).xyz;
+    vShadowMaterialId = int(mc_Entity.x + 0.5);
+    vShadowFluidRenderType = mc_Entity.y;
     gl_Position = ftransform();
 }
