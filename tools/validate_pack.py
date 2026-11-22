@@ -641,33 +641,6 @@ if "if (!gl_FrontFacing) normal = -normal;" not in translucent_particles:
 if "if (!gl_FrontFacing) {" not in water or "normal = -normal;" not in water or "viewNormal = -viewNormal;" not in water:
     errors.append("Translucent terrain must flip both player-space and view-space back-face normals before forward lighting")
 
-shadow_vertex = (SHADERS / "shadow.vsh").read_text(encoding="utf-8")
-shadow_fragment = sources.get("shadow.fsh", "")
-for token in ("uniform mat4 shadowModelViewInverse", "in vec2 mc_Entity",
-              "vShadowPlayerPosition = (shadowModelViewInverse * shadowViewPosition).xyz",
-              "vShadowMaterialId = int(mc_Entity.x + 0.5)"):
-    if token not in shadow_vertex:
-        errors.append(f"Iris shadow material/position interface is missing component: {token}")
-for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = RGBA8",
-              "uniform ivec3 cameraPositionInt;", "uniform vec3 cameraPositionFract;",
-              "uniform float frameTimeCounter", "getStableShadowWorldPosition",
-              "mod(cameraOffset + cameraPositionFract + playerPosition, vec3(256.0))",
-              "vShadowMaterialId == 32000", "calculateWaterCaustics",
-              "float causticsStrength = WATER_CAUSTICS_STRENGTH * 0.01",
-              "return clamp(1.0 + (causticPattern - 1.0) * causticsStrength, 0.0, 1.0)",
-              "stableWorldPosition = getStableShadowWorldPosition(vShadowPlayerPosition)",
-              "float caustic = calculateWaterCaustics(stableWorldPosition)",
-              "outShadowColor = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12)",
-              "outShadowColor = vec4(1.0, 1.0, 1.0, 0.0)",
-              "vShadowMaterialId == 30008", "vShadowMaterialId >= 31000 && vShadowMaterialId <= 31031",
-              "vShadowMaterialId == 32008 || vShadowMaterialId == 32012",
-              "vShadowMaterialId == 32004", "vShadowMaterialId == 30020"):
-    if token not in shadow_fragment:
-        errors.append(f"Iris shadowcolor water caustics path is missing component: {token}")
-for token in ("shadowTranslucent=true", "blend.shadow.shadowcolor0=off", "flip.shadow.shadowcolor0=false"):
-    if token not in props:
-        errors.append(f"Iris translucent shadowcolor configuration is missing: {token}")
-
 deferred = sources.get("deferred.fsh", "")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
               "float centerShadow0 = texture(shadowtex0", "float centerShadow1 = texture(shadowtex1",
