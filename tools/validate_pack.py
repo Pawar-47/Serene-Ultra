@@ -141,6 +141,10 @@ if props_path.is_file():
             errors.append(f"{program} must disable blending on the deferred-validity mask")
     if "WEATHER_TEX_OPACITY" not in props:
         errors.append("Weather particle opacity control must be exposed in the Quality menu")
+    if "PARTICLE_MATERIAL_FEATURES" not in props:
+        errors.append("Complementary-guided particle material effects must be exposed in the Quality menu")
+    if "option.PARTICLE_MATERIAL_FEATURES =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+        errors.append("Particle material effects option needs a user-facing label")
 
 # These two Iris additional programs are only activated by separateEntityDraws.
 # Keep them out of the missing-program warning while that option is intentionally
