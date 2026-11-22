@@ -4,7 +4,7 @@
 const int colortex2Format = RGBA8;
 */
 /*
-const int colortex3Format = RG8;
+const int colortex3Format = RGBA8;
 */
 
 uniform sampler2D colortex0;
@@ -44,6 +44,8 @@ in vec2 vTexCoord;
 #define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.65 0.70 0.80 0.90 1.00] Contact occlusion strength
 #define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
 #define MATERIAL_SPECULAR_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Deferred specular response for smooth materials
+#define MATERIAL_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material ambient occlusion strength
+#define MATERIAL_SSS_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] LabPBR subsurface scattering strength
 
 // Deferred is a composite-style pass: it reads the main colortex0 image and
 // writes the alternate image. Iris flips the pair after this pass, so the
@@ -240,7 +242,9 @@ void main() {
 #else
     vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
 #endif
-    vec3 litLinear = albedoLinear * (ambient + direct);
+    float materialAO = clamp(emissionData.b, 0.0, 1.0);
+    float materialAOFactor = mix(1.0, materialAO, MATERIAL_AO_STRENGTH * 0.01);
+    vec3 litLinear = albedoLinear * (ambient * materialAOFactor + direct);
 
     // Low-cost GGX direct specular. The branch is skipped for non-glossy
     // surfaces and when no direct celestial light reaches the pixel.
@@ -275,6 +279,25 @@ void main() {
             specularContribution /= (1.0 + 0.125 * specularContribution);
             litLinear += specularContribution;
         }
+    }
+
+    // LabPBR blue stores porosity (0-64) or subsurface scattering (65-255).
+    // Decode the SSS range here; porosity remains packed for later wet-surface work.
+    float materialSSS = 0.0;
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    float materialSurfaceCode = floor(emissionData.a * 255.0 + 0.5);
+    if (materialSurfaceCode >= 65.0) {
+        materialSSS = clamp((materialSurfaceCode - 65.0) / 190.0, 0.0, 1.0);
+    }
+#endif
+    float sssStrength = materialSSS * MATERIAL_SSS_STRENGTH * 0.01;
+    if (sssStrength > 0.001 && celestialGate > 0.001) {
+        float backLighting = pow(max(dot(-normal, worldLightDirection), 0.0), 2.0);
+        float sssVisibility = mix(shadow, 1.0, sssStrength * 0.65);
+        vec3 sssContribution = albedoLinear * celestialColor
+            * (celestialIntensity * celestialGate) * backLighting
+            * sssStrength * sssVisibility * 0.25;
+        litLinear += sssContribution;
     }
 
     // Emission is stored separately from albedo/lightmap/normal so it is not
