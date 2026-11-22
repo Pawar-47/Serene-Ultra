@@ -222,3 +222,7 @@ The dedicated `gbuffers_entities_translucent` and `gbuffers_block_translucent` s
 
 ## Water-wave feature update — 2026-11-23
 `gbuffers_water` now applies three world-anchored analytic wave bands to water-surface normals, with user controls for strength and cycle rate. The implementation uses Iris-documented `cameraPosition`, `frameTimeCounter` and `gbufferModelView`. It is an original low-bandwidth substitute for the reference's texture-driven multi-scale normal maps; visual parity and runtime performance remain unverified.
+
+
+## Water colour feature update — 2026-11-23
+The water-only branch now applies an Unbound-inspired biome-aware base tint and a single-sample animated `noisetex` colour variation. Both effects are user-adjustable; noise animation is periodic across Iris' `frameTimeCounter` wrap. Underwater tint/absorption and visual calibration remain pending.
