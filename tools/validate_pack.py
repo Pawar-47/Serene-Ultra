@@ -319,7 +319,11 @@ if "particle.a <= 0.001" not in translucent_particles or "alphaTestRef" in trans
     errors.append("Translucent particles must preserve fractional alpha instead of applying cutout alphaTestRef")
 for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog"):
     if token not in translucent_particles:
-        errors.append(f"Translucent particle shader is missing Iris fog component: {token}")
+        errors.append(f"Translucent particle shader is missing forward lighting component: {token}")
+translucent_particle_vertex = sources.get("gbuffers_particles_translucent.vsh", "")
+for token in ("gbufferModelViewInverse", "vPlayerPosition", "vPlayerNormal"):
+    if token not in translucent_particle_vertex:
+        errors.append(f"Translucent particle vertex stage is missing player-space lighting input: {token}")
 particles = sources.get("gbuffers_particles.fsh", "")
 if "/* RENDERTARGETS: 0,1,2 */" not in particles:
     errors.append("Opaque particles must write color, lightmap and normal G-buffer attachments")
