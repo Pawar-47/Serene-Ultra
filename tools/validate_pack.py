@@ -138,8 +138,7 @@ if "shadowHardwareFiltering=" in props or "shadowIntervalSize=" in props:
     errors.append("Iris GLSL constants must not be declared as shaders.properties directives")
 
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
-             "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh",
-             "gbuffers_spidereyes.fsh"):
+             "gbuffers_particles.fsh", "gbuffers_spidereyes.fsh"):
     source = sources.get(name, "")
     alpha_test_uses_ref = ("albedo.a < alphaTestRef" in source or "particle.a < alphaTestRef" in source or "emissiveColor.a < alphaTestRef" in source)
     if "uniform float alphaTestRef" not in source or not alpha_test_uses_ref:
@@ -225,6 +224,8 @@ if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0
 if "fogColor" not in spidereyes or "calculateEyeFog" not in spidereyes:
     errors.append("Spider-eye pass must preserve Iris fog while bypassing deferred lighting")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
+if "particle.a <= 0.001" not in translucent_particles or "alphaTestRef" in translucent_particles:
+    errors.append("Translucent particles must preserve fractional alpha instead of applying cutout alphaTestRef")
 for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape", "calculateParticleFog"):
     if token not in translucent_particles:
         errors.append(f"Translucent particle shader is missing Iris fog component: {token}")
