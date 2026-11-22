@@ -300,3 +300,10 @@ Correction to the water alpha note: `alphaTest.gbuffers_water=GREATER 0.0001` is
 - Run [45067162625](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45067162625) passed after adding the dedicated line overlay and compiling Iris render-stage macro branches for sky-basic, sky-textured and line programs.
 - Run [45067030813](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45067030813) also passed the complete shader compile/link/structural checks with sky render-stage macros enabled.
 - These runs validate GLSL and structure only. Iris 1.x runtime loading, Minecraft 26.3 rendering, visual parity, and Intel HD 5500 performance are not yet tested.
+
+
+## Translucent particle lighting checkpoint — 2026-11-23
+- `gbuffers_particles_translucent.vsh` now passes player-space position and normal using Iris `gbufferModelViewInverse`.
+- The fragment path samples the vanilla lightmap, computes the active celestial source, applies one hardware-filtered `shadowtex0` comparison and Iris fog.
+- One shadow comparison is intentional to limit bandwidth/ALU cost on Intel HD 5500; this is a source-level performance choice, not measured FPS.
+- Particle-specific emissive classification, campfire smoke, underwater particles and material-specific water/rain/snow effects remain pending.
