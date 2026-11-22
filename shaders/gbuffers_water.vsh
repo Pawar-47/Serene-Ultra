@@ -34,6 +34,7 @@ void main() {
     vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
     vViewPosition = viewPosition.xyz;
     vMaterialId = int(mc_Entity.x + 0.5);
+    if (vMaterialId == 10049) vMaterialId = 32001; // Water cauldron
     vFluidRenderType = mc_Entity.y;
 
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
