@@ -115,7 +115,8 @@ if "shadowHardwareFiltering=" in props or "shadowIntervalSize=" in props:
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_hand.fsh",
              "gbuffers_particles.fsh", "gbuffers_particles_translucent.fsh"):
     source = sources.get(name, "")
-    if "uniform float alphaTestRef" not in source or "albedo.a < alphaTestRef" not in source:
+    alpha_test_uses_ref = ("albedo.a < alphaTestRef" in source or "particle.a < alphaTestRef" in source)
+    if "uniform float alphaTestRef" not in source or not alpha_test_uses_ref:
         errors.append(f"{name} must use Iris alphaTestRef for alpha discard")
 hand_fragment = sources.get("gbuffers_hand.fsh", "")
 if "uniform sampler2D lightmap" not in hand_fragment or "texture(lightmap" not in hand_fragment:
