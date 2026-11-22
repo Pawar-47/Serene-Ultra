@@ -33,17 +33,21 @@ void main() {
             max(abs(particleTexture.r - particleTexture.g), abs(particleTexture.g - particleTexture.b)),
             abs(particleTexture.b - particleTexture.r)
         );
-        float particleColorSum = dot(particle.rgb, vec3(1.0));
 
-        if (textureColorSpread < 0.001 && particleColorSum > 2.9 && particle.a > 0.99) {
-            if (particleTexture.r < 0.75) {
-                // Ender-family, crying obsidian and redstone emissive particles.
+        if (textureColorSpread < 0.001) {
+            float dotColor = dot(particle.rgb, particle.rgb);
+            if (dotColor > 0.25 && particle.g < 0.5 &&
+                ((particle.b > particle.r * 1.1 && particle.r > 0.3) ||
+                 particle.r > (particle.g + particle.b) * 3.0)) {
+                // Ender, crying-obsidian and redstone particles (Complementary reference heuristic).
                 emissionStrength = clamp(particle.r * 8.0, 1.6, 5.0);
                 suppressLightmap = true;
                 particle.rgb = pow(max(particle.rgb, vec3(0.0)), vec3(1.5));
-            } else {
-                // Lava particles retain their normal lightmap contribution.
+            } else if (particle.r > 0.83 && particle.g > 0.23 && particle.b < 0.4) {
+                // Lava particles retain their normal lightmap contribution and reference tint.
                 emissionStrength = 2.0;
+                particle.b *= 0.5;
+                particle.r *= 1.2;
             }
         }
     }
