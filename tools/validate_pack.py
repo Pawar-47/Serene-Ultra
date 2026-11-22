@@ -423,6 +423,11 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
         errors.append("Entity G-buffer must pack emission, reflectance, material AO and SSS data")
     if "outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData)" not in source and name == "gbuffers_block.fsh":
         errors.append("Block-entity G-buffer must pack emission, reflectance, material AO and SSS data")
+for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh",
+             "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
+    if "outLightmapData = vec4(vanillaLight, skyLight);" not in sources.get(name, ""):
+        errors.append(f"{name} must write vanilla lightmap RGB and sky-light factor to colortex1")
+
 for name in ("gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
     if "outEmissionData = vec4(emissionStrength / 5.0, defaultReflectance, 1.0, 0.0)" not in sources.get(name, ""):
         errors.append(f"{name} must initialize neutral PBR reflectance/AO/SSS channels")
