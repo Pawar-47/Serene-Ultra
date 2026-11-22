@@ -408,12 +408,21 @@ for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureL
     if token not in water:
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 
-for token in ("uniform mat4 gbufferModelView;", "uniform vec3 cameraPosition",
-              "uniform float frameTimeCounter", "calculateWaterWaveNormal",
-              "float phaseA =", "float phaseB =", "float phaseC =",
+for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt;",
+              "uniform vec3 cameraPositionFract;", "uniform float frameTimeCounter",
+              "getStableWaterWorldPosition", "cameraPositionInt % ivec3(256)",
+              "cameraPositionFract + playerPosition", "calculateWaterWaveNormal",
+              "float phaseA = worldXZ.x * frequencyA", "float phaseB = worldXZ.y * frequencyB",
+              "float phaseC = dot(worldXZ, vec2(1.0, 1.0))",
               "viewNormal = normalize(mat3(gbufferModelView) * normal)"):
     if token not in water:
         errors.append(f"Unbound-guided animated water normal path is missing component: {token}")
+if "uniform vec3 cameraPosition;" in water:
+    errors.append("Water waves must avoid Iris cameraPosition's 30,000-block wrap")
+if "vec3 shadowNormal = normal;" not in water or "sampleTranslucentShadow(vPlayerPosition, shadowNormal, worldLightDirection)" not in water:
+    errors.append("Water wave perturbation must not alter geometric shadow-map bias")
+if "vec3 reflectionViewNormal = viewNormal;" not in water:
+    errors.append("Water SSR must reuse the wave-perturbed view-space normal")
 if "out vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not in water_vertex:
     errors.append("Water vertex stage must output the Iris view-space normal used by Fresnel reflection")
 water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
