@@ -37,6 +37,17 @@ jobs:
             echo "Compiling $shader"
             glslangValidator -S "$stage" "$shader"
           done < <(find shaders -type f \( -name '*.vsh' -o -name '*.fsh' \) -print0)
+      - name: Compile Iris render-stage macro branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          glslangValidator -S frag \
+            -DMC_RENDER_STAGE_SKY=1 -DMC_RENDER_STAGE_SUNSET=2 \
+            -DMC_RENDER_STAGE_STARS=3 -DMC_RENDER_STAGE_VOID=4 \
+            shaders/gbuffers_skybasic.fsh
+          glslangValidator -S frag \
+            -DMC_RENDER_STAGE_SUN=5 -DMC_RENDER_STAGE_MOON=6 \
+            shaders/gbuffers_skytextured.fsh
       - name: Link vertex and fragment shader programs
         shell: bash
         run: |
