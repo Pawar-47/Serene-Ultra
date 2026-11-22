@@ -47,15 +47,28 @@ for path in SHADERS.rglob("gbuffers_*"):
             f"{path.relative_to(ROOT)}: Iris gbuffers programs cannot sample colortex0-3"
         )
 
-# Keep missing post-deferred geometry paths visible in CI without failing the
-# baseline while their dedicated implementations are still pending.
-POST_DEFERRED_PROGRAMS = (
-    "gbuffers_water", "gbuffers_weather", "gbuffers_hand_water",
-)
-missing_post_deferred = [
-    name for name in POST_DEFERRED_PROGRAMS
-    if not (SHADERS / f"{name}.fsh").is_file()
-]
+# Track Iris program coverage explicitly. Missing files use the documented
+# fallback program; fallback coverage is not equivalent to a feature-specific
+# material implementation. Keep these as visible warnings until the program
+# families are implemented and runtime-tested.
+IRIS_PROGRAM_FALLBACKS = {
+    "gbuffers_water": "gbuffers_terrain",
+    "gbuffers_weather": "gbuffers_textured_lit",
+    "gbuffers_hand_water": "gbuffers_hand",
+    "gbuffers_block": "gbuffers_terrain",
+    "gbuffers_entities_translucent": "gbuffers_entities",
+    "gbuffers_block_translucent": "gbuffers_block",
+    "gbuffers_particles": "gbuffers_textured_lit",
+    "gbuffers_particles_translucent": "gbuffers_particles",
+    "gbuffers_terrain_solid": "gbuffers_terrain",
+    "gbuffers_terrain_cutout": "gbuffers_terrain",
+}
+missing_iris_programs = {
+    name: fallback
+    for name, fallback in IRIS_PROGRAM_FALLBACKS.items()
+    if not ((SHADERS / f"{name}.vsh").is_file()
+            and (SHADERS / f"{name}.fsh").is_file())
+}
 
 audit = ROOT / "docs" / "REFERENCE_ULTRA_AUDIT.md"
 if not audit.is_file():
@@ -146,6 +159,8 @@ if "/* RENDERTARGETS: 3 */" in deferred:
     errors.append("Deferred must write the lit scene to logical colortex0 through Iris buffer flipping")
 if "copies colortex3 back to colortex0" in deferred:
     errors.append("Deferred source contains obsolete colortex3 copy-back commentary")
+if "colortex3" in deferred:
+    errors.append("Deferred still references obsolete colortex3 scene output")
 for directive in (
     "flip.deferred.colortex0=true", "flip.composite.colortex0=true",
     "blend.gbuffers_water.colortex0=SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE ONE_MINUS_SRC_ALPHA",
@@ -173,9 +188,8 @@ if errors:
     sys.exit(1)
 
 print("Serene Ultra structural validation passed.")
-if missing_post_deferred:
-    print(
-        "Iris coverage warning: dedicated post-deferred programs still pending: "
-        + ", ".join(missing_post_deferred)
-    )
+if missing_iris_programs:
+    print("Iris program coverage warnings (dedicated vertex+fragment pair missing):")
+    for name, fallback in missing_iris_programs.items():
+        print(f" - {name}: Iris fallback -> {fallback}")
 print("Note: GLSL compilation and in-game Iris compatibility require runtime testing.")
