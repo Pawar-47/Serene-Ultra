@@ -180,8 +180,19 @@ void main() {
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
+    bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
     vec3 normal = normalize(vPlayerNormal);
-    if (!gl_FrontFacing) normal = -normal;
+    vec3 viewNormal = normalize(vViewNormal);
+    if (!gl_FrontFacing) {
+        normal = -normal;
+        viewNormal = -viewNormal;
+    }
+    // Complementary's Iris-water workaround: orient the geometric normal
+    // toward the camera before shadowing, Fresnel and reflection calculations.
+    if (isWater && dot(normalize(vViewPosition), viewNormal) > 0.0) {
+        normal = -normal;
+        viewNormal = -viewNormal;
+    }
     vec3 viewLightDirection = normalize(shadowLightPosition);
     vec3 worldLightDirection = normalize(mat3(gbufferModelViewInverse) * viewLightDirection);
     float nDotL = max(dot(normal, worldLightDirection), 0.0);
@@ -211,7 +222,6 @@ void main() {
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
 
-    bool isWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
     float waterThickness = 0.0;
     float waterFog = 0.0;
     float waterFresnel = 0.0;
@@ -220,10 +230,6 @@ void main() {
     vec3 refractedSceneLinear = vec3(0.0);
 
     if (isWater) {
-        vec3 viewNormal = normalize(vViewNormal);
-        if (dot(normalize(vViewPosition), viewNormal) > 0.0) {
-            viewNormal = -viewNormal;
-        }
         float nDotV = clamp(dot(viewNormal, normalize(-vViewPosition)), 0.0, 1.0);
         waterFresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
 
@@ -252,9 +258,13 @@ void main() {
             vec2 refractedUV = clamp(screenUV + waterRefractionOffset,
                                      halfTexel, vec2(1.0) - halfTexel);
 
-            float refractedDepth = texture(depthtex1, refractedUV).r;
+            ivec2 refractedPixel = ivec2(refractedUV * vec2(textureSize(depthtex1, 0)));
+            refractedPixel = clamp(refractedPixel, ivec2(0), textureSize(depthtex1, 0) - ivec2(1));
+            float refractedDepth = texelFetch(depthtex1, refractedPixel, 0).r;
+            vec2 refractedDepthUV = (vec2(refractedPixel) + 0.5)
+                / vec2(textureSize(depthtex1, 0));
             if (refractedDepth < 0.999999) {
-                vec3 refractedNdc = vec3(refractedUV, refractedDepth) * 2.0 - 1.0;
+                vec3 refractedNdc = vec3(refractedDepthUV, refractedDepth) * 2.0 - 1.0;
                 vec3 refractedViewPosition = projectAndDivide(gbufferProjectionInverse, refractedNdc);
                 float depthDelta = abs(length(refractedViewPosition) - length(opaqueViewPosition));
                 refractionConfidence = 1.0 - smoothstep(0.5, 4.0, depthDelta);
