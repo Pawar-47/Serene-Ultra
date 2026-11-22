@@ -119,3 +119,6 @@ The `gbuffers_textured` path preserves unlit texture/vertex color and Iris fog w
 
 ## Sky and unlit geometry
 Iris routes sky/horizon, stars and void through `gbuffers_skybasic`, and sun/moon textures through `gbuffers_skytextured`. The pack implements these as dedicated programs using the documented `renderStage` uniform and `MC_RENDER_STAGE_*` macros. Celestial positions are read from Iris `sunPosition` and `moonPosition` (view space, length 100) and compared against the view-space up vector. Sky/fog colors are converted to linear space in the vertex stage, while the sky-basic fragment shader reconstructs direction only for sky/sunset stages. `gbuffers_textured` provides a fogged unlit atlas fallback for world border and unlit particles. All sky/overlay paths clear the deferred-validity mask and disable blending on that attachment. CI compiles the render-stage branches with explicit macro definitions; visual parity remains pending.
+
+## Line overlays
+`gbuffers_line` is a dedicated forward overlay. It preserves vertex color, applies Iris fog to ordinary lines, skips fog for selection outlines and debug lines using Iris render-stage macros, and clears the deferred-normal validity mask.
