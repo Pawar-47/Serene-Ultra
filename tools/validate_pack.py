@@ -423,7 +423,9 @@ for token in ("uniform int isEyeInWater", "bool cameraUnderwater = (isEyeInWater
     if token not in water:
         errors.append(f"Unbound-guided underwater water response is missing component: {token}")
 for token in ("WATER_FOAM_STRENGTH",
-              "float shallowFoam = 1.0 - smoothstep(0.035, 0.42, waterThickness)", "waterFoam = shallowFoam",
+              "float foamThreshold = mix(0.06, 0.42, foamNoise * foamNoise)",
+              "float shallowFoam = 1.0 - smoothstep(0.035, foamThreshold, waterThickness)",
+              "waterFoamColor", "waterFoam = shallowFoam",
               "(1.0 - waterFoam)"):
     if token not in water:
         errors.append(f"Unbound-guided water foam path is missing component: {token}")
