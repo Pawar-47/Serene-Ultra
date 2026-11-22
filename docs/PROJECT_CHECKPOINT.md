@@ -391,3 +391,13 @@ After the interruption, resumed the particle audit at the live `main` state. Ver
 
 ## Opaque particle material parity correction — 2026-11-23
 Corrected the two opaque lit-particle G-buffer paths (`gbuffers_particles` and `gbuffers_textured_lit`) after comparing their classifier with the exact Complementary `gbuffers_textured.glsl` logic. Removed a broad brightness/grayscale shortcut that could falsely label unrelated particles as emissive. Both paths now use the reference's raw-texture grayscale test, ender-family channel/energy predicate, separate lava predicate and lava color adjustment. The validator enforces those predicates. This complements the already corrected post-deferred translucent-particle dither sampler. Runtime material identification and visual parity still require in-game testing.
+
+## Complementary Unbound reference update — 2026-11-23
+The user has selected Complementary Unbound as the primary visual/material reference for water and the broader material system. The official source is the r5.10 revision of `ComplementaryDevelopment/ComplementaryReimagined` (`e10d27dec5acfb18509fdcc3cda704152dc2f7df)); the same upstream codebase contains both visual styles. The official site explains that Unbound and Reimagined differ by default settings, and the upstream language file maps `WATER_STYLE_DEFINE=3` to Unbound. Keep the supplied working Reimagined ZIP as the proven Iris implementation reference; do not discard it. Vanilla-stock remains the Minecraft 26.3 native-behavior reference, and Iris documentation remains the implementation contract. See [UNBOUND_REFERENCE_AUDIT.md](UNBOUND_REFERENCE_AUDIT.md) for the file-level water/material map, Iris checks, current gaps and implementation sequence.
+
+## Water pipeline validation checkpoint — 2026-11-23
+- Corrected the water-normal path to orient both player-space and view-space normals consistently, using the Iris water-normal workaround as the reference pattern.
+- Refraction now fetches the clamped exact depth texel and reconstructs view position using that texel's centre UV, avoiding a filtered-depth/UV mismatch.
+- Fresnel reflection strength is bounded after user scaling; the validator checks the current screen-space reflection path and correct vertex-stage varying direction.
+- CI run [45074177714](https://github.com/Pawar-47/Serene-Ultra/actions/runs/45074177714) passed shader compilation, render-stage macro compilation, vertex/fragment linking and structural validation for source commit `7cf83a758257731980b1b40a71e7ac0ac53b6f53`.
+- This remains source/CI validation only. Iris runtime loading, visual parity and Intel HD 5500 performance are not yet proven.
