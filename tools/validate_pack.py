@@ -257,7 +257,31 @@ if "const int shadowMapResolution" not in shadow_vertex or "const float shadowDi
     errors.append("Shadow pass must declare Iris shadowMapResolution and shadowDistance constants")
 if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
     errors.append("Shadow pass must enable Iris shadow-distance culling")
+
+for token in ("uniform mat4 shadowModelViewInverse", "in vec2 mc_Entity",
+              "vShadowPlayerPosition = (shadowModelViewInverse * shadowViewPosition).xyz",
+              "vShadowMaterialId = int(mc_Entity.x + 0.5)"):
+    if token not in shadow_vertex:
+        errors.append(f"Iris shadow material/position interface is missing component: {token}")
+for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = R8",
+              "uniform vec3 cameraPosition", "uniform float frameTimeCounter",
+              "vShadowMaterialId == 32000", "calculateWaterCaustics",
+              "outShadowColor = vec4(calculateWaterCaustics(absoluteWorldPosition), 1.0, 1.0, 1.0)"):
+    if token not in shadow_fragment:
+        errors.append(f"Iris shadowcolor water caustics path is missing component: {token}")
+for token in ("shadowTranslucent=true", "blend.shadow.shadowcolor0=off", "flip.shadow.shadowcolor0=false"):
+    if token not in props:
+        errors.append(f"Iris translucent shadowcolor configuration is missing: {token}")
+
 deferred_options = sources.get("deferred.fsh", "")
+
+for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
+              "float centerShadow0 = texture(shadowtex0", "float centerShadow1 = texture(shadowtex1",
+              "float waterTransmission = texture(shadowcolor0, shadowPosition.xy).r",
+              "visibility = mix(visibility, translucentVisibility, 1.0 - visibility)"):
+    if token not in deferred_options:
+        errors.append(f"Deferred translucent shadow transmission is missing component: {token}")
+
 if "/* RENDERTARGETS: 0 */" not in deferred_options or "outOpaqueReflectionScene" in deferred_options:
     errors.append("Full-resolution deferred must write only colortex0; the half-resolution water copy belongs in deferred1")
 deferred1 = sources.get("deferred1.fsh", "")
