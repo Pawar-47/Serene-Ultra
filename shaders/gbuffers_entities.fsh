@@ -28,7 +28,7 @@ vec3 calculateOpaquePbrNormal(vec3 geometricNormal, out float materialAO) {
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     // LabPBR blue stores material AO; XY are the DirectX Y- tangent normal.
-    materialAO = clamp(normalTexel.b, 0.0, 1.0);
+    materialAO = mix(1.0, clamp(normalTexel.b, 0.0, 1.0), PBR_AO_STRENGTH * 0.01);
     tangentNormal.xy = normalTexel.rg * 2.0 - 1.0;
     tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0));
     tangentNormal.y = -tangentNormal.y;
@@ -84,7 +84,7 @@ void main() {
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
     float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
     if (pbrMapPresent < 0.5) {
-        materialReflectance = 0.04;
+        materialReflectance = 0.45; // LabPBR code for dielectric F0 near 0.04
     } else if (labF0Code >= 230.0) {
         materialReflectance = 1.0;
     } else {
