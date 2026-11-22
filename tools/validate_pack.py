@@ -644,9 +644,10 @@ if "if (!gl_FrontFacing) {" not in water or "normal = -normal;" not in water or 
 deferred = sources.get("deferred.fsh", "")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
               "float centerShadow0 = texture(shadowtex0", "float centerShadow1 = texture(shadowtex1",
-              "float waterTransmission = texture(shadowcolor0, shadowPosition.xy).r",
+              "vec4 casterColor = texture(shadowcolor0, shadowPosition.xy)",
               "vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a)",
-              "visibility = mix(visibility, translucentVisibility, 1.0 - visibility)"):
+              "mix(opaqueVisibility, translucentVisibility, 1.0 - visibility)",
+              "return clamp("):
     if token not in deferred:
         errors.append(f"Deferred translucent shadow transmission is missing component: {token}")
 
