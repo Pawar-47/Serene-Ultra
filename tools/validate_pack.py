@@ -361,7 +361,7 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
     if token not in hand_water:
         errors.append(f"Hand-water shader is missing forward component: {token}")
 water = sources.get("gbuffers_water.fsh", "")
-water_vertex = sources.get("gbuffers_water.vsh", "")
+water_vertex = (SHADERS / "gbuffers_water.vsh").read_text(encoding="utf-8")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleTranslucentShadow",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
