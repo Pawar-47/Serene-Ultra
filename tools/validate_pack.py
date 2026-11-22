@@ -430,7 +430,7 @@ for token in ("flat in vec2 vMidTexCoord", "flat in vec2 vTexHalfSize",
 for token in ("vMaterialId == 32008", "vMaterialId >= 31000 && vMaterialId <= 31031",
               "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
               "sampleTranslucentScreenReflection(", "GLASS_REFLECTION_STRENGTH",
-              "PORTAL_EMISSION_STRENGTH", "float portalEmission = isPortal"):
+              "PORTAL_EMISSION_STRENGTH", "float portalEmissionSignal = 0.0", "portalEmissionSignal = max(translucentAlbedo.r, 0.0)", "float portalEmission = isPortal"):
     if token not in water:
         errors.append(f"Unbound-guided translucent material path is missing component: {token}")
 for token in ("block.30008=minecraft:tinted_glass", "block.30020=minecraft:nether_portal portal",
