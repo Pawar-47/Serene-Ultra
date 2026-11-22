@@ -189,3 +189,12 @@ Enabled with `separateEntityDraws=true` and `iris.features.optional=ENTITY_TRANS
 
 ## Emissive materials — 2026-11-23
 A compact `colortex3` RGBA8 emission buffer is now written by opaque G-buffer programs. Terrain uses Iris `mc_Entity` plus `block.properties` IDs to classify luminous blocks; deferred adds their tinted emission after AO/direct lighting and before fog. Lava gets a forward emission term in `gbuffers_water`. Entity and opaque-particle paths currently initialize emission to zero; richer entity/particle material maps and bloom remain pending.
+
+## Core overlay/block-entity coverage — 2026-11-23
+| Iris program | Geometry | Current implementation |
+|---|---|---|
+| `gbuffers_basic` | Leash and debug chunk-border overlay | Vertex color + Iris fog; clears deferred-validity mask |
+| `gbuffers_damagedblock` | Block-breaking texture | Color-only crack overlay; `alphaTestRef` set to 0.004 |
+| `gbuffers_block` | Block entities and sign text | Four-target G-buffer; sign text fogged and bypasses deferred lighting; portal/gateway emission ID |
+
+`block.properties` maps sign families to ID 5004 and End portal/gateway to 5025, read through Iris `blockEntityId`.
