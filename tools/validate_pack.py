@@ -34,6 +34,7 @@ REQUIRED = (
     "gbuffers_beaconbeam.vsh", "gbuffers_beaconbeam.fsh",
     "shadow.vsh", "shadow.fsh",
     "deferred.vsh", "deferred.fsh",
+    "deferred1.vsh", "deferred1.fsh",
     "composite.vsh", "composite.fsh",
     "final.vsh", "final.fsh",
     "lang/en_us.lang",
@@ -137,7 +138,8 @@ if props_path.is_file():
     for screen in ("screen = <profile>", "screen.QUALITY =", "screen.COLOR ="):
         if screen not in props:
             errors.append(f"Missing menu configuration: {screen}")
-    for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS"):
+    for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
+                   "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH"):
         if option not in props:
             errors.append(f"{option} is not exposed in the Quality menu")
     if "separateAo=false" not in props:
@@ -155,6 +157,8 @@ if props_path.is_file():
         errors.append("Buffer formats must use Iris GLSL const directives, not shaders.properties key/value syntax")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
+    if "size.buffer.colortex4=0.5 0.5" not in props or "flip.deferred1.colortex4=true" not in props:
+        errors.append("Water refraction requires a half-resolution colortex4 written/flipped by deferred1 before translucent gbuffers")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
@@ -356,7 +360,8 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleTranslucentShadow",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
               "texture(gtexture", "texture(lightmap", "depthtex1", "calculateWaterThickness",
-              "WATER_FOG_MULT", "uniform float alphaTestRef",
+              "uniform sampler2D colortex4", "texture(colortex4", "WATER_REFRACTION_STRENGTH",
+              "WATER_REFLECTION_STRENGTH", "waterReflectionMix", "WATER_FOG_MULT", "uniform float alphaTestRef",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
               "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)",
               "gl_FragCoord.xy / vec2(textureSize(depthtex1, 0))",
@@ -509,6 +514,19 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
         errors.append(f"Deferred lighting is missing required component: {token}")
 if "abs(sceneDepth - opaqueWorldDepth) > 0.000001" not in deferred:
     errors.append("Deferred must mask hand/translucent pixels by comparing depthtex0 with depthtex2")
+
+deferred1 = sources.get("deferred1.fsh", "")
+deferred1_vertex = sources.get("deferred1.vsh", "")
+for token in ("/* RENDERTARGETS: 4 */", "uniform sampler2D colortex0",
+              "texelFetch(colortex0", "outOpaqueSceneCopy"):
+    if token not in deferred1:
+        errors.append(f"Deferred1 water scene-copy pass is missing component: {token}")
+if "out vec2 vTexCoord" not in deferred1_vertex or "gl_Position = ftransform()" not in deferred1_vertex:
+    errors.append("Deferred1 scene-copy vertex stage is incomplete")
+for option in ("WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH"):
+    if f"#define {option} " not in water:
+        errors.append(f"Water shader is missing the {option} numeric option")
+
 if "vec3(vTexCoord, opaqueWorldDepth)" not in deferred:
     errors.append("Deferred must reconstruct world position from depthtex2")
 
@@ -574,7 +592,7 @@ for directive in (
 lang_path = SHADERS / "lang" / "en_us.lang"
 if lang_path.is_file():
     lang = lang_path.read_text(encoding="utf-8")
-    for option in ("AO_STRENGTH", "AO_RADIUS"):
+    for option in ("AO_STRENGTH", "AO_RADIUS", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH"):
         if f"option.{option} =" not in lang or f"option.{option}.comment =" not in lang:
             errors.append(f"Missing user-facing label or tooltip for {option}")
 
