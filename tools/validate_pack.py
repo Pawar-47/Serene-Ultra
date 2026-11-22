@@ -388,7 +388,7 @@ for vertex_name in ("gbuffers_terrain.vsh", "gbuffers_entities.vsh", "gbuffers_b
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(fragment_name, "")
     for token in ("uniform sampler2D normals;", "in vec3 vPlayerTangent;", "flat in float vTangentHandedness;",
-                  "calculateOpaquePbrNormal", "textureLod(normals, vTexCoord, 0.0)",
+                  "calculateOpaquePbrNormal", "texture(normals, vTexCoord)",
                   "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
                   "cross(tangent, geometricNormal)", "OPAQUE_NORMAL_MAP_STRENGTH"):
         if token not in source:
@@ -554,8 +554,8 @@ for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureL
 for token in ("uniform sampler2D normals;", "calculateTranslucentNormalMap", "normalMapStrength * 0.01",
               "calculateTranslucentNormalMap(normal, GLASS_NORMAL_MAP_STRENGTH)",
               "else if (isClearGlass || isStainedGlass || isTintedGlass || isIce)",
-              "textureLod(normals, vTexCoord, 0.0)", "MC_TEXTURE_FORMAT_LAB_PBR",
-              "vec4 normalTexel = textureLod(normals, vTexCoord, 0.0)",
+              "texture(normals, vTexCoord)", "MC_TEXTURE_FORMAT_LAB_PBR",
+              "vec4 normalTexel = texture(normals, vTexCoord)",
               "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
               "tangentNormal.y = -tangentNormal.y", "cross(tangent, geometricNormal)",
               "vPlayerTangent", "vTangentHandedness", "at_tangent.w < 0.0 ? -1.0 : 1.0"):
