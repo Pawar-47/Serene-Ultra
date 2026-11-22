@@ -64,6 +64,6 @@ void main() {
     outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
-    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 1.0);
+    outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5); // Valid particle, zero smoothness
     outEmissionData = vec4(emissionStrength / 5.0, 0.0, 0.0, 1.0);
 }
