@@ -293,7 +293,7 @@ void main() {
     float sssStrength = materialSSS * MATERIAL_SSS_STRENGTH * 0.01;
     if (sssStrength > 0.001 && celestialGate > 0.001) {
         float backLighting = pow(max(dot(-normal, worldLightDirection), 0.0), 2.0);
-        float sssVisibility = mix(shadow, 1.0, sssStrength * 0.65);
+        vec3 sssVisibility = mix(shadow, vec3(1.0), sssStrength * 0.65);
         vec3 sssContribution = albedoLinear * celestialColor
             * (celestialIntensity * celestialGate) * backLighting
             * sssStrength * sssVisibility * 0.25;
