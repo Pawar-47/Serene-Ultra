@@ -57,3 +57,18 @@ Additional runtime checks:
 - [ ] Verify falling rain/snow behavior with camera outside, underwater, in lava and inside powdered snow; confirm the `isEyeInWater == 3` suppression branch matches intended vanilla behavior.
 
 - [ ] On the target Iris/Minecraft version, verify translucent living entities and translucent block entities actually enter `gbuffers_entities_translucent` and `gbuffers_block_translucent` with `separateEntityDraws=true`; confirm with a debug marker or temporary per-program output, then test glass entities, armor/item translucency and block-entity glass in the real pack.
+
+
+
+## Minecraft 26.3 OIT / Iris transparency regression
+
+**Purpose:** verify that Minecraft's native 26.3 OIT changes do not cause duplicate, missing or incorrectly blended geometry while the Iris shaderpack pipeline is active.
+
+1. Record Minecraft 26.3 build, Iris version/build, Sodium version, OS, GPU and driver.
+2. Load Serene Ultra and capture logs during shaderpack load/reload. Check for unsupported shader stages, missing attachments, framebuffer errors and OIT-related compile failures.
+3. Test intersecting/overlapping water, clear glass, stained glass, ice, portals, translucent block entities, translucent entities, opaque and translucent particles, rain/snow, beacon beams and first-person hand-water.
+4. Compare each scene with shaders disabled and with the working reference pack. Check depth ordering, alpha accumulation, water-mask edges, reflections/refraction, fog and whether any object is drawn twice or omitted.
+5. Confirm the expected Iris routes are active: translucent terrain through `gbuffers_water`, translucent particles through `gbuffers_particles_translucent`, and water-mask handling through the Iris basic route.
+6. Save the Iris log and screenshots. Mark this test complete only after the same scene passes after a shader reload and a full game restart.
+
+Do not add vanilla `OIT_*` macros or native OIT attachment declarations to the shaderpack unless Iris documents and exposes those phases.
