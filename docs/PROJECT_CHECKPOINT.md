@@ -1750,3 +1750,9 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Added validator coverage for the shared helper and the existing Ultra-Light/Smooth/Ultra/HDR/Ultra-HDR strength budgets.
 - Commits: helper `86f0801aaa3033678a8e0e066942715192c9f40a`; terrain `4eaf6bbd9d5d91971e7a76354d6520959729c1c9`, view-space follow-up `54b57d014ce8c0523dd0d45530c8eecd043b6976`; shadow `1b1dd7f971b1651d3f401c06f1bf0f76d88ea0f1`; validator `f8bcfb2df06007e48cc8e9d08dd0090d67046522`; matrix `81858dbc24bb0d7a3522816b39a9c5e57584b387`.
 - Runtime wind continuity, plant-species motion, shadow matching and performance still require Minecraft/Iris testing.
+
+
+### Water-wave timer continuity — 2026-11-23
+- Restricted `WATER_WAVE_SPEED` choices and profile values to multiples of ten. The shared two-frequency wave uses 0.7× and 0.5× phase multipliers; multiples of ten make both components complete integer cycles at Iris' 3600-second `frameTimeCounter` wrap, preventing a visible phase jump.
+- Updated the water fragment, water vertex, shadow fragment and shadow vertex option declarations, and adjusted the Smooth profile from 45 to 50 cycles/hour. Added structural checks for slider choices and every profile.
+- This is a continuity correction for the new water vertex-wave path and the existing water normal/caustic animation; CI confirmation is pending.
