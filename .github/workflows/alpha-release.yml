@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   publish-alpha:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && vars.ENABLE_ALPHA_PUBLISH == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the exact validated commit
