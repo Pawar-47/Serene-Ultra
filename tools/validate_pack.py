@@ -265,10 +265,8 @@ if props_path.is_file():
         errors.append("Buffer formats must use Iris GLSL const directives, not shaders.properties key/value syntax")
     if "particles.ordering=mixed" not in props:
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
-    if ("size.buffer.colortex4=0.5 0.5" not in props
-        or "flip.deferred1.colortex0=false" not in props
-        or "flip.deferred1.colortex4=" in props):
-        errors.append("Water refraction requires half-resolution colortex4, no flip of deferred1's read-only colortex0 source, and no explicit flip of the colortex4 it writes")
+    if "size.buffer.colortex4=0.5 0.5" not in props:
+        errors.append("Water refraction requires the half-resolution opaque-scene copy in colortex4")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
@@ -413,10 +411,6 @@ for token in ("/* RENDERTARGETS: 4 */", "uniform sampler2D colortex0",
         errors.append(f"Half-resolution deferred1 scene copy is missing component: {token}")
 if "size.buffer.colortex4=0.5 0.5" not in props:
     errors.append("Water scene-copy attachment must be half resolution")
-if "flip.deferred.colortex4=false" not in props:
-    errors.append("Deferred must not flip colortex4, which only deferred1 writes")
-if "flip.deferred1.colortex4=" in props:
-    errors.append("deferred1 writes colortex4, so it must rely on Iris' default flip rather than declare flip.deferred1.colortex4")
 ao_strength_line = next((line for line in deferred_options.splitlines() if line.startswith("#define AO_STRENGTH ")), "")
 if "0.65" not in ao_strength_line:
     errors.append("AO_STRENGTH option values must include the 0.65 profile preset")
@@ -1656,52 +1650,55 @@ for name, tokens in (
     if "BLOOM_STRENGTH" not in stage:
         errors.append(f"{name} must honour BLOOM_STRENGTH so low profiles skip the chain")
 
-# Iris enables buffer flipping by default for composite-style passes.
-# flip.<pass>.<buffer>=false DISABLES that sampler's swap; true/default keeps it
-# enabled. Written buffers must retain the default swap so the next stage sees the
-# new contents. Read-only inputs (and prior outputs that must survive untouched)
-# are pinned to false so they do not switch to stale alternate storage.
-bloom_written = {"composite1": "colortex5", "composite2": "colortex6",
-                 "composite3": "colortex5", "composite4": "colortex7"}
-bloom_read_only = (("composite1", "colortex0"), ("composite2", "colortex0"),
-                   ("composite2", "colortex5"), ("composite3", "colortex0"),
-                   ("composite3", "colortex6"), ("composite4", "colortex0"),
-                   ("composite4", "colortex5"))
-for stage_name, buffer in bloom_written.items():
-    if f"flip.{stage_name}.{buffer}=false" in props:
-        errors.append(
-            f"{stage_name} writes {buffer}; flip=false disables the required default swap"
-        )
-for stage_name, buffer in bloom_read_only:
-    if f"flip.{stage_name}.{buffer}=false" not in props:
-        errors.append(
-            f"{stage_name} must pin read-only/preserved {buffer} with flip=false"
-        )
-
-# Validate every explicit colortex flip against the pass's RENDERTARGETS:
-# false on an output disables its required swap; true on a read-only/preserved
-# buffer swaps to alternate storage that the pass did not update.
-for flip_line in props.splitlines():
-    flip_match = re.match(
-        r"\s*flip\.([^\.\s=]+)\.colortex(\d+)\s*=\s*(true|false)\s*$",
-        flip_line,
+# Iris flips composite-style draw buffers by default. An explicit flip directive
+# for a buffer written by the same pass either disables that swap (false) or
+# performs an extra swap (true), both of which break the normal pass hand-off.
+# Read-only false directives are no-ops; avoid requiring them as fake protection.
+legacy_flip_targets = {
+    "gcolor": 0, "gdepth": 1, "gnormal": 2, "composite": 3,
+    "gaux1": 4, "gaux2": 5, "gaux3": 6, "gaux4": 7,
+}
+composite_programs = {"begin", "shadowcomp", "prepare", "deferred", "composite"}
+for line_number, raw_line in enumerate(props.splitlines(), 1):
+    directive = raw_line.split("#", 1)[0].strip()
+    flip_match = re.fullmatch(
+        r"flip\.([^.=\s]+)\.([^.=\s]+)\s*=\s*(true|false)",
+        directive,
     )
     if not flip_match:
+        if directive.startswith("flip.") and "=" in directive:
+            errors.append(f"shaders.properties line {line_number}: malformed Iris flip directive")
         continue
-    flip_program, flip_buffer = flip_match.group(1), int(flip_match.group(2))
-    flip_value = flip_match.group(3)
+    flip_program, buffer_name, flip_value = flip_match.groups()
+    if flip_program not in composite_programs:
+        errors.append(
+            f"shaders.properties line {line_number}: flip directives are only valid for composite-style passes, not {flip_program}"
+        )
+        continue
+    if buffer_name in legacy_flip_targets:
+        flip_buffer = legacy_flip_targets[buffer_name]
+    else:
+        buffer_match = re.fullmatch(r"colortex(\d+)", buffer_name)
+        if not buffer_match:
+            errors.append(
+                f"shaders.properties line {line_number}: unsupported flip target {buffer_name!r}; use colortexN or an Iris legacy colour-buffer alias"
+            )
+            continue
+        flip_buffer = int(buffer_match.group(1))
+        if flip_buffer > 15:
+            errors.append(
+                f"shaders.properties line {line_number}: colortex{flip_buffer} exceeds Iris' supported colour-buffer range"
+            )
+            continue
+
     flip_source = sources.get(f"{flip_program}.fsh", "")
     flip_targets = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", flip_source)
     if not flip_targets:
         continue
     written = {int(value) for value in re.findall(r"\d+", flip_targets.group(1))}
-    if flip_buffer in written and flip_value == "false":
+    if flip_buffer in written:
         errors.append(
-            f"flip.{flip_program}.colortex{flip_buffer}=false disables the required output swap"
-        )
-    elif flip_buffer not in written and flip_value == "true":
-        errors.append(
-            f"flip.{flip_program}.colortex{flip_buffer}=true swaps a read-only/preserved buffer"
+            f"shaders.properties line {line_number}: explicit flip for {buffer_name} overrides the default output ping-pong in {flip_program}; remove it"
         )
 
 if "uniform sampler2D colortex5" not in final_shader or "uniform sampler2D colortex7" not in final_shader:
