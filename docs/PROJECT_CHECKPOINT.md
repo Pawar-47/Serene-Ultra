@@ -972,3 +972,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Added a small recursive include expander for CI only. It resolves absolute Iris include paths from the shaders root, resolves relative paths from the including file, rejects path traversal and cycles, and expands nested includes into temporary compile sources.
 - Updated every default, Iris-macro, LabPBR, entity-POM, water-detail and program-link compile stage to use the expander before glslangValidator. Runtime shader sources retain standard Iris #include syntax with no extra extension requirement.
 - The shared celestial environment include remains unvalidated until the fresh CI run completes.
+
+
+## Include-file version validation correction — 2026-11-23
+- Run #1099 compiled every standalone shader, Iris macro branch, LabPBR branch, opt-in entity POM branch, opt-in Unbound water-detail branch and linked all vertex/fragment programs.
+- Structural validation then incorrectly required the reusable `.glsl` include to declare its own `#version 330`. Iris includes are preprocessor fragments inserted into the parent stage; they must inherit the parent's version directive instead.
+- Updated the structural check to require GLSL 330 only on standalone stage files. No runtime shader code changed.

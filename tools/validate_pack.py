@@ -52,7 +52,9 @@ for path in SHADERS.rglob("*"):
         continue
     source = path.read_text(encoding="utf-8")
     sources[path.name] = source
-    if not re.search(r"^\s*#version\s+330\b", source, re.MULTILINE):
+    # Reusable .glsl includes are inserted into a parent stage and must not
+    # declare their own #version directive. Only standalone stages require it.
+    if path.suffix != ".glsl" and not re.search(r"^\s*#version\s+330\b", source, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: expected an explicit GLSL 330 version")
     if source.count("{") != source.count("}"):
         errors.append(f"{path.relative_to(ROOT)}: unbalanced brace count")
