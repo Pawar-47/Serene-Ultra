@@ -269,3 +269,8 @@ option.LENS_FLARE_STRENGTH.comment = Adds screen-space spectral ghosting and a s
 
 option.IMAGE_SHARPENING = Image Sharpening
 option.IMAGE_SHARPENING.comment = Edge-aware unsharp masking after FXAA/DOF and before bloom; increases local detail without sharpening the bloom halo.
+
+option.PBR_REFLECTION_DISTANCE = Opaque Reflection Distance
+option.PBR_REFLECTION_DISTANCE.comment = Maximum screen-space ray distance for opaque block reflections; longer traces improve coverage but cost more depth samples.
+option.WATER_REFLECTION_DISTANCE = Water/Glass Reflection Distance
+option.WATER_REFLECTION_DISTANCE.comment = Maximum screen-space ray distance for water and glass reflections; longer traces can reach more distant visible geometry.
