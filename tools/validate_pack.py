@@ -522,13 +522,33 @@ entity_properties = (SHADERS / "entity.properties").read_text(encoding="utf-8")
 for token in ("entity.50128=minecraft:item_frame", "entity.50132=minecraft:glow_item_frame"):
     if token not in entity_properties:
         errors.append(f"Entity POM exclusion mapping is missing: {token}")
-for option in ("POM_QUALITY", "POM_DISTANCE"):
+for option, names in (
+    ("POM_STRENGTH", ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_water.fsh")),
+    ("POM_QUALITY", ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh", "gbuffers_water.fsh")),
+    ("POM_DISTANCE", ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh", "gbuffers_water.fsh")),
+):
     definitions = []
-    for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
+    for name in names:
         definitions.extend(line.strip() for line in sources.get(name, "").splitlines()
                            if line.startswith(f"#define {option} "))
     if len(set(definitions)) != 1:
-        errors.append(f"{option} must be defined identically in terrain, block and entity shaders")
+        errors.append(f"{option} must be defined identically across its terrain/block/entity/water consumers")
+
+water_pom_source = sources.get("gbuffers_water.fsh", "")
+for token in ("vec2 calculateWaterParallaxUv(", "textureGrad(normals, baseUv, uvDx, uvDy)",
+              "initialNormal.a >= 0.9995", "spriteBounds.xy + hitLocal * tileSize",
+              "for (int stepIndex = 0; stepIndex < POM_QUALITY; ++stepIndex)",
+              "waterMaterialUv = calculateWaterParallaxUv(",
+              "textureGrad(gtexture, waterMaterialUv, materialUvDx, materialUvDy)",
+              "appliedWaterParallax > 0.0001"):
+    if token not in water_pom_source:
+        errors.append(f"Water POM is missing sprite-safe height-map component: {token}")
+water_vertex_source = sources.get("gbuffers_water.vsh", "")
+for token in ("flat out vec2 vMidTexCoord", "flat out vec2 vTexHalfSize",
+              "out vec3 vPlayerTangent", "flat out float vTangentHandedness",
+              "in vec2 mc_midTexCoord", "in vec4 at_tangent"):
+    if token not in water_vertex_source:
+        errors.append(f"Water vertex stage is missing POM atlas/tangent input: {token}")
 if "POM_ENTITY_STRENGTH" not in props or "POM_ENTITY_STRENGTH" not in slider_options_line:
     errors.append("POM_ENTITY_STRENGTH must be exposed as an Iris Quality slider")
 if "POM_ENTITY_STRENGTH:0" not in props or "POM_ENTITY_STRENGTH:20" not in props:
@@ -2082,7 +2102,8 @@ for token in ("sampleSereneCloudReflection", "CLOUD_REFLECTION_STRENGTH",
               "texture(noisetex", "verticalMask", "frameTimeCounter"):
     if token not in environment_reflection:
         errors.append(f"Environment reflection is missing procedural cloud contribution: {token}")
-for name in ("composite.fsh", "gbuffers_water.fsh"):
+for name in ("composite.fsh", "gbuffers_water.fsh",
+             "gbuffers_block_translucent.fsh", "gbuffers_entities_translucent.fsh"):
     source = sources.get(name, "")
     if "CLOUD_REFLECTION_STRENGTH" not in source or "uniform sampler2D noisetex" not in source:
         errors.append(f"{name} must provide cloud-reflection controls and noise input")
