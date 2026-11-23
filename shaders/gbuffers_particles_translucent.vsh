@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#include "/lib/taa_jitter.glsl"
+
 out vec2 vTexCoord;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
@@ -19,4 +21,5 @@ void main() {
     vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
+    applySereneTaaJitter(gl_Position);
 }
