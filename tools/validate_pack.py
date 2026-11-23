@@ -2165,7 +2165,8 @@ for token in ("float xx = dot(uvDx, uvDx)", "float xy = dot(uvDx, uvDy)",
         errors.append(f"Translucent anisotropic sampler is missing principal-axis component: {token}")
 
 for fragment_name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
-                       "gbuffers_block_translucent.fsh"):
+                       "gbuffers_block_translucent.fsh", "gbuffers_weather.fsh",
+                       "gbuffers_particles_translucent.fsh"):
     source = sources.get(fragment_name, "")
     for token in ('#include "/lib/materials/anisotropic_sampling.glsl"',
                   "#define ANISOTROPIC_FILTER_QUALITY",
@@ -2174,7 +2175,8 @@ for fragment_name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
             errors.append(f"{fragment_name} is missing shared translucent atlas filtering: {token}")
 
 for vertex_name in ("gbuffers_water.vsh", "gbuffers_entities_translucent.vsh",
-                    "gbuffers_block_translucent.vsh"):
+                    "gbuffers_block_translucent.vsh", "gbuffers_weather.vsh",
+                    "gbuffers_particles_translucent.vsh"):
     source = sources.get(vertex_name, "")
     for token in ("in vec2 mc_midTexCoord", "flat out vec2 vMidTexCoord",
                   "flat out vec2 vTexHalfSize", "vTexHalfSize = abs(vTexCoord - vMidTexCoord)"):
