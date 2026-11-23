@@ -449,3 +449,11 @@ The latest vertex/fragment interface audit also found matching fragment inputs f
 ## Weather camera-state contract cross-check
 
 The dedicated `gbuffers_weather.fsh` discards weather geometry when `isEyeInWater == 3`. The current Iris status-uniform reference explicitly defines 3 as **powdered snow** (1 is water, 2 is lava, 0 is none/other), so this condition is not an accidental water/lava enum mismatch. Preserve it only if the intended behavior is to suppress exterior weather while the camera is inside powdered snow; include this state in runtime regression testing. Reference: https://shaders.properties/current/reference/uniforms/status/
+
+## Iris translucent-entity routing caveat
+
+The pack sets `separateEntityDraws=true` and provides dedicated `gbuffers_entities_translucent` and `gbuffers_block_translucent` pairs. Iris' documented contract says the directive moves translucent entities and block entities after deferred and selects those programs. However, the current Iris ordering documentation also warns that this feature may be broken in newer Iris versions. A parsed property and present shader files therefore do **not** prove that Minecraft 26.3 actually routes those draw calls into the intended programs.
+
+The current Iris source snapshot inspected for the pipeline still parses and stores the directive, sets the world-rendering setting, and maps translucent entity/item pipelines to the translucent shader keys. That source-level evidence does not resolve the documentation warning or prove the target runtime's draw routing. Keep this as a release-blocking runtime check, not a source-complete claim.
+
+The explicit `particles.ordering=mixed` setting is different: Iris documents it as opaque particles before deferred and translucent particles after deferred, matching the pack's split opaque-MRT and translucent-forward particle programs.
