@@ -690,6 +690,7 @@ void main() {
         emissionStrength = 0.90; // Charged respawn anchors.
     } else if (vMaterialId == 32127) {
         emissionStrength = 0.90; // Lit copper bulbs.
+    }
 
     emissionStrength = max(emissionStrength, pbrEmission * 5.0);
     outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData);
