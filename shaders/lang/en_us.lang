@@ -166,7 +166,7 @@ option.HELD_LIGHTING_STRENGTH = Held Item World Lighting
 option.HELD_LIGHTING_STRENGTH.comment = Adds low-cost colored light from luminous main/offhand items to nearby opaque surfaces. Ultra-Light compiles it out; it adds no texture samples and does not cast shadows.
 
 option.BLOOM_STRENGTH = Bloom Strength
-option.BLOOM_STRENGTH.comment = Combines a blurred half-resolution level with a wide quarter-resolution level for a soft multi-scale glow. It costs four small extra passes; Ultra-Light disables the chain entirely.
+option.BLOOM_STRENGTH.comment = Combines a tight half-resolution glow with quarter-, eighth- and sixteenth-resolution wide halos. Bloom extraction and blending use linear light; Ultra-Light disables the chain entirely.
 option.BLOOM_THRESHOLD = Bloom Highlight Threshold
 option.BLOOM_THRESHOLD.comment = Sets the linear-light brightness where the bloom bright pass begins. Lower values make more surfaces glow; higher values restrict the effect to bright emissive and highlight pixels. The cutoff uses a soft knee so bloom ramps in instead of popping.
 
