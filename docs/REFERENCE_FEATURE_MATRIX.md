@@ -40,7 +40,7 @@ The supplied archive is a Complementary Reimagined shaderpack and is used as a t
 | Color grading | Tonemapping, exposure, saturation and contrast | Reference-matched color pipeline | Foundation; parity pending |
 | Depth of field | Focus/depth post-processing if present in Ultra | Final-pass depth reconstruction with configurable focus distance/range and an eight-tap bilateral gather blur; bounded to a six-pixel maximum radius | Implemented at source level; visual/runtime calibration and Intel HD 5500 cost remain unverified |
 | Motion blur | Motion-dependent post-processing if present | Velocity-aware path; avoid ghosting | Pending |
-| Lens/post effects | Any enabled Ultra lens and post-processing effects | Individually inventoried and switchable | Pending |
+| Lens/post effects | Lens dispersion, vignette and fine-grain presentation controls | Configurable radial chromatic aberration, adjustable final-pass vignette replacing the vanilla overlay, and animated monochrome grain from Iris `noisetex`; each has independent menu control and profile budget | Implemented at source level; visual calibration/runtime and grain stability remain unverified |
 | Text rendering | Correct text/UI treatment and compatibility | Preserve vanilla UI/text; no destructive post-processing | Pending |
 | Weather | Rain/snow and weather-dependent material/lighting | Dedicated forward weather path with Iris lightmap/fog; volumetric and wetness effects remain | Partial |
 | Dimension support | Overworld, Nether, End and special dimensions | Iris hasSkylight gating plus End-flash shadow source; full per-dimension atmosphere/material tuning remains | Partial |
