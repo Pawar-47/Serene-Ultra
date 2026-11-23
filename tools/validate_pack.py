@@ -90,6 +90,28 @@ for path in SHADERS.rglob("gbuffers_*.fsh"):
             + ", ".join(f"colortex{value}" for value in conflicts)
         )
 
+# Verify modern fragment output locations against the ordered RENDERTARGETS
+# list. Location N maps to the Nth target, not to colortexN itself. The line
+# program is intentionally GLSL 130 and uses Iris's outColorN core transform.
+for path in SHADERS.rglob("*.fsh"):
+    source = path.read_text(encoding="utf-8")
+    target_match = re.search(r"/\\*\\s*RENDERTARGETS:\\s*([0-9,\\s]+)\\s*\\*/", source)
+    if not target_match or re.search(r"^\\s*#version\\s+130\\b", source, re.MULTILINE):
+        continue
+    targets = [int(value) for value in re.findall(r"\\d+", target_match.group(1))]
+    locations = [
+        int(value) for value in re.findall(
+            r"layout\\s*\\(\\s*location\\s*=\\s*(\\d+)\\s*\\)\\s*out\\s+\\w+\\s+\\w+",
+            source,
+        )
+    ]
+    expected_locations = list(range(len(targets)))
+    if sorted(locations) != expected_locations:
+        errors.append(
+            f"{path.relative_to(ROOT)}: fragment output locations {sorted(locations)} "
+            f"do not match RENDERTARGETS slot order {expected_locations}"
+        )
+
 # Track Iris program coverage explicitly. Missing files use the documented
 # fallback program; fallback coverage is not equivalent to a feature-specific
 # material implementation. Keep these as visible warnings until the program
