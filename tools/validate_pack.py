@@ -857,7 +857,10 @@ for token in ("float iceSmoothness = translucentAlbedo.g * translucentAlbedo.g *
                "if (isIce && nDotL > 0.001 && celestialGate > 0.001)"):
     if token not in water:
         errors.append(f"Unbound-guided ice highlight path is missing component: {token}")
-for token in ("vMaterialId == 32008", "vMaterialId == 32001", "vMaterialId >= 31000 && vMaterialId <= 31031",
+for token in ("bool isClearGlassPane = (vMaterialId == 32012)",
+               "isClearGlassPane && translucentAlbedo.a < 0.001",
+               "abs(normalize(vPlayerNormal).y) > 0.95",
+               "vMaterialId == 32008", "vMaterialId == 32001", "vMaterialId >= 31000 && vMaterialId <= 31031",
               "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
               "float closeGlassFactor = (1.0 - smoothstep(0.5, 4.0, glassCameraDistance)) * 0.5",
               "translucentAlbedo.a * translucentAlbedo.a",

@@ -339,3 +339,9 @@ The supplied Complementary reference's `materialMethods/translucentTweaks.glsl` 
 
 ### Ice direct-highlight angular attenuation — 2026-11-23
 A follow-up review against Unbound's GGX implementation found its direct highlight includes an explicit light-facing term. Serene's lightweight Blinn approximation now multiplies the ice highlight by the existing world-space (N\cdot L) term as well, preventing a bright specular response at grazing/back-facing light angles. This is arithmetic-only and adds no sampling.
+
+
+### Clear-glass pane alpha edge guard — 2026-11-23
+- Complementary's translucent material dispatch includes a narrow guard for clear glass panes: discard only fragments with alpha below 0.001 whose surface normal is nearly horizontal (|N·up| > 0.95), preventing CTM/Opti connected-pane edge artifacts.
+- Serene now mirrors that exact material-specific condition using its existing player-space geometric normal. This is deliberately limited to clear glass panes (ID 32012); stained-glass panes have a separate reference path and are not affected. The existing general Iris alpha test remains in place.
+- No voxel-neighbor/connected-glass behavior is claimed or added; the reference's optional connected-glass volume processing remains out of scope until Serene has a supported voxel-volume data source.

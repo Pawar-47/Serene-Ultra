@@ -425,6 +425,11 @@ void main() {
     bool isFluidWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
     bool isWater = isFluidWater || (vMaterialId == 32001);
     bool isClearGlass = (vMaterialId == 32008 || vMaterialId == 32012);
+    bool isClearGlassPane = (vMaterialId == 32012);
+    // Match Unbound's CTM/Opti pane edge guard without discarding valid faces:
+    // only near-horizontal clear-pane fragments with effectively zero alpha.
+    if (isClearGlassPane && translucentAlbedo.a < 0.001
+        && abs(normalize(vPlayerNormal).y) > 0.95) discard;
     bool isStainedGlass = (vMaterialId >= 31000 && vMaterialId <= 31031);
     bool isTintedGlass = (vMaterialId == 30008);
     bool isIce = (vMaterialId == 32004);
