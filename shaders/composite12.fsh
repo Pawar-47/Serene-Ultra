@@ -93,7 +93,7 @@ void main() {
         if (previousClipPosition.w > 0.0001) {
             vec3 previousNdc = previousClipPosition.xyz
                 / previousClipPosition.w;
-            previousNdc.xy += sereneTaaJitterNdc(max(frameCounter - 1, 0));
+            previousNdc.xy += sereneTaaJitterNdc((frameCounter + 7) % 8);
             vec2 previousUv = previousNdc.xy * 0.5 + 0.5;
             float expectedPreviousDepth = previousNdc.z * 0.5 + 0.5;
 
