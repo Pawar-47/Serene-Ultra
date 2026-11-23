@@ -340,6 +340,26 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
             errors.append(f"{name} is missing POM integration: {token}")
 if "gl_FrontFacing && !signText && blockEntityId != 5025" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity POM must skip sign text and Nether portal surfaces")
+for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    for token in ("#define GENERATED_NORMAL_STRENGTH 25",
+                  "hasExplicitNormal = any(greaterThan(abs(normalTexel.rg - vec2(0.5)), vec2(0.01)))",
+                  "calculateGeneratedAlbedoNormal(", "textureSize(gtexture, 0)",
+                  "textureGrad(gtexture, rightUv, uvDx, uvDy)",
+                  "textureGrad(gtexture, leftUv, uvDx, uvDy)",
+                  "textureGrad(gtexture, upUv, uvDx, uvDy)",
+                  "textureGrad(gtexture, downUv, uvDx, uvDy)",
+                  "GENERATED_NORMAL_STRENGTH) * 0.025",
+                  "min(min(rightSample.a, leftSample.a), min(upSample.a, downSample.a))"):
+        if token not in source:
+            errors.append(f"{name} is missing atlas-safe generated-normal component: {token}")
+if "GENERATED_NORMAL_STRENGTH" not in props or "GENERATED_NORMAL_STRENGTH" not in slider_options_line:
+    errors.append("GENERATED_NORMAL_STRENGTH must be exposed as an Iris Quality slider")
+if "GENERATED_NORMAL_STRENGTH:0" not in props:
+    errors.append("Ultra-Light profile must disable generated normals")
+if "option.GENERATED_NORMAL_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("Generated normal strength requires a user-facing tooltip")
+
 for option in ("POM_STRENGTH", "POM_QUALITY", "POM_DISTANCE"):
     if option not in props or option not in slider_options_line:
         errors.append(f"{option} must be exposed as an Iris Quality slider")
@@ -478,11 +498,11 @@ for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers
                   "cross(tangent, geometricNormal)", "OPAQUE_NORMAL_MAP_STRENGTH"):
         if token not in source:
             errors.append(f"{fragment_name} is missing opaque PBR normal-map component: {token}")
-if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO)" not in sources.get("gbuffers_terrain.fsh", ""):
+if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal)" not in sources.get("gbuffers_terrain.fsh", ""):
     errors.append("Terrain must apply resource-pack tangent-space normal maps")
 if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO)" not in sources.get("gbuffers_entities.fsh", ""):
     errors.append("Entities must apply resource-pack tangent-space normal maps")
-if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO)" not in sources.get("gbuffers_block.fsh", ""):
+if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal)" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")
 
 

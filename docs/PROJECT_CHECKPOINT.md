@@ -726,3 +726,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Both terrain and block-entity programs compile and link with the same Iris mc_midTexCoord/at_tangent POM varyings. Structural validation confirms atlas bounds, bounded sampling, cutout fallback, and sign-text/portal exclusions.
 - Tuned the depth control mapping to give the low-end 20/35 presets a more visible displacement while retaining a 0.20 UV-offset cap and 4/6/8 sample limit. This is a source-level calibration only; real resource-pack appearance and Intel HD 5500 cost still need runtime checks.
 - POM remains unavailable for generic entity models and held items; their stable per-object exclusions are not yet mapped in this pack. Self-shadowing and slope-normal reconstruction also remain pending.
+
+
+## Albedo-derived generated normals — 2026-11-23
+- Added four-neighbour albedo-gradient normal generation to terrain and block-entity G-buffers. It runs only when the resource normal map's XY channels are effectively flat, and only on fully opaque texels; explicit PBR normal maps retain priority.
+- Uses precomputed screen derivatives, a one-texel minimum footprint, per-quad mc_midTexCoord atlas bounds, and a half-texel inset for all four textureGrad samples. Any neighbour with partial/cutout alpha rejects the generated normal to avoid lighting across leaf/plant holes.
+- Generated tangent-space gradients are thresholded and clamped before conversion through the existing at_tangent/handedness basis. GENERATED_NORMAL_STRENGTH is independently configurable; Ultra-Light disables it.
+- This is a low-sample adaptation of Complementary's generatedNormals.glsl, not a claim of visual parity. Entity models, runtime comparison, texture-pack coverage and Intel HD 5500 performance remain pending.

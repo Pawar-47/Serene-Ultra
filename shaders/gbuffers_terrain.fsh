@@ -17,6 +17,7 @@ uniform float alphaTestRef;
 // Low-cost, sprite-safe parallax occlusion mapping for Iris normal atlases.
 // LabPBR and oldPBR both store height in normals.a; a neutral fallback has alpha 1.
 #define POM_STRENGTH 25 // [0 10 20 35 50 75 100] LabPBR/oldPBR height-map parallax strength
+#define GENERATED_NORMAL_STRENGTH 25 // [0 10 20 35 50 75 100] Albedo-derived normal detail when no normal map is present
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
 
@@ -115,8 +116,9 @@ layout(location = 3) out vec4 outEmissionData;
 #define RAIN_PUDDLE_STRENGTH 70 // [0 25 50 70 85 100] Unbound-inspired exposed-surface puddle coverage
 #define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
 
-vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, vec2 uvDy, out float materialAO) {
+vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, vec2 uvDy, out float materialAO, out bool hasExplicitNormal) {
     vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy);
+    hasExplicitNormal = any(greaterThan(abs(normalTexel.rg - vec2(0.5)), vec2(0.01)));
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     // LabPBR blue stores material AO; XY are the DirectX Y- tangent normal.
@@ -148,10 +150,75 @@ vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, 
 #endif
 }
 
+vec3 calculateGeneratedAlbedoNormal(
+    vec3 geometricNormal,
+    vec2 materialUv,
+    vec2 uvDx,
+    vec2 uvDy,
+    vec2 uvFootprint,
+    vec4 spriteBounds
+) {
+#if GENERATED_NORMAL_STRENGTH > 0
+    vec2 atlasTexel = 1.0 / vec2(textureSize(gtexture, 0));
+    vec2 sampleOffset = max(uvFootprint, atlasTexel);
+    vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
+    vec2 lowerBound = spriteBounds.xy + 0.5 * atlasTexel;
+    vec2 upperBound = spriteBounds.xy + tileSize - 0.5 * atlasTexel;
+
+    vec2 rightUv = clamp(materialUv + vec2(sampleOffset.x, 0.0), lowerBound, upperBound);
+    vec2 leftUv  = clamp(materialUv - vec2(sampleOffset.x, 0.0), lowerBound, upperBound);
+    vec2 upUv    = clamp(materialUv + vec2(0.0, sampleOffset.y), lowerBound, upperBound);
+    vec2 downUv  = clamp(materialUv - vec2(0.0, sampleOffset.y), lowerBound, upperBound);
+
+    vec4 rightSample = textureGrad(gtexture, rightUv, uvDx, uvDy) * vVertexColor;
+    vec4 leftSample  = textureGrad(gtexture, leftUv, uvDx, uvDy) * vVertexColor;
+    vec4 upSample    = textureGrad(gtexture, upUv, uvDx, uvDy) * vVertexColor;
+    vec4 downSample  = textureGrad(gtexture, downUv, uvDx, uvDy) * vVertexColor;
+
+    // Avoid synthesizing slopes across cutout holes or partial-alpha edges.
+    if (min(min(rightSample.a, leftSample.a), min(upSample.a, downSample.a)) < 0.999) {
+        return geometricNormal;
+    }
+
+    const vec3 luminanceWeights = vec3(0.2126, 0.7152, 0.0722);
+    float rightHeight = dot(rightSample.rgb, luminanceWeights);
+    float leftHeight = dot(leftSample.rgb, luminanceWeights);
+    float upHeight = dot(upSample.rgb, luminanceWeights);
+    float downHeight = dot(downSample.rgb, luminanceWeights);
+
+    float deltaX = rightHeight - leftHeight;
+    float deltaY = upHeight - downHeight;
+    if (abs(deltaX) < 0.05) deltaX = 0.0;
+    if (abs(deltaY) < 0.05) deltaY = 0.0;
+    deltaX = clamp(deltaX, -0.2, 0.2);
+    deltaY = clamp(deltaY, -0.2, 0.2);
+    if (deltaX == 0.0 && deltaY == 0.0) return geometricNormal;
+
+    vec3 tangentNormal = normalize(vec3(-deltaX, -deltaY, 1.0));
+    tangentNormal.xy *= float(GENERATED_NORMAL_STRENGTH) * 0.025;
+    tangentNormal = normalize(tangentNormal);
+
+    vec3 tangentCandidate = vPlayerTangent - geometricNormal * dot(vPlayerTangent, geometricNormal);
+    float tangentLengthSquared = dot(tangentCandidate, tangentCandidate);
+    if (tangentLengthSquared < 0.000001) return geometricNormal;
+
+    vec3 tangent = tangentCandidate * inversesqrt(tangentLengthSquared);
+    vec3 bitangent = normalize(cross(tangent, geometricNormal)) * vTangentHandedness;
+    return normalize(
+        tangent * tangentNormal.x +
+        bitangent * tangentNormal.y +
+        geometricNormal * tangentNormal.z
+    );
+#else
+    return geometricNormal;
+#endif
+}
+
 
 void main() {
     vec2 uvDx = dFdx(vTexCoord);
     vec2 uvDy = dFdy(vTexCoord);
+    vec2 uvFootprint = max(fwidth(vTexCoord), 1.0 / vec2(textureSize(gtexture, 0)));
     vec2 materialUv = vTexCoord;
     vec4 albedo = texture(gtexture, materialUv) * vVertexColor;
     if (albedo.a < alphaTestRef) discard;
@@ -182,7 +249,13 @@ void main() {
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     float materialAO = 1.0;
-    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO);
+    bool hasExplicitNormal = false;
+    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal);
+#if GENERATED_NORMAL_STRENGTH > 0
+    if (gl_FrontFacing && !hasExplicitNormal && albedo.a >= 0.999) {
+        surfaceNormal = calculateGeneratedAlbedoNormal(surfaceNormal, materialUv, uvDx, uvDy, uvFootprint, vTexCoordAM);
+    }
+#endif
     // Iris exposes the resource-pack specular atlas for oldPBR and LabPBR.
     // Both formats store smoothness in red; green is metalness (oldPBR) or
     // dielectric F0 / metal code (LabPBR).

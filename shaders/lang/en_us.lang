@@ -125,3 +125,6 @@ option.POM_QUALITY = Parallax Sample Quality
 option.POM_QUALITY.comment = Number of bounded height samples per pixel. Higher values improve depth intersection but increase terrain shader cost.
 option.POM_DISTANCE = Parallax Fade Distance
 option.POM_DISTANCE.comment = POM fades smoothly to zero by this view distance. Shorter distances reduce GPU cost.
+
+option.GENERATED_NORMAL_STRENGTH = Generated Normal Strength
+option.GENERATED_NORMAL_STRENGTH.comment = Creates subtle tangent-space detail from albedo contrast when no resource-pack normal detail is present. Uses four bounded atlas samples; set to 0 for the lowest GPU cost.
