@@ -131,3 +131,6 @@ option.GENERATED_NORMAL_STRENGTH.comment = Creates subtle tangent-space detail f
 
 option.COATED_TEXTURE_STRENGTH = Coated Texture Strength
 option.COATED_TEXTURE_STRENGTH.comment = Adds subtle stable noise variation to dark opaque materials. Uses one noise lookup and fades with distance/mip level; set to 0 for the lowest GPU cost.
+
+option.POM_ENTITY_STRENGTH = Entity Parallax / POM Strength
+option.POM_ENTITY_STRENGTH.comment = Enables bounded LabPBR/oldPBR height mapping on opaque entity models. Item frames are excluded. Disabled in Ultra-Light and Smooth to protect low-end GPUs.
