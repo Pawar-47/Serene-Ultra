@@ -1656,11 +1656,11 @@ for name, tokens in (
     if "BLOOM_STRENGTH" not in stage:
         errors.append(f"{name} must honour BLOOM_STRENGTH so low profiles skip the chain")
 
-# Iris' CompositeRenderer flips every draw buffer by default, then applies any
-# explicit flip.<pass>.<buffer>=true as an ADDITIONAL flip on top. Declaring true
-# for a buffer the pass already writes therefore flips it twice, cancelling the
-# default and leaving the next stage reading stale contents. Bloom stages must
-# declare no flip for the buffer they write and must not flip buffers they read.
+# Iris enables buffer flipping by default for composite-style passes.
+# flip.<pass>.<buffer>=false DISABLES that sampler's swap; true/default keeps it
+# enabled. Written buffers must retain the default swap so the next stage sees the
+# new contents. Read-only inputs (and prior outputs that must survive untouched)
+# are pinned to false so they do not switch to stale alternate storage.
 bloom_written = {"composite1": "colortex5", "composite2": "colortex6",
                  "composite3": "colortex5", "composite4": "colortex7"}
 bloom_read_only = (("composite1", "colortex0"), ("composite2", "colortex0"),
@@ -1668,34 +1668,42 @@ bloom_read_only = (("composite1", "colortex0"), ("composite2", "colortex0"),
                    ("composite3", "colortex6"), ("composite4", "colortex0"),
                    ("composite4", "colortex5"))
 for stage_name, buffer in bloom_written.items():
-    if f"flip.{stage_name}.{buffer}=true" in props:
+    if f"flip.{stage_name}.{buffer}=false" in props:
         errors.append(
-            f"{stage_name} must not set flip.{buffer}=true: Iris already flips draw buffers "
-            "and an explicit true applies a second flip that cancels it"
+            f"{stage_name} writes {buffer}; flip=false disables the required default swap"
         )
 for stage_name, buffer in bloom_read_only:
-    if f"flip.{stage_name}.{buffer}=true" in props:
-        errors.append(f"{stage_name} only reads {buffer} and must not flip it")
+    if f"flip.{stage_name}.{buffer}=false" not in props:
+        errors.append(
+            f"{stage_name} must pin read-only/preserved {buffer} with flip=false"
+        )
 
-# Generalise the rule to the whole pack: derive each program's draw buffers from its
-# own RENDERTARGETS line and reject an explicit flip.<program>.<buffer>=true on one of
-# them. Iris flips written buffers once by default; an explicit true flips again and
-# cancels the swap, so the next program reads the texture that was never written.
+# Validate every explicit colortex flip against the pass's RENDERTARGETS:
+# false on an output disables its required swap; true on a read-only/preserved
+# buffer swaps to alternate storage that the pass did not update.
 for flip_line in props.splitlines():
-    flip_match = re.match(r"\s*flip\.([^.\s=]+)\.colortex(\d+)\s*=\s*true\s*$", flip_line)
+    flip_match = re.match(
+        r"\s*flip\.([^\.\s=]+)\.colortex(\d+)\s*=\s*(true|false)\s*$",
+        flip_line,
+    )
     if not flip_match:
         continue
     flip_program, flip_buffer = flip_match.group(1), int(flip_match.group(2))
+    flip_value = flip_match.group(3)
     flip_source = sources.get(f"{flip_program}.fsh", "")
     flip_targets = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", flip_source)
     if not flip_targets:
         continue
     written = {int(value) for value in re.findall(r"\d+", flip_targets.group(1))}
-    if flip_buffer in written:
+    if flip_buffer in written and flip_value == "false":
         errors.append(
-            f"flip.{flip_program}.colortex{flip_buffer}=true double-flips a buffer {flip_program} "
-            "writes, cancelling Iris' default flip so the next program reads stale contents"
+            f"flip.{flip_program}.colortex{flip_buffer}=false disables the required output swap"
         )
+    elif flip_buffer not in written and flip_value == "true":
+        errors.append(
+            f"flip.{flip_program}.colortex{flip_buffer}=true swaps a read-only/preserved buffer"
+        )
+
 if "uniform sampler2D colortex5" not in final_shader or "uniform sampler2D colortex7" not in final_shader:
     errors.append("Final pass must combine both bloom levels")
 
