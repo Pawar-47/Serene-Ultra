@@ -239,3 +239,6 @@ option.POM_SLOPE_NORMAL_STRENGTH.comment = Derives additional tangent-space surf
 
 option.SCREEN_GI_TEMPORAL_STRENGTH = Temporal GI Stability
 option.SCREEN_GI_TEMPORAL_STRENGTH.comment = Reprojects previous screen-space colour-bounce samples with camera motion and rejects history when previous depth does not match. Zero disables temporal GI history.
+
+option.PBR_REFLECTION_BLUR_STRENGTH = Reflection Roughness Filtering
+option.PBR_REFLECTION_BLUR_STRENGTH.comment = Blurs opaque screen-space reflections according to material roughness while rejecting neighboring samples at depth discontinuities.
