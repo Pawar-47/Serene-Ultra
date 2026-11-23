@@ -55,7 +55,11 @@ for path in SHADERS.rglob("*"):
     if path.suffix not in {".vsh", ".fsh", ".csh", ".glsl"}:
         continue
     source = path.read_text(encoding="utf-8")
-    sources[path.name] = source
+    # Prefer canonical root-level program sources over same-named dimension overrides.
+    # A recursive walk can otherwise let world-1/world1 copies replace the main pass,
+    # producing false failures in checks intended for the default dimension.
+    if path.name not in sources or path.parent == SHADERS:
+        sources[path.name] = source
     # Reusable .glsl includes are inserted into a parent stage and must not
     # declare their own #version directive. Only standalone stages require it.
     # Iris routes gbuffers_line through its dedicated core-profile transform
