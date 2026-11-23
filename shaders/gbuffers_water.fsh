@@ -70,6 +70,9 @@ flat in float vFluidRenderType;
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_REFLECTION_DISTANCE 24 // [16 24 32 40 48] Maximum water/glass SSR trace distance in blocks
 #define WATER_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack water normal-map detail
+#define POM_STRENGTH 25 // [0 10 20 35 50 75 100] LabPBR/oldPBR height-map parallax strength
+#define POM_QUALITY 4 // [4 6 8] Bounded water POM samples
+#define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade water POM to zero at this view distance
 #define GLASS_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack glass/ice normal-map detail
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
@@ -103,8 +106,11 @@ vec3 getStableWaterWorldPosition(vec3 playerPosition) {
 
 // Multi-scale wave bands use a tileable custom tangent-normal texture; the
 // optional very-large octave follows Unbound while remaining disabled on low profiles.
-vec3 calculateTranslucentNormalMap(vec3 geometricNormal, float normalMapStrength) {
-    vec4 normalTexel = texture(normals, vTexCoord);
+vec3 calculateTranslucentNormalMap(
+    vec3 geometricNormal, float normalMapStrength,
+    vec2 materialUv, vec2 uvDx, vec2 uvDy
+) {
+    vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy);
     vec3 tangentNormal;
     #ifdef MC_TEXTURE_FORMAT_LAB_PBR
         // LabPBR stores XY in RG, AO in B, and height in A. Reconstruct Z.
@@ -126,6 +132,68 @@ vec3 calculateTranslucentNormalMap(vec3 geometricNormal, float normalMapStrength
         bitangent * tangentNormal.y +
         geometricNormal * tangentNormal.z
     );
+}
+
+// Bounded sprite-safe POM for resource-pack water normal maps. The supplied
+// custom wave-normal texture has constant alpha, so it remains a wave-only map;
+// parallax activates only when the active LabPBR/oldPBR normals atlas has height.
+vec2 calculateWaterParallaxUv(
+    vec2 baseUv, vec2 uvDx, vec2 uvDy, vec4 spriteBounds,
+    vec3 tangentView, float viewDistance, out float appliedOffset
+) {
+    appliedOffset = 0.0;
+#if POM_STRENGTH > 0
+    if (viewDistance >= float(POM_DISTANCE) || tangentView.z >= -0.05) return baseUv;
+    float distanceFade = 1.0 - smoothstep(
+        float(POM_DISTANCE) * 0.55, float(POM_DISTANCE), viewDistance
+    );
+    float heightScale = clamp(float(POM_STRENGTH) * 0.003, 0.0, 0.20) * distanceFade;
+    if (heightScale <= 0.0001) return baseUv;
+
+    vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
+    vec2 localUv = clamp((baseUv - spriteBounds.xy) / tileSize, vec2(0.0), vec2(1.0));
+    vec4 initialNormal = textureGrad(normals, baseUv, uvDx, uvDy);
+    if (initialNormal.a >= 0.9995) return baseUv;
+
+    vec2 totalOffset = tangentView.xy / max(-tangentView.z, 0.12) * heightScale;
+    float offsetLength = length(totalOffset);
+    if (offsetLength > 0.20) totalOffset *= 0.20 / offsetLength;
+    vec2 stepOffset = totalOffset / float(POM_QUALITY);
+    vec2 atlasTexel = 1.0 / vec2(textureSize(normals, 0));
+    vec2 lowerBound = spriteBounds.xy + 0.5 * atlasTexel;
+    vec2 upperBound = spriteBounds.xy + tileSize - 0.5 * atlasTexel;
+
+    vec2 previousLocal = localUv;
+    float previousLayerDepth = 0.0;
+    float previousSurfaceDepth = 1.0 - initialNormal.a;
+    vec2 currentLocal = localUv;
+    float currentLayerDepth = 0.0;
+    float currentSurfaceDepth = previousSurfaceDepth;
+    for (int stepIndex = 0; stepIndex < POM_QUALITY; ++stepIndex) {
+        if (currentLayerDepth >= currentSurfaceDepth) break;
+        previousLocal = currentLocal;
+        previousLayerDepth = currentLayerDepth;
+        previousSurfaceDepth = currentSurfaceDepth;
+        currentLocal = clamp(currentLocal + stepOffset, vec2(0.0), vec2(1.0));
+        currentLayerDepth += 1.0 / float(POM_QUALITY);
+        vec2 sampleUv = clamp(
+            spriteBounds.xy + currentLocal * tileSize, lowerBound, upperBound
+        );
+        float sampledHeight = textureGrad(normals, sampleUv, uvDx, uvDy).a;
+        currentSurfaceDepth = 1.0 - sampledHeight;
+    }
+    float beforeDelta = previousLayerDepth - previousSurfaceDepth;
+    float afterDelta = currentLayerDepth - currentSurfaceDepth;
+    float denominator = beforeDelta - afterDelta;
+    float interpolation = abs(denominator) > 1e-5
+        ? clamp(beforeDelta / denominator, 0.0, 1.0) : 1.0;
+    vec2 hitLocal = mix(previousLocal, currentLocal, interpolation);
+    vec2 hitUv = clamp(spriteBounds.xy + hitLocal * tileSize, lowerBound, upperBound);
+    appliedOffset = length(hitLocal - localUv);
+    return hitUv;
+#else
+    return baseUv;
+#endif
 }
 
 vec3 calculateWaterWaveNormal(
@@ -394,7 +462,9 @@ float calculateTranslucentFog(float distanceToCamera) {
 }
 
 void main() {
-    vec4 translucentAlbedo = texture(gtexture, vTexCoord) * vVertexColor;
+    vec2 materialUvDx = dFdx(vTexCoord);
+    vec2 materialUvDy = dFdy(vTexCoord);
+    vec4 translucentAlbedo = textureGrad(gtexture, vTexCoord, materialUvDx, materialUvDy) * vVertexColor;
     float portalEmissionSignal = 0.0;
     if (translucentAlbedo.a < alphaTestRef) discard;
 
@@ -440,9 +510,34 @@ void main() {
     vec2 waterNormalCoordDx = dFdx(vPlayerPosition.xz * waterNormalScale);
     vec2 waterNormalCoordDy = dFdy(vPlayerPosition.xz * waterNormalScale);
     if (isWater) {
+        vec2 waterMaterialUv = vTexCoord;
+        if (abs(normal.y) > 0.72) {
+            vec3 viewTangent = normalize(mat3(gbufferModelView) * vPlayerTangent);
+            vec3 viewBitangent = normalize(cross(viewTangent, viewNormal)) * vTangentHandedness;
+            vec3 tangentView = vec3(
+                dot(viewTangent, vViewPosition),
+                dot(viewBitangent, vViewPosition),
+                dot(viewNormal, vViewPosition)
+            );
+            vec4 spriteBounds = vec4(vMidTexCoord - vTexHalfSize, vTexHalfSize * 2.0);
+            float appliedWaterParallax = 0.0;
+            waterMaterialUv = calculateWaterParallaxUv(
+                vTexCoord, materialUvDx, materialUvDy, spriteBounds,
+                tangentView, length(vViewPosition), appliedWaterParallax
+            );
+            if (appliedWaterParallax > 0.0001) {
+                translucentAlbedo = textureGrad(
+                    gtexture, waterMaterialUv, materialUvDx, materialUvDy
+                ) * vVertexColor;
+                if (translucentAlbedo.a < alphaTestRef) discard;
+            }
+        }
         #if WATER_NORMAL_MAP_STRENGTH > 0
             if (abs(normal.y) > 0.72) {
-                normal = calculateTranslucentNormalMap(normal, WATER_NORMAL_MAP_STRENGTH);
+                normal = calculateTranslucentNormalMap(
+                    normal, WATER_NORMAL_MAP_STRENGTH,
+                    waterMaterialUv, materialUvDx, materialUvDy
+                );
             }
         #endif
         normal = calculateWaterWaveNormal(normal, waterNormalCoord, waterNormalCoordDx, waterNormalCoordDy);
@@ -451,7 +546,9 @@ void main() {
         viewNormal = normalize(mat3(gbufferModelView) * normal);
     } else if (isClearGlass || isStainedGlass || isTintedGlass || isIce) {
         #if GLASS_NORMAL_MAP_STRENGTH > 0
-            normal = calculateTranslucentNormalMap(normal, GLASS_NORMAL_MAP_STRENGTH);
+            normal = calculateTranslucentNormalMap(
+                normal, GLASS_NORMAL_MAP_STRENGTH, vTexCoord, materialUvDx, materialUvDy
+            );
             viewNormal = normalize(mat3(gbufferModelView) * normal);
         #endif
     }
