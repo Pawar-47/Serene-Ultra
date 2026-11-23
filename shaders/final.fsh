@@ -6,6 +6,8 @@ uniform sampler2D colortex5;
 uniform sampler2D colortex7;
 uniform sampler2D depthtex0;
 uniform mat4 gbufferProjectionInverse;
+uniform sampler2D noisetex;
+uniform int frameCounter;
 
 in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -26,6 +28,9 @@ layout(location = 0) out vec4 outColor;
 #define DOF_STRENGTH 0 // [0 10 20 30 40 50 60 70 80 90 100] Depth-of-field blur strength
 #define DOF_FOCUS_DISTANCE 8.0 // [2.0 4.0 6.0 8.0 10.0 12.0 16.0 24.0 32.0 48.0 64.0] Focus distance in blocks
 #define DOF_FOCUS_RANGE 8.0 // [2.0 4.0 6.0 8.0 12.0 16.0 24.0 32.0] In-focus depth range in blocks
+#define CHROMATIC_ABERRATION 0 // [0 10 20 30 40 50 60 70 80 90 100] Radial lens colour separation
+#define VIGNETTE_STRENGTH 0 // [0 10 20 30 40 50 60 70 80 90 100] Edge darkening strength
+#define FILM_GRAIN_STRENGTH 0 // [0 5 10 15 20 25 30 40 50] Animated fine-grain intensity
 
 // Edge-adaptive FXAA using the final scene buffer. It avoids temporal history
 // and extra render targets, so it remains usable on older integrated GPUs.
@@ -129,6 +134,45 @@ vec3 sampleBloomChain(vec2 uv) {
     return narrowScale * 0.60 + wideScale * 0.55;
 }
 
+
+vec3 applyChromaticAberration(vec3 source, vec2 uv, vec2 texelSize) {
+#if CHROMATIC_ABERRATION > 0
+    vec2 radial = uv - 0.5;
+    float edgeWeight = smoothstep(0.08, 0.72, length(radial));
+    vec2 offset = normalize(radial + vec2(0.00001)) * texelSize
+        * (float(CHROMATIC_ABERRATION) * 0.018) * edgeWeight;
+    float redChannel = texture(colortex0, clamp(uv + offset, texelSize, vec2(1.0) - texelSize)).r;
+    float blueChannel = texture(colortex0, clamp(uv - offset, texelSize, vec2(1.0) - texelSize)).b;
+    return vec3(redChannel, source.g, blueChannel);
+#else
+    return source;
+#endif
+}
+
+vec3 applyVignette(vec3 source, vec2 uv) {
+#if VIGNETTE_STRENGTH > 0
+    vec2 centered = (uv - 0.5) * vec2(1.0, 1.0);
+    float radius = length(centered);
+    float vignette = smoothstep(0.28, 0.78, radius);
+    float amount = float(VIGNETTE_STRENGTH) * 0.01;
+    return source * (1.0 - vignette * amount * 0.65);
+#else
+    return source;
+#endif
+}
+
+vec3 applyFilmGrain(vec3 source, vec2 uv) {
+#if FILM_GRAIN_STRENGTH > 0
+    vec2 noiseSize = vec2(textureSize(noisetex, 0));
+    vec2 noiseUv = fract(uv * noiseSize + vec2(float(frameCounter) * 0.75487766, float(frameCounter) * 0.56984029));
+    float noiseValue = texture(noisetex, noiseUv).r - 0.5;
+    float grain = noiseValue * float(FILM_GRAIN_STRENGTH) * 0.0018;
+    return max(source + vec3(grain), vec3(0.0));
+#else
+    return source;
+#endif
+}
+
 vec3 applyHdrLook(vec3 color) {
 #if HDR_LOOK == 1
     // Filmic shoulder: retain highlight detail while keeping output display-safe.
@@ -170,6 +214,8 @@ void main() {
     color += bloom * (float(BLOOM_STRENGTH) * 0.01);
 #endif
 
+    color = applyChromaticAberration(color, vTexCoord, texelSize);
+
     // Exposure is expressed in photographic stops.
     color *= exp2(EXPOSURE);
 
@@ -185,6 +231,8 @@ void main() {
     color = max(color, vec3(0.0));
 
     color = applyHdrLook(color);
+    color = applyVignette(color, vTexCoord);
+    color = applyFilmGrain(color, vTexCoord);
 
     // Gamma is an explicit user control. 1.0 leaves the tone-mapped result unchanged.
     color = pow(max(color, vec3(0.0)), vec3(1.0 / GAMMA));
