@@ -1574,3 +1574,9 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Redstone block and lapis block were removed from the new material-ID map after the structural validator identified duplicate assignments: both already have Serene material IDs for mineral treatment. Their optional Complementary emissive toggles are not forced on by default.
 - Commits: added mapping `1c7613353cd32617e293c0805f8b99bf3ac7c0e7`; added terrain fallback dispatch `1d373238c07c254d8175f7f69301ab9c06d7dc01`; expanded coverage tests `70a90826050256e1c6c242a34786aa0489ae0244`; duplicate-ID correction commits `e3d3b1105221da9a91007df3bcc2b166f7bc5c61`, `eb2ee0774ed91afe8c249d5538dd974c80f85589`, `0fa9b1f91bb4a79cfe0a119ba81067388e7b33c6`; matrix `4985168a685bac0430cc49199a48fb07c8ab91fe`.
 - GLSL compilation and program linking passed on the preceding extended-emitter commit; the structural failure was only duplicate block-ID assignment for redstone/lapis, now corrected. Latest correction is awaiting CI.
+
+
+### Emissive fallback validation result — 2026-11-23 17:34 UTC
+- The follow-up validator now checks the actual split ID ranges after preserving existing unique redstone/lapis IDs; it no longer assumes a continuous 32131–32152 range.
+- CI run `45228817698` on `8d7f334e434de2475ee5767d4e7bd82fe02b13ce` completed successfully. All compile, macro-branch, LabPBR, entity-POM, Unbound water-detail, Ultra-Light reflection, water-normal inspection, link and structural validation stages passed.
+- This confirms the expanded material fallback source compiles and the structural material-ID checks pass. It does not verify the new emission appearance in a live Minecraft world.
