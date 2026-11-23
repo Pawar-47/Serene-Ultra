@@ -1326,3 +1326,11 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - `alpha-release.yml` gained a `workflow_dispatch` trigger with a `publish` input, so a testable build can be produced on demand. Automatic publishing on every validated push remains gated by `ENABLE_ALPHA_PUBLISH=true` and is still off.
 - Structural validation now checks the new cloud terms.
 - Status: source and CI compile/structure only. No Minecraft/Iris runtime run has occurred for any change in this session.
+
+
+## Screen-space GI quality tiers — 2026-11-23
+- Expanded the local colour-bounce pass from a fixed four-cardinal-sample pattern to selectable 4/8/12 depth-aware neighbour samples.
+- Added `SCREEN_GI_QUALITY` to the Quality menu, slider list, language labels/tooltips and all five profiles: Ultra-Light 0, Smooth 4, Ultra 8, HDR 8, Ultra-HDR 12. Strength values remain unchanged.
+- The 4-sample tier uses cardinal taps; 8 adds diagonal coverage; 12 adds a wider cardinal ring. The pass retains its opaque receiver/depth/normal rejection.
+- Updated structural validation to require the 12-sample pattern, quality loop, UI exposure and exact profile values.
+- This remains a spatial single-bounce screen-space approximation, not full GI. Higher tap counts increase texture sampling and have not been benchmarked on Intel HD 5500. CI and in-game runtime validation are required before calling the change verified.
