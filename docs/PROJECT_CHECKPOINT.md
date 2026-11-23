@@ -1651,3 +1651,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Expanded the structural validator to cover water POM atlas/tangent inputs, shared POM option values, cloud reflection consumers/profile budgets, and the updated derivative-sampling path. The old whitespace-sensitive water alpha assertion was replaced with semantic token checks.
 - CI run `45232285056` on `815b1d9d534158ea9a64a0024511547e9cffb9e1` passed all stages: standalone GLSL, Iris macro branches, LabPBR, entity POM, Unbound water detail, Ultra-Light reflection, water-normal alpha-height inspection, program linking and structural validation.
 - Runtime visual calibration is still pending in Minecraft 26.3 + Iris. Water POM appearance, translucent reflection weight, cloud reflection noise/shape, underwater distortion intensity and cost on Intel HD 5500 must be judged in-game before release.
+
+
+### Water POM and validator reconciliation — 2026-11-23
+- Water POM uses the active resource-pack LabPBR/oldPBR `normals.a` height channel only when it is non-flat. The custom wave-normal asset's alpha is constant and is not used as a fabricated height map.
+- The final validator now compares numeric POM macro values rather than comment text, checks sprite-safe water POM sampling, and uses semantic water alpha/normal sampling assertions rather than brittle whitespace or obsolete `texture()` spellings.
+- GitHub Actions run `45232285056` passed on `815b1d9d534158ea9a64a0024511547e9cffb9e1`: all shader stages, Iris macro branches, LabPBR branches, opt-in entity POM, water wave detail, Ultra-Light reflection branches, water-normal alpha inspection, program linking and structural validation.
+- Updated `docs/UNBOUND_REFERENCE_AUDIT.md` to reflect current water tint/absorption/foam/caustics/underwater distortion, resource-pack water POM, procedural cloud reflections and the remaining true-WSR/temporal/runtime gaps. Audit update commit: `337beb0ad13a76074db1e018745b8f7e108e2e16`.
+- No Minecraft/Iris runtime test has been performed; visual and target-GPU calibration remain pending.
