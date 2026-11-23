@@ -86,6 +86,12 @@ flat in float vFluidRenderType;
 #define WATER_FOAM_STRENGTH 60 // [0 25 45 50 60 70 75 100 125 150] Shoreline and shallow-surface foam strength
 #define WATER_UNDERWATER_STRENGTH 100 // [0 25 50 75 100 125 150] Underwater tint and surface response
 #define WATER_ABSORPTION_STRENGTH 125 // [0 25 50 75 90 100 110 125 135 150 175 200] Depth-dependent water light absorption
+#define WATER_TINT_R 100 // [0 25 50 75 100 125 150 175 200] Water tint red multiplier
+#define WATER_TINT_G 100 // [0 25 50 75 100 125 150 175 200] Water tint green multiplier
+#define WATER_TINT_B 100 // [0 25 50 75 100 125 150 175 200] Water tint blue multiplier
+#define UNDERWATER_TINT_R 100 // [0 25 50 75 100 125 150 175 200] Underwater tint red multiplier
+#define UNDERWATER_TINT_G 100 // [0 25 50 75 100 125 150 175 200] Underwater tint green multiplier
+#define UNDERWATER_TINT_B 100 // [0 25 50 75 100 125 150 175 200] Underwater tint blue multiplier
 #define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Glass and stained-glass screen-space reflection
 #define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
 #define PORTAL_DISTORTION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Atlas-safe animated portal distortion
@@ -269,7 +275,8 @@ vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
     // square-root colour preparation; the fixed blue fallback belongs to
     // the older Reimagined-style water treatment.
     vec3 biomeTint = sqrt(max(vertexColor, vec3(0.0))) * vec3(0.88, 0.95, 1.0);
-    vec3 baseColor = 0.375 * biomeTint;
+    vec3 baseColor = 0.375 * biomeTint
+        * vec3(float(WATER_TINT_R), float(WATER_TINT_G), float(WATER_TINT_B)) * 0.01;
 
     if (WATER_NOISE_COLOR_STRENGTH > 0) {
         vec2 waterPosition = calculateWaterNoisePosition(stableWorldPosition);
@@ -624,7 +631,8 @@ void main() {
         if (cameraUnderwater) {
             translucentAlbedo.rgb *= mix(
                 vec3(1.0),
-                vec3(0.78, 0.90, 1.05),
+                vec3(0.78, 0.90, 1.05)
+                    * vec3(float(UNDERWATER_TINT_R), float(UNDERWATER_TINT_G), float(UNDERWATER_TINT_B)) * 0.01,
                 clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.0)
             );
         }
