@@ -1,6 +1,9 @@
 #version 330 compatibility
 
 uniform mat4 gbufferModelViewInverse;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
+uniform float frameTimeCounter;
 in vec2 mc_Entity;
 in vec4 at_tangent;
 in vec2 mc_midTexCoord;
@@ -16,6 +19,8 @@ flat out vec4 vTexCoordAM;
 flat out float vTangentHandedness;
 flat out int vMaterialId;
 
+#define WAVING_FOLIAGE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Wind-driven foliage motion
+
 void main() {
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
     vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
@@ -24,6 +29,26 @@ void main() {
     vLightmapCoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
     vVertexColor = gl_Color;
     vMaterialId = int(mc_Entity.x + 0.5);
+
+#if WAVING_FOLIAGE_STRENGTH > 0
+    // Use camera-relative player coordinates plus Iris' split camera origin
+    // for stable wind phase at large world coordinates. Existing leaf IDs are
+    // reused; the additional ID covers vanilla ground and aquatic vegetation.
+    if (vMaterialId == 10009 || vMaterialId == 10011 || vMaterialId == 32130) {
+        vec3 stableWorld = vec3(cameraPositionInt) + cameraPositionFract + vPlayerPosition;
+        vec2 windPosition = mod(stableWorld.xz, vec2(4096.0));
+        float windStrength = float(WAVING_FOLIAGE_STRENGTH) * 0.00045;
+        float broadWave = sin(dot(windPosition, vec2(0.071, 0.053)) + frameTimeCounter * 0.85);
+        float detailWave = sin(dot(windPosition, vec2(-0.113, 0.097)) - frameTimeCounter * 1.27);
+        vec2 wind = vec2(broadWave + detailWave * 0.28, detailWave + broadWave * 0.22)
+            * windStrength;
+        vec4 displacedViewPosition = viewPosition;
+        displacedViewPosition.xyz += mat3(gl_ModelViewMatrix)
+            * vec3(wind.x, 0.0, wind.y);
+        gl_Position = gl_ProjectionMatrix * displacedViewPosition;
+        vPlayerPosition.xz += wind;
+    }
+#endif
 
 
     // Store normals in player/world-aligned space so later deferred passes
