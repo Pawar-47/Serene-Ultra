@@ -138,3 +138,9 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 
 ## Better Clouds compatibility note
 The user's uploaded log identifies Better Clouds 1.15.0 running its independent Blaze3D cloud renderer. Iris logs a missing override for `betterclouds:blaze_3d_renderer` followed by `GL_INVALID_OPERATION`. Serene's own volumetric cloud pass is independent of that mod renderer. For a clean shader-only comparison, use Better Clouds settings with **Cloud Override off** and **Iris Support off**, or temporarily disable the Better Clouds mod. The pack sets `clouds=off` to prevent vanilla cloud geometry from competing with its own volumetric sky.
+
+
+## Direct colour controls — 2026-11-24
+- Added nested RGB pages for surface water, underwater tint, sun disc, sky and volumetric cloud lighting.
+- Each channel is independently adjustable in Iris and all five performance profiles begin at neutral 100% multipliers.
+- Cloud shape modes now own their complete vertical density profiles; the old cumulus-only prefilter no longer suppresses stratus and wispy presets.
