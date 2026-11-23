@@ -91,6 +91,16 @@ vec3 sampleScreenSpaceColorBleed(
 
         float sampleDepth = texture(depthtex2, sampleUv).r;
         if (sampleDepth >= 0.999999) continue;
+
+        // Only gather from the opaque surface represented by depthtex2.
+        // Reject translucent/hand overlays using the all-geometry depth and
+        // reject pixels without a valid G-buffer normal. This avoids pulling
+        // glass, water, particles or HUD/hand colour into the opaque GI term.
+        float sampleDepthAll = texture(depthtex0, sampleUv).r;
+        if (abs(sampleDepthAll - sampleDepth) > 0.000001) continue;
+        vec4 sampleNormalData = texture(colortex2, sampleUv);
+        if (sampleNormalData.a < 0.5) continue;
+
         vec3 sampleNdc = vec3(sampleUv, sampleDepth) * 2.0 - 1.0;
         vec4 sampleView4 = gbufferProjectionInverse * vec4(sampleNdc, 1.0);
         vec3 sampleViewPosition = sampleView4.xyz / max(sampleView4.w, 0.0001);
