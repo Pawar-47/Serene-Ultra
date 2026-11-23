@@ -65,9 +65,9 @@ flat in float vFluidRenderType;
 
 /* RENDERTARGETS: 0 */
 
-#define WATER_REFRACTION_STRENGTH 0.50 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 2.00] Screen-space water refraction strength
-#define WATER_REFLECTION_STRENGTH 0.45 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
-#define WATER_FOG_MULT 125 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 125 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
+#define WATER_REFRACTION_STRENGTH 0.50 // [0.00 0.25 0.40 0.50 0.55 0.60 0.75 1.00 1.25 1.50 2.00] Screen-space water refraction strength
+ #define WATER_REFLECTION_STRENGTH 0.45 // [0.00 0.25 0.35 0.40 0.45 0.50 0.55 0.60 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
+#define WATER_FOG_MULT 125 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 125 130 140 150 160 165 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 4 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_REFLECTION_DISTANCE 24 // [16 24 32 40 48] Maximum water/glass SSR trace distance in blocks
 #define WATER_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack water normal-map detail
@@ -76,16 +76,16 @@ flat in float vFluidRenderType;
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade water POM to zero at this view distance
 #define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level translucent atlas filtering taps
 #define GLASS_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack glass/ice normal-map detail
-#define WATER_WAVE_STRENGTH 50 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
-#define WATER_WAVE_SPEED 50 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
+#define WATER_WAVE_STRENGTH 50 // [0 25 40 50 55 65 70 75 100 125 150 175 200] Animated multi-scale water normal strength
+#define WATER_WAVE_SPEED 50 // [20 30 40 50 55 60 70 80 90 100 120] Water wave cycles per real-time hour
 #define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
 #define WATER_WAVE_DETAIL 0 // [0 1] Optional very-large Unbound-style normal scale; adds one texture sample
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Held-item lighting strength
-#define WATER_COLOR_STRENGTH 85 // [0 25 50 75 100] Unbound-style water base tint blend
-#define WATER_NOISE_COLOR_STRENGTH 10 // [0 10 20 35 50 75 100] Animated water colour variation
-#define WATER_FOAM_STRENGTH 60 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
+#define WATER_COLOR_STRENGTH 85 // [0 25 50 75 80 85 90 100] Unbound-style water base tint blend
+#define WATER_NOISE_COLOR_STRENGTH 10 // [0 5 10 15 20 35 50 75 100] Animated water colour variation
+#define WATER_FOAM_STRENGTH 60 // [0 25 45 50 60 70 75 100 125 150] Shoreline and shallow-surface foam strength
 #define WATER_UNDERWATER_STRENGTH 100 // [0 25 50 75 100 125 150] Underwater tint and surface response
-#define WATER_ABSORPTION_STRENGTH 125 // [0 25 50 75 100 125 150 175 200] Depth-dependent water light absorption
+#define WATER_ABSORPTION_STRENGTH 125 // [0 25 50 75 90 100 110 125 135 150 175 200] Depth-dependent water light absorption
 #define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Glass and stained-glass screen-space reflection
 #define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
 #define PORTAL_DISTORTION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Atlas-safe animated portal distortion
