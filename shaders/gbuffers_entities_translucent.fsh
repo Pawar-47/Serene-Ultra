@@ -69,6 +69,8 @@ float calculateForwardFog(float distanceToCamera) {
     return 0.0;
 }
 
+#include "/lib/lighting/held_item_lighting.glsl"
+
 vec3 calculateForwardLighting(vec3 albedoLinear) {
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
@@ -110,7 +112,6 @@ vec3 calculateForwardLighting(vec3 albedoLinear) {
     return albedoLinear * (ambient + direct);
 }
 
-#include "/lib/lighting/held_item_lighting.glsl"
 
 void main() {
     vec4 albedo = texture(gtexture, vTexCoord) * vVertexColor;
