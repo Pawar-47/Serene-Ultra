@@ -167,3 +167,6 @@ option.SCREEN_GI_QUALITY.comment = Selects 0, 4, 8 or 12 depth-aware neighbour s
 
 option.SKY_ATMOSPHERE_STRENGTH = Atmospheric Scattering
 option.SKY_ATMOSPHERE_STRENGTH.comment = Controls the strength of Rayleigh sky tint, aerosol forward scattering and warm twilight haze. Set to zero for the vanilla sky gradient.
+
+option.CLOUD_SCATTERING_STRENGTH = Cloud Lighting
+option.CLOUD_SCATTERING_STRENGTH.comment = Controls daylight tint, weather response and forward-scattering silver lining on Minecraft 26.3 cloud geometry.
