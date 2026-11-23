@@ -98,3 +98,9 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added sprite-bounded major-derivative sampling for albedo, normal and specular atlases in terrain, block entities and opaque entity models.
 - Added 1/2/4-tap quality tiers with per-profile budgets; Ultra-Light remains single-sample, higher tiers enable 2 or 4 taps.
 - Sampling clamps to Iris per-quad sprite bounds to avoid atlas bleed. Hardware anisotropy remains complementary and can still be used through Minecraft/Iris texture settings.
+
+
+## Overworld sky effects — 2026-11-23
+- Added procedural multi-scale nebulae and animated aurora curtains to clear night skies, with rain suppression.
+- Added a spectral anti-solar rainbow arc when rain and direct sunlight overlap.
+- Added a dedicated Atmosphere menu and explicit profile budgets; Ultra-Light disables the effects to preserve integrated-GPU headroom.
