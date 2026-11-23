@@ -308,6 +308,10 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
         if (sampleDistance > endDistance) break;
 
         vec3 samplePosition = cameraWorldPosition + rayDirection * sampleDistance;
+        float heightFraction = clamp(
+            (samplePosition.y - cloudBase) / max(float(CLOUD_THICKNESS), 1.0),
+            0.0, 1.0
+        );
         float density = sampleCloudDensity(
             samplePosition, cloudBase, float(CLOUD_THICKNESS),
             wind, coverage, detailStrength, rain
