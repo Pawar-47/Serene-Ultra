@@ -529,8 +529,11 @@ for option, names in (
 ):
     definitions = []
     for name in names:
-        definitions.extend(line.strip() for line in sources.get(name, "").splitlines()
-                           if line.startswith(f"#define {option} "))
+        definitions.extend(
+            re.match(rf"#define {option} (\\S+)", line).group(1)
+            for line in sources.get(name, "").splitlines()
+            if re.match(rf"#define {option} (\\S+)", line)
+        )
     if len(set(definitions)) != 1:
         errors.append(f"{option} must be defined identically across its terrain/block/entity/water consumers")
 
@@ -539,7 +542,7 @@ for token in ("vec2 calculateWaterParallaxUv(", "textureGrad(normals, baseUv, uv
               "initialNormal.a >= 0.9995", "spriteBounds.xy + hitLocal * tileSize",
               "for (int stepIndex = 0; stepIndex < POM_QUALITY; ++stepIndex)",
               "waterMaterialUv = calculateWaterParallaxUv(",
-              "textureGrad(gtexture, waterMaterialUv, materialUvDx, materialUvDy)",
+              "gtexture, waterMaterialUv, materialUvDx, materialUvDy",
               "appliedWaterParallax > 0.0001"):
     if token not in water_pom_source:
         errors.append(f"Water POM is missing sprite-safe height-map component: {token}")
@@ -847,7 +850,7 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
         errors.append(f"{name} must sample specular data at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(fragment_name, "")
-    normal_sample = "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, vTexCoordAM)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh") else "texture(normals, vTexCoord)"
+    normal_sample = "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, vTexCoordAM)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh") else "textureGrad(normals, materialUv, uvDx, uvDy)"
     if normal_sample not in source:
         errors.append(f"{fragment_name} must sample its PBR normal map at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
@@ -940,7 +943,7 @@ entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
 block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
 for name, source in (("gbuffers_entities_translucent", entity_translucent),
                      ("gbuffers_block_translucent", block_translucent)):
-    for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
+    for token in ("/* RENDERTARGETS: 0 */", "textureGrad(gtexture", "texture(lightmap",
                   "sampler2DShadow shadowtex0", "shadowModelView", "shadowProjection",
                   "calculateForwardLighting", "calculateForwardFog", "outColor = vec4("):
         if token not in source:
@@ -1276,10 +1279,10 @@ for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureL
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 
 for token in ("uniform sampler2D normals;", "calculateTranslucentNormalMap", "normalMapStrength * 0.01",
-              "calculateTranslucentNormalMap(normal, GLASS_NORMAL_MAP_STRENGTH)",
+              "normal, GLASS_NORMAL_MAP_STRENGTH, vTexCoord, materialUvDx, materialUvDy",
               "else if (isClearGlass || isStainedGlass || isTintedGlass || isIce)",
               "texture(normals, vTexCoord)", "MC_TEXTURE_FORMAT_LAB_PBR",
-              "vec4 normalTexel = texture(normals, vTexCoord)",
+              "vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy)",
               "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
               "tangentNormal.y = -tangentNormal.y", "cross(tangent, geometricNormal)",
               "vPlayerTangent", "vTangentHandedness", "at_tangent.w < 0.0 ? -1.0 : 1.0"):
