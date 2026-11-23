@@ -1680,3 +1680,12 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Translucent atlas bounds are now flat varyings sourced from Iris `mc_midTexCoord`, preventing interpolation drift across primitives. Quality remains governed by the shared 1/2/4-tap `ANISOTROPIC_FILTER_QUALITY` option.
 - Final follow-up commits: water `4164c7ad324c4ec7e7a55bf64351cb4e3312dc72`; translucent entity vertex/fragment `f772fde067660b79f878ad5eec40167aa6bc4539` / `18184b8a6d07afe975412e735c8191e69e73b386`; translucent block vertex/fragment `aec76bbdb23e135ba2270c4fbd479d933bc6cb90` / `3d3b3672083b175f9e83a7d9ad26e23072c20aa5`; validator `0b8b84e020639aec70d21f8954f3ecf40bd0e51b`.
 - Remaining texture-filtering gaps are weather/particle paths, hardware anisotropy and runtime shimmer/performance calibration.
+
+
+### Translucent atlas anisotropic filtering refinement — 2026-11-23
+- Compared Serene's translucent filtering against the supplied working Complementary Reimagined archive, specifically `lib/materials/materialMethods/anisotropicFiltering.glsl`.
+- Replaced the simplified “longer of dFdx/dFdy” direction with the principal eigenvector of the UV-derivative covariance matrix. Tap count remains bounded by the shared 1/2/4 quality control, taps are distributed across the major footprint, and every tap is clamped to the Iris sprite rectangle before `textureGrad`.
+- The shared helper serves water/glass/ice/portal, translucent entities and translucent block entities. Their fragment stages consume flat `mc_midTexCoord`-derived sprite bounds; opaque terrain/entity/block atlas filtering remains unchanged.
+- Added validator coverage for the covariance/eigenvector path, sprite bounds, shared option defaults and all three forward translucent receivers.
+- Commits: helper `58fe149109e26adbac744dfb80539f41573b24f0`; validator `e91e3901497f9c186cba09f57bc17643cbedc36d`, regex correction `ea50bfc1dfb8eab54a8feb5aabcfeebe52a5c9ea`; matrix `bf84e72e580193ae5ed1e29007c9e7b209419f4e`.
+- GLSL/runtime validation for this refinement is pending. This is a source-level improvement, not a claim of visual parity or performance measurement.
