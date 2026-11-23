@@ -593,6 +593,30 @@ void main() {
                 clamp(albedo.g - quartzGreenEighth * 0.5, 0.0, 1.0));
         } else if (vMaterialId == 10608) { // Redstone block
             materialSmoothness = max(materialSmoothness, 0.4);
+        } else if (vMaterialId == 32160) { // Stone, polished stone and tuff families
+            materialSmoothness = max(
+                materialSmoothness, clamp(pow(albedo.g, 4.0) * 2.0, 0.0, 1.0)
+            );
+            materialCoatingFactor = max(materialCoatingFactor, 0.77);
+        } else if (vMaterialId == 32161) { // Deepslate family
+            materialSmoothness = max(
+                materialSmoothness, clamp(pow(albedo.g, 1.5) * 0.55, 0.0, 1.0)
+            );
+        } else if (vMaterialId == 32162) { // Cobblestone family
+            float cobbleSmoothness = dot(albedo.rgb, albedo.rgb) * 0.17;
+            float mossHighlight = (albedo.g > albedo.b * 1.5)
+                ? 0.30 * albedo.g : 0.0;
+            materialSmoothness = max(
+                materialSmoothness, clamp(max(cobbleSmoothness, mossHighlight), 0.0, 1.0)
+            );
+        } else if (vMaterialId == 32163) { // Dirt, coarse dirt, rooted dirt, podzol and mycelium
+            materialSmoothness = max(materialSmoothness, albedo.r * 0.1 + 0.1);
+        } else if (vMaterialId == 32164) { // Obsidian
+            float obsidianFactor = max(0.3 - abs(albedo.r - 0.3), 0.0) * 1.5;
+            materialSmoothness = max(
+                materialSmoothness, clamp(obsidianFactor, 0.0, 1.0)
+            );
+            materialReflectance = max(materialReflectance, 0.08);
         }
     }
 
