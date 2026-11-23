@@ -245,3 +245,10 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Albedo, normal and specular atlases are sampled at the displaced UV. If the displaced albedo lookup would cross into a transparent texel, the original UV is retained to protect cutout silhouettes. The first pass is terrain only; block entities, self-shadowing and slope-normal reconstruction are not yet enabled.
 - Ultra-Light disables POM. Smooth uses 4 steps and a shorter fade; Ultra/HDR use 6. These are quality presets, not proof of a performance gain on the target GPU.
 - CI run #1050 (45108422197) passed all nine stages on commit 3d68fdf. This validates GLSL syntax, Iris macro branches, LabPBR compilation/linking and structural checks only. Runtime checks with real PBR resource packs and Minecraft 26.3 + Iris remain outstanding.
+
+
+## Block-entity POM coverage — 2026-11-23
+- Extended the same bounded sprite-safe POM path to Iris gbuffers_block (block entities), reusing the same LabPBR/oldPBR normals.a height convention, 4/6/8 steps, fade distance, displacement cap and cutout-alpha fallback.
+- Block-entity vertex data now forwards mc_midTexCoord sprite bounds and tangent-space view direction from at_tangent. The displaced UV is used consistently for albedo, normal and specular maps.
+- Sign text and Nether portal surfaces are explicitly excluded. The ordinary sign wood texture and other block-entity materials may use POM when their height atlas contains non-neutral data.
+- POM remains terrain + block-entity only; entity models, self-shadowing, slope-normal reconstruction and runtime/target-GPU calibration remain outstanding.

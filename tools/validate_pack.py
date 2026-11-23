@@ -323,19 +323,23 @@ for token in ("textureGrad(normals, sampleUv, uvDx, uvDy)", "textureSize(normals
               "spriteBounds.xy + hitLocal * tileSize", "appliedOffset"):
     if token not in pom_source:
         errors.append(f"Shared POM implementation is missing component: {token}")
-terrain_vertex_source = sources.get("gbuffers_terrain.vsh", "")
-for token in ("in vec2 mc_midTexCoord", "flat out vec4 vTexCoordAM",
-              "out vec3 vTangentView", "cross(viewTangent, viewNormal)",
-              "vec4(mc_midTexCoord, 0.0, 1.0)"):
-    if token not in terrain_vertex_source:
-        errors.append(f"Terrain vertex stage is missing Iris sprite-safe POM input: {token}")
-for token in ("flat in vec4 vTexCoordAM",
-              "in vec3 vTangentView", "calculateParallaxUv(",
-              "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
-              "parallaxAlbedo.a >= alphaTestRef",
-              "textureGrad(specular, materialUv, uvDx, uvDy)"):
-    if token not in sources.get("gbuffers_terrain.fsh", ""):
-        errors.append(f"Terrain fragment stage is missing POM integration: {token}")
+for name in ("gbuffers_terrain.vsh", "gbuffers_block.vsh"):
+    source = sources.get(name, "")
+    for token in ("in vec2 mc_midTexCoord", "flat out vec4 vTexCoordAM",
+                  "out vec3 vTangentView", "cross(viewTangent, viewNormal)",
+                  "vec4(mc_midTexCoord, 0.0, 1.0)"):
+        if token not in source:
+            errors.append(f"{name} is missing Iris sprite-safe POM input: {token}")
+for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    for token in ("flat in vec4 vTexCoordAM", "in vec3 vTangentView", "calculateParallaxUv(",
+                  "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
+                  "parallaxAlbedo.a >= alphaTestRef",
+                  "textureGrad(specular, materialUv, uvDx, uvDy)"):
+        if token not in source:
+            errors.append(f"{name} is missing POM integration: {token}")
+if "gl_FrontFacing && !signText && blockEntityId != 5025" not in sources.get("gbuffers_block.fsh", ""):
+    errors.append("Block-entity POM must skip sign text and Nether portal surfaces")
 for option in ("POM_STRENGTH", "POM_QUALITY", "POM_DISTANCE"):
     if option not in props or option not in slider_options_line:
         errors.append(f"{option} must be exposed as an Iris Quality slider")
@@ -446,7 +450,7 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
             errors.append(f"{name} is missing resource-pack PBR specular support: {token}")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(fragment_name, "")
-    normal_sample = "textureGrad(normals, materialUv, uvDx, uvDy)" if fragment_name == "gbuffers_terrain.fsh" else "texture(normals, vTexCoord)"
+    normal_sample = "textureGrad(normals, materialUv, uvDx, uvDy)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh") else "texture(normals, vTexCoord)"
     if normal_sample not in source:
         errors.append(f"{fragment_name} must sample its PBR normal map at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
@@ -475,7 +479,7 @@ if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uv
     errors.append("Terrain must apply resource-pack tangent-space normal maps")
 if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO)" not in sources.get("gbuffers_entities.fsh", ""):
     errors.append("Entities must apply resource-pack tangent-space normal maps")
-if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO)" not in sources.get("gbuffers_block.fsh", ""):
+if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO)" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")
 
 

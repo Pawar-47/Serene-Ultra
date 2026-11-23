@@ -30,7 +30,7 @@ The supplied archive is a Complementary Reimagined shaderpack. Its source is not
 | Block reflections | Reflective material response | Material masks and screen-space/fallback reflections | Pending |
 | Rain/wetness | Rain response and wet surfaces | Weather/material masks and roughness response | Pending |
 | Puddles | Rain puddles and surface reflections | Rain/biome-gated sky exposure, upward-facing masks, three-noise breakup, ripple normals, LabPBR porosity suppression and PBR smoothness/SSR integration | Partial; no voxelized water map, no entity/block-entity wetness, and runtime/performance calibration pending |
-| Parallax/POM | Parallax occlusion material detail | Terrain-only LabPBR/oldPBR height mapping from Iris normals.a; per-quad mc_midTexCoord atlas bounds; at_tangent view direction; bounded 4/6/8-step intersection, distance fade, capped displacement and cutout-safe albedo fallback | Partial; block entities, POM self-shadowing, slope normals and runtime calibration pending |
+| Parallax/POM | Parallax occlusion material detail | Terrain and block-entity LabPBR/oldPBR height mapping from Iris normals.a; per-quad mc_midTexCoord atlas bounds; at_tangent view direction; bounded 4/6/8-step intersection, distance fade, capped displacement and cutout-safe albedo fallback | Partial; entity models, POM self-shadowing, slope normals and runtime calibration pending |
 | Texture filtering | Texture quality and anisotropic behavior | Hardware filtering where supported; quality controls | Pending |
 | TAA | Temporal anti-aliasing | Motion-aware history, rejection and sharpening controls | Pending |
 | Other anti-aliasing | Additional AA modes/quality settings | Configurable AA path and edge validation | Pending |

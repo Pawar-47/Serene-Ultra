@@ -712,3 +712,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - GitHub Actions run #1050 (45108422197) passed all nine stages: shader compilation, Iris render-stage macro compilation, LabPBR branches, vertex/fragment linking and structural validation.
 - Earlier runs #1047–#1049 failed during the POM bring-up due to (1) a direct-compiler include directive, then (2) stale validator paths and (3) stale terrain-normal assertions. These were corrected; the latest run is green.
 - Scope remains terrain-only POM. Do not claim runtime or target-GPU performance verification.
+
+
+## Block-entity POM coverage — 2026-11-23
+- Extended the same bounded sprite-safe POM path to Iris gbuffers_block (block entities), reusing the same LabPBR/oldPBR normals.a height convention, 4/6/8 steps, fade distance, displacement cap and cutout-alpha fallback.
+- Block-entity vertex data now forwards mc_midTexCoord sprite bounds and tangent-space view direction from at_tangent. The displaced UV is used consistently for albedo, normal and specular maps.
+- Sign text and Nether portal surfaces are explicitly excluded. The ordinary sign wood texture and other block-entity materials may use POM when their height atlas contains non-neutral data.
+- POM remains terrain + block-entity only; entity models, self-shadowing, slope-normal reconstruction and runtime/target-GPU calibration remain outstanding.
