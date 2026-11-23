@@ -422,7 +422,8 @@ void main() {
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
 
-    bool isWater = ((vMaterialId == 32000) && (vFluidRenderType > 0.5)) || (vMaterialId == 32001);
+    bool isFluidWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5);
+    bool isWater = isFluidWater || (vMaterialId == 32001);
     bool isClearGlass = (vMaterialId == 32008 || vMaterialId == 32012);
     bool isStainedGlass = (vMaterialId >= 31000 && vMaterialId <= 31031);
     bool isTintedGlass = (vMaterialId == 30008);
@@ -546,7 +547,7 @@ void main() {
         // thickness is the stable signal for a nearby opaque intersection;
         // avoid a world-Y test, which misses sloped shorelines and depends on
         // the sign of the opaque surface's vertical offset.
-        if (WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999 &&
+        if (isFluidWater && WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999 &&
             abs(vPlayerNormal.y) > 0.99) {
             vec2 foamNoiseUV = calculateWaterNoisePosition(stableWaterWorldPosition) * 4.0
                 + calculateWaterNoiseDrift() * 0.5;
@@ -668,7 +669,7 @@ void main() {
         translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0)) * 0.8;
     }
 
-    if (isWater && waterFoam > 0.0) {
+    if (isFluidWater && waterFoam > 0.0) {
         translucentAlbedo.rgb = mix(
             translucentAlbedo.rgb,
             waterFoamColor,

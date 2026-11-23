@@ -321,3 +321,7 @@ The analytic wave substitute has been superseded by an original tileable 64x64 t
 
 ## Glass/ice environment reflection quality fallback
 Glass and ice retain Fresnel-weighted sky/horizon environment reflections when `WATER_REFLECTION_QUALITY=0`. Higher tiers continue to use screen-space hits with environment fallback for misses; the zero-quality branch directly uses the shared environment helper and does not sample SSR depth/color buffers.
+
+
+### Flowing-water-only shoreline foam — 2026-11-23
+Complementary Unbound's water material code gates shoreline foam to material ID 32000 (actual fluid water). Serene now keeps the shared `isWater` surface treatment for fluid water and water cauldrons, but uses a separate `isFluidWater` predicate for foam generation and composition. Water cauldrons therefore retain depth/refraction/absorption/underwater response without receiving shoreline foam. Structural regression checks cover both gates; runtime validation remains pending.

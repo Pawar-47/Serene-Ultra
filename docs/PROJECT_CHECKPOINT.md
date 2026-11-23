@@ -1101,3 +1101,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Fixed a quality-tier gap in the Unbound-guided glass/ice path: previously all glass reflections were compiled out whenever `WATER_REFLECTION_QUALITY=0`, even though Ultra-Light retains the shared low-cost environment reflection helper.
 - Clear, stained and tinted glass plus ice now retain Fresnel-weighted sky/horizon environment reflections in the zero-SSR branch. Higher tiers continue to blend screen-space hits with environment fallback.
 - The zero-quality branch performs no SSR depth/color sampling. CI's existing zero-quality macro build and a new structural assertion cover the fallback; runtime intensity/tint calibration remains outstanding.
+
+
+## Flowing-water-only shoreline foam — 2026-11-23
+- Compared the water foam dispatch with Complementary Unbound's `water.glsl`: its shoreline foam branch explicitly requires material ID 32000 (actual fluid water), while cauldron water is classified separately.
+- Split `isFluidWater` from the broader water-surface predicate. Flowing water and water cauldrons retain shared depth, refraction, absorption and underwater treatment, but shoreline foam calculation/application now runs only on actual fluid water.
+- Added validator assertions for both the foam-generation and foam-composition gates. This is a source-parity correction; runtime shoreline/cauldron appearance still needs Iris testing.
