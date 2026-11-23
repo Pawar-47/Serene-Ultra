@@ -316,3 +316,8 @@ The dedicated `gbuffers_item` pair was removed after checking Iris 26.1 source. 
 ## World-stable cloud noise at large coordinates — 2026-11-23
 
 Both native cloud surface detail and projected cloud shadows now use `lib/lighting/stable_world_position.glsl`. It reduces the integer camera origin modulo the chosen period before converting to float, then adds the fractional camera offset and player-relative position. This avoids float precision loss near Minecraft's world border. The cloud-shadow period is 62,500 blocks: 62,500 × 0.0016 = 100 base-noise repeats and 100 × 2.73 = 273 detail repeats. The cloud-surface-detail period is 100,000 blocks: 100,000 × 0.0021 = 210 base repeats and 210 × 3.1 = 651 detail repeats. Both are seamless because Iris 26.1's `NoiseTexture` configures `noisetex` with `GL_REPEAT` on both axes. Runtime camera-motion, boundary-seam and visual calibration tests remain outstanding.
+
+
+## Cloud-shadow direct-light consistency — 2026-11-23
+
+The same scalar cloud-shadow factor now attenuates diffuse direct light and all separately accumulated direct-light lobes: deferred GGX highlights, LabPBR subsurface backlighting, and the forward water/glass/ice specular highlights. Ambient/block light, emissive terms and environment reflections remain unattenuated. The validator checks the direct-light factor in all five receivers and the separate deferred/water lobes. Runtime appearance remains pending.

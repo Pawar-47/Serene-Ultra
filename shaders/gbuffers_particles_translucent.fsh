@@ -175,7 +175,8 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
-    direct *= sampleSereneCloudShadow(vPlayerPosition, playerLightDirection, dayFactor);
+    float cloudShadow = sampleSereneCloudShadow(vPlayerPosition, playerLightDirection, dayFactor);
+    direct *= cloudShadow;
 
     vec3 particleLinear = pow(max(particle.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = particleLinear * (ambient + direct) + particleLinear * emission;

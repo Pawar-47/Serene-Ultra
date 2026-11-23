@@ -976,6 +976,24 @@ if "gtexture" in cloud_fragment or "texture(gtexture" in cloud_fragment:
 if "vec4 cloudColor = vVertexColor;" not in cloud_fragment:
     errors.append("gbuffers_clouds must preserve the CloudColor/face shading carried by POSITION_COLOR")
 
+# Cloud attenuation must cover every direct-light component, not only diffuse.
+for program_name in (
+    "deferred.fsh", "gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
+    "gbuffers_block_translucent.fsh", "gbuffers_particles_translucent.fsh",
+):
+    source = sources.get(program_name, "")
+    if "float cloudShadow = sampleSereneCloudShadow(" not in source or "direct *= cloudShadow;" not in source:
+        errors.append(f"{program_name} must apply a single shared cloud-shadow factor to direct lighting")
+if "* sssStrength * sssVisibility * 0.25 * cloudShadow;" not in sources.get("deferred.fsh", ""):
+    errors.append("Deferred subsurface backlighting must be attenuated by procedural cloud shadows")
+for token in (
+    "clearGlassSpecular * cloudShadow;",
+    "stainedSpecular * cloudShadow;",
+    "iceSpecular * cloudShadow;",
+):
+    if token not in sources.get("gbuffers_water.fsh", ""):
+        errors.append(f"Water direct specular must respect cloud shadows: {token}")
+
 # World-space cloud noise must reduce integer camera coordinates before float
 # conversion. Both base/detail octaves must tile exactly at their chosen periods.
 stable_world = sources.get("stable_world_position.glsl", "")

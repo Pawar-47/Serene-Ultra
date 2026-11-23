@@ -98,3 +98,6 @@ Do not add vanilla `OIT_*` macros or native OIT attachment declarations to the s
 4. Compare clear weather, rain, dusk, night and dimensions without skylight. Cloud shadows should attenuate direct celestial light only; they must not darken block light or emissive materials.
 5. Compare terrain, items, water, translucent entities, block entities and particles to ensure all direct-light receiver paths share the same cloud-shadow pattern. Record GPU cost at every profile.
 6. Compare against the supplied working Complementary reference at identical coordinates/time/weather. Mark the feature visually complete only after screenshots and a runtime log are saved.
+
+
+7. Under a moving cloud-shadow pattern, inspect glossy LabPBR blocks, subsurface materials, clear/stained glass and ice. Their direct highlights/backlighting must dim with the same cloud shadow as diffuse light; block/ambient light, emission and environment reflections must remain stable.

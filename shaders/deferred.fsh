@@ -207,7 +207,8 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
-    direct *= sampleSereneCloudShadow(playerPosition, worldLightDirection, dayFactor);
+    float cloudShadow = sampleSereneCloudShadow(playerPosition, worldLightDirection, dayFactor);
+    direct *= cloudShadow;
 
     // Decode sampled sRGB albedo for lighting, then encode it again for the
     // existing color-grading/final pass. This keeps the output contract intact.
@@ -273,7 +274,7 @@ void main() {
         vec3 sssVisibility = mix(shadow, vec3(1.0), sssStrength * 0.65);
         vec3 sssContribution = albedoLinear * celestialColor
             * (celestialIntensity * celestialGate) * backLighting
-            * sssStrength * sssVisibility * 0.25;
+            * sssStrength * sssVisibility * 0.25 * cloudShadow;
         litLinear += sssContribution;
     }
 

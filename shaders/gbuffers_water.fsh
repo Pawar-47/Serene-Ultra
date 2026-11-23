@@ -477,7 +477,8 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
-    direct *= sampleSereneCloudShadow(vPlayerPosition, worldLightDirection, dayFactor);
+    float cloudShadow = sampleSereneCloudShadow(vPlayerPosition, worldLightDirection, dayFactor);
+    direct *= cloudShadow;
     if ((isWater && cameraUnderwater) || isPortal) direct = vec3(0.0);
 
     float waterThickness = 0.0;
@@ -671,7 +672,7 @@ void main() {
             max(dot(normalize(viewNormal), clearGlassHalfVector), 0.0),
             128.0
         ) * 3.5 * nDotL;
-        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * clearGlassSpecular;
+        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * clearGlassSpecular * cloudShadow;
     }
     if (isStainedGlass && nDotL > 0.001 && celestialGate > 0.001) {
         // Unbound assigns stained glass a medium-smooth surface and a 1.5
@@ -684,7 +685,7 @@ void main() {
             max(dot(normalize(viewNormal), stainedHalfVector), 0.0),
             32.0
         ) * 1.5 * nDotL;
-        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * stainedSpecular;
+        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * stainedSpecular * cloudShadow;
     }
     if (isIce && nDotL > 0.001 && celestialGate > 0.001) {
         float iceSmoothness = translucentAlbedo.g * translucentAlbedo.g * translucentAlbedo.g;
@@ -698,7 +699,7 @@ void main() {
         float iceSpecularExponent = mix(8.0, 128.0, iceSmoothness);
         float iceSpecular = pow(max(dot(normalize(viewNormal), iceHalfVector), 0.0),
                                 iceSpecularExponent) * iceHighlight * nDotL * 0.7;
-        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * iceSpecular;
+        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * iceSpecular * cloudShadow;
     }
     // Lava shares the post-deferred fluid pass but retains its self-emission.
     float lavaEmission = (vMaterialId == 32118) ? 0.9 : 0.0;

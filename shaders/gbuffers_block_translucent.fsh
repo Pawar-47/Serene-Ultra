@@ -100,7 +100,8 @@ vec3 calculateForwardLighting(vec3 albedoLinear) {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
-    direct *= sampleSereneCloudShadow(vPlayerPosition, worldLightDirection, dayFactor);
+    float cloudShadow = sampleSereneCloudShadow(vPlayerPosition, worldLightDirection, dayFactor);
+    direct *= cloudShadow;
     return albedoLinear * (ambient + direct);
 }
 
