@@ -2258,6 +2258,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fs
         errors.append(f"{name} POM traversal must not wrap across sprite edges")
 
 # Screen-space GI must be depth-aware, profile-scaled and explicitly described as an approximation.
+quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
 for token in ("#define SCREEN_GI_STRENGTH", "#define SCREEN_GI_QUALITY",
               "const vec2 offsets[12] = vec2[12](",
               "i < SCREEN_GI_QUALITY", "vec3 sampleScreenSpaceColorBleed(",
