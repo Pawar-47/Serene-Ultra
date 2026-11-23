@@ -6,6 +6,7 @@ uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 uniform sampler2D colortex4;
 uniform sampler2D noisetex;
+uniform sampler2D waterNormalTex;
 uniform sampler2D normals;
 uniform float alphaTestRef;
 uniform mat4 gbufferProjection;
@@ -106,35 +107,43 @@ vec3 calculateTranslucentNormalMap(vec3 geometricNormal, float normalMapStrength
     );
 }
 
-vec3 calculateWaterWaveNormal(vec3 geometricNormal, vec3 stableWorldPosition) {
+vec3 calculateWaterWaveNormal(
+    vec3 geometricNormal,
+    vec2 waterCoord,
+    vec2 waterCoordDx,
+    vec2 waterCoordDy
+) {
     if (abs(geometricNormal.y) < 0.72 || WATER_WAVE_STRENGTH <= 0) {
         return geometricNormal;
     }
 
-    vec2 worldXZ = stableWorldPosition.xz;
-    // Iris frameTimeCounter wraps every 3600 seconds. Integer cycle counts
-    // keep every wave phase continuous at that wrap for all slider values.
-    float waveTime = frameTimeCounter * (6.28318530718 * float(WATER_WAVE_SPEED) / 3600.0);
+    // Wind shifts by whole texture periods at Iris' 3600-second timer wrap
+    // for every quarter-step speed preset.
+    float waveCycles = frameTimeCounter / 3600.0 * (float(WATER_WAVE_SPEED) * 0.01);
+    vec2 wind = vec2(waveCycles * 8.0, -waveCycles * 16.0);
 
-    // Every exposed scale is a quarter-step, so all selected wavelengths
-    // remain integer divisors of the 256-block stable-world coordinate period.
-    float waveScale = WATER_WAVE_SCALE * 0.01;
-    float frequencyA = (6.28318530718 / 64.0) * waveScale;
-    float frequencyB = (6.28318530718 / 32.0) * waveScale;
-    float frequencyC = (6.28318530718 / 32.0) * waveScale;
-    float phaseA = worldXZ.x * frequencyA + waveTime;
-    float phaseB = worldXZ.y * frequencyB - waveTime * 2.0;
-    float phaseC = dot(worldXZ, vec2(1.0, 1.0)) * frequencyC + waveTime * 3.0;
+    // Three Unbound-style scales from a tileable, generated tangent-normal map.
+    // Explicit gradients keep mip selection stable inside the translucent branch.
+    vec2 normalMedium = textureGrad(
+        waterNormalTex, waterCoord + wind, waterCoordDx, waterCoordDy
+    ).rg - vec2(0.5);
+    vec2 normalSmall = textureGrad(
+        waterNormalTex, waterCoord * 4.0 - wind * 2.0,
+        waterCoordDx * 4.0, waterCoordDy * 4.0
+    ).rg - vec2(0.5);
+    vec2 normalLarge = textureGrad(
+        waterNormalTex, waterCoord * 0.25 - wind * 0.5,
+        waterCoordDx * 0.25, waterCoordDy * 0.25
+    ).rg - vec2(0.5);
 
-    vec2 slope = vec2(0.34 * frequencyA * cos(phaseA),
-                     0.15 * frequencyB * cos(phaseB));
-    slope += vec2(1.0, 1.0) * (0.38 * frequencyC * cos(phaseC));
-
-    float strength = (WATER_WAVE_STRENGTH * 0.01) * 3.0;
+    vec2 slope = normalMedium * 0.8 + normalSmall * 0.55 + normalLarge * 0.45;
+    float strength = float(WATER_WAVE_STRENGTH) * 0.01 * 4.0;
     float faceSign = geometricNormal.y < 0.0 ? -1.0 : 1.0;
     vec3 waveNormal = normalize(vec3(-slope.x * strength, faceSign, -slope.y * strength));
-    return normalize(mix(geometricNormal, waveNormal,
-                         clamp(WATER_WAVE_STRENGTH * 0.01, 0.0, 1.0)));
+    return normalize(mix(
+        geometricNormal, waveNormal,
+        clamp(float(WATER_WAVE_STRENGTH) * 0.01, 0.0, 1.0)
+    ));
 }
 
 // Unbound-style water base colour: retain biome influence, but move the
@@ -427,15 +436,20 @@ void main() {
     // Keep the geometric normal for shadow-map bias; PBR and wave detail
     // are applied only to the forward lighting/reflection normal.
     vec3 shadowNormal = normal;
-    vec3 stableWaterWorldPosition = vec3(0.0);
+    vec3 stableWaterWorldPosition = getStableWaterWorldPosition(vPlayerPosition);
+    float waterNormalScale = 0.03125 * float(WATER_WAVE_SCALE) * 0.01;
+    vec2 waterNormalCoord = stableWaterWorldPosition.xz * waterNormalScale;
+    // Derivatives use continuous camera-relative position; only the texture
+    // coordinate itself is reduced to the stable world-position period.
+    vec2 waterNormalCoordDx = dFdx(vPlayerPosition.xz * waterNormalScale);
+    vec2 waterNormalCoordDy = dFdy(vPlayerPosition.xz * waterNormalScale);
     if (isWater) {
-        stableWaterWorldPosition = getStableWaterWorldPosition(vPlayerPosition);
         #if WATER_NORMAL_MAP_STRENGTH > 0
             if (abs(normal.y) > 0.72) {
                 normal = calculateTranslucentNormalMap(normal, WATER_NORMAL_MAP_STRENGTH);
             }
         #endif
-        normal = calculateWaterWaveNormal(normal, stableWaterWorldPosition);
+        normal = calculateWaterWaveNormal(normal, waterNormalCoord, waterNormalCoordDx, waterNormalCoordDy);
         // Iris documents gbufferModelView as player-space to view-space.
         // Transform the perturbed normal for Fresnel, refraction and SSR.
         viewNormal = normalize(mat3(gbufferModelView) * normal);

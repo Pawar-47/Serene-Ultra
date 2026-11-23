@@ -758,3 +758,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - The effect remains a single Iris noisetex lookup on eligible opaque fragments, with atlas/world-cell-stable coordinates and derivative-based mip fade. This refinement reduces unintended changes to emissive/metallic PBR response.
 - Iris noisetex documentation confirms the sampler is a generated RGB8 white-noise buffer (256x256 by default) and can be replaced via texture.noise. The cameraPositionInt/cameraPositionFract uniforms used for stable world-space variation are Iris-supported.
 - Corrected coating filter requires a fresh CI run; runtime material appearance and GPU cost remain unverified.
+
+
+## Multi-scale Unbound-style water normals — 2026-11-23
+- Replaced the three analytic sine-wave slopes with three animated scales sampled from an original tileable 64x64 tangent-normal texture generated for Serene-Ultra. This follows Unbound's multi-scale normal-map approach without copying the reference pack's cloud-water asset.
+- The normal field is sampled at medium, 4x-small and 0.25x-large scales with explicit textureGrad derivatives. Stable world coordinates anchor the pattern; camera-relative derivatives avoid discontinuities at the 2560-block coordinate wrap.
+- Wind shifts by whole texture periods at Iris' 3600-second frameTimeCounter wrap for every quarter-step speed preset. Existing WATER_WAVE_STRENGTH, SCALE and SPEED controls remain authoritative.
+- The custom texture is bound through Iris customTexture.waterNormalTex and uses blur=true/clamp=false metadata. This is Iris-specific by design; the pack's target renderer is Iris.
+- This source change aims for better Unbound-style surface detail while keeping three texture reads per water fragment. Runtime water appearance, texture filtering and Intel HD 5500 cost remain to be checked in Minecraft 26.3 + Iris.

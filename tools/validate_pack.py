@@ -731,14 +731,20 @@ for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt
               "uniform vec3 cameraPositionFract;", "uniform float frameTimeCounter",
               "getStableWaterWorldPosition", "cameraPositionInt % ivec3(256)",
               "cameraPositionFract + playerPosition", "calculateWaterWaveNormal",
-              "float phaseA = worldXZ.x * frequencyA", "float phaseB = worldXZ.y * frequencyB",
-              "float phaseC = dot(worldXZ, vec2(1.0, 1.0))",
-              "float waveScale = WATER_WAVE_SCALE * 0.01",
-              "frequencyA = (6.28318530718 / 64.0) * waveScale",
-              "frequencyB = (6.28318530718 / 32.0) * waveScale",
+              "uniform sampler2D waterNormalTex;",
+              "textureGrad(waterNormalTex, waterCoord + wind, waterCoordDx, waterCoordDy)",
+              "waterCoord * 4.0 - wind * 2.0", "waterCoord * 0.25 - wind * 0.5",
+              "float waveCycles = frameTimeCounter / 3600.0",
+              "waterNormalCoordDx = dFdx(vPlayerPosition.xz * waterNormalScale)",
               "viewNormal = normalize(mat3(gbufferModelView) * normal)"):
     if token not in water:
-        errors.append(f"Unbound-guided animated water normal path is missing component: {token}")
+        errors.append(f"Unbound-guided multi-scale water normal path is missing component: {token}")
+water_normal_path = SHADERS / "lib" / "textures" / "water-normal.png"
+water_normal_meta = SHADERS / "lib" / "textures" / "water-normal.png.mcmeta"
+if not water_normal_path.is_file() or not water_normal_meta.is_file():
+    errors.append("Water normal custom texture and blur/wrap metadata must both exist")
+if "customTexture.waterNormalTex = lib/textures/water-normal.png" not in props:
+    errors.append("Iris customTexture binding for the water normal map is missing")
 if "cross(geometricNormal, tangent)" in water:
     errors.append("Water tangent basis must follow Iris at_tangent handedness: cross(tangent, normal)")
 if "uniform vec3 cameraPosition;" in water:
