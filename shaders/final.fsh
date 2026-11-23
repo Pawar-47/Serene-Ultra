@@ -13,6 +13,8 @@ uniform mat4 gbufferPreviousModelView;
 uniform mat4 gbufferPreviousProjection;
 uniform vec3 cameraPosition;
 uniform vec3 previousCameraPosition;
+uniform float viewWidth;
+uniform float viewHeight;
 
 in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
