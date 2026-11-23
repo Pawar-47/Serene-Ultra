@@ -1672,3 +1672,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Translucent vertex stages now pass Iris `mc_midTexCoord` sprite bounds so taps cannot bleed across adjacent atlas sprites. The shared `ANISOTROPIC_FILTER_QUALITY` profile control drives all added paths.
 - Implementation files: `shaders/lib/materials/anisotropic_sampling.glsl`, `shaders/gbuffers_water.fsh`, `shaders/gbuffers_entities_translucent.vsh/.fsh`, `shaders/gbuffers_block_translucent.vsh/.fsh`, and `tools/validate_pack.py`; feature matrix commit `24cb0a0497cf34f9e8efb35a7bd8757718613a8d`.
 - CI is being rerun after these filtering changes. Weather and particle paths remain on their current sampling path; hardware texture anisotropy and runtime shimmer/performance calibration remain outstanding.
+
+
+### Translucent anisotropic validation — 2026-11-23
+- GitHub Actions run `45233397408` passed on commit `3d3b3672083b175f9e83a7d9ad26e23072c20aa5`: standalone GLSL compilation, Iris render-stage branches, LabPBR branches, entity POM branches, Unbound water-wave detail, Ultra-Light reflection branches, water-normal alpha inspection, all program links and structural validation succeeded.
+- The shared atlas-safe sampler is `shaders/lib/materials/anisotropic_sampling.glsl` (commit `09419fa92dfc3e5ab46d03a0477f452361c6832b`). It is active for water/glass/ice/portal and translucent block/entity albedo, plus water PBR normal atlases. The opaque terrain/block/entity paths retain their existing equivalent sampler.
+- Translucent atlas bounds are now flat varyings sourced from Iris `mc_midTexCoord`, preventing interpolation drift across primitives. Quality remains governed by the shared 1/2/4-tap `ANISOTROPIC_FILTER_QUALITY` option.
+- Final follow-up commits: water `4164c7ad324c4ec7e7a55bf64351cb4e3312dc72`; translucent entity vertex/fragment `f772fde067660b79f878ad5eec40167aa6bc4539` / `18184b8a6d07afe975412e735c8191e69e73b386`; translucent block vertex/fragment `aec76bbdb23e135ba2270c4fbd479d933bc6cb90` / `3d3b3672083b175f9e83a7d9ad26e23072c20aa5`; validator `0b8b84e020639aec70d21f8954f3ecf40bd0e51b`.
+- Remaining texture-filtering gaps are weather/particle paths, hardware anisotropy and runtime shimmer/performance calibration.
