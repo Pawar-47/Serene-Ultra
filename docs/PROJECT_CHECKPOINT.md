@@ -1490,3 +1490,13 @@ The supplied ZIPs exist in the conversation runtime, but data analysis became te
 
 ### Latest code checkpoint
 Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009dc8ec6139c`. Continue feature implementation from current `main`; do not request user testing yet.
+
+
+## Latest continuation — 2026-11-23 (lightning and volumetric cloud work)
+- Added volumetric-cloud self-shadowing in `shaders/gbuffers_skybasic.fsh`: cloud density is now sampled along the celestial light direction with quality-scaled 1/2/3 sample counts, attenuating direct cloud lighting and adding a bounded multiple-scattering floor. Feature matrix updated.
+- Added a shared `shaders/lib/lighting/lightning_flash.glsl` helper using Iris `lightningBoltPosition` (player-space bolt position; `w` indicates a visible bolt) and `thunderStrength`.
+- Integrated localized, distance-attenuated lightning illumination into deferred opaque surfaces, translucent entities, translucent block entities and translucent particles. Added a restrained sky flash while a bolt is present.
+- Iris uniform contract checked against the current Iris documentation: `thunderStrength` is a 0–1 thunderstorm strength and `lightningBoltPosition` is a player-space position with `w=1` while a bolt is present. This is source-level integration only; intensity/range and frame timing still need in-game calibration.
+- Commits: cloud self-shadowing `e755e5c0002e72abf07d37a0930e62930674c52e`; localized lightning helper `24bda52f6cdcf62cfc79488dde835ca00631fd3f`; deferred integration `74f54180944e12a229983217272caca107d2a4e9`; entity translucent `88654e9e4d62fe6f46f763df909281584e8ac82d`; block translucent `5c899a4f0e577e15581a8720f0921b7701217fbb`; particle translucent `b9ff6e7628ed70983e6d81999aa7873312b035e2`; sky flash `b6fd36bd44ad5c8e97dd0054431e6ea6c7307c3d`; matrix `6f3f1c9a3bfd6220891272c8ce1c15182091e9b9`.
+- Current next priority: continue closing the remaining feature-matrix gaps, with special focus on colored light propagation and translucent/material consistency. Do not switch to a validation-only loop; reserve full GLSL/Iris validation for the next meaningful implementation milestone.
+- The supplied ZIP archives still require actual content inspection. Do not claim their feature code or stock interfaces were compared during this continuation.
