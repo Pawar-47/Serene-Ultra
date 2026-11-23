@@ -61,6 +61,7 @@ flat in float vFluidRenderType;
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
 #define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
+#define WATER_WAVE_DETAIL 0 // [0 1] Optional very-large Unbound-style normal scale; adds one texture sample
 #define WATER_COLOR_STRENGTH 100 // [0 25 50 75 100] Unbound-style water base tint blend
 #define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
 #define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
@@ -73,15 +74,15 @@ layout(location = 0) out vec4 outColor;
 
 // Reconstruct a stable, periodic world position from Iris' unshifted integer
 // camera position, fractional camera position and player-relative position.
-// This avoids cameraPosition's documented 30,000-block wrap and large-float jitter.
+// A 2560-block period tiles every selected water-normal octave, avoiding cameraPosition's 30,000-block wrap and large-float jitter.
 vec3 getStableWaterWorldPosition(vec3 playerPosition) {
-    ivec3 cameraModulo = cameraPositionInt % ivec3(256);
-    vec3 cameraOffset = mod(vec3(cameraModulo), vec3(256.0));
-    return mod(cameraOffset + cameraPositionFract + playerPosition, vec3(256.0));
+    ivec3 cameraModulo = cameraPositionInt % ivec3(2560);
+    vec3 cameraOffset = mod(vec3(cameraModulo), vec3(2560.0));
+    return mod(cameraOffset + cameraPositionFract + playerPosition, vec3(2560.0));
 }
 
-// Three analytic wave bands provide stable multi-scale surface normals without
-// a full-screen texture fetch or an additional normal-map asset.
+// Multi-scale wave bands use a tileable custom tangent-normal texture; the
+// optional very-large octave follows Unbound while remaining disabled on low profiles.
 vec3 calculateTranslucentNormalMap(vec3 geometricNormal, float normalMapStrength) {
     vec4 normalTexel = texture(normals, vTexCoord);
     vec3 tangentNormal;
@@ -117,10 +118,10 @@ vec3 calculateWaterWaveNormal(
         return geometricNormal;
     }
 
-    // Wind shifts by whole texture periods at Iris' 3600-second timer wrap
-    // for every quarter-step speed preset.
+    // Forty texture periods per normalized cycle make all selected octaves
+    // land on integer repeats at Iris' 3600-second timer wrap.
     float waveCycles = frameTimeCounter / 3600.0 * (float(WATER_WAVE_SPEED) * 0.01);
-    vec2 wind = vec2(waveCycles * 8.0, -waveCycles * 16.0);
+    vec2 wind = vec2(waveCycles * 40.0, -waveCycles * 40.0);
 
     // Three Unbound-style scales from a tileable, generated tangent-normal map.
     // Explicit gradients keep mip selection stable inside the translucent branch.
@@ -135,6 +136,13 @@ vec3 calculateWaterWaveNormal(
         waterNormalTex, waterCoord * 0.25 - wind * 0.5,
         waterCoordDx * 0.25, waterCoordDy * 0.25
     ).rg - vec2(0.5);
+#if WATER_WAVE_DETAIL > 0
+    vec2 normalVeryLarge = textureGrad(
+        waterNormalTex, waterCoord * 0.05 - wind * 0.5,
+        waterCoordDx * 0.05, waterCoordDy * 0.05
+    ).rg - vec2(0.5);
+    normalLarge += normalVeryLarge * 0.5;
+#endif
 
     vec2 slope = normalMedium * 0.8 + normalSmall * 0.55 + normalLarge * 0.45;
     float strength = float(WATER_WAVE_STRENGTH) * 0.01 * 4.0;

@@ -137,3 +137,6 @@ option.POM_ENTITY_STRENGTH.comment = Enables bounded LabPBR/oldPBR height mappin
 
 option.ENTITY_GN_AND_CT = Entity Generated Normals + Coating
 option.ENTITY_GN_AND_CT.comment = Enables albedo-derived normal detail and stable noise coating on opaque entity models. Disabled by default to avoid extra texture reads on low-end GPUs; terrain and block-entity settings remain independent.
+
+option.WATER_WAVE_DETAIL = Very Large Water Wave Detail
+option.WATER_WAVE_DETAIL.comment = Adds Unbound-style very-large-scale normal detail with one extra texture sample. Disabled in Ultra-Light and Smooth to protect low-end GPUs.
