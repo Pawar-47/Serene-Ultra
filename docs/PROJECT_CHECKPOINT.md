@@ -1437,3 +1437,15 @@ User priority remains feature completion before Iris runtime debugging. This cyc
 - `docs/REFERENCE_FEATURE_MATRIX.md`: moves DOF from pending to source-implemented/runtime-unverified.
 
 This is a source implementation, not a claim of runtime correctness. It has not been tested in Minecraft/Iris. The next work remains feature implementation (temporal AA/motion handling, post/lens effects, expanded lighting/material parity and remaining reference systems); runtime debugging is deferred until the feature set is substantially complete. The uploaded archive contents were not available for fresh inspection during this cycle, so this DOF implementation is not claimed as a direct formula match to Complementary.
+
+
+## Feature implementation cycle — lens/post effects — 2026-11-23
+
+A second source feature batch followed the DOF work:
+- `shaders/final.fsh`: added configurable radial chromatic aberration (edge-weighted red/blue channel separation), a smooth adjustable vignette, and animated monochrome film grain using Iris `noisetex` plus `frameCounter`.
+- `shaders/shaders.properties`: added all three options to the Color menu and slider list; all five profiles receive explicit values. Ultra-Light disables them; higher profiles use restrained values.
+- Vanilla vignette overlay is disabled so the Serene vignette control is authoritative and does not double-darken the corners.
+- `shaders/lang/en_us.lang`: labels and tooltips added.
+- `docs/REFERENCE_FEATURE_MATRIX.md`: lens/post effects moved from pending to source-implemented/runtime-unverified.
+
+The two post-processing batches are source changes only. No Minecraft/Iris runtime or visual comparison was performed. The current archive inspection limitation remains; no direct Complementary parity claim is made for these effects. Continue feature work before runtime debugging.
