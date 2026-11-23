@@ -1580,3 +1580,9 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - The follow-up validator now checks the actual split ID ranges after preserving existing unique redstone/lapis IDs; it no longer assumes a continuous 32131–32152 range.
 - CI run `45228817698` on `8d7f334e434de2475ee5767d4e7bd82fe02b13ce` completed successfully. All compile, macro-branch, LabPBR, entity-POM, Unbound water-detail, Ultra-Light reflection, water-normal inspection, link and structural validation stages passed.
 - This confirms the expanded material fallback source compiles and the structural material-ID checks pass. It does not verify the new emission appearance in a live Minecraft world.
+
+
+### Extended emitter map validation — 2026-11-23
+- The extended vanilla emitter dispatch now covers unique mapped IDs `32131–32137` and `32140–32152`, plus the existing `10352`/`10608` mineral IDs where applicable. Duplicate redstone/lapis assignments were removed; their existing material IDs remain the sole source of identity.
+- The latest full GitHub Actions validation passed on commit `8d7f334e434de2475ee5767d4e7bd82fe02b13ce`, run `45228817698`: all vertex/fragment stages, configured Iris/LabPBR/POM/water macro branches, alpha-height inspection, program links and structural validation succeeded.
+- This confirms source compilation and structural consistency, not visual/runtime behavior in Minecraft/Iris.
