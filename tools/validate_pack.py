@@ -551,7 +551,8 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
 if "fallbackEmissiveMaterial" not in sources.get("gbuffers_terrain.fsh", ""):
     errors.append("Terrain coating must skip built-in emissive material IDs")
 terrain_emissive = sources.get("gbuffers_terrain.fsh", "")
-for token in ("vMaterialId >= 32131 && vMaterialId <= 32152", "vMaterialId == 32131",
+for token in ("vMaterialId >= 32131 && vMaterialId <= 32137",
+              "vMaterialId >= 32140 && vMaterialId <= 32152", "vMaterialId == 32131",
               "vMaterialId == 32132", "vMaterialId == 32149", "vMaterialId == 32150",
               "vMaterialId == 32151", "vMaterialId == 32152"):
     if token not in terrain_emissive:
