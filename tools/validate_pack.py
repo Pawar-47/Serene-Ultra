@@ -358,6 +358,13 @@ entity_properties = (SHADERS / "entity.properties").read_text(encoding="utf-8")
 for token in ("entity.50128=minecraft:item_frame", "entity.50132=minecraft:glow_item_frame"):
     if token not in entity_properties:
         errors.append(f"Entity POM exclusion mapping is missing: {token}")
+for option in ("POM_QUALITY", "POM_DISTANCE"):
+    definitions = []
+    for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
+        definitions.extend(line.strip() for line in sources.get(name, "").splitlines()
+                           if line.startswith(f"#define {option} "))
+    if len(set(definitions)) != 1:
+        errors.append(f"{option} must be defined identically in terrain, block and entity shaders")
 if "POM_ENTITY_STRENGTH" not in props or "POM_ENTITY_STRENGTH" not in slider_options_line:
     errors.append("POM_ENTITY_STRENGTH must be exposed as an Iris Quality slider")
 if "POM_ENTITY_STRENGTH:0" not in props or "POM_ENTITY_STRENGTH:20" not in props:

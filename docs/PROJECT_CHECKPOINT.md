@@ -775,3 +775,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Entity POM uses the same bounded 4/6/8-step intersection, 32-block maximum fade, 0.20 UV displacement cap and cutout-alpha fallback as terrain/block entities. Item frames and glow item frames are excluded through explicit entity.properties mappings (50128 and 50132).
 - POM_ENTITY_STRENGTH defaults to 0 and is disabled in Ultra-Light/Smooth; Ultra/HDR opt in at 20 to protect low-end performance. Generic translucent entities and held items are not covered.
 - CI #1065 (45110274115) compiled and linked all shader variants but failed structural validation because the validator still expected pre-POM implicit normal/specular sampling and the old normal-function signature. The source compiled; the validator has now been updated to recognise explicit textureGrad sampling and entity POM exclusions. Re-run CI before marking this extension validated.
+
+
+## Entity POM validation follow-up — 2026-11-23
+- CI run #1066 (45110449563) passed all nine stages after updating structural checks for the entity path's displaced-UV specular/normal samples and POM normal-function signature.
+- A final Iris-options audit found the POM_QUALITY option comment differed between entity and terrain/block shader files. Iris requires an option to be defined identically in every file where it is used; the entity definition and validator now enforce identical POM_QUALITY/POM_DISTANCE definitions.
+- Await the new CI run after this options-consistency correction. Runtime entity rendering and target-GPU profiling remain pending.

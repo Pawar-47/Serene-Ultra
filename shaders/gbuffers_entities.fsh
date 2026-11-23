@@ -26,7 +26,7 @@ layout(location = 3) out vec4 outEmissionData;
 #define OPAQUE_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack PBR normal-map detail
 #define PBR_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material ambient occlusion
 #define POM_ENTITY_STRENGTH 0 // [0 10 20 35 50] Entity-model POM
-#define POM_QUALITY 4 // [4 6 8] Bounded POM samples
+#define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
 
 vec2 calculateParallaxUv(
