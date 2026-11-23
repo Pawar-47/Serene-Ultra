@@ -252,3 +252,10 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Block-entity vertex data now forwards mc_midTexCoord sprite bounds and tangent-space view direction from at_tangent. The displaced UV is used consistently for albedo, normal and specular maps.
 - Sign text and Nether portal surfaces are explicitly excluded. The ordinary sign wood texture and other block-entity materials may use POM when their height atlas contains non-neutral data.
 - POM remains terrain + block-entity only; entity models, self-shadowing, slope-normal reconstruction and runtime/target-GPU calibration remain outstanding.
+
+
+## POM terrain + block-entity validation — 2026-11-23
+- CI run #1054 (45108839328) passed all nine stages on commit fe4a10a after removing a duplicated interface block introduced during the block-entity extension.
+- Both terrain and block-entity programs compile and link with the same Iris mc_midTexCoord/at_tangent POM varyings. Structural validation confirms atlas bounds, bounded sampling, cutout fallback, and sign-text/portal exclusions.
+- Tuned the depth control mapping to give the low-end 20/35 presets a more visible displacement while retaining a 0.20 UV-offset cap and 4/6/8 sample limit. This is a source-level calibration only; real resource-pack appearance and Intel HD 5500 cost still need runtime checks.
+- POM remains unavailable for generic entity models and held items; their stable per-object exclusions are not yet mapped in this pack. Self-shadowing and slope-normal reconstruction also remain pending.

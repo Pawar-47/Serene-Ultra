@@ -36,7 +36,7 @@ vec2 calculateParallaxUv(
     float distanceFade = 1.0 - smoothstep(
         float(POM_DISTANCE) * 0.55, float(POM_DISTANCE), viewDistance
     );
-    float heightScale = clamp(float(POM_STRENGTH) * 0.0015, 0.0, 0.15) * distanceFade;
+    float heightScale = clamp(float(POM_STRENGTH) * 0.003, 0.0, 0.20) * distanceFade;
     if (heightScale <= 0.0001) return baseUv;
 
     vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
