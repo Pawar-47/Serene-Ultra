@@ -1633,3 +1633,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Added `CLOUD_REFLECTION_STRENGTH` to Quality settings, with profile budgets Ultra-Light 0, Smooth 25, Ultra 55, HDR 65, Ultra-HDR 75, and a tooltip identifying this as a procedural sky approximation rather than a world-space reflection volume.
 - Updated the water-reflection feature matrix and structural validator. This improves the environment fallback when SSR misses or is disabled; it does not replace screen-space reflections or claim temporal/world-space cloud reflection.
 - Prepared against main `5c269721c07b1d6d0f74f19c7511321027485fbd`; validation must run on the resulting commit. Minecraft/Iris runtime appearance and Intel HD 5500 cost remain unverified.
+
+
+### Water POM extension — 2026-11-23
+- Added bounded sprite-safe parallax to the dedicated water pass using the active resource-pack `normals.a` height channel, reusing the shared `POM_STRENGTH`, `POM_QUALITY` and `POM_DISTANCE` profile controls. It clamps samples to Iris `mc_midTexCoord`/half-size sprite bounds, fades by view distance, offsets both the albedo and PBR normal sample, and rechecks alpha after a meaningful UV offset.
+- The custom `water-normal.png` remains a wave-normal-only texture because its alpha is constant 255; water POM activates only when the resource-pack normal atlas provides a varying height field. No fabricated height channel was added.
+- Commits: water shader `f109ba64b0b1403151cbb35ea4fbbb8013790986`; validator `ce7da25dcdcd21cc953bbfb120cb0ab3e989d608`; feature matrix `7d29d5375eb531762ce4089f379bd7d176034a06`.
+- Runtime checks still needed for LabPBR/oldPBR water packs, atlas edges, flowing water, and the low-profile cost. CI is being rerun against this water-POM addition.
