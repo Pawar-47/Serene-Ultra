@@ -1626,3 +1626,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Reference basis: Complementary Reimagined exposes an `UNDERWATER_DISTORTION` camera control; its water pass also uses a dedicated reflection/refraction/material path. Minecraft 26.3's stock archive exposes a dedicated water-mask pass and shared fog include; Serene retains Iris' native underwater state and fog path, adding only a post-process displacement rather than replacing stock water-mask semantics.
 - Commits: shader `b81e1f2fef3a05d89be31fd955c32e6bee1142d6`; UI/profile `ee66e135ed46d77770a9824f348ba3f733cfa1bc`; language `ff1a97bd2a710df3498aac901364597d1f8c3313`; validator `a4447fe63e8e56f80d82ef74a8cec27b736a4fa3`, follow-up `f971ab9ffc0d0a7c99f357c80742d65dd4f7246b`; matrix `912782c892fbd17d873966637b36e91198100458`.
 - Not yet confirmed by a completed CI run after this feature. In-game underwater visual testing remains pending.
+
+
+### Procedural cloud reflections — 2026-11-23
+- Extended the shared environment-reflection helper used by opaque PBR and water/glass to add an animated spherical sky-cloud reflection approximation. It uses the sky/cloud coverage, density, detail and wind controls, blends day/night cloud color, and fades near the horizon and zenith.
+- Added `CLOUD_REFLECTION_STRENGTH` to Quality settings, with profile budgets Ultra-Light 0, Smooth 25, Ultra 55, HDR 65, Ultra-HDR 75, and a tooltip identifying this as a procedural sky approximation rather than a world-space reflection volume.
+- Updated the water-reflection feature matrix and structural validator. This improves the environment fallback when SSR misses or is disabled; it does not replace screen-space reflections or claim temporal/world-space cloud reflection.
+- Prepared against main `5c269721c07b1d6d0f74f19c7511321027485fbd`; validation must run on the resulting commit. Minecraft/Iris runtime appearance and Intel HD 5500 cost remain unverified.

@@ -284,3 +284,6 @@ option.TAA_SHARPEN_STRENGTH.comment = Restores local edge detail after temporal 
 
 option.UNDERWATER_DISTORTION = Underwater Distortion
 option.UNDERWATER_DISTORTION.comment = Animated screen-space water refraction while submerged; does not affect lava or other fluids.
+
+option.CLOUD_REFLECTION_STRENGTH = Sky Cloud Reflections
+option.CLOUD_REFLECTION_STRENGTH.comment = Adds a low-cost animated procedural cloud layer to sky/horizon fallback reflections on water and glossy opaque materials. This is an approximation, not a world-space reflection volume.

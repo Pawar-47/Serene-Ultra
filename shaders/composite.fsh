@@ -7,6 +7,8 @@ uniform sampler2D colortex4;
 uniform sampler2D colortex12;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
+uniform sampler2D noisetex;
+uniform float frameTimeCounter;
 
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
@@ -51,6 +53,11 @@ const int colortex12Format = RGBA16F;
 #define SCREEN_GI_QUALITY 8 // [0 4 8 12] Number of depth-aware colour-bounce samples
 #define SCREEN_GI_TEMPORAL_STRENGTH 75 // [0 25 50 75 90] Reprojected GI history weight
 #define FOG_HEIGHT_STRENGTH 45 // [0 20 35 50 65 80 100] World-height fog strength
+#define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
+#define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Cloud optical density
+#define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
+#define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
+#define CLOUD_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 100] Procedural sky-cloud reflections on glossy materials
 
 
 vec3 sampleCelestialLensFlare(vec2 uv) {

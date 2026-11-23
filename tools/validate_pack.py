@@ -2065,6 +2065,27 @@ for profile, strength, quality in (("Ultra-Light", "0", "0"), ("Smooth", "10", "
     if f"SCREEN_GI_QUALITY:{quality}" not in line:
         errors.append(f"{profile} has incorrect screen-space indirect-light quality")
 
+
+# Shared procedural sky-cloud reflection must be available to opaque and water fallbacks.
+environment_reflection = sources.get("environment_reflection.glsl", "")
+for token in ("sampleSereneCloudReflection", "CLOUD_REFLECTION_STRENGTH",
+              "texture(noisetex", "verticalMask", "frameTimeCounter"):
+    if token not in environment_reflection:
+        errors.append(f"Environment reflection is missing procedural cloud contribution: {token}")
+for name in ("composite.fsh", "gbuffers_water.fsh"):
+    source = sources.get(name, "")
+    if "CLOUD_REFLECTION_STRENGTH" not in source or "uniform sampler2D noisetex" not in source:
+        errors.append(f"{name} must provide cloud-reflection controls and noise input")
+if "CLOUD_REFLECTION_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("Cloud reflection strength must be exposed in the Quality screen")
+for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:0"),
+                          ("Smooth", "CLOUD_REFLECTION_STRENGTH:25"),
+                          ("Ultra", "CLOUD_REFLECTION_STRENGTH:55"),
+                          ("HDR", "CLOUD_REFLECTION_STRENGTH:65"),
+                          ("Ultra-HDR", "CLOUD_REFLECTION_STRENGTH:75")):
+    if expected not in props:
+        errors.append(f"{profile} profile is missing cloud reflection budget: {expected}")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:
