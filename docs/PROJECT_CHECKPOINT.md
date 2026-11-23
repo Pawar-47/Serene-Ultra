@@ -858,3 +858,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1079 (45112309599) passed all stages for the corrected conduit lightmap/emission, bell gold and material-specific coating dispatch.
 - Final review removed fallback-emission and smoothness gates from the block-entity coating call. Complementary applies coating to ender chests even when their fallback glow is active, and the per-material factors are already deliberately conservative. Explicit PBR-map emission and explicit specular maps still retain priority.
 - CI now guards that fallback coating is not accidentally suppressed by emissionStrength or smoothness thresholds while explicit PBR emission remains protected.
+
+
+## Block-entity coating validator alignment — 2026-11-23
+- Run #1080 (45112397002) compiled and linked all shaders but the structural validator still required the old generic block-entity smoothness/emission gates. The reference-guided material-factor path intentionally allows ender-chest fallback coating while keeping explicit PBR-map emission/specular priority.
+- Updated the validator to keep the generic smoothness gate for terrain/entities, but validate block entities through their explicit materialCoatingFactor and PBR-map priority conditions instead.
+- A fresh CI run is required for this validator correction.
