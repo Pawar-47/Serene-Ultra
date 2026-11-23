@@ -32,6 +32,7 @@ layout(location = 0) out vec4 outColor;
 #define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Two-scale emissive bloom strength
 #define BLOOM_QUALITY 2 // [0 1 2] Additional wide bloom pyramid levels
 #define FXAA_ENABLED 1 // [0 1] Edge-adaptive fast approximate anti-aliasing
+#define IMAGE_SHARPENING 20 // [0 10 20 30 40 50 60 70 80 90 100] Edge-aware post-AA sharpening
 #define DOF_STRENGTH 0 // [0 10 20 30 40 50 60 70 80 90 100] Depth-of-field blur strength
 #define DOF_FOCUS_DISTANCE 8.0 // [2.0 4.0 6.0 8.0 10.0 12.0 16.0 24.0 32.0 48.0 64.0] Focus distance in blocks
 #define DOF_FOCUS_RANGE 8.0 // [2.0 4.0 6.0 8.0 12.0 16.0 24.0 32.0] In-focus depth range in blocks
@@ -79,6 +80,24 @@ vec3 sampleFxaa(vec2 uv, vec2 texelSize) {
     return (lumaB < lumaMin || lumaB > lumaMax) ? sampleA : sampleB;
 }
 
+
+
+vec3 applyImageSharpening(vec3 source, vec2 uv, vec2 texelSize) {
+#if IMAGE_SHARPENING > 0
+    vec3 north = texture(colortex0, uv + vec2(0.0, texelSize.y)).rgb;
+    vec3 south = texture(colortex0, uv - vec2(0.0, texelSize.y)).rgb;
+    vec3 east = texture(colortex0, uv + vec2(texelSize.x, 0.0)).rgb;
+    vec3 west = texture(colortex0, uv - vec2(texelSize.x, 0.0)).rgb;
+    vec3 localAverage = (north + south + east + west) * 0.25;
+    vec3 detail = source - localAverage;
+    float edgeStrength = clamp(length(detail) * 3.0, 0.0, 1.0);
+    float sharpenAmount = float(IMAGE_SHARPENING) * 0.01
+        * mix(0.45, 1.0, edgeStrength);
+    return max(source + detail * sharpenAmount * 1.35, vec3(0.0));
+#else
+    return source;
+#endif
+}
 
 float getLinearViewDepth(vec2 uv) {
     float depth = texture(depthtex0, uv).r;
@@ -244,6 +263,8 @@ void main() {
 #else
     vec3 color = max(dofColor, vec3(0.0));
 #endif
+
+    color = applyImageSharpening(color, vTexCoord, texelSize);
 
 #if BLOOM_STRENGTH > 0
     vec3 bloom = sampleBloomChain(vTexCoord);
