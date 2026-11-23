@@ -152,6 +152,14 @@ for path in SHADERS.rglob("*.fsh"):
 # material implementation. Keep these as visible warnings until the program
 # families are implemented and runtime-tested.
 IRIS_PROGRAM_FALLBACKS = {
+    "shadow_solid": "shadow",
+    "shadow_cutout": "shadow",
+    "shadow_water": "shadow",
+    "shadow_entities": "shadow",
+    "shadow_lightning": "shadow_entities",
+    "shadow_block": "shadow",
+    "gbuffers_item": "gbuffers_textured_lit",
+    "gbuffers_entities_glowing": "gbuffers_entities",
     "gbuffers_water": "gbuffers_terrain",
     "gbuffers_weather": "gbuffers_textured_lit",
     "gbuffers_hand_water": "gbuffers_hand",
