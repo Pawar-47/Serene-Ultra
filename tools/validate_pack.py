@@ -1861,7 +1861,8 @@ for token in ("uniform int isEyeInWater;", "applyUnderwaterDistortion(",
               "sceneUv = applyUnderwaterDistortion(vTexCoord)"):
     if token not in final_shader:
         errors.append(f"Underwater distortion is missing implementation component: {token}")
-if "UNDERWATER_DISTORTION" not in quality_screen:
+underwater_quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
+if "UNDERWATER_DISTORTION" not in underwater_quality_screen:
     errors.append("UNDERWATER_DISTORTION must appear in the Quality screen")
 if "UNDERWATER_DISTORTION" not in slider_line:
     errors.append("UNDERWATER_DISTORTION must be exposed as a slider")
