@@ -876,3 +876,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1082 (45112646920) passed all nine stages after the chest seam correction.
 - Added a lightweight CI asset inspection for water-normal.png. It reports image dimensions, channel layout and alpha min/max/unique-value count. A varying alpha channel is not automatically treated as height; its semantics must still be verified before implementing water parallax.
 - The inspection is diagnostic only and does not change shader behavior. Water POM remains disabled until the asset is confirmed to contain a valid height field.
+
+
+## Water-normal PNG integrity repair — 2026-11-23
+- Run #1083 failed in the new asset-inspection step because the checked-in water-normal PNG raised a broken-data-stream error when Pillow decoded its IDAT payload. Shader compilation had already passed.
+- Regenerated the 64x64 tileable RGBA normal field from periodic multi-frequency height waves. The new PNG fully decodes and verifies; alpha is constant 255 (one unique value), so it is not a height map and water POM remains disabled.
+- Pixel alpha and RGB channel metadata are inspected in CI. The normal field remains three spatial samples in low profiles and the optional fourth sample in Ultra/HDR.
+- The replacement texture has no runtime appearance or GPU performance claim until tested in Minecraft 26.3 + Iris.
