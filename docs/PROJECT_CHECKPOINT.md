@@ -1551,3 +1551,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Signs, banners and portals are excluded; PBR porosity suppresses puddle formation on porous surfaces. The existing `RAIN_PUDDLE_STRENGTH` menu/profile control drives both terrain and block-entity puddles.
 - Commit: `11b5810b65a55ee325fe7708526e294682e8206c`; feature matrix: `439126f6c8ec5cadbcedb4c1226cac9c10679084`.
 - Source-level implementation only; verify chest/shulker top faces, modded block entities, rainfall, and performance in Iris.
+
+
+### Latest compiler/validator checkpoint — 2026-11-23
+- GitHub Actions run `45227697354` on commit `03d42ffb2d781af9b795c0f92203a1d7363a4e24` passed: every standalone shader stage compiled, all configured Iris/LabPBR/POM/water branches compiled, water alpha-height inspection passed, all vertex/fragment program links passed, and structural validation passed.
+- The structural validator's last failures were stale exact-string checks expecting direct `textureGrad` calls. The source now uses the atlas-bounded `sampleAnisotropicAtlas` helper; validator assertions were updated to check the current bounded helper calls instead of obsolete source spellings.
+- After that green run, block-entity puddles were added and separately validated at source level; `tools/validate_pack.py` now checks the shared puddle option, rain gating, surface normal/tangent ripple, world-stable noise and sign/banner/portal exclusions.
+- Latest implementation commits after the green run: block-entity puddles `11b5810b65a55ee325fe7708526e294682e8206c`; matrix `439126f6c8ec5cadbcedb4c1226cac9c10679084`; checkpoint `6fdcdc07358d852e7d44cf639ae307ea191835ec`; puddle validator coverage `9edf2fbeb47970344ed8b660c2260b648f249958`.
+- The new block-puddle code compiled and linked successfully in run `45228033759`; structural validation also passed. The latest validator-only extension has a new CI run pending.
