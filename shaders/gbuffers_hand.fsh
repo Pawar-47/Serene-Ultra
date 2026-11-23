@@ -78,11 +78,16 @@ void main() {
 #endif
 
     if (!hasSpecularMap) {
-        if (currentRenderedItemId == 45004) {
+        if (currentRenderedItemId == 45000) {
+            // Armor trims use a restrained mid-smoothness response in the reference.
+            materialSmoothness = 0.5;
+            materialMetalness = 0.2;
+        } else if (currentRenderedItemId == 45004) {
             float woodGloss = dot(albedo.rgb, vec3(0.3));
             materialSmoothness = clamp(woodGloss * woodGloss, 0.0, 0.4);
         } else if (currentRenderedItemId == 45008) {
-            materialSmoothness = clamp(pow(albedo.g, 4.0) * 2.0, 0.0, 0.4);
+            // Match the reference stone response; the material can reach full smoothness.
+            materialSmoothness = clamp(pow(albedo.g, 4.0) * 2.0, 0.0, 1.0);
         } else if (currentRenderedItemId == 45012 || currentRenderedItemId == 45013) {
             materialSmoothness = clamp(pow(albedo.r, 2.0), 0.0, 1.0);
             materialMetalness = 0.75;
@@ -188,9 +193,11 @@ void main() {
         } else if (currentRenderedItemId == 44002 || currentRenderedItemId == 44003 ||
                    currentRenderedItemId == 44010 || currentRenderedItemId == 44011 ||
                    currentRenderedItemId == 44012 || currentRenderedItemId == 44018 ||
+                   currentRenderedItemId == 44007 || currentRenderedItemId == 44008 ||
+                   currentRenderedItemId == 44009 || currentRenderedItemId == 44015 ||
                    currentRenderedItemId == 44019 || currentRenderedItemId == 44028 ||
                    currentRenderedItemId == 44029 || currentRenderedItemId == 44030 ||
-                   currentRenderedItemId == 44035) {
+                   currentRenderedItemId == 44035 || currentRenderedItemId == 44084) {
             pbrEmission = max(max(albedo.r, albedo.g), albedo.b) * 0.5;
         }
     }
@@ -199,7 +206,8 @@ void main() {
     vec3 lightDirection = normalize(shadowLightPosition);
     float nDotL = max(dot(surfaceNormal, lightDirection), 0.0);
     float nDotV = max(dot(surfaceNormal, viewDirection), 0.001);
-    float skyFactor = hasSkylight ? clamp(vLightmapCoord.y, 0.0, 1.0) : 0.0;
+    float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
+    float skyFactor = hasSkylight ? skyLight : 0.0;
 
     if (nDotL > 0.001 && skyFactor > 0.001) {
         vec3 halfVector = normalize(viewDirection + lightDirection);

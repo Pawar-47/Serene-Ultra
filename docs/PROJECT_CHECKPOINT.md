@@ -930,3 +930,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Corrected clock versus compass classification: clocks/totems use the gold response; compass and echo/recovery-compass/music-disc items use the iron response. Added copper tool/armor fallbacks and the trident's smoothness/emission treatment.
 - Added reference-aligned fallbacks for lava buckets, spectral-arrow group, end crystals, experience bottles and trial keys. Explicit PBR specular/emission maps still take priority; these are fallback heuristics only.
 - Added CI assertions for the new item branches. Some reference item classes (notably harnesses, elytra and less common block-item IDs) still need a dedicated material review; held-item visuals and target-GPU cost remain unverified.
+
+
+## Held-item material formula alignment — 2026-11-23
+- Corrected the stone-tool smoothness cap to match the supplied Complementary stone material formula (pow(green,4) * 2, clamped to 1.0 rather than 0.4).
+- Added the reference's mid-smoothness fallback for armor trims, and included the mapped froglight/campfire/copper-lantern item group in the low-cost emissive fallback.
+- Normalized hand skylight using the same 30/32 lightmap range used by the terrain and block-entity paths, avoiding a small but systematic direct-highlight mismatch.
+- These are fallback-only material heuristics; explicit PBR maps remain authoritative. CI compile/structure validation is required, and runtime held-item appearance is still pending.

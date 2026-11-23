@@ -1262,7 +1262,9 @@ for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemI
               "currentRenderedItemId == 44086", "currentRenderedItemId == 45080",
               "currentRenderedItemId == 45084", "currentRenderedItemId == 45108",
               "currentRenderedItemId == 45112", "currentRenderedItemId == 45116",
-              "outColor = albedo"):
+              "currentRenderedItemId == 45000", "materialSmoothness = 0.5",
+              "float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0)",
+              "currentRenderedItemId == 44084", "outColor = albedo"):
     if token not in hand_shader:
         errors.append(f"Hand PBR path is missing component: {token}")
 hand_vertex = sources.get("gbuffers_hand.vsh", "")
