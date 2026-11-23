@@ -676,7 +676,7 @@ for token in ("in vec3 vPlayerPosition", "uniform sampler2D noisetex",
               "uniform float frameTimeCounter", "uniform float wetness", "uniform float rainStrength",
               "uniform float rainfall", "uniform int biome_precipitation", "biome_precipitation == 1",
               "#define RAIN_PUDDLE_STRENGTH 70", "#define MATERIAL_WETNESS_STRENGTH 100",
-              "materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0)",
+              "materialPorosity = labSurfaceCode < 65.0",
               "float porousWetness = clamp(", "materialReflectance *= 1.0 - porousWetness * 0.45",
               "materialSmoothness *= 1.0 - porousWetness * 0.35",
               "puddleLightFactor", "puddleNormalFactor", "puddleForm",
@@ -2025,7 +2025,7 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
                   "uniform int biome_precipitation", "MATERIAL_WETNESS_STRENGTH 100",
                   '#include "/lib/materials/porosity_wetness.glsl"',
                   "float materialPorosity = 0.0;", "labF0Code < 65.0",
-                  "materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0)",
+                  "materialPorosity = labSurfaceCode < 65.0",
                   "applyPorosityWetness("):
         if token not in source:
             errors.append(f"{name} is missing LabPBR porosity wetness handling: {token}")
