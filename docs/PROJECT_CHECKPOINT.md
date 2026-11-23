@@ -1727,3 +1727,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - `LAVA_WAVE_STRENGTH` is now present in the Quality slider list; existing per-profile values and language label/tooltip are retained. Validator checks the shared helper, period/timer constants, both receivers, slider and profile values.
 - Commits: helper `b1f53afab5c9e39e176b6fdeb7eb2abca5ca0e0d`; terrain `4546bdceaa3d4fad6d48e4ea1471b158c8ec0289`, view-space follow-up `7e030e6870c719aff2474f5a42a080383020e4ea`; shadow `2be49c647ea38108e2f9a12642a695c2efd84700`; slider `349b23a19d30c6a6300a47c5d1e57aace3b05ae8`; validator `fc53156637904b57788f45d738eb1cfa0acb6b26`; matrix `8ecd33e3fc35f443081c6d8b60cea75058b6296b`.
 - Runtime surface geometry, lava cauldron behaviour, shadow alignment and performance still require Minecraft/Iris verification.
+
+
+### Water surface vertex motion — 2026-11-23
+- Added a shared `water_waves.glsl` helper used by `gbuffers_water.vsh` and `shadow.vsh`. It creates a low-amplitude two-frequency water surface displacement with a 4096-block periodic world coordinate and an hourly timer phase driven by the existing `WATER_WAVE_SPEED` control.
+- The existing `WATER_WAVE_STRENGTH` option now controls both animated normal detail and the small vertex displacement. Water fluid geometry is gated by Iris material ID 32000 and `mc_Entity.y`; the shadow pass applies the same displacement to the same fluid vertices.
+- Updated the tooltip, feature matrix and structural validator to check shared helper use, material gating, and matching visible/shadow position updates.
+- GLSL compilation and runtime visual calibration are pending for this addition. Validate for water edge cracks, flowing-water geometry, cauldron interactions and shadow alignment in Minecraft 26.3 + Iris.
