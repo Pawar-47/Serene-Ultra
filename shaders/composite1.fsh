@@ -37,6 +37,9 @@ void main() {
     accumulated += texture(colortex0, vTexCoord + vec2(-0.5, 0.5) * sourceTexel).rgb;
     accumulated += texture(colortex0, vTexCoord + vec2(0.5, 0.5) * sourceTexel).rgb;
     accumulated *= 0.25;
-    outColor = vec4(extractHighlight(accumulated), 1.0);
+    // The scene buffer is display-encoded; bloom extraction and all blur levels
+    // operate in linear light so threshold and halo energy are physically useful.
+    vec3 accumulatedLinear = pow(max(accumulated, vec3(0.0)), vec3(2.2));
+    outColor = vec4(extractHighlight(accumulatedLinear), 1.0);
 #endif
 }
