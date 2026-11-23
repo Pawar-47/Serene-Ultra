@@ -16,6 +16,8 @@ uniform float frameTimeCounter;
 uniform float sunAngle;
 uniform float rainStrength;
 uniform bool hasSkylight;
+uniform float thunderStrength;
+uniform vec4 lightningBoltPosition;
 
 in vec4 vVertexColor;
 in vec3 vViewPosition;
@@ -31,6 +33,7 @@ out vec4 outColor1;
 #define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
 
 #include "/lib/lighting/stable_world_position.glsl"
+#include "/lib/lighting/lightning_flash.glsl"
 
 float calculateCloudFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -125,6 +128,9 @@ void main() {
         : vec3(1.0);
     cloudLinear *= mix(vec3(1.0), lightingTint, cloudQuality);
     cloudLinear *= weatherTint;
+    cloudLinear += sampleSereneLightningFlash(
+        vPlayerPosition, vec3(0.0, 1.0, 0.0)
+    ) * 0.35;
     cloudLinear += cloudLinear * silverLining
         * (0.35 + 0.45 * solarElevation) * cloudQuality * (1.0 - rainStrength * 0.65);
 
