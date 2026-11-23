@@ -53,3 +53,5 @@ Additional runtime checks:
 - [ ] Verify terrain solid/cutout paths resolve through `gbuffers_terrain` and preserve alpha-tested foliage and block materials.
 - [ ] Verify held item, dropped item, armor glint, spider eyes, beacon beam, lightning and clouds independently; shared fallback coverage is not visual parity.
 - [ ] Re-test the same scene after shader reload and after a full game restart to distinguish stale shaderpack cache from source behavior.
+
+- [ ] Verify falling rain/snow behavior with camera outside, underwater, in lava and inside powdered snow; confirm the `isEyeInWater == 3` suppression branch matches intended vanilla behavior.
