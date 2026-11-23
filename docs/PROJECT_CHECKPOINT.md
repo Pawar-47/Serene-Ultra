@@ -1408,3 +1408,21 @@ The cleanup is source/configuration-verified; the latest validator workflow must
 
 ### Next priority
 Run the exact Minecraft 26.3 + Iris + Sodium runtime matrix for clouds, fog, colored shadows, translucent entity routing and native OIT interaction. Continue feature-parity implementation only after the active render routes are confirmed.
+
+
+## User-directed project priority correction — 2026-11-23
+
+The user explicitly corrected the recent work pattern: do not spend the next development cycles primarily on CI, structural validation, GLSL linting, or speculative Iris debugging. The priority is to finish the shaderpack's feature implementation comprehensively first. Iris runtime debugging and compatibility correction begin only after the planned shader feature set has been implemented and an actual Minecraft/Iris test environment is available.
+
+### Required execution order
+1. **Feature completion first:** implement the full Serene Ultra feature set against the tracked Ultra reference inventory in `docs/REFERENCE_ULTRA_AUDIT.md`, including all major visual systems, settings, quality tiers, dimension behavior, material handling, lighting, water, reflections, weather, clouds, atmosphere, and post-processing. Do not treat source-level placeholders, generic fallbacks, or a passing validator as feature completion.
+2. **Reference-led implementation:** use both supplied archives for relevant work: Vanilla-stock establishes Minecraft 26.3 interfaces and stage behavior; Good working shader (Complementary Reimagined) establishes proven feature techniques, Ultra behavior, settings and visual targets. Inspect the actual relevant files before making feature-specific decisions. Preserve Intel HD 5500 viability through explicit quality/resource strategies, not by silently deleting Ultra features.
+3. **Track actual feature coverage:** maintain the feature matrix/checkpoint as an implementation ledger. Distinguish implemented, partial, not implemented, and runtime-unverified. A feature is not complete merely because its source compiles or its tokens satisfy a validator.
+4. **Batch static checks, don't let them drive the roadmap:** run structural/GLSL checks after coherent implementation batches or when a source change warrants them. Do not repeatedly spend cycles rerunning CI without meaningful feature work.
+5. **Runtime phase later:** after the planned feature implementation is substantially complete, test the pack in Minecraft with Iris, then debug actual observed failures, rendering differences, pass ordering, attachment behavior, compatibility and performance. Do not claim runtime success before those tests occur.
+
+### Immediate development directive
+Resume implementation from current `main` HEAD. Prioritize the largest remaining Ultra feature gaps identified by the reference audit and feature matrix. Each development cycle should deliver real shader functionality and user-facing controls, not just validator changes or documentation. Update the checkpoint with concrete files/features changed and clearly label anything still partial or untested.
+
+### Validation boundary
+CI success means only that the checks in that workflow passed. It is not a substitute for feature completeness, Iris runtime behavior, visual comparison, or Intel HD 5500 performance testing. Keep these as separate evidence categories.
