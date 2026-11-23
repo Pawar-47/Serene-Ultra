@@ -245,6 +245,7 @@ void main() {
     float upDot = 0.0;
     float horizonBlend = 0.0;
     vec3 viewDirection = vec3(0.0, 1.0, 0.0);
+    vec3 playerDirection = vec3(0.0, 1.0, 0.0);
 
     float solarElevation = sin(sunAngle * 6.28318530718);
     float twilight = hasSkylight
