@@ -794,3 +794,12 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1068 (45110765737) passed all nine stages after generated normals and coated textures were extended to opaque entity models. Entity item frames/glow item frames are explicitly excluded.
 - Added a dedicated CI step that compiles and links the opt-in entity POM branch twice: oldPBR and LabPBR, both with POM_ENTITY_STRENGTH forced to 20. The default entity profile remains POM-off to protect low-end GPUs; this test ensures the optional code path cannot silently rot.
 - Structural validation now requires the CI opt-in POM variants. This is a test-coverage improvement, not a runtime visual verification.
+
+
+## Entity POM and entity material-effect CI — 2026-11-23
+- Run #1067 (45110640697) passed all nine stages after POM option definitions were aligned across terrain, block and entity shaders.
+- Run #1068 (45110765737) passed all nine stages after generated normals and coated textures were extended to opaque entity models.
+- Run #1069 (45110882840) added and passed dedicated oldPBR and LabPBR opt-in entity POM compile/link variants.
+- Run #1070 (45111042199) passed after entity generated normals/coating were placed behind ENTITY_GN_AND_CT, off by default. Entity POM remains independently opt-in in Ultra/HDR.
+- Next CI update also compiles the combined entity POM + ENTITY_GN_AND_CT path for both oldPBR and LabPBR, so the optional entity material branches remain tested rather than only the default-off branch.
+- Runtime testing of mobs, armor, item frames, resource-pack height maps and Intel HD 5500 cost remains pending.

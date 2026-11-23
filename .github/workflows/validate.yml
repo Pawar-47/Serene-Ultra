@@ -116,13 +116,15 @@ jobs:
           cp shaders/gbuffers_entities.vsh "$tmpdir/entities.vert"
 
           # Compile the non-LabPBR branch with POM enabled.
-          sed 's/^#define POM_ENTITY_STRENGTH 0.*/#define POM_ENTITY_STRENGTH 20/' \
+          sed -e 's/^#define POM_ENTITY_STRENGTH 0.*/#define POM_ENTITY_STRENGTH 20/' \
+            -e 's@^//#define ENTITY_GN_AND_CT.*@#define ENTITY_GN_AND_CT@' \
             shaders/gbuffers_entities.fsh > "$tmpdir/entities-pom-oldpbr.frag"
           glslangValidator -l "$tmpdir/entities.vert" "$tmpdir/entities-pom-oldpbr.frag"
 
           # Also compile the LabPBR branch with the opt-in POM path enabled.
           awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next }
                /^#define POM_ENTITY_STRENGTH 0/ { print "#define POM_ENTITY_STRENGTH 20"; next }
+               /^\/\/#define ENTITY_GN_AND_CT/ { print "#define ENTITY_GN_AND_CT"; next }
                { print }' shaders/gbuffers_entities.fsh > "$tmpdir/entities-pom-labpbr.frag"
           glslangValidator -l "$tmpdir/entities.vert" "$tmpdir/entities-pom-labpbr.frag"
       - name: Link vertex and fragment shader programs

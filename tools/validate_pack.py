@@ -1071,6 +1071,15 @@ if "Compile opt-in entity POM branches" not in workflow_text or "POM_ENTITY_STRE
     errors.append("CI must compile both opt-in entity POM variants")
 if "MC_TEXTURE_FORMAT_LAB_PBR 1" not in workflow_text:
     errors.append("CI must compile entity POM with the LabPBR format branch")
+if "ENTITY_GN_AND_CT" not in workflow_text:
+    errors.append("CI must compile the opt-in entity generated-normal/coating branch")
+for option in ("GENERATED_NORMAL_STRENGTH", "COATED_TEXTURE_STRENGTH"):
+    definitions = []
+    for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
+        definitions.extend(line.strip() for line in sources.get(name, "").splitlines()
+                           if line.startswith(f"#define {option} "))
+    if len(set(definitions)) != 1:
+        errors.append(f"{option} must be defined identically in terrain, block and entity shaders")
 
 if errors:
     print("Serene Ultra structural validation FAILED:")
