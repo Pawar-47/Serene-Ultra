@@ -1765,3 +1765,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Updated `tools/validate_pack.py` to assert each block-ID mapping and material formula; updated the feature matrix.
 - Commits: block IDs `392c73b816db896cc6a8f6822262d8640af298dd`; terrain formulas `22412d34800d8bd7e62ffb18f9cac8fff416ff2d`, coating correction `7c99394c6c3fe08dae463e586fc3a1c5b7b0ad8d`; validator `4845fd759b73f8dbc012500454f23bfea48aa924`; matrix `04ebcfb07f61da84bc1618a16a9216b64622bfcd`.
 - Runtime appearance on stock textures, PBR-map priority and performance still require Minecraft/Iris verification.
+
+
+### Vanilla/oldPBR terrain wetness fallbacks — 2026-11-23
+- Added `sereneVanillaMaterialPorosity()` to the terrain material path. LabPBR blue-channel porosity (0–64) remains authoritative; metals remain nonporous; LabPBR SSS-coded surfaces and maps without explicit porosity fall back to conservative material-ID values. OldPBR and vanilla terrain now use the same fallback.
+- Reused existing Complementary-guided IDs for stone, deepslate, cobblestone, dirt and obsidian, and added IDs for vanilla wood/planks and sand/gravel/clay/mud groups. Porosity now drives both rain darkening/reflectance loss and the existing terrain puddle suppression mask.
+- Updated the wetness tooltip, structural validation and feature matrix. Entity and block-entity oldPBR wetness fallbacks remain a separate gap; their LabPBR paths are unchanged.
+- CI confirmation pending for this material fallback.
