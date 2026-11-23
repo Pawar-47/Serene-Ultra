@@ -10,6 +10,8 @@ uniform int fogMode;
 uniform int fogShape;
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
+uniform float rainStrength;
+uniform bool hasSkylight;
 
 in vec4 vVertexColor;
 in vec3 vViewPosition;
@@ -17,6 +19,8 @@ in vec3 vViewPosition;
 /* RENDERTARGETS: 0,2 */
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outDeferredValidity;
+
+#define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud daylight and silver-lining response
 
 float calculateCloudFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -51,22 +55,31 @@ void main() {
     // shadowLightPosition is the view-space direction of the active celestial body
     // (sun by day, moon by night), normalised here with a guard so dimensions
     // without a celestial body cannot produce a NaN.
-    float solarElevation = smoothstep(-0.15, 0.35, sin(sunAngle * 6.28318530718));
+    float solarElevation = hasSkylight
+        ? smoothstep(-0.15, 0.35, sin(sunAngle * 6.28318530718))
+        : 0.0;
     float lightLength = length(shadowLightPosition);
     vec3 lightDirection = lightLength > 0.0001
         ? shadowLightPosition / lightLength
-        : vec3(0.0);
+        : vec3(0.0, 1.0, 0.0);
     float viewLength = length(vViewPosition);
-    vec3 viewDirection = viewLength > 0.0001 ? -vViewPosition / viewLength : vec3(0.0, 1.0, 0.0);
+    vec3 viewDirection = viewLength > 0.0001
+        ? -vViewPosition / viewLength
+        : vec3(0.0, 1.0, 0.0);
 
-    // Forward scattering: looking through a cloud toward the light brightens it,
-    // which is the silver lining visible at dawn and dusk.
+    // Daylight fill changes cloud colour temperature, while forward scattering
+    // adds a restrained silver lining toward the active sun/moon direction.
     float towardLight = max(dot(viewDirection, lightDirection), 0.0);
     float silverLining = pow(towardLight, 6.0);
-
-    // Day/night exposure of the whole layer, then the sunward scattering highlight.
-    cloudLinear *= mix(0.72, 1.12, solarElevation);
-    cloudLinear += cloudLinear * silverLining * (0.35 + 0.45 * solarElevation);
+    float cloudQuality = float(CLOUD_SCATTERING_STRENGTH) * 0.01;
+    vec3 dayTint = vec3(1.0, 0.97, 0.90);
+    vec3 nightTint = vec3(0.42, 0.50, 0.72);
+    vec3 weatherTint = mix(vec3(1.0), vec3(0.72, 0.78, 0.88), rainStrength * 0.65);
+    vec3 lightingTint = mix(nightTint, dayTint, solarElevation);
+    cloudLinear *= mix(vec3(0.72), lightingTint, cloudQuality);
+    cloudLinear *= weatherTint;
+    cloudLinear += cloudLinear * silverLining
+        * (0.35 + 0.45 * solarElevation) * cloudQuality * (1.0 - rainStrength * 0.65);
 
     float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateCloudFog(fogDistance);
