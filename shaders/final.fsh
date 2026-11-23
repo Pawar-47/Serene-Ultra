@@ -180,8 +180,10 @@ vec3 applyChromaticAberration(vec3 source, vec2 uv, vec2 texelSize) {
     float edgeWeight = smoothstep(0.08, 0.72, length(radial));
     vec2 offset = normalize(radial + vec2(0.00001)) * texelSize
         * (float(CHROMATIC_ABERRATION) * 0.018) * edgeWeight;
-    float redChannel = texture(colortex0, clamp(uv + offset, texelSize, vec2(1.0) - texelSize)).r;
-    float blueChannel = texture(colortex0, clamp(uv - offset, texelSize, vec2(1.0) - texelSize)).b;
+    float redEncoded = texture(colortex0, clamp(uv + offset, texelSize, vec2(1.0) - texelSize)).r;
+    float blueEncoded = texture(colortex0, clamp(uv - offset, texelSize, vec2(1.0) - texelSize)).b;
+    float redChannel = pow(max(redEncoded, 0.0), 2.2);
+    float blueChannel = pow(max(blueEncoded, 0.0), 2.2);
     return vec3(redChannel, source.g, blueChannel);
 #else
     return source;
