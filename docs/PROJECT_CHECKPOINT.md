@@ -1247,3 +1247,8 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - FXAA uses the existing scene attachment and no temporal history or extra render target. It is disabled in Ultra-Light and enabled in Smooth and higher profiles.
 - Added the user-facing Color-screen toggle, slider entry, tooltip, profile presets and structural regression checks.
 - FXAA is a spatial AA baseline only; TAA, temporal reprojection and reference edge-quality comparison remain pending.
+
+
+## FXAA profile validation correction — 2026-11-23
+- The first combined bloom/FXAA CI run compiled and linked every shader successfully but the structural validator correctly caught missing `FXAA_ENABLED:1` entries in HDR and Ultra-HDR presets.
+- Added the missing values to both HDR profiles. The failing run is not treated as a passing validation; the corrected commit has a new CI run pending.
