@@ -347,44 +347,53 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0);
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
-// Complementary material-dispatch fallbacks for block entities.
-    // Explicit oldPBR/LabPBR specular maps retain priority for smoothness and reflectance.
-    if (!hasMaterialSpecularMap) {
-        if (blockEntityId == 5008) { // Chest and trapped chest
+// Complementary material dispatch for block entities.
+    // Material identity controls coating on both vanilla and PBR resource packs.
+    // Smoothness/F0 fallbacks never override an explicit oldPBR/LabPBR specular map.
+    if (blockEntityId == 5008) { // Chest and trapped chest
+        materialCoatingFactor = 0.66;
+        if (!hasMaterialSpecularMap) {
             materialSmoothness = clamp(pow(albedo.g, 2.0), 0.0, 1.0);
-            materialCoatingFactor = 0.66;
-        } else if (blockEntityId == 5012) { // Ender chest
+        }
+    } else if (blockEntityId == 5012) { // Ender chest
+        materialCoatingFactor = 0.66;
+        if (!hasMaterialSpecularMap) {
             float enderChestFactor = min(pow(albedo.g, 2.0), 0.25);
             materialSmoothness = enderChestFactor * 2.0;
-            materialCoatingFactor = 0.66;
-        } else if (blockEntityId == 5016) { // Shulker boxes, heads and beds
-            materialCoatingFactor = 0.2;
-        } else if (blockEntityId == 5028) { // Bell: distinguish gold from stone
-            if (albedo.r + albedo.g > albedo.b + 0.5) {
+        }
+    } else if (blockEntityId == 5016) { // Shulker boxes, heads and beds
+        materialCoatingFactor = 0.2;
+    } else if (blockEntityId == 5028) { // Bell: distinguish gold from stone
+        if (albedo.r + albedo.g > albedo.b + 0.5) {
+            materialCoatingFactor = 0.33;
+            if (!hasMaterialSpecularMap) {
                 float goldGreenSquared = albedo.g * albedo.g;
                 materialSmoothness = max(materialSmoothness,
                     min(max(albedo.g, 0.8) - goldGreenSquared * 0.5, 1.0));
                 materialReflectance = max(materialReflectance, 0.72);
-                materialCoatingFactor = 0.33;
-                albedo.rgb *= 0.5 + 0.4 * dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
-            } else {
+            }
+            albedo.rgb *= 0.5 + 0.4 * dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+        } else {
+            materialCoatingFactor = 0.77;
+            if (!hasMaterialSpecularMap) {
                 float stoneSmoothness = pow(albedo.g, 4.0) * 2.0;
                 materialSmoothness = max(materialSmoothness, min(stoneSmoothness, 1.0));
-                materialCoatingFactor = 0.77;
             }
-        } else if (blockEntityId == 5032) { // Copper chests and copper golem statues
+        }
+    } else if (blockEntityId == 5032) { // Copper chests and copper golem statues
+        materialCoatingFactor = 0.5;
+        if (!hasMaterialSpecularMap) {
             float copperSmoothness = pow(albedo.r, 4.0)
                 + pow(max(albedo.g - albedo.r * 0.5, 0.0), 2.0) * 0.3;
             materialSmoothness = max(materialSmoothness, min(copperSmoothness, 1.0));
             materialReflectance = max(materialReflectance, 0.58);
-            materialCoatingFactor = 0.5;
-            float copperLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
-            albedo.rgb *= clamp(0.6 + 0.7 * copperLuminance, 0.0, 1.0);
-        } else if (blockEntityId == 5036) { // Banners
-            materialCoatingFactor = 0.2;
-        } else if (blockEntityId == 10548) { // Enchanting-table book
-            materialSmoothness = max(materialSmoothness, clamp(pow(albedo.g, 2.0) * 0.35, 0.0, 1.0));
         }
+        float copperLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+        albedo.rgb *= clamp(0.6 + 0.7 * copperLuminance, 0.0, 1.0);
+    } else if (blockEntityId == 5036) { // Banners
+        materialCoatingFactor = 0.2;
+    } else if (blockEntityId == 10548 && !hasMaterialSpecularMap) { // Enchanting-table book
+        materialSmoothness = max(materialSmoothness, clamp(pow(albedo.g, 2.0) * 0.35, 0.0, 1.0));
     }
 
     // The conduit lightmap adjustment is independent of whether its texture has a PBR emission map.
@@ -417,9 +426,9 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
 
     outLightmapData = vec4(vanillaLight, skyLight);
 #if COATED_TEXTURE_STRENGTH > 0
-    if (!signText && blockEntityId != 5025 && !hasMaterialSpecularMap &&
-        albedo.a >= 0.999 && materialCoatingFactor > 0.0 &&
-        pbrEmission < 0.01 && materialReflectance < 0.8) {
+    if (!signText && blockEntityId != 5025 && albedo.a >= 0.999 &&
+        materialCoatingFactor > 0.0 && pbrEmission < 0.01 &&
+        materialReflectance < 0.8) {
         albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM,
             vPlayerPosition, materialCoatingFactor);
     }

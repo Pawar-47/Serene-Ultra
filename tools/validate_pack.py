@@ -415,9 +415,16 @@ if "fallbackEmissiveMaterial" not in sources.get("gbuffers_terrain.fsh", ""):
     errors.append("Terrain coating must skip built-in emissive material IDs")
 block_coat_source = sources.get("gbuffers_block.fsh", "")
 for token in ("pbrEmission < 0.01", "materialReflectance < 0.8",
-              "materialCoatingFactor > 0.0", "!hasMaterialSpecularMap"):
+              "materialCoatingFactor > 0.0", "if (!signText && blockEntityId != 5025 && albedo.a >= 0.999"):
     if token not in block_coat_source:
-        errors.append(f"Block-entity fallback coating is missing priority condition: {token}")
+        errors.append(f"Block-entity coating is missing reference priority condition: {token}")
+if "&& !hasMaterialSpecularMap &&" in block_coat_source:
+    errors.append("Block-entity coating must remain available when a non-emissive PBR specular map is present")
+for token in ("materialCoatingFactor = 0.66", "materialCoatingFactor = 0.2",
+              "materialCoatingFactor = 0.33", "materialCoatingFactor = 0.77",
+              "materialCoatingFactor = 0.5"):
+    if token not in block_coat_source:
+        errors.append(f"Block-entity material-specific coating factor is missing: {token}")
 if "out vec3 vPlayerPosition;" not in sources.get("gbuffers_block.vsh", "") or "vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;" not in sources.get("gbuffers_block.vsh", ""):
     errors.append("Block-entity vertex stage must provide stable player-relative position for coated texture noise")
 for token in ("uniform int blockEntityId;", "uniform vec3 cameraPositionFract;",

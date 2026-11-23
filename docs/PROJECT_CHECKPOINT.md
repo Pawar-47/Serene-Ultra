@@ -883,3 +883,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Regenerated the 64x64 tileable RGBA normal field from periodic multi-frequency height waves. The new PNG fully decodes and verifies; alpha is constant 255 (one unique value), so it is not a height map and water POM remains disabled.
 - Pixel alpha and RGB channel metadata are inspected in CI. The normal field remains three spatial samples in low profiles and the optional fourth sample in Ultra/HDR.
 - The replacement texture has no runtime appearance or GPU performance claim until tested in Minecraft 26.3 + Iris.
+
+
+## Block-entity coating parity with PBR resource packs — 2026-11-23
+- Comparison with the supplied Complementary materialMethods/coatedTextures.glsl and gbuffers_block.glsl showed that per-material coating factors are applied independently of whether a resource pack provides a specular map.
+- Corrected Serene's block-entity dispatch so chest, ender chest, shulker/head/bed, bell, copper and banner coating factors are assigned for both vanilla and PBR resource packs. Explicit specular maps still retain priority for smoothness/F0 fallback decoding.
+- The coating pass remains blocked by explicit PBR emission and high reflectance/metal response, but no longer disappears merely because a non-emissive PBR specular map exists.
+- Gold-bell and copper base-colour response remains material-specific; their fallback smoothness/F0 values are only applied when no explicit specular map exists.
+- CI now guards the per-material factors and verifies that the coating gate does not require the absence of a PBR map. Runtime visuals and performance remain pending.
