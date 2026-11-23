@@ -221,7 +221,8 @@ vec3 applyCoatedTexture(
     vec2 uvDx,
     vec2 uvDy,
     vec4 spriteBounds,
-    vec3 playerPosition
+    vec3 playerPosition,
+    float materialCoatingFactor
 ) {
 #if COATED_TEXTURE_STRENGTH > 0
     vec2 atlasSize = vec2(textureSize(gtexture, 0));
@@ -237,7 +238,7 @@ vec3 applyCoatedTexture(
     float texelFootprint = max(length(uvDx * atlasSize), length(uvDy * atlasSize));
     float mipLevel = max(0.0, log2(max(texelFootprint, 1.0)));
     float noiseFactor = float(COATED_TEXTURE_STRENGTH) * 0.0027
-        * max(1.0 - colorBrightness, 0.0);
+        * max(1.0 - colorBrightness, 0.0) * materialCoatingFactor;
     noiseFactor *= max(1.0 - mipLevel * 0.25, 0.0);
     color *= pow(max(noiseValue, 0.01), noiseFactor);
 #endif
@@ -333,6 +334,9 @@ void main() {
         vMaterialId == 10248 || vMaterialId == 10264 || vMaterialId == 10268 ||
         vMaterialId == 10280 || vMaterialId == 10292 || vMaterialId == 10296 ||
         vMaterialId == 10312;
+    // Complementary's raw-metal and netherite handlers have no coated-texture
+    // factor; gold/iron use 0.33 and copper uses 0.5.
+    float materialCoatingFactor = fallbackMetalMaterial ? 0.0 : 1.0;
 
     // Vanilla fallback heuristics mirror Complementary's terrain material
     // dispatch and run only when the resource pack has no specular map.
@@ -345,6 +349,7 @@ void main() {
             materialReflectance = max(materialReflectance, 0.85);
 #endif
         } else if (vMaterialId == 10264) { // Iron block
+            materialCoatingFactor = 0.33;
             materialSmoothness = max(materialSmoothness, pow(albedo.r, 4.0));
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
             materialReflectance = 1.0;
@@ -366,6 +371,7 @@ void main() {
             materialReflectance = max(materialReflectance, 0.55);
 #endif
         } else if (vMaterialId == 10292) { // Copper block and oxidation/wax variants
+            materialCoatingFactor = 0.5;
             float copperSmoothness = pow(albedo.r, 4.0)
                 + pow(max(albedo.g - albedo.r * 0.5, 0.0), 2.0) * 0.3;
             materialSmoothness = max(materialSmoothness, clamp(copperSmoothness, 0.0, 1.0));
@@ -382,6 +388,7 @@ void main() {
             materialReflectance = max(materialReflectance, 0.90);
 #endif
         } else if (vMaterialId == 10312) { // Gold block
+            materialCoatingFactor = 0.33;
             float goldGreenFourth = pow(albedo.g, 4.0);
             materialSmoothness = max(materialSmoothness,
                 clamp(max(albedo.g, 0.8) - goldGreenFourth * 0.5, 0.0, 1.0));
@@ -403,9 +410,12 @@ void main() {
     }
 #if COATED_TEXTURE_STRENGTH > 0
     if (albedo.a >= 0.999 && pbrEmission < 0.01 &&
-        !fallbackEmissiveMaterial && !fallbackMetalMaterial &&
-        materialReflectance < 0.8 && materialSmoothness < 0.85) {
-        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
+        !fallbackEmissiveMaterial && materialCoatingFactor > 0.0 &&
+        (!hasMaterialSpecularMap || materialReflectance < 0.8) &&
+        materialSmoothness < 0.85) {
+        albedo.rgb = applyCoatedTexture(
+            albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition, materialCoatingFactor
+        );
     }
 #endif
     // LabPBR porosity (blue codes 0-64) makes a wet material darker and

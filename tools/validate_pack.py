@@ -600,8 +600,10 @@ for token in (
     "vMaterialId == 10248", "vMaterialId == 10264", "vMaterialId == 10268",
     "vMaterialId == 10280", "vMaterialId == 10292", "vMaterialId == 10296",
     "vMaterialId == 10312", "fallbackMetalMaterial",
-    "materialReflectance = 1.0;", "materialReflectance, 0.75",
-    "materialReflectance, 0.65", "materialReflectance, 0.90",
+    "float materialCoatingFactor = fallbackMetalMaterial ? 0.0 : 1.0;",
+    "materialCoatingFactor = 0.33;", "materialCoatingFactor = 0.5;",
+    "* materialCoatingFactor", "materialReflectance = 1.0;",
+    "materialReflectance, 0.75", "materialReflectance, 0.65", "materialReflectance, 0.90",
 ):
     if token not in terrain_fragment:
         errors.append(f"Vanilla terrain metal fallback is missing component: {token}")

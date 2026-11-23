@@ -1008,3 +1008,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Implemented the deferred main/offhand light contribution using Iris held-item IDs, block-light values and relativeEyePosition.
 - The Ultra-Light profile compiles the path out; Smooth and Ultra/HDR profiles use progressively stronger settings.
 - CI structural assertions now verify Iris uniforms, color/energy dispatch, quality gating and the quadratic ambient combine. In-game range, color and third-person placement remain unverified.
+
+
+## Terrain metal coating parity — 2026-11-23
+- Aligned vanilla fallback metal coating with the supplied Complementary material handlers: gold and iron blocks use a reduced 0.33 coating factor, copper uses 0.5, and raw-metal/netherite groups remain uncoated.
+- Extended the existing terrain coating helper with a scalar material factor, matching the already-used block-entity coating design. The same single noisetex lookup is retained; no new texture fetches are added.
+- Explicit PBR metal maps remain protected from coating. Fallback gold/iron/copper retain subtle reference-style coating without letting the default material threshold suppress their calibrated metal response.
+- CI must compile both PBR branches and validate per-material factors. Runtime appearance and GPU cost remain unverified.
