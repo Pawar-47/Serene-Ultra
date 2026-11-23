@@ -15,6 +15,28 @@ layout(location = 0) out vec4 outColor;
 #define CONTRAST 1.00 // [0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.40] Contrast
 #define SATURATION 1.00 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00] Color saturation
 #define HDR_LOOK 0 // [0 1 2] 0=Neutral, 1=HDR, 2=Ultra HDR tone mapping
+#define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Single-scale emissive bloom strength
+#define BLOOM_THRESHOLD 0.90 // [0.50 0.65 0.80 0.90 1.00 1.20 1.50 2.00] Highlight threshold for bloom
+
+// Low-bandwidth single-scale bloom for Intel HD-class GPUs. The five-tap
+// cross filter uses the existing final scene buffer and adds no render target.
+vec3 extractBloomHighlights(vec3 sampleColor) {
+    float brightness = max(max(sampleColor.r, sampleColor.g), sampleColor.b);
+    float knee = max(BLOOM_THRESHOLD * 0.5, 0.001);
+    float soft = clamp(brightness - BLOOM_THRESHOLD + knee, 0.0, 2.0 * knee);
+    soft = soft * soft / (4.0 * knee + 0.0001);
+    float contribution = max(brightness - BLOOM_THRESHOLD, soft) / max(brightness, 0.0001);
+    return sampleColor * contribution;
+}
+
+vec3 sampleSingleScaleBloom(vec2 uv, vec2 texelSize) {
+    vec3 bloom = extractBloomHighlights(texture(colortex0, uv).rgb) * 0.40;
+    bloom += extractBloomHighlights(texture(colortex0, uv + vec2(texelSize.x * 1.5, 0.0)).rgb) * 0.15;
+    bloom += extractBloomHighlights(texture(colortex0, uv - vec2(texelSize.x * 1.5, 0.0)).rgb) * 0.15;
+    bloom += extractBloomHighlights(texture(colortex0, uv + vec2(0.0, texelSize.y * 1.5)).rgb) * 0.15;
+    bloom += extractBloomHighlights(texture(colortex0, uv - vec2(0.0, texelSize.y * 1.5)).rgb) * 0.15;
+    return bloom;
+}
 
 vec3 applyHdrLook(vec3 color) {
 #if HDR_LOOK == 1
@@ -39,6 +61,12 @@ vec3 applyHdrLook(vec3 color) {
 void main() {
     vec4 scene = texture(colortex0, vTexCoord);
     vec3 color = max(scene.rgb, vec3(0.0));
+
+#if BLOOM_STRENGTH > 0
+    vec2 texelSize = 1.0 / vec2(textureSize(colortex0, 0));
+    vec3 bloom = sampleSingleScaleBloom(vTexCoord, texelSize);
+    color += bloom * (float(BLOOM_STRENGTH) * 0.01);
+#endif
 
     // Exposure is expressed in photographic stops.
     color *= exp2(EXPOSURE);
