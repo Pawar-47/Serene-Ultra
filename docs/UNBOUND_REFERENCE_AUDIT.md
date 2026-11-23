@@ -135,38 +135,38 @@ Key constraints applied to Serene:
 
 ### Still missing or incomplete relative to Unbound
 
-- Water parallax refinement remains unavailable: the generated 64x64 custom texture is tangent-normal-only and has constant alpha, so it does not provide a verified height field. Visual calibration of the new multi-scale normal field remains pending.
-- More advanced water noise-colour variation and per-biome colour calibration. Serene currently uses a single-sample low-amplitude tint variation.
-- More complete foam shaping/calibration. Serene now has a first depth-intersection foam approximation, but does not yet match the reference's complete surface/foam logic.
-- Full Unbound water colour and underwater-specific response. Serene now has a first-pass base tint/noise treatment and a distinct underwater branch, but needs colour/lighting calibration and the full absorption model.
-- Richer sky/cloud/world-space reflection fallback. Serene now blends valid SSR hits with Iris skyColor/fogColor horizon fallback, but does not yet reproduce Unbound's full cloud/world-space reflection path.
-- More robust SSR refinement, edge handling, temporal stability and quality scaling.
-- Full material dispatch for glass, stained glass, portal and other translucent surfaces.
-- Broad IntegratedPBR+/resource-pack PBR material handling, including normal/roughness/smoothness maps, material masks and material-specific specular response.
-- POM with parallax self-shadow, generated normals and coated-texture effects.
-- Expanded terrain/entity material classification and material-specific emission/subsurface behaviour.
+- Water POM is now implemented for resource packs whose LabPBR/oldPBR `normals.a` contains a non-flat height field. The custom 64x64 wave-normal texture still has constant alpha and is intentionally used only for animated wave normals; it is not treated as a height map. Atlas bounds, distance fade and the shared POM quality controls are applied. Runtime/visual calibration remains pending.
+- More advanced water noise-colour variation and per-biome colour calibration remain. Serene currently uses a single-sample low-amplitude tint variation; the source path is present but needs scene calibration.
+- More complete foam shaping/calibration remains. Serene has depth-intersection foam with noise breakup and configurable strength, but does not yet match the reference's full surface/foam logic.
+- Water colour and underwater response are implemented at source level: Unbound-style biome tint/noise, above-/underwater alpha branches, Beer-Lambert absorption, underwater screen distortion, and projected caustics. Colour/lighting calibration and runtime parity remain.
+- Sky/horizon and animated procedural cloud reflection fallbacks are implemented alongside Fresnel SSR and a low-cost sun/moon lobe. The cloud reflection is a spherical sky approximation, not a world-space reflection volume; true WSR and temporal reprojection remain gaps.
+- SSR now has 4/6/8 coarse steps, two hit-refinement steps, configurable trace distance and edge/depth rejection. Temporal reflection reprojection and additional edge/roughness calibration remain.
+- Dedicated forward paths cover water, clear/stained/tinted glass, ice, portals, translucent entities/block entities, particles, weather and hand-water. Further modded-material classification and runtime tuning remain.
+- LabPBR/oldPBR material handling now covers terrain, opaque entities, block entities and translucent water/glass/ice normals, with material-specific smoothness/F0/metalness/emission and selected fallback IDs. Full IntegratedPBR+ classification and runtime calibration remain.
+- POM is implemented for terrain, block entities, opt-in opaque entity models and PBR water height maps, including bounded self-shadowing and slope-normal blending. Generated normals and coated textures are also implemented with profile controls; coverage and visual calibration remain.
+- Terrain/entity material classification and a broad set of emissive fallbacks are implemented; remaining gaps are additional modded material IDs, entity-specific hue/intensity refinement and runtime calibration.
 
 These are parity gaps, not approved omissions. Low-end optimisation must preserve each feature's visible contribution.
 
 ## 7. Implementation sequence
 
 1. Complete the Iris water contract review and keep CI green before adding further effects.
-2. Completed: implement animated multi-scale water normals with an original tileable 64x64 tangent-normal texture, three baseline samples and one optional very-large octave. Water POM is intentionally deferred because alpha is constant and not a verified height channel.
-3. Completed at source level: water noise colour, foam, above-/underwater response, Beer-Lambert absorption and Unbound-style base colour are implemented; calibration against in-game scenes remains.
-4. Add sky/environment reflection fallback and improve SSR search/refinement with an adaptive quality strategy; investigate WSR only after its Iris prerequisites and hardware cost are understood.
-5. Build a general translucent-material classifier and independently implement glass, stained glass, portal and beacon responses.
-6. Expand terrain/entity PBR classification, emission, roughness/smoothness, normal maps, generated normals, coated textures and POM.
+2. Completed at source level: implement stable animated multi-scale wave normals using the custom tileable 64x64 tangent-normal texture and optional fourth octave. Resource-pack water POM now uses `normals.a` when a verified height field exists; the custom wave texture's constant alpha remains unused for height.
+3. Completed at source level: water noise colour, foam, above-/underwater response, Beer-Lambert absorption, Unbound-style base colour, underwater distortion and projected caustics are implemented; calibration against in-game scenes remains.
+4. Completed at source level: add Iris sky/horizon, sun/moon and procedural cloud reflection fallback, plus 4/6/8-step SSR with two-step refinement. True WSR and temporal reflection reprojection remain deferred pending Iris prerequisites and hardware-cost review.
+5. Completed at source level: dedicated water/glass/ice/portal and translucent entity/block/particle/weather/hand-water paths are present; modded material classification and runtime tuning remain.
+6. Completed at source level for the core set: terrain/entity/block-entity PBR classification, emissive fallbacks, roughness/smoothness, normal maps, generated normals, coated textures and bounded POM. Additional modded IDs and material calibration remain.
 7. Validate each change against Iris documentation first, then compile, run structural checks, load in Iris/Minecraft 26.3, compare scenes against Unbound and measure on the target Intel HD 5500 system.
 
-**Validation status:** CI #1092 passed all shader compile/link stages, the water-normal PNG decode/alpha inspection, and structural validation. This is source/asset validation only, not Iris runtime proof, visual parity, or measured performance. Do not claim those until tested in-game.
+**Validation status:** GitHub Actions run `45232285056` passed all standalone shader compile stages, Iris render-stage macro branches, LabPBR branches, opt-in entity POM, Unbound water-wave detail, Ultra-Light reflection branches, water-normal alpha inspection, program linking and structural validation on commit `815b1d9d534158ea9a64a0024511547e9cffb9e1`. This is source/asset validation only, not Iris runtime proof, visual parity, or measured performance.
 
 
 ## Analytic water-wave milestone — 2026-11-23
-Serene now has three animated analytic wave bands in `gbuffers_water.fsh`. The waves use absolute player/world coordinates (`vPlayerPosition + cameraPosition`) so the pattern remains stable as the camera moves. The perturbed normal is transformed with Iris `gbufferModelView` for Fresnel/refraction/SSR while the player-space normal is used for lighting and shadowing. `WATER_WAVE_STRENGTH` and `WATER_WAVE_SPEED` are exposed in the Quality menu. Speed is expressed as an integer number of complete cycles per 3600-second `frameTimeCounter` interval, avoiding a phase discontinuity when Iris' documented timer wraps. This is an original low-bandwidth approximation of Unbound's animated multi-scale normal map; texture-driven normals, parallax refinement and calibrated wave appearance remain outstanding.
+Serene now has three animated analytic wave bands in `gbuffers_water.fsh`. The waves use absolute player/world coordinates (`vPlayerPosition + cameraPosition`) so the pattern remains stable as the camera moves. The perturbed normal is transformed with Iris `gbufferModelView` for Fresnel/refraction/SSR while the player-space normal is used for lighting and shadowing. `WATER_WAVE_STRENGTH` and `WATER_WAVE_SPEED` are exposed in the Quality menu. Speed is expressed as an integer number of complete cycles per 3600-second `frameTimeCounter` interval, avoiding a phase discontinuity when Iris' documented timer wraps. This is an original low-bandwidth approximation of Unbound's animated multi-scale normal map. Resource-pack PBR normal sampling and water POM from non-flat `normals.a` are now implemented; the custom wave texture remains normal-only because its alpha is constant. Calibrated wave appearance remains outstanding.
 
 
 ## Unbound-style water colour update — 2026-11-23
-The water pass now applies a dedicated Unbound-inspired base tint only to the water material ID, retaining alpha and blending behavior. The tint combines a stable blue base with a restrained biome vertex-colour contribution. A single Iris `noisetex` sample adds low-amplitude animated colour variation. The noise drift uses the same integer-cycle timer basis as the wave system so it does not jump when Iris' `frameTimeCounter` wraps. `WATER_COLOR_STRENGTH` and `WATER_NOISE_COLOR_STRENGTH` are exposed in the Quality menu. This is a first-pass colour treatment; underwater tint, absorption, foam, and reference visual calibration remain outstanding.
+The water pass now applies a dedicated Unbound-inspired base tint only to the water material ID, retaining alpha and blending behavior. The tint combines a stable blue base with a restrained biome vertex-colour contribution. A single Iris `noisetex` sample adds low-amplitude animated colour variation. The noise drift uses the same integer-cycle timer basis as the wave system so it does not jump when Iris' `frameTimeCounter` wraps. `WATER_COLOR_STRENGTH` and `WATER_NOISE_COLOR_STRENGTH` are exposed in the Quality menu. This is a first-pass colour treatment; underwater tint, Beer-Lambert absorption, foam and underwater distortion are now implemented in the dedicated water path. Reference visual calibration remains outstanding.
 
 
 ## Water foam milestone — 2026-11-23
