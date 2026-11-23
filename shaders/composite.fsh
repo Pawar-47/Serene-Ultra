@@ -40,6 +40,7 @@ const int colortex12Format = RGBA16F;
 
 #define PBR_REFLECTION_STRENGTH 75 // [0 25 50 75 100 125 150] Opaque material reflection strength
 #define PBR_REFLECTION_QUALITY 4 // [0 4 6 8] Opaque screen-space reflection steps
+#define PBR_REFLECTION_BLUR_STRENGTH 65 // [0 25 50 65 80 100] Roughness-aware reflection filtering
 #define LIGHT_SHAFT_STRENGTH 45 // [0 10 20 30 40 50 60 70 80 90 100] Screen-space sunlight scattering strength
 #define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
 #define SCREEN_GI_STRENGTH 25 // [0 5 10 15 20 25 30 35 40 45 50] Screen-space local colour bounce
@@ -155,8 +156,41 @@ vec3 sampleScreenSpaceColorBleed(
 #endif
 }
 
+
+vec3 sampleRoughOpaqueReflection(vec2 hitUv, float hitDepth, float roughness) {
+#if PBR_REFLECTION_BLUR_STRENGTH > 0
+    float blurRadius = roughness * roughness
+        * (float(PBR_REFLECTION_BLUR_STRENGTH) * 0.01) * 3.0;
+    if (blurRadius < 0.35) return texture(colortex4, hitUv).rgb;
+
+    vec2 texel = 1.0 / vec2(textureSize(colortex4, 0));
+    vec2 offsets[4] = vec2[4](
+        vec2(1.0, 0.0), vec2(-1.0, 0.0),
+        vec2(0.0, 1.0), vec2(0.0, -1.0)
+    );
+    vec3 accumulated = texture(colortex4, hitUv).rgb * 2.0;
+    float totalWeight = 2.0;
+    float depthTolerance = max(0.0008, hitDepth * 0.002);
+    for (int i = 0; i < 4; ++i) {
+        vec2 sampleUv = clamp(
+            hitUv + offsets[i] * texel * blurRadius,
+            texel, vec2(1.0) - texel
+        );
+        float sampleDepth = texture(depthtex2, sampleUv).r;
+        if (abs(sampleDepth - hitDepth) > depthTolerance) continue;
+        vec4 sampleColor = texture(colortex4, sampleUv);
+        if (sampleColor.a < 0.5) continue;
+        accumulated += sampleColor.rgb;
+        totalWeight += 1.0;
+    }
+    return accumulated / totalWeight;
+#else
+    return texture(colortex4, hitUv).rgb;
+#endif
+}
+
 #if PBR_REFLECTION_QUALITY > 0
-vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
+vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, float roughness, out float hitConfidence) {
     const float maxDistance = 32.0;
     float stepLength = maxDistance / float(PBR_REFLECTION_QUALITY);
     vec3 incidentDirection = normalize(viewPosition);
@@ -200,7 +234,7 @@ vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, out float 
         float distanceFade = 1.0 - smoothstep(20.0, maxDistance, travelDistance);
 
         if (sceneDepth >= 0.999999) {
-            reflectionColor = sceneSample.rgb;
+            reflectionColor = sampleRoughOpaqueReflection(sampleUV, sceneDepth, roughness);
             hitConfidence = edgeFade * distanceFade;
             return reflectionColor;
         }
@@ -212,7 +246,7 @@ vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, out float 
 
         if (depthDelta <= 0.0 && depthDelta > -stepLength * 0.75) {
             float depthConfidence = 1.0 - smoothstep(0.0, stepLength * 0.75, abs(depthDelta));
-            reflectionColor = sceneSample.rgb;
+            reflectionColor = sampleRoughOpaqueReflection(sampleUV, sceneDepth, roughness);
             hitConfidence = edgeFade * distanceFade * depthConfidence;
             return reflectionColor;
         }
@@ -400,7 +434,7 @@ void main() {
 #if PBR_REFLECTION_QUALITY > 0
     float hitConfidence = 0.0;
     vec3 screenReflection = sampleOpaqueScreenReflection(
-        viewPosition, viewNormal, hitConfidence
+        viewPosition, viewNormal, 1.0 - materialSmoothness, hitConfidence
     );
     vec3 screenReflectionLinear = pow(max(screenReflection, vec3(0.0)), vec3(2.2));
     if (hitConfidence < 0.999) {
