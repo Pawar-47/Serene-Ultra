@@ -90,6 +90,41 @@ for path in SHADERS.rglob("gbuffers_*.fsh"):
             + ", ".join(f"colortex{value}" for value in conflicts)
         )
 
+# Verify that each paired fragment input is provided by the vertex stage
+# with the same GLSL type and interpolation qualifier. Missing qualifiers use
+# the GLSL default smooth interpolation.
+for fragment_path in SHADERS.rglob("*.fsh"):
+    vertex_path = fragment_path.with_suffix(".vsh")
+    if not vertex_path.is_file():
+        continue
+    vertex_source = vertex_path.read_text(encoding="utf-8")
+    fragment_source = fragment_path.read_text(encoding="utf-8")
+    declaration = re.compile(
+        r"^\\s*(?:(flat|smooth|noperspective)\\s+)?"
+        r"(in|out)\\s+(\\w+)\\s+(\\w+)(?:\\s*\\[[^]]*\\])?\\s*;",
+        re.MULTILINE,
+    )
+    vertex_outputs = {
+        match.group(4): (match.group(3), match.group(1) or "smooth")
+        for match in declaration.finditer(vertex_source)
+        if match.group(2) == "out"
+    }
+    for match in declaration.finditer(fragment_source):
+        if match.group(2) != "in":
+            continue
+        name = match.group(4)
+        actual = (match.group(3), match.group(1) or "smooth")
+        expected = vertex_outputs.get(name)
+        if expected is None:
+            errors.append(
+                f"{fragment_path.relative_to(ROOT)}: fragment input {name} has no matching vertex output"
+            )
+        elif actual != expected:
+            errors.append(
+                f"{fragment_path.relative_to(ROOT)}: varying {name} mismatch; "
+                f"vertex={expected}, fragment={actual}"
+            )
+
 # Verify modern fragment output locations against the ordered RENDERTARGETS
 # list. Location N maps to the Nth target, not to colortexN itself. The line
 # program is intentionally GLSL 130 and uses Iris's outColorN core transform.
