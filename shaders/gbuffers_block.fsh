@@ -91,37 +91,14 @@ vec2 calculateParallaxUv(
 #endif
 }
 
-
-in vec2 vTexCoord;
-in vec2 vLightmapCoord;
-in vec3 vPlayerPosition;
-in vec4 vVertexColor;
-in vec3 vPlayerNormal;
-in vec3 vPlayerTangent;
-flat in float vTangentHandedness;
-in vec3 vTangentView;
-flat in vec4 vTexCoordAM;
-in vec3 vTangentView;
-flat in vec4 vTexCoordAM;
-flat in int vMaterialId;
-
-/* RENDERTARGETS: 0,1,2,3 */
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outLightmapData;
-layout(location = 2) out vec4 outEncodedNormal;
-layout(location = 3) out vec4 outEmissionData;
-
-#define OPAQUE_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack PBR normal-map detail
-#define PBR_AO_STRENGTH 100 // [0 25 50 75 100]
-#define RAIN_PUDDLE_STRENGTH 70 // [0 25 50 70 85 100] Unbound-inspired exposed-surface puddle coverage
-#define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
-
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
 flat in vec4 vVertexColor;
 in vec3 vPlayerNormal;
 in vec3 vPlayerTangent;
 flat in float vTangentHandedness;
+in vec3 vTangentView;
+flat in vec4 vTexCoordAM;
 in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0,1,2,3 */
