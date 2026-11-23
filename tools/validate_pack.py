@@ -1311,11 +1311,11 @@ for program_name in cloud_shadow_programs:
         if declaration not in source:
             errors.append(f"{program_name} is missing cloud-shadow input/option: {declaration}")
 
-if "CLOUD_SHADOW_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+if "CLOUD_SHADOW_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_SHADOW_STRENGTH must be exposed in the Iris Quality screen")
 if "CLOUD_SHADOW_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_SHADOW_STRENGTH must be included in the Iris slider list")
-if "CLOUD_DETAIL_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+if "CLOUD_DETAIL_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_DETAIL_STRENGTH must be exposed in the Iris Quality screen")
 if "CLOUD_DETAIL_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_DETAIL_STRENGTH must be included in the Iris slider list")
@@ -1534,9 +1534,10 @@ if "out vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not 
 water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
                  "WATER_NORMAL_MAP_STRENGTH", "GLASS_NORMAL_MAP_STRENGTH", "WATER_WAVE_STRENGTH", "WATER_WAVE_SPEED", "WATER_WAVE_SCALE", "WATER_CAUSTICS_STRENGTH", "WATER_CAUSTICS_SCALE", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH")
 lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
+water_screen = next((line for line in props.splitlines() if line.startswith("screen.WATER =")), "")
 for option in water_options:
-    if option not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
-        errors.append(f"{option} must be exposed in the Iris Quality menu")
+    if option not in water_screen:
+        errors.append(f"{option} must be exposed in the Iris Water menu")
     if option not in props.split("sliders =", 1)[-1].splitlines()[0]:
         errors.append(f"{option} must be adjustable as an Iris slider")
     if f"option.{option} =" not in lang:
@@ -2078,9 +2079,9 @@ for token in ("uniform int isEyeInWater;", "applyUnderwaterDistortion(",
               "sceneUv = applyUnderwaterDistortion(vTexCoord)"):
     if token not in final_shader:
         errors.append(f"Underwater distortion is missing implementation component: {token}")
-underwater_quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
+underwater_quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.WATER =")), "")
 if "UNDERWATER_DISTORTION" not in underwater_quality_screen:
-    errors.append("UNDERWATER_DISTORTION must appear in the Quality screen")
+    errors.append("UNDERWATER_DISTORTION must appear in the Water screen")
 underwater_slider_line = next((line for line in held_props.splitlines() if line.startswith("sliders =")), "")
 if "UNDERWATER_DISTORTION" not in underwater_slider_line:
     errors.append("UNDERWATER_DISTORTION must be exposed as a slider")
@@ -2101,10 +2102,12 @@ for option in ("BLOOM_STRENGTH", "BLOOM_THRESHOLD", "FXAA_ENABLED"):
         errors.append(f"{option} must be exposed as a slider")
 
 # Sky and cloud scattering controls must be exposed consistently in UI and profiles.
-quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
-for option in ("SKY_ATMOSPHERE_STRENGTH", "CLOUD_SCATTERING_STRENGTH"):
-    if option not in quality_screen or option not in slider_line:
-        errors.append(f"{option} must be exposed in the Quality screen and slider list")
+sky_screen = next((line for line in held_props.splitlines() if line.startswith("screen.SKY =")), "")
+cloud_screen = next((line for line in held_props.splitlines() if line.startswith("screen.CLOUDS =")), "")
+for option, screen_line in (("SKY_ATMOSPHERE_STRENGTH", sky_screen),
+                            ("CLOUD_SCATTERING_STRENGTH", cloud_screen)):
+    if option not in screen_line or option not in slider_line:
+        errors.append(f"{option} must be exposed in its dedicated subsystem screen and slider list")
     if f"option.{option} =" not in held_lang or f"option.{option}.comment =" not in held_lang:
         errors.append(f"{option} requires a user-facing label and tooltip")
 for profile, sky_value, cloud_value in (
@@ -2231,10 +2234,10 @@ for token in ("#define LIGHT_SHAFT_STRENGTH", "#define LIGHT_SHAFT_QUALITY",
               "resultLinear += lightShafts"):
     if token not in composite_shader:
         errors.append(f"Screen-space light shafts are missing implementation component: {token}")
-quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
+sun_screen = next((line for line in held_props.splitlines() if line.startswith("screen.SUN =")), "")
 for option in ("LIGHT_SHAFT_STRENGTH", "LIGHT_SHAFT_QUALITY"):
-    if option not in quality_screen or option not in slider_line:
-        errors.append(f"{option} must be exposed in the Quality screen and slider list")
+    if option not in sun_screen or option not in slider_line:
+        errors.append(f"{option} must be exposed in the Sun screen and slider list")
     if f"option.{option}.comment =" not in held_lang:
         errors.append(f"{option} requires a user-facing tooltip")
 for profile, strength, quality in (("Ultra-Light", "0", "0"), ("Smooth", "20", "4"),
@@ -2295,8 +2298,8 @@ for name in ("composite.fsh", "gbuffers_water.fsh",
     source = sources.get(name, "")
     if "CLOUD_REFLECTION_STRENGTH" not in source or "uniform sampler2D noisetex" not in source:
         errors.append(f"{name} must provide cloud-reflection controls and noise input")
-if "CLOUD_REFLECTION_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
-    errors.append("Cloud reflection strength must be exposed in the Quality screen")
+if "CLOUD_REFLECTION_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
+    errors.append("Cloud reflection strength must be exposed in the Clouds screen")
 for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:15"),
                           ("Smooth", "CLOUD_REFLECTION_STRENGTH:30"),
                           ("Ultra", "CLOUD_REFLECTION_STRENGTH:60"),
