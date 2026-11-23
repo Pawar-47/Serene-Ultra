@@ -8,6 +8,10 @@ uniform sampler2D depthtex0;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2D noisetex;
 uniform int frameCounter;
+uniform float nightVision;
+uniform float blindness;
+uniform float darknessFactor;
+uniform float darknessLightFactor;
 
 in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -174,6 +178,25 @@ vec3 applyFilmGrain(vec3 source, vec2 uv) {
 #endif
 }
 
+
+vec3 applyVanillaStatusEffects(vec3 color) {
+    // Match Minecraft's night-vision lift: normalize toward full brightness
+    // without changing hue, and blend by Iris' transition-aware strength.
+    float peak = max(max(color.r, color.g), color.b);
+    vec3 nightVisionColor = color / max(peak, 0.0001);
+    color = mix(color, nightVisionColor, clamp(nightVision, 0.0, 1.0));
+
+    // Blindness and the Darkness effect suppress scene visibility. Darkness
+    // uses Iris' pulsing light factor so the vanilla heartbeat modulation is
+    // retained instead of applying a constant black overlay.
+    float blindnessAmount = clamp(blindness, 0.0, 1.0);
+    float darknessAmount = clamp(darknessFactor, 0.0, 1.0)
+        * clamp(darknessLightFactor, 0.0, 1.0);
+    float visibility = (1.0 - blindnessAmount)
+        * (1.0 - darknessAmount * 0.85);
+    return color * visibility;
+}
+
 vec3 applyHdrLook(vec3 color) {
 #if HDR_LOOK == 1
     // Filmic shoulder: retain highlight detail while keeping output display-safe.
@@ -231,6 +254,7 @@ void main() {
     color = mix(vec3(luminance), color, SATURATION);
     color = max(color, vec3(0.0));
 
+    color = applyVanillaStatusEffects(color);
     color = applyHdrLook(color);
     color = applyVignette(color, vTexCoord);
     color = applyFilmGrain(color, vTexCoord);
