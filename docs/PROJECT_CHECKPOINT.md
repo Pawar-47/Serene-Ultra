@@ -1536,3 +1536,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Removed the duplicate glow-lichen assignment from the waving-foliage ID; glow lichen keeps its dedicated emissive material ID instead of being overwritten by a second ID mapping.
 - Commits: block mappings `8bc9cdd88ac137e50e1351fc9f1a1fe246eba685`; terrain emission fallbacks `654c37a45730637c4e37957fad9b96d59b04a263`; matrix `c36549dff70e42b59b7ae46c8d42f9ba21b718f6`.
 - These are source-level material mappings; block-state parsing, colour/intensity and light-bounce appearance still require Iris runtime checks.
+
+
+### Validation milestone — 2026-11-23 17:27 UTC
+- The structural validator was brought back into agreement with the current shader architecture without dropping the checks: canonical root-level stages now take precedence over same-named dimension overrides; POM/PBR checks recognize the sprite-bounded anisotropic atlas sampler; lightmap checks accept the intended POM self-shadow multiplier; deferred/composite checks recognize the active temporal-history MRTs; FXAA is validated in the Antialiasing menu with actual profile values; screen-GI validation recognizes the temporally accumulated result.
+- Fixed a genuine syntax error in the expanded vanilla emissive fallback chain: the lit-copper-bulb branch had a missing closing brace. This was introduced with the new material fallbacks and is now fixed.
+- Resolved a duplicate block ID assignment for glow lichen: it retains its dedicated emissive material ID and is no longer included in the waving-foliage material list.
+- CI run `45227697354` on commit `03d42ffb2d781af9b795c0f92203a1d7363a4e24` completed successfully. All stages passed: standalone GLSL compilation, Iris render-stage macro branches, LabPBR, entity POM, Unbound water-wave detail, Ultra-Light reflection branches, water-normal alpha-height inspection, vertex/fragment linking, and structural validation.
+- This is source/compile/link validation only; it does not replace an actual Minecraft 26.3 + Iris runtime scene test.
