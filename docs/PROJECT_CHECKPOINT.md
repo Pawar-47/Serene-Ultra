@@ -1353,7 +1353,7 @@ Inspected Iris source snapshot `IrisShaders/Iris@bff1e69cb6c5519d8745784aa9c8b92
 - Moved particle material option/label checks outside the per-file weather loop.
 - Added output-slot validation for GLSL 130 `outColorN` declarations against ordered `RENDERTARGETS`, while retaining explicit-layout validation for GLSL 330.
 - Tightened Iris buffer-format validation so the required RGBA8 directives must appear in valid block comments.
-- Corrected buffer-flip validation to match Iris documentation: flipping is enabled by default; `flip=false` disables a sampler's swap. Written attachments must retain the default swap; read-only/preserved attachments are pinned with `false`. Removed the incorrect claim that explicit `true` causes a second flip.
+- Corrected buffer-flip validation to match Iris implementation: composite-style draw outputs ping-pong automatically; `flip=false` suppresses that output swap, read-only inputs are not flipped and need no override, and `shadowcolor0` is a separate shadow attachment rather than a colortex target.
 
 ### Commits and validation
 - `a1e4ffca863c0a2ce5f1be2c9e33b65e06998313` — skipped validation checks and GLSL 130 output-slot validation.

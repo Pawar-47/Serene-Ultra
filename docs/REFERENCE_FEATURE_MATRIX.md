@@ -266,7 +266,7 @@ Nether portals now receive a four-tap animated UV distortion, with each sample c
 
 
 ## Colored translucent shadows — 2026-11-23
-The shadow pass now writes RGBA8 transmission data for water, clear/stained/tinted glass, ice and Nether portals. Deferred combines `shadowtex0` PCF with the opaque-only `shadowtex1` test and `shadowcolor0` material transmission, producing colored translucent shadows and animated water caustics. Runtime and performance validation remain pending.
+The shadow pass writes RGBA8 transmission data for water, clear/stained/tinted glass, ice and Nether portals. A shared rotated-Poisson PCF helper now combines `shadowtex0`, opaque-only `shadowtex1` and Iris' `shadowcolor0.rgb * (1.0 - shadowcolor0.a)` transmission formula across deferred, water, translucent entities, block entities and particles. Runtime and performance validation remain pending.
 
 
 ## Water cauldron material coverage — 2026-11-23
@@ -274,7 +274,7 @@ Filled water cauldrons now map to material ID 32001 and use the water surface pi
 
 
 ## Forward translucent shadow consistency — 2026-11-23
-The forward `gbuffers_water` pass now samples the same `shadowtex1`/`shadowcolor0` material transmission as deferred, so water and glass surfaces receive colored shadow/caustic lighting consistently with opaque receivers.
+The forward water, translucent entity, block-entity and particle paths now call the same shared soft/colored shadow helper as deferred, so all post-deferred translucent receivers use consistent PCF and material transmission.
 
 
 ## Resource-pack water normal maps — 2026-11-23
