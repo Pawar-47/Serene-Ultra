@@ -1616,3 +1616,13 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - CI run 45229840172 on commit 2e53605a76aec0589c1e4e73fed8f06b091920b3 passed: all standalone shader compilation, Iris macro branches, LabPBR, entity POM, Unbound water detail, Ultra-Light reflection, water-normal inspection, program linking and structural validation stages completed successfully.
 - A review of the Lottes display transform confirmed that it already performs linear-to-display conversion. The final gamma control was therefore corrected to apply only its optional user adjustment, avoiding a second 2.2 display encoding pass.
 - This validates source compilation and the structural contract; it is not a Minecraft/Iris visual runtime result.
+
+
+### Underwater camera distortion — 2026-11-23
+- Implemented an animated screen-space underwater refraction effect in `shaders/final.fsh`. It combines two low-amplitude travelling wave fields with Iris `noisetex` modulation, clamps UVs to the active scene buffer, and only activates while `isEyeInWater == 1` (not lava or other fluids).
+- The effect is applied consistently to the scene, FXAA, depth-of-field, sharpening, bloom and chromatic-aberration sampling coordinates, while vignette and film grain remain anchored to the physical screen coordinates.
+- Added `UNDERWATER_DISTORTION` as a dedicated quality slider, localized label/tooltip, and profile values: Ultra-Light 20, Smooth 40, Ultra 60, HDR 70, Ultra-HDR 80.
+- Updated `docs/REFERENCE_FEATURE_MATRIX.md` and `tools/validate_pack.py` to document and validate the implementation.
+- Reference basis: Complementary Reimagined exposes an `UNDERWATER_DISTORTION` camera control; its water pass also uses a dedicated reflection/refraction/material path. Minecraft 26.3's stock archive exposes a dedicated water-mask pass and shared fog include; Serene retains Iris' native underwater state and fog path, adding only a post-process displacement rather than replacing stock water-mask semantics.
+- Commits: shader `b81e1f2fef3a05d89be31fd955c32e6bee1142d6`; UI/profile `ee66e135ed46d77770a9824f348ba3f733cfa1bc`; language `ff1a97bd2a710df3498aac901364597d1f8c3313`; validator `a4447fe63e8e56f80d82ef74a8cec27b736a4fa3`, follow-up `f971ab9ffc0d0a7c99f357c80742d65dd4f7246b`; matrix `912782c892fbd17d873966637b36e91198100458`.
+- Not yet confirmed by a completed CI run after this feature. In-game underwater visual testing remains pending.
