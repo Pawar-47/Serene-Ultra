@@ -1267,3 +1267,9 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - This verifies shader compilation/linking and declared structural contracts only. It does not verify Minecraft 26.3 + Iris runtime loading, image quality, performance or visual parity.
 - Alpha publication remains disabled; workflow run `45197020825` was skipped.
 - Bloom, FXAA and screen-space sunlight shafts are implemented as low-cost source-level approximations with profile controls. Multi-scale bloom, TAA, full volumetric integration, world-space GI, procedural cloud layers, custom colored-light propagation and archive-level feature-by-feature source reconciliation remain outstanding.
+
+
+## POM atlas-boundary correction — 2026-11-23
+- Fixed terrain, block-entity and entity-model POM traversal: UV steps now clamp to the current sprite's local [0,1] bounds instead of using `fract()`, which wrapped a ray to the opposite edge of the same atlas tile and could create visible discontinuities.
+- Added structural regression checks to reject wrapped POM traversal and require local sprite clamping.
+- Shader compilation and POM visual behavior remain subject to the next CI run and in-game resource-pack tests.
