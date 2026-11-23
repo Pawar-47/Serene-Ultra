@@ -77,7 +77,7 @@ flat in float vFluidRenderType;
 #define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level translucent atlas filtering taps
 #define GLASS_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack glass/ice normal-map detail
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
-#define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
+#define WATER_WAVE_SPEED 60 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
 #define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
 #define WATER_WAVE_DETAIL 0 // [0 1] Optional very-large Unbound-style normal scale; adds one texture sample
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Held-item lighting strength
