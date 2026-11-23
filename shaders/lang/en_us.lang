@@ -128,3 +128,6 @@ option.POM_DISTANCE.comment = POM fades smoothly to zero by this view distance. 
 
 option.GENERATED_NORMAL_STRENGTH = Generated Normal Strength
 option.GENERATED_NORMAL_STRENGTH.comment = Creates subtle tangent-space detail from albedo contrast when no resource-pack normal detail is present. Uses four bounded atlas samples; set to 0 for the lowest GPU cost.
+
+option.COATED_TEXTURE_STRENGTH = Coated Texture Strength
+option.COATED_TEXTURE_STRENGTH.comment = Adds subtle stable noise variation to dark opaque materials. Uses one noise lookup and fades with distance/mip level; set to 0 for the lowest GPU cost.

@@ -14,6 +14,7 @@ out vec3 vTangentView;
 flat out vec4 vTexCoordAM;
 flat out float vTangentHandedness;
 out vec3 vViewPosition;
+out vec3 vPlayerPosition;
 
 void main() {
     gl_Position = ftransform();
@@ -23,6 +24,7 @@ void main() {
 
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
     vViewPosition = viewPosition.xyz;
+    vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
     vec3 viewTangent = normalize(gl_NormalMatrix * normalize(at_tangent.xyz));

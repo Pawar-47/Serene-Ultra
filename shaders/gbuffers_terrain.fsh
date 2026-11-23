@@ -7,6 +7,8 @@ uniform sampler2D specular;
 uniform sampler2D noisetex;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
 uniform float frameTimeCounter;
 uniform float wetness;
 uniform float rainStrength;
@@ -18,6 +20,7 @@ uniform float alphaTestRef;
 // LabPBR and oldPBR both store height in normals.a; a neutral fallback has alpha 1.
 #define POM_STRENGTH 25 // [0 10 20 35 50 75 100] LabPBR/oldPBR height-map parallax strength
 #define GENERATED_NORMAL_STRENGTH 25 // [0 10 20 35 50 75 100] Albedo-derived normal detail when no normal map is present
+#define COATED_TEXTURE_STRENGTH 20 // [0 10 20 35 50 75 100] Stable subtle noise coating on opaque material colour
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
 
@@ -215,6 +218,35 @@ vec3 calculateGeneratedAlbedoNormal(
 }
 
 
+vec3 applyCoatedTexture(
+    vec3 color,
+    vec2 uvDx,
+    vec2 uvDy,
+    vec4 spriteBounds,
+    vec3 playerPosition
+) {
+#if COATED_TEXTURE_STRENGTH > 0
+    vec2 atlasSize = vec2(textureSize(gtexture, 0));
+    vec2 spriteCenter = spriteBounds.xy + spriteBounds.zw * 0.5;
+    vec2 noiseCoord = floor(spriteCenter * atlasSize / 16.0 * 64.0) / 64.0 / 3.0;
+
+    vec3 worldPosition = vec3(cameraPositionInt) + cameraPositionFract + playerPosition;
+    vec3 floorWorldPosition = floor(worldPosition + vec3(0.001));
+    noiseCoord += 0.84 * (floorWorldPosition.xz + vec2(floorWorldPosition.y));
+
+    float noiseValue = textureLod(noisetex, noiseCoord, 0.0).r + 0.6;
+    float colorBrightness = dot(color, color) * 0.3;
+    float texelFootprint = max(length(uvDx * atlasSize), length(uvDy * atlasSize));
+    float mipLevel = max(0.0, log2(max(texelFootprint, 1.0)));
+    float noiseFactor = float(COATED_TEXTURE_STRENGTH) * 0.0027
+        * max(1.0 - colorBrightness, 0.0);
+    noiseFactor *= max(1.0 - mipLevel * 0.25, 0.0);
+    color *= pow(max(noiseValue, 0.01), noiseFactor);
+#endif
+    return color;
+}
+
+
 void main() {
     vec2 uvDx = dFdx(vTexCoord);
     vec2 uvDy = dFdy(vTexCoord);
@@ -239,6 +271,11 @@ void main() {
                 albedo = parallaxAlbedo;
             }
         }
+    }
+#endif
+#if COATED_TEXTURE_STRENGTH > 0
+    if (albedo.a >= 0.999) {
+        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
     }
 #endif
 

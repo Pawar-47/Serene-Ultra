@@ -735,3 +735,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - This is a low-sample adaptation of Complementary's generatedNormals.glsl, not a claim of visual parity. Entity models, runtime comparison, texture-pack coverage and Intel HD 5500 performance remain pending.
 
 - Performance refinement: generated-normal sampling is now gated by the screen-space albedo contrast before issuing its four neighbour taps; flat-colour regions avoid the extra reads. This is a heuristic optimisation and still requires GPU profiling.
+
+
+## Coated texture variation — 2026-11-23
+- Added an optional low-cost noise coating to opaque terrain and block-entity albedo, adapting the supplied Complementary coatedTextures.glsl approach.
+- Noise coordinates combine the sprite's atlas centre with floored world-cell position, so the variation is stable in world space rather than swimming with the camera. The noise modulation is reduced for bright materials and fades with mip level/distance.
+- Added COATED_TEXTURE_STRENGTH control; Ultra-Light disables it, Smooth uses a subtle value, and Ultra/HDR use a stronger preset. It is one noise lookup per eligible opaque fragment and is skipped for transparent/cutout texels, sign text and portal surfaces.
+- This is a source-level low-cost adaptation. Entity-model coverage, material appearance and GPU cost require runtime validation.
