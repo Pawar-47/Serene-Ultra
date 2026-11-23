@@ -38,6 +38,8 @@ uniform mat4 shadowProjection;
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
+uniform bool hasCeiling;
+uniform float ambientLight;
 uniform float endFlashIntensity;
 uniform vec3 fogColor;
 uniform float fogStart;
@@ -192,7 +194,12 @@ void main() {
     float materialAO = clamp(emissionData.b, 0.0, 1.0);
     float materialAOFactor = mix(1.0, materialAO, MATERIAL_AO_STRENGTH * 0.01);
     vec3 vanillaAmbient = pow(max(lightData.rgb, vec3(0.0)), vec3(2.2));
-    vec3 ambient = vec3(0.018) + vanillaAmbient * 0.72;
+    // Iris exposes the current dimension's ambient-light property. Keep the
+    // sampled vanilla lightmap as the coloured foundation, while allowing
+    // dimensions such as the Nether to contribute their native ambient floor.
+    float dimensionAmbient = clamp(ambientLight, 0.0, 1.0);
+    vec3 ambient = vec3(0.018 + dimensionAmbient * 0.12)
+        + vanillaAmbient * (0.72 + dimensionAmbient * 0.15);
 
     // Contact and LabPBR material AO attenuate indirect/block light only;
     // direct celestial illumination remains separate and unaffected.
@@ -214,7 +221,11 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
-    float cloudShadow = sampleSereneCloudShadow(playerPosition, worldLightDirection, dayFactor);
+    // Procedural cloud shadows only make sense in open-sky dimensions. In
+    // ceiling dimensions, do not project an invented cloud layer underground.
+    float cloudShadow = (hasSkylight && !hasCeiling)
+        ? sampleSereneCloudShadow(playerPosition, worldLightDirection, dayFactor)
+        : 1.0;
     direct *= cloudShadow;
 
     // Decode sampled sRGB albedo for lighting, then encode it again for the
