@@ -948,11 +948,18 @@ entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
 block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
 for name, source in (("gbuffers_entities_translucent", entity_translucent),
                      ("gbuffers_block_translucent", block_translucent)):
-    for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
+    for token in ("/* RENDERTARGETS: 0 */", "sampleAnisotropicAtlas(",
+                  "gtexture, vTexCoord, materialUvDx, materialUvDy", "texture(lightmap",
                   "sampler2DShadow shadowtex0", "shadowModelView", "shadowProjection",
-                  "calculateForwardLighting", "calculateForwardFog", "outColor = vec4("):
+                  "calculateForwardLighting", "calculateForwardFog", "outColor = vec4(",
+                  "#define ANISOTROPIC_FILTER_QUALITY", "spriteBounds = vec4(vMidTexCoord - vTexHalfSize"):
         if token not in source:
             errors.append(f"{name} is missing forward translucent component: {token}")
+    vertex_source = sources.get(name + ".vsh", "")
+    for token in ("in vec2 mc_midTexCoord", "out vec2 vMidTexCoord",
+                  "out vec2 vTexHalfSize", "vTexHalfSize = abs(vTexCoord - vMidTexCoord)"):
+        if token not in vertex_source:
+            errors.append(f"{name} vertex stage is missing atlas-bound input: {token}")
     if "alphaTestRef" in source or "albedo.a <= 0.001" not in source:
         errors.append(f"{name} must preserve fractional alpha instead of applying cutout alphaTestRef")
 if "uniform vec4 entityColor" not in entity_translucent or "mix(albedoLinear, tintLinear, entityColor.a)" not in entity_translucent:
@@ -1287,7 +1294,7 @@ for token in ("uniform sampler2D normals;", "calculateTranslucentNormalMap", "no
               "normal, GLASS_NORMAL_MAP_STRENGTH, vTexCoord, materialUvDx, materialUvDy",
               "else if (isClearGlass || isStainedGlass || isTintedGlass || isIce)",
               "MC_TEXTURE_FORMAT_LAB_PBR",
-              "vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy)",
+              "sampleAnisotropicAtlas(", "normals, materialUv, uvDx, uvDy",
               "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
               "tangentNormal.y = -tangentNormal.y", "cross(tangent, geometricNormal)",
               "vPlayerTangent", "vTangentHandedness", "at_tangent.w < 0.0 ? -1.0 : 1.0"):
