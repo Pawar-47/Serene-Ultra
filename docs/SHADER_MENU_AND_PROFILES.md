@@ -85,3 +85,10 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added depth-rejected four-neighbor filtering at the SSR hit location.
 - Blur radius scales with squared material roughness, while depth rejection avoids mixing foreground/background surfaces.
 - Exposed `PBR_REFLECTION_BLUR_STRENGTH` in Quality and across all profiles; Ultra-Light disables the extra samples.
+
+
+## Temporal contact AO — 2026-11-23
+- Added a persistent RGBA16F history buffer (`colortex13`) for contact AO.
+- Reprojects previous AO using Iris previous camera matrices and camera positions, rejects depth mismatches, and clamps history within a narrow range around the current AO estimate.
+- Added `AO_TEMPORAL_STRENGTH` to Quality and all five profiles; Ultra-Light disables history.
+- This is temporal AO stabilization, not full temporal AA; moving-object velocity is not represented.
