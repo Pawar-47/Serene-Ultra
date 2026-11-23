@@ -71,3 +71,11 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Opaque entity-model POM self-shadowing remains pending.
 
 - Added height-gradient slope normals for terrain, block entities and opt-in opaque entity models; the strength is exposed in Quality and scales across all five profiles.
+
+
+## Temporal screen-space GI — 2026-11-23
+- Added a persistent RGBA16F history buffer (`colortex12`) ping-ponged by the composite pass.
+- Reprojects previous GI using Iris previous model-view/projection matrices and camera positions.
+- Rejects history when the reprojected depth does not match; clamps history to the current spatial estimate to limit stale-light trails.
+- Exposed `SCREEN_GI_TEMPORAL_STRENGTH` across all profiles. Ultra-Light disables history; higher profiles progressively increase accumulation.
+- This stabilizes the GI contribution only; it is not full temporal anti-aliasing and does not handle moving-object velocity.
