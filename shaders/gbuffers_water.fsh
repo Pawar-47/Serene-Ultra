@@ -38,6 +38,8 @@ uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
+uniform float thunderStrength;
+uniform vec4 lightningBoltPosition;
 uniform vec3 fogColor;
 uniform vec3 skyColor;
 uniform float fogStart;
@@ -87,6 +89,8 @@ layout(location = 0) out vec4 outColor;
 #include "/lib/lighting/cloud_shadows.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
+
+#include "/lib/lighting/lightning_flash.glsl"
 
 // Reconstruct a stable, periodic world position from Iris' unshifted integer
 // camera position, fractional camera position and player-relative position.
@@ -715,6 +719,8 @@ void main() {
           * (PORTAL_EMISSION_STRENGTH * 0.01)
         : 0.0;
     litLinear += albedoLinear * (lavaEmission + portalEmission);
+    // Localized lightning also illuminates water, glass, ice and portal surfaces.
+    litLinear += albedoLinear * sampleSereneLightningFlash(vPlayerPosition, normal);
 
     float fogDistance = (fogShape == 1)
         ? max(length(vViewPosition.xz), abs(vViewPosition.y))
