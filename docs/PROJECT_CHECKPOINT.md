@@ -1049,3 +1049,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Added the matching water quality-zero branch: Fresnel reflections still use the shared sky/horizon and sun/moon environment approximation, but skip water SSR depth/color ray samples.
 - Smooth remains at 6 steps and Ultra/HDR remain at 8 steps. Higher profiles retain screen-space reflections.
 - Added validator checks for the environment-only water branch and the Ultra-Light zero-step profile. This is a quality/performance preset change; actual FPS and visual balance require in-game testing.
+
+
+## Low-end reflection branch CI coverage — 2026-11-23
+- Added explicit glslang compile/link coverage for the Ultra-Light quality-zero reflection branches in composite and water.
+- The water quality-zero branch is compiled in both oldPBR and LabPBR; it must retain environment reflection while compiling out SSR sampling.
+- Profile regression checks now enforce Ultra-Light=0 steps, Smooth=6 and Ultra=8 for both opaque and water SSR.

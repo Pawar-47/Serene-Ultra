@@ -962,10 +962,12 @@ for token in ("WATER_WAVE_STRENGTH:25", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_S
     if token not in ultra_light_profile:
         errors.append(f"Ultra-Light profile is missing low-cost setting: {token}")
 for token in ("WATER_WAVE_STRENGTH:75", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:60",
-              "WATER_FOAM_STRENGTH:60", "PBR_REFLECTION_STRENGTH:50", "AO_STRENGTH:0.55"):
+              "WATER_FOAM_STRENGTH:60", "PBR_REFLECTION_STRENGTH:50",
+              "PBR_REFLECTION_QUALITY:6", "WATER_REFLECTION_QUALITY:6", "AO_STRENGTH:0.55"):
     if token not in smooth_profile:
         errors.append(f"Smooth profile is missing balanced setting: {token}")
-for token in ("WATER_WAVE_DETAIL:1", "POM_ENTITY_STRENGTH:20", "PBR_REFLECTION_QUALITY:8"):
+for token in ("WATER_WAVE_DETAIL:1", "POM_ENTITY_STRENGTH:20",
+              "PBR_REFLECTION_QUALITY:8", "WATER_REFLECTION_QUALITY:8"):
     if token not in ultra_profile:
         errors.append(f"Ultra profile is missing high-quality setting: {token}")
 if "option.WATER_WAVE_DETAIL.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
@@ -1280,6 +1282,8 @@ if "ENTITY_GN_AND_CT" not in workflow_text:
     errors.append("CI must compile the opt-in entity generated-normal/coating branch")
 if "Compile opt-in Unbound water wave detail" not in workflow_text or "WATER_WAVE_DETAIL 1" not in workflow_text:
     errors.append("CI must compile the optional fourth Unbound water-normal octave")
+if "Compile Ultra-Light environment-only reflection branches" not in workflow_text or "PBR_REFLECTION_QUALITY 0" not in workflow_text or "WATER_REFLECTION_QUALITY 0" not in workflow_text:
+    errors.append("CI must compile the Ultra-Light environment-only opaque and water reflection branches")
 if "Inspect water normal alpha-height channel" not in workflow_text or "alpha.getextrema()" not in workflow_text:
     errors.append("CI must inspect water-normal alpha data before water POM is considered")
 

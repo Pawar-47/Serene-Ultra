@@ -163,6 +163,34 @@ jobs:
           python tools/expand_glsl_includes.py "$tmpdir/water.vert" "$tmpdir/water-detail-labpbr.expanded.vert"
           python tools/expand_glsl_includes.py "$tmpdir/water-detail-labpbr.frag" "$tmpdir/water-detail-labpbr.expanded.frag"
           glslangValidator -l "$tmpdir/water-detail-labpbr.expanded.vert" "$tmpdir/water-detail-labpbr.expanded.frag"
+      - name: Compile Ultra-Light environment-only reflection branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          # Opaque composite: quality zero must compile the environment-only branch.
+          sed 's/^#define PBR_REFLECTION_QUALITY 4.*/#define PBR_REFLECTION_QUALITY 0/' \
+            shaders/composite.fsh > "$tmpdir/composite-env-only.frag"
+          python tools/expand_glsl_includes.py shaders/composite.vsh "$tmpdir/composite-env-only.vert"
+          python tools/expand_glsl_includes.py "$tmpdir/composite-env-only.frag" "$tmpdir/composite-env-only.expanded.frag"
+          glslangValidator -l "$tmpdir/composite-env-only.vert" "$tmpdir/composite-env-only.expanded.frag"
+
+          # Water: compile the quality-zero environment fallback in both PBR formats.
+          cp shaders/gbuffers_water.vsh "$tmpdir/water-env-only.vert"
+          sed 's/^#define WATER_REFLECTION_QUALITY 6.*/#define WATER_REFLECTION_QUALITY 0/' \
+            shaders/gbuffers_water.fsh > "$tmpdir/water-env-only-oldpbr.frag"
+          python tools/expand_glsl_includes.py "$tmpdir/water-env-only.vert" "$tmpdir/water-env-only.expanded.vert"
+          python tools/expand_glsl_includes.py "$tmpdir/water-env-only-oldpbr.frag" "$tmpdir/water-env-only-oldpbr.expanded.frag"
+          glslangValidator -l "$tmpdir/water-env-only.expanded.vert" "$tmpdir/water-env-only-oldpbr.expanded.frag"
+
+          awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next }
+               /^#define WATER_REFLECTION_QUALITY 6/ { print "#define WATER_REFLECTION_QUALITY 0"; next }
+               { print }' shaders/gbuffers_water.fsh > "$tmpdir/water-env-only-labpbr.frag"
+          python tools/expand_glsl_includes.py "$tmpdir/water-env-only-labpbr.frag" "$tmpdir/water-env-only-labpbr.expanded.frag"
+          glslangValidator -l "$tmpdir/water-env-only.expanded.vert" "$tmpdir/water-env-only-labpbr.expanded.frag"
+
       - name: Inspect water normal alpha-height channel
         shell: bash
         run: |
