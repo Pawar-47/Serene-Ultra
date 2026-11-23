@@ -968,7 +968,9 @@ weather_vertex = sources.get("gbuffers_weather.vsh", "")
 if "#define WAVING_RAIN" not in weather_vertex or "eyeBrightnessSmooth" not in weather_vertex or "rainStrength" not in weather_vertex:
     errors.append("Weather vertex path must implement the Iris-aware waving rain/snow option")
 weather = sources.get("gbuffers_weather.fsh", "")
-for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
+for token in ("/* RENDERTARGETS: 0 */", "sampleAnisotropicAtlas(",
+              "gtexture, vTexCoord, materialUvDx, materialUvDy", "texture(lightmap",
+              "#define ANISOTROPIC_FILTER_QUALITY", "spriteBounds = vec4(vMidTexCoord - vTexHalfSize",
               "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape",
               "uniform int isEyeInWater", "uniform float alphaTestRef",
               "WEATHER_TEX_OPACITY", "rainTexOpacity", "snowTexOpacity",
@@ -977,6 +979,10 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "weatherSkyLight * 0.45", "weatherSkyTint", "CLOUD_SHADOW_STRENGTH"):
     if token not in weather:
         errors.append(f"Forward weather shader is missing Iris fog/light component: {token}")
+for token in ("in vec2 mc_midTexCoord", "flat out vec2 vMidTexCoord",
+              "flat out vec2 vTexHalfSize", "vTexHalfSize = abs(vTexCoord - vMidTexCoord)"):
+    if token not in weather_vertex:
+        errors.append(f"Weather vertex stage is missing atlas-bound input: {token}")
 if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in weather:
     errors.append("Weather cylindrical fog must match the vanilla cylinder distance metric")
 hand_water = sources.get("gbuffers_hand_water.fsh", "")
@@ -1558,13 +1564,17 @@ for token in ("fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogSha
               "uniform sampler2D noisetex", "textureLod(noisetex, gl_FragCoord.xy / 128.0, 0.0)",
               "WEATHER_TEX_OPACITY", "rainTexOpacity", "snowTexOpacity",
               "suppressLightmap", "PARTICLE_MATERIAL_FEATURES",
-              "uniform float rainStrength", "hasSkylight && rainStrength > 0.001"):
+              "uniform float rainStrength", "hasSkylight && rainStrength > 0.001",
+              "sampleAnisotropicAtlas(", "gtexture, vTexCoord, materialUvDx, materialUvDy",
+              "#define ANISOTROPIC_FILTER_QUALITY", "spriteBounds = vec4(vMidTexCoord - vTexHalfSize"):
     if token not in translucent_particles:
         errors.append(f"Translucent particle shader is missing forward lighting component: {token}")
 translucent_particle_vertex = sources.get("gbuffers_particles_translucent.vsh", "")
-for token in ("gbufferModelViewInverse", "vPlayerPosition", "vPlayerNormal"):
+for token in ("gbufferModelViewInverse", "vPlayerPosition", "vPlayerNormal",
+              "in vec2 mc_midTexCoord", "flat out vec2 vMidTexCoord",
+              "flat out vec2 vTexHalfSize", "vTexHalfSize = abs(vTexCoord - vMidTexCoord)"):
     if token not in translucent_particle_vertex:
-        errors.append(f"Translucent particle vertex stage is missing player-space lighting input: {token}")
+        errors.append(f"Translucent particle vertex stage is missing player-space/atlas input: {token}")
 textured_lit = sources.get("gbuffers_textured_lit.fsh", "")
 for token in ("/* RENDERTARGETS: 0,1,2,3 */", "texture(gtexture", "texture(lightmap",
               "alphaTestRef", "outLightmapData", "outEncodedNormal",
