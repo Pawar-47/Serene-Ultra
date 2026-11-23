@@ -55,6 +55,12 @@ jobs:
             expanded="$tmpdir/$(printf '%s' "$shader" | sed 's#[^A-Za-z0-9_]#_#g').$ext"
             echo "Expanding includes and compiling $shader"
             python tools/expand_glsl_includes.py "$shader" "$expanded"
+            # Iris exposes these render-target formats to shader sources. They
+            # are OpenGL enum constants, not built-in GLSL identifiers; define
+            # their numeric values only in this standalone validator copy.
+            if grep -Eq '\\b(RGBA16F|RGBA8|RGB16F|R16F|RG16F|RGB8|R8|RG8)\\b' "$expanded"; then
+              sed -i '2i#define RGBA16F 34842\n#define RGBA8 32856\n#define RGB16F 34843\n#define R16F 33325\n#define RG16F 33327\n#define RGB8 32849\n#define R8 33321\n#define RG8 33323' "$expanded"
+            fi
             glslangValidator -S "$stage" "$expanded"
           done < <(find shaders -type f \( -name '*.vsh' -o -name '*.fsh' \) -print0)
       - name: Compile Iris render-stage macro branches
