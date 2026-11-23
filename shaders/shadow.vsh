@@ -19,6 +19,7 @@ flat out float vShadowFluidRenderType;
 in vec2 mc_Entity;
 
 #define WAVING_FOLIAGE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Wind-driven foliage motion
+#define LAVA_WAVE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Animated lava surface vertex motion
 
 void main() {
     // Preserve the original block/entity texture coordinates so cutout
@@ -45,6 +46,21 @@ void main() {
             * windStrength;
         vShadowPlayerPosition.xz += wind;
         shadowViewPosition = gl_ModelViewMatrix * vec4(vShadowPlayerPosition, 1.0);
+    }
+#endif
+#if LAVA_WAVE_STRENGTH > 0
+    if (vShadowMaterialId == 32118 || vShadowMaterialId == 32132) {
+        vec3 stableWorld = vec3(cameraPositionInt) + cameraPositionFract + vShadowPlayerPosition;
+        if (fract(stableWorld.y + 0.005) > 0.06) {
+            vec2 lavaPosition = mod(stableWorld.xz, vec2(4096.0));
+            float lavaTime = mod(frameTimeCounter, 3600.0) * 0.10471975512;
+            float waveA = sin(lavaTime * 0.7 - dot(lavaPosition, vec2(0.9790, 1.9602)));
+            float waveB = sin(lavaTime * 0.5 - dot(lavaPosition, vec2(1.4008, -0.6995)));
+            float lavaDisplacement = (waveA + waveB)
+                * 0.0125 * float(LAVA_WAVE_STRENGTH) * 0.01;
+            vShadowPlayerPosition.y += lavaDisplacement;
+            shadowViewPosition = gl_ModelViewMatrix * vec4(vShadowPlayerPosition, 1.0);
+        }
     }
 #endif
     gl_Position = gl_ProjectionMatrix * shadowViewPosition;
