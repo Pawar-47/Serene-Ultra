@@ -1680,7 +1680,7 @@ for token in ("uniform int heldBlockLightValue;", "uniform int heldBlockLightVal
               "getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2)",
               "1.0 - pow(1.0 - max(specialAlpha, 0.1), 8.0)",
               "if (itemId == 44013)", "energy = 1.0;",
-              "if (itemId == 44094 || itemId == 44095 || itemId == 44096) return 0.2;",
+              "if (itemId == 44093 || itemId == 44094 || itemId == 44095 || itemId == 44096) return 0.2;",
               "if (mainEnergy <= 0.0 && offEnergy <= 0.0) return vec3(0.0)",
               "return mainLight * mainLight + offLight * offLight"):
     if token not in held_shader:
