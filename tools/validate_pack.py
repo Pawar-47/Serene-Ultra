@@ -711,6 +711,22 @@ for token in (
 ):
     if token not in block_properties:
         errors.append(f"Missing Complementary-guided vanilla metal material mapping: {token}")
+for token in ("block.32160=minecraft:stone", "block.32161=minecraft:deepslate",
+              "block.32162=minecraft:cobblestone", "block.32163=minecraft:dirt",
+              "block.32164=minecraft:obsidian"):
+    if token not in block_properties:
+        errors.append(f"Missing Complementary-guided stone/earth material mapping: {token}")
+
+terrain_material_source = sources.get("gbuffers_terrain.fsh", "")
+for token in ("vMaterialId == 32160", "pow(albedo.g, 4.0) * 2.0",
+              "vMaterialId == 32161", "pow(albedo.g, 1.5) * 0.55",
+              "vMaterialId == 32162", "dot(albedo.rgb, albedo.rgb) * 0.17",
+              "vMaterialId == 32163", "albedo.r * 0.1 + 0.1",
+              "vMaterialId == 32164", "0.3 - abs(albedo.r - 0.3)",
+              "materialCoatingFactor = 0.77"):
+    if token not in terrain_material_source:
+        errors.append(f"Terrain material fallback is missing reference-guided response: {token}")
+
 for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_block",
               "block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
               "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal",
