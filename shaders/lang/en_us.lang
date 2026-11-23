@@ -173,3 +173,6 @@ option.CLOUD_SCATTERING_STRENGTH.comment = Controls daylight tint, weather respo
 
 option.SHADOW_FILTER_QUALITY = Soft Shadow Samples
 option.SHADOW_FILTER_QUALITY.comment = Controls the rotated Poisson PCF sample count used to soften shadow edges. Higher values improve penumbra smoothness at additional GPU cost.
+
+option.CLOUD_SHADOW_STRENGTH = Cloud Shadow Strength
+option.CLOUD_SHADOW_STRENGTH.comment = Controls moving, world-stable procedural cloud shadows on terrain, items, water and translucent surfaces. Rain increases cloud coverage and shadow opacity.
