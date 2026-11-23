@@ -66,7 +66,7 @@ flat in float vFluidRenderType;
 /* RENDERTARGETS: 0 */
 
 #define WATER_REFRACTION_STRENGTH 0.50 // [0.00 0.25 0.40 0.50 0.55 0.60 0.75 1.00 1.25 1.50 2.00] Screen-space water refraction strength
- #define WATER_REFLECTION_STRENGTH 0.45 // [0.00 0.25 0.35 0.40 0.45 0.50 0.55 0.60 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
+#define WATER_REFLECTION_STRENGTH 0.45 // [0.00 0.25 0.35 0.40 0.45 0.50 0.55 0.60 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
 #define WATER_FOG_MULT 125 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 125 130 140 150 160 165 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 4 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_REFLECTION_DISTANCE 24 // [16 24 32 40 48] Maximum water/glass SSR trace distance in blocks
