@@ -69,6 +69,7 @@ void main() {
             displacedViewPosition.xyz += mat3(gl_ModelViewMatrix)
                 * vec3(0.0, lavaDisplacement, 0.0);
             gl_Position = gl_ProjectionMatrix * displacedViewPosition;
+            viewPosition = displacedViewPosition;
             vPlayerPosition.y += lavaDisplacement;
         }
     }
