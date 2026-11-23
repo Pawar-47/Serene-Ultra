@@ -21,6 +21,12 @@ void main() {
     vec4 skyTexture = texture(gtexture, vTexCoord) * vVertexColor;
     if (skyTexture.a < alphaTestRef) discard;
 
+    bool isSun = false;
+#ifdef MC_RENDER_STAGE_SUN
+    isSun = (renderStage == MC_RENDER_STAGE_SUN);
+#endif
+    if (hasSkylight && isSun) discard;
+
     vec3 colorLinear = pow(max(skyTexture.rgb, vec3(0.0)), vec3(2.2));
     vec3 upVector = normalize(gbufferModelView[1].xyz);
     float sunElevation = 0.0;
