@@ -672,3 +672,12 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Extended `tools/validate_pack.py` to prevent regression in both shader paths.
 - The supplied working Complementary archive was consulted for the material-system reference; the Vanilla-stock terrain pipeline was checked to preserve the native vertex/lightmap/albedo contract. LabPBR channel semantics were checked against the shaderLABS LabPBR 1.3 specification.
 - Previous baseline CI run 1040 passed all nine stages on `eb070b7566e6c6b12f43f548298be210d858d92c`. The combined correction commit below requires its own fresh CI run. Minecraft/Iris runtime and Intel HD 5500 visual/performance validation remain outstanding.
+
+
+## Unbound style-3 water parity correction — 2026-11-23
+- Compared the supplied working shader archive's `shaders/lib/materials/specificMaterials/translucents/water.glsl`; its `WATER_STYLE == 3` branch is the Unbound implementation.
+- Unbound style 3 prepares the biome/vertex tint with square-root colour and the multiplier `(1.0, 0.85, 0.8)`, then applies a `0.375` base multiplier. Serene previously mixed that tint 50/50 with the fixed Reimagined blue tint. The fixed tint has been removed from the Unbound path; `WATER_COLOR_STRENGTH` still controls blending with the atlas colour.
+- Unbound style 3 sets above-water surface alpha to `0.98`, then applies depth opacity and Fresnel. Underwater it applies a separate `0.75` alpha reduction. Serene previously used the Reimagined-style square-root of sampled atlas alpha. The water pass now follows the Unbound branch.
+- Cross-checked Minecraft 26.3 Vanilla-stock `core/terrain.fsh` (sampled atlas colour multiplied by vertex colour, then fog while preserving alpha), `core/terrain.vsh` (vertex colour multiplied by vanilla lightmap), and `include/fog.glsl` (fog affects RGB while preserving alpha). Those native inputs remain intact; the Unbound surface-alpha treatment is isolated to Iris' water program.
+- Added validator assertions for the Unbound base tint and above-/underwater alpha branches.
+- This is a source-parity correction, not a runtime-verified visual claim. Validate above-water, underwater, shore and transparent-boundary scenes in Iris.

@@ -543,7 +543,9 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "gl_FragCoord.xy / vec2(textureSize(depthtex1, 0))",
               "refractedScene.a >= 0.5", "texelFetch(depthtex1, refractedPixel, 0)",
               "if (isWater && dot(normalize(vViewPosition), viewNormal) > 0.0)",
-              "sqrt(max(translucentAlbedo.a, 0.0))",
+              "translucentAlbedo.a = 0.98",
+              "translucentAlbedo.a *= 0.75",
+              "float waterAlpha = translucentAlbedo.a * (0.25 + 0.75 * waterFog)",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
@@ -620,7 +622,7 @@ if "uniform int isEyeInWater;" not in water:
 if "return 0.03125 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);" not in water:
     errors.append("Water noise coordinates must tile the 256-block stable-world period exactly")
 for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureLod(noisetex, noiseUV, 0.0)",
-              "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "WATER_ABSORPTION_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
+              "vec3 baseColor = 0.375 * biomeTint", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "WATER_ABSORPTION_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
     if token not in water:
         errors.append(f"Unbound-style water colour path is missing component: {token}")
 

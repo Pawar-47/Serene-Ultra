@@ -153,9 +153,11 @@ vec2 calculateWaterNoisePosition(vec3 stableWorldPosition) {
 }
 
 vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
+    // Unbound style 3 uses the biome/vertex tint directly after its
+    // square-root colour preparation; the fixed blue fallback belongs to
+    // the older Reimagined-style water treatment.
     vec3 biomeTint = sqrt(max(vertexColor, vec3(0.0))) * vec3(1.0, 0.85, 0.8);
-    vec3 waterTint = mix(vec3(0.43, 0.60, 0.80), biomeTint, 0.5);
-    vec3 baseColor = 0.375 * waterTint;
+    vec3 baseColor = 0.375 * biomeTint;
 
     if (WATER_NOISE_COLOR_STRENGTH > 0) {
         vec2 waterPosition = calculateWaterNoisePosition(stableWorldPosition);
@@ -462,16 +464,17 @@ void main() {
             waterFoam = clamp(waterFoam, 0.0, 1.0);
         }
 
-        // Match the working reference's depth-based opacity and add a modest
-        // Fresnel opacity increase at grazing angles.
-        translucentAlbedo.a = sqrt(max(translucentAlbedo.a, 0.0));
-        float waterAlpha = translucentAlbedo.a * (0.25 + 0.75 * waterFog);
-        waterAlpha = mix(waterAlpha, 1.0, waterFresnel * 0.25);
-        // Complementary Unbound uses a distinct underwater branch: soften
-        // water opacity, cool the surface tint and suppress directional light.
+        // Complementary Unbound style 3 uses a stable 0.98 surface alpha
+        // above water, then applies depth opacity. Underwater it retains the
+        // sampled material alpha and applies the reference's 0.75 reduction.
         if (cameraUnderwater) {
-            waterAlpha *= mix(1.0, 0.75, clamp(WATER_UNDERWATER_STRENGTH * 0.01, 0.0, 1.5));
+            translucentAlbedo.a *= 0.75;
+        } else {
+            translucentAlbedo.a = 0.98;
         }
+        float waterAlpha = translucentAlbedo.a * (0.25 + 0.75 * waterFog);
+        // Keep the Unbound grazing-angle opacity response.
+        waterAlpha = mix(waterAlpha, 1.0, waterFresnel * 0.25);
         translucentAlbedo.a = clamp(waterAlpha, 0.0, 1.0);
 
         // deferred1 snapshots the opaque scene into half-resolution colortex4.
