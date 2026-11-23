@@ -480,9 +480,9 @@ if "gl_FrontFacing && !signText && blockEntityId != 5025" not in sources.get("gb
 entity_pom_source = sources.get("gbuffers_entities.fsh", "")
 for token in ("#define POM_ENTITY_STRENGTH 0", "uniform int entityId;",
               "calculateParallaxUv(", "entityId != 50128 && entityId != 50132",
-              "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
+              "sampleAnisotropicAtlas(gtexture, parallaxUv, uvDx, uvDy, vTexCoordAM)",
               "parallaxAlbedo.a >= alphaTestRef",
-              "textureGrad(specular, materialUv, uvDx, uvDy)",
+              "sampleAnisotropicAtlas(specular, materialUv, uvDx, uvDy, vTexCoordAM)",
               "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, vTexCoordAM)"):
     if token not in entity_pom_source:
         errors.append(f"Entity POM is missing bounded atlas-safe component: {token}")
@@ -600,7 +600,7 @@ if "option.POM_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read
     errors.append("POM strength requires a user-facing tooltip")
 
 terrain_fragment = sources.get("gbuffers_terrain.fsh", "")
-for token in ("uniform sampler2D specular", "textureGrad(specular, materialUv, uvDx, uvDy)",
+for token in ("uniform sampler2D specular", "sampleAnisotropicAtlas(specular, materialUv, uvDx, uvDy, vTexCoordAM)",
               "MC_TEXTURE_FORMAT_LAB_PBR", "pbrSpecular.r", "pbrSpecular.g",
               "pbrSpecular.a", "pbrSpecular.b", "materialSmoothness"):
     if token not in terrain_fragment:
@@ -778,12 +778,12 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
                   "outEmissionData = vec4("):
         if token not in source:
             errors.append(f"{name} is missing resource-pack PBR specular support: {token}")
-    specular_sample = "textureGrad(specular, materialUv, uvDx, uvDy)" if name in ("gbuffers_block.fsh", "gbuffers_entities.fsh") else "texture(specular, vTexCoord)"
+    specular_sample = "sampleAnisotropicAtlas(specular, materialUv, uvDx, uvDy, vTexCoordAM)" if name in ("gbuffers_block.fsh", "gbuffers_entities.fsh") else "texture(specular, vTexCoord)"
     if specular_sample not in source:
         errors.append(f"{name} must sample specular data at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(fragment_name, "")
-    normal_sample = "textureGrad(normals, materialUv, uvDx, uvDy)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh") else "texture(normals, vTexCoord)"
+    normal_sample = "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, vTexCoordAM)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh") else "texture(normals, vTexCoord)"
     if normal_sample not in source:
         errors.append(f"{fragment_name} must sample its PBR normal map at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
