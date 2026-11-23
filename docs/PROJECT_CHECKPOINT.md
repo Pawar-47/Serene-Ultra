@@ -1510,3 +1510,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Added `EMISSIVE_BOUNCE_STRENGTH` as a Quality menu control and profile budgets: Ultra-Light 0, Smooth 20, Ultra 45, HDR 55, Ultra-HDR 65. Updated the feature matrix to retain the explicit gap: no voxel floodfill, off-screen propagation or full per-block coloured transport.
 - Commits: deferred implementation `eb95633bbededd0d13c74f43688598f870a1bffa`; profile/menu control `1aba36a43fed029dff20c04cea4545fb65ae650c`; feature matrix `6455a87ed54f4ccce2fbe0aa3d6d659596148b20`.
 - Not yet GLSL-compiled or run in Iris after these changes. Screen-space colour bounce can miss off-screen emitters and may show view-dependent leakage; runtime scene tests and performance calibration remain necessary.
+
+
+### Validation follow-up — 2026-11-23
+- First CI attempt after emissive bounce failed during standalone GLSL compilation because `deferred.fsh` used Iris' `gbufferModelView` matrix without declaring it for the standalone compiler. Added the explicit uniform declaration; this is required by the pack's compile harness and matches the Iris matrix contract.
+- The subsequent CI run compiled every standalone vertex/fragment stage, all configured Iris render-stage macro branches, LabPBR branches, opt-in entity POM, Unbound water detail, Ultra-Light reflection branches, the water normal alpha-height inspection and vertex/fragment program links successfully.
+- Structural validation then failed on numerous stale exact-string assertions unrelated to the new shader compilation. Examples include expecting old `textureGrad(...)` calls where current code uses `sampleAnisotropicAtlas(...)`, an outdated deferred target declaration, old sky shader expressions and an outdated FXAA menu contract. One stale assertion also expected the block lightmap output before conduit logic using an exact string that no longer matches the current `skyLight * pomSelfShadow` output; that assertion was changed to match the current assignment prefix and ordering.
+- The validator is not green yet. Its assertions need to be reconciled against current source semantics without weakening real coverage. Do not interpret this structural-validator failure as a GLSL compile failure: all GLSL compile/link stages passed in run `45226274621`, job `137873673354`.
+- This is not an Iris/Minecraft runtime test.
