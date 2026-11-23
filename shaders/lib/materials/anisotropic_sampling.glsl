@@ -1,5 +1,8 @@
 // Atlas-bounded anisotropic sampling shared by forward translucent passes.
 // The caller supplies the sprite rectangle from mc_midTexCoord and UV half-size.
+// The major footprint axis is the principal eigenvector of the UV derivative
+// covariance matrix, so oblique UV gradients are filtered along their true
+// major axis instead of whichever screen derivative happens to be longer.
 vec4 sampleAnisotropicAtlas(
     sampler2D sourceTexture,
     vec2 uv,
@@ -8,12 +11,21 @@ vec4 sampleAnisotropicAtlas(
     vec4 spriteBounds
 ) {
 #if ANISOTROPIC_FILTER_QUALITY > 1
-    vec2 majorGradient = dot(uvDx, uvDx) >= dot(uvDy, uvDy)
-        ? uvDx : uvDy;
-    float majorLength = length(majorGradient);
-    float minorLength = max(min(length(uvDx), length(uvDy)), 0.000001);
+    float xx = dot(uvDx, uvDx);
+    float xy = dot(uvDx, uvDy);
+    float yy = dot(uvDy, uvDy);
+    float discriminant = sqrt(max((xx - yy) * (xx - yy) + 4.0 * xy * xy, 0.0));
+    float majorEigenvalue = max(0.5 * (xx + yy + discriminant), 0.0);
+    float minorEigenvalue = max(0.5 * (xx + yy - discriminant), 1e-12);
+    float majorAngle = 0.5 * atan(2.0 * xy, xx - yy);
+    vec2 majorAxisVector = uvDx * cos(majorAngle) + uvDy * sin(majorAngle);
+    float majorAxisLength = length(majorAxisVector);
+    vec2 majorDirection = majorAxisLength > 1e-7
+        ? majorAxisVector / majorAxisLength : vec2(1.0, 0.0);
+    float majorLength = sqrt(majorEigenvalue);
+    float minorLength = sqrt(minorEigenvalue);
     int sampleCount = int(clamp(
-        ceil(majorLength / minorLength),
+        ceil(majorLength / max(minorLength, 1e-6)),
         1.0, float(ANISOTROPIC_FILTER_QUALITY)
     ));
     if (sampleCount <= 1) return textureGrad(sourceTexture, uv, uvDx, uvDy);
@@ -22,11 +34,14 @@ vec4 sampleAnisotropicAtlas(
     vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
     vec2 lowerBound = spriteBounds.xy + 0.5 * atlasTexel;
     vec2 upperBound = spriteBounds.xy + tileSize - 0.5 * atlasTexel;
+    vec2 majorFootprint = majorDirection * majorLength;
     vec4 accumulated = vec4(0.0);
     for (int tap = 0; tap < ANISOTROPIC_FILTER_QUALITY; ++tap) {
         if (tap >= sampleCount) break;
         float tapOffset = (float(tap) + 0.5) / float(sampleCount) - 0.5;
-        vec2 sampleUv = clamp(uv + majorGradient * tapOffset, lowerBound, upperBound);
+        vec2 sampleUv = clamp(
+            uv + majorFootprint * tapOffset, lowerBound, upperBound
+        );
         accumulated += textureGrad(sourceTexture, sampleUv, uvDx, uvDy);
     }
     return accumulated / float(sampleCount);
