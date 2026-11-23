@@ -1413,8 +1413,13 @@ for directive in (
 
 # Both programs write colortex0 and must rely on Iris' default flip. Declaring a flip
 # for a buffer they write either double-flips (true) or suppresses the swap (false).
+# Only uncommented directives count; prose in comments may quote them.
+declared_directives = [
+    line.strip() for line in props.splitlines()
+    if not line.lstrip().startswith("#")
+]
 for forbidden in ("flip.deferred.colortex0=", "flip.composite.colortex0="):
-    if forbidden in props:
+    if any(line.startswith(forbidden) for line in declared_directives):
         errors.append(f"{forbidden[:-1]} must not be declared: that program writes colortex0 and an explicit flip cancels Iris' default swap")
 
 lang_path = SHADERS / "lang" / "en_us.lang"
