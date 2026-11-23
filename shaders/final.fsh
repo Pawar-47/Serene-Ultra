@@ -322,7 +322,7 @@ vec3 applyReferenceSaturation(vec3 color) {
 vec2 applyUnderwaterDistortion(vec2 uv) {
 #if UNDERWATER_DISTORTION > 0
     if (isEyeInWater == 1) {
-        float time = frameTimeCounter;
+        float time = mod(frameTimeCounter, 60.0);
         float waveX = sin(uv.y * 58.0 + time * 1.7
             + sin(uv.x * 19.0 - time * 0.55) * 0.8);
         float waveY = sin(uv.x * 46.0 - time * 1.25
