@@ -1227,3 +1227,10 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Clarified the Iris pipeline audit so its original fallback/attachment hazard is explicitly historical; it no longer says the current source lacks water, weather or hand-water program pairs.
 - Added an Iris-uniform contract note: `isEyeInWater == 3` means powdered snow, and added a runtime test for weather rendering across camera states.
 - CI runs #1168–#1170 were triggered by the documentation/checkpoint commits; #1166 remains the latest confirmed successful run at this point. Check the newest run before treating these documentation commits as CI-validated.
+
+## Continued Iris routing audit (2026-11-23)
+
+- Latest `main` before this continuation was `ec7f416871e7fb51f70801779a6e7d7e43dfbafe`; CI #1172 passed on that commit.
+- Rechecked current Iris docs and the Iris source snapshot for `separateEntityDraws`. The directive is parsed/stored and the pipeline maps translucent entity/item render pipelines to the translucent shader keys, but current docs warn that separate entity drawing may be broken in newer Iris versions. The pack's setting and shader files are not proof of runtime routing.
+- Added a dedicated release-blocking runtime test for actual translucent entity and block-entity program routing. Kept `particles.ordering=mixed`, which Iris documents as the intended split for opaque vs translucent particles.
+- No runtime pass or alpha publication is claimed.
