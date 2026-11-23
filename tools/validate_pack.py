@@ -1841,7 +1841,7 @@ for token in ("#define BLOOM_STRENGTH", "#define FXAA_ENABLED",
               "vec3 sampleFxaa(", "float lumaMin", "vec3 sampleBloomLevel(",
               "vec3 sampleBloomChain(", "textureSize(colortex0, 0)",
               "color = pow(max(color, vec3(0.0)), vec3(2.2))",
-              "1.0 / (2.2 * GAMMA)", "color += bloom *",
+              "1.0 / GAMMA", "color += bloom *",
               "redChannel = pow(max(redEncoded, 0.0), 2.2)",
               "blueChannel = pow(max(blueEncoded, 0.0), 2.2)"):
     if token not in final_shader:
