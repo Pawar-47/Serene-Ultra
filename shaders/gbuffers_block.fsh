@@ -350,7 +350,9 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
 // Complementary material dispatch for block entities.
     // Material identity controls coating on both vanilla and PBR resource packs.
     // Smoothness/F0 fallbacks never override an explicit oldPBR/LabPBR specular map.
-    if (blockEntityId == 5008) { // Chest and trapped chest
+    if (blockEntityId == 5004) { // Sign boards; sign text is filtered separately.
+        materialCoatingFactor = 0.66;
+    } else if (blockEntityId == 5008) { // Chest and trapped chest
         materialCoatingFactor = 0.66;
         if (!hasMaterialSpecularMap) {
             materialSmoothness = clamp(pow(albedo.g, 2.0), 0.0, 1.0);

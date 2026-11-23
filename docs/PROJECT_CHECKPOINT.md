@@ -985,3 +985,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Updated vanilla fallback shading for gold bell parts and copper chests/statues to mirror the existing item-material convention: LabPBR uses 1.0 metal classification; oldPBR retains the calibrated fallback metalness values (gold 0.72, copper 0.58).
 - This only applies when no explicit resource-pack specular map is present. Explicit PBR maps remain authoritative.
 - Added structural regression checks for both format-specific branches. CI required; visual calibration remains pending.
+
+
+## Sign-board coating parity — 2026-11-23
+- Compared `shaders/gbuffers_block.fsh` against the supplied Complementary `blockEntityIPBR.glsl`. Complementary assigns coating/noise factor 0.66 to sign block entities while separately identifying sign text.
+- Serene already excluded sign text from coating, but had no material coating factor for the wooden sign board itself. Added the missing 0.66 factor for blockEntityId 5004; text remains excluded by the existing `!signText` gate.
+- Added a structural regression assertion. Iris block.properties docs confirm block-entity IDs are supplied through `blockEntityId` in gbuffers. Await CI; no runtime appearance claim is made.

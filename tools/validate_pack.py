@@ -554,6 +554,7 @@ for pattern in (
         errors.append("Gold/copper block-entity fallback must separate LabPBR metal F0 from oldPBR metalness")
 
 for token in (
+    "blockEntityId == 5004", "materialCoatingFactor = 0.66;",
     "blockEntityId == 5008", "blockEntityId == 5012", "blockEntityId == 5016",
     "blockEntityId == 5020", "blockEntityId == 5028", "blockEntityId == 5032",
     "blockEntityId == 5036", "blockEntityId == 10548",
