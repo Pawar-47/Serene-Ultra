@@ -95,13 +95,13 @@ for path in SHADERS.rglob("gbuffers_*.fsh"):
 # program is intentionally GLSL 130 and uses Iris's outColorN core transform.
 for path in SHADERS.rglob("*.fsh"):
     source = path.read_text(encoding="utf-8")
-    target_match = re.search(r"/\\*\\s*RENDERTARGETS:\\s*([0-9,\\s]+)\\s*\\*/", source)
-    if not target_match or re.search(r"^\\s*#version\\s+130\\b", source, re.MULTILINE):
+    target_match = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", source)
+    if not target_match or re.search(r"^\s*#version\s+130\b", source, re.MULTILINE):
         continue
-    targets = [int(value) for value in re.findall(r"\\d+", target_match.group(1))]
+    targets = [int(value) for value in re.findall(r"\d+", target_match.group(1))]
     locations = [
         int(value) for value in re.findall(
-            r"layout\\s*\\(\\s*location\\s*=\\s*(\\d+)\\s*\\)\\s*out\\s+\\w+\\s+\\w+",
+            r"layout\s*\(\s*location\s*=\s*(\d+)\s*\)\s*out\s+\w+\s+\w+",
             source,
         )
     ]
