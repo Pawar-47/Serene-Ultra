@@ -2,6 +2,8 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform float thunderStrength;
+uniform vec4 lightningBoltPosition;
 
 uniform vec3 fogColor;
 uniform float fogStart;
@@ -17,6 +19,8 @@ in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
+
+#include "/lib/lighting/lightning_flash.glsl"
 
 float calculateHandWaterFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -38,6 +42,9 @@ void main() {
 
     vec3 lightmapLinear = pow(max(texture(lightmap, vLightmapCoord).rgb, vec3(0.0)), vec3(2.2));
     vec3 handWaterLinear = pow(max(handWaterColor.rgb, vec3(0.0)), vec3(2.2)) * lightmapLinear;
+    handWaterLinear += sampleSereneLightningFlash(
+        vec3(0.0), normalize(lightningBoltPosition.xyz + vec3(0.0, 0.0, 0.0001))
+    );
 
     float fogDistance = (fogShape == 1)
         ? max(length(vViewPosition.xz), abs(vViewPosition.y))
