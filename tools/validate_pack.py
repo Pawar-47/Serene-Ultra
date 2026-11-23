@@ -552,7 +552,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
 
 for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
               "uniform mat4 gbufferProjectionInverse", "WATER_REFLECTION_QUALITY",
-              "sampleTranslucentScreenReflection(", "texelFetch(depthtex2, depthPixel, 0)",
+              "sampleTranslucentScreenReflection(", "for (int refineStep = 0; refineStep < 2; ++refineStep)", "refineLow", "refineHigh", "texelFetch(depthtex2, depthPixel, 0)",
               "texelFetch(colortex4, reflectionPixel, 0)",
               "float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0)",
               "float reflectionWeight = clamp(",

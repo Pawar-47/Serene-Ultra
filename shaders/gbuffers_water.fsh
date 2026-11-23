@@ -241,6 +241,10 @@ vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out f
 
     vec3 reflectionColor = vec3(0.0);
     hitConfidence = 0.0;
+    float previousDepthDelta = 1e20;
+    float previousTravelDistance = 0.0;
+    ivec2 depthSize = textureSize(depthtex2, 0);
+    ivec2 reflectionSize = textureSize(colortex4, 0);
 
     for (int i = 0; i < WATER_REFLECTION_QUALITY; ++i) {
         float travelDistance = (float(i) + 1.0) * stepLength;
@@ -255,41 +259,109 @@ vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out f
             break;
         }
 
-        ivec2 depthPixel = ivec2(sampleUV * vec2(textureSize(depthtex2, 0)));
-        ivec2 reflectionPixel = ivec2(sampleUV * vec2(textureSize(colortex4, 0)));
-        depthPixel = clamp(depthPixel, ivec2(0), textureSize(depthtex2, 0) - ivec2(1));
-        reflectionPixel = clamp(reflectionPixel, ivec2(0), textureSize(colortex4, 0) - ivec2(1));
+        ivec2 depthPixel = clamp(
+            ivec2(sampleUV * vec2(depthSize)), ivec2(0), depthSize - ivec2(1)
+        );
+        ivec2 reflectionPixel = clamp(
+            ivec2(sampleUV * vec2(reflectionSize)), ivec2(0), reflectionSize - ivec2(1)
+        );
         float sceneDepth = texelFetch(depthtex2, depthPixel, 0).r;
         vec4 sceneSample = texelFetch(colortex4, reflectionPixel, 0);
 
-        // Alpha zero marks pixels where the deferred scene snapshot contained
-        // first-person hand or transparent overlays rather than opaque/sky color.
-        if (sceneSample.a < 0.5) continue;
-
-        vec2 edgeDistance = min(sampleUV, vec2(1.0) - sampleUV);
-        float edgeFade = smoothstep(0.0, 0.08, min(edgeDistance.x, edgeDistance.y));
-        float distanceFade = 1.0 - smoothstep(16.0, maxDistance, travelDistance);
-
-        // A clear depth sample is the sky; its color is already present in the
-        // deferred snapshot and is a valid reflection source.
+        // A clear depth sample is the sky; its color is a valid reflection source.
         if (sceneDepth >= 0.999999) {
-            reflectionColor = sceneSample.rgb;
-            hitConfidence = edgeFade * distanceFade;
-            return reflectionColor;
+            if (sceneSample.a >= 0.5) {
+                vec2 edgeDistance = min(sampleUV, vec2(1.0) - sampleUV);
+                float edgeFade = smoothstep(0.0, 0.08, min(edgeDistance.x, edgeDistance.y));
+                float distanceFade = 1.0 - smoothstep(16.0, maxDistance, travelDistance);
+                hitConfidence = edgeFade * distanceFade;
+                return sceneSample.rgb;
+            }
+            previousDepthDelta = 1e20;
+            previousTravelDistance = travelDistance;
+            continue;
         }
 
         vec3 sceneNdc = vec3(sampleUV, sceneDepth) * 2.0 - 1.0;
         vec3 sceneViewPosition = projectAndDivide(gbufferProjectionInverse, sceneNdc);
         float depthDelta = rayPosition.z - sceneViewPosition.z;
 
-        // View-space Z is negative in front of the camera. A negative delta
-        // means the reflection ray has crossed behind the opaque depth surface.
-        if (depthDelta <= 0.0 && depthDelta > -stepLength * 0.75) {
-            float depthConfidence = 1.0 - smoothstep(0.0, stepLength * 0.75, abs(depthDelta));
-            reflectionColor = sceneSample.rgb;
+        // View-space Z is negative in front of the camera. A positive-to-negative
+        // transition brackets the opaque surface and can be refined with two taps.
+        if (depthDelta <= 0.0 && previousDepthDelta > 0.0 && i > 0) {
+            float refineLow = previousTravelDistance;
+            float refineHigh = travelDistance;
+            vec2 hitUV = sampleUV;
+            vec4 hitSample = sceneSample;
+            float hitDepthDelta = depthDelta;
+
+            // Two bounded binary-search steps sharpen the coarse hit without
+            // adopting Unbound's much more expensive high-quality ray budget.
+            for (int refineStep = 0; refineStep < 2; ++refineStep) {
+                float refineDistance = (refineLow + refineHigh) * 0.5;
+                vec3 refineRayPosition = rayOrigin + reflectionDirection * refineDistance;
+                vec4 refineClipPosition = gbufferProjection * vec4(refineRayPosition, 1.0);
+                if (refineClipPosition.w <= 0.0001) break;
+
+                vec3 refineNdc = refineClipPosition.xyz / refineClipPosition.w;
+                vec2 refineUV = refineNdc.xy * 0.5 + 0.5;
+                if (refineUV.x <= 0.001 || refineUV.x >= 0.999 ||
+                    refineUV.y <= 0.001 || refineUV.y >= 0.999) {
+                    break;
+                }
+
+                ivec2 refineDepthPixel = clamp(
+                    ivec2(refineUV * vec2(depthSize)), ivec2(0), depthSize - ivec2(1)
+                );
+                ivec2 refineReflectionPixel = clamp(
+                    ivec2(refineUV * vec2(reflectionSize)), ivec2(0), reflectionSize - ivec2(1)
+                );
+                float refineDepth = texelFetch(depthtex2, refineDepthPixel, 0).r;
+                vec4 refineSample = texelFetch(colortex4, refineReflectionPixel, 0);
+
+                if (refineDepth >= 0.999999 || refineSample.a < 0.5) {
+                    refineLow = refineDistance;
+                    continue;
+                }
+
+                vec3 refineSceneNdc = vec3(refineUV, refineDepth) * 2.0 - 1.0;
+                vec3 refineScenePosition = projectAndDivide(gbufferProjectionInverse, refineSceneNdc);
+                float refineDepthDelta = refineRayPosition.z - refineScenePosition.z;
+                if (refineDepthDelta <= 0.0) {
+                    refineHigh = refineDistance;
+                    hitUV = refineUV;
+                    hitSample = refineSample;
+                    hitDepthDelta = refineDepthDelta;
+                } else {
+                    refineLow = refineDistance;
+                }
+            }
+
+            vec2 edgeDistance = min(hitUV, vec2(1.0) - hitUV);
+            float edgeFade = smoothstep(0.0, 0.08, min(edgeDistance.x, edgeDistance.y));
+            float distanceFade = 1.0 - smoothstep(16.0, maxDistance, refineHigh);
+            float depthConfidence = 1.0 - smoothstep(
+                0.0, stepLength * 0.75, abs(hitDepthDelta)
+            );
             hitConfidence = edgeFade * distanceFade * depthConfidence;
-            return reflectionColor;
+            return hitSample.rgb;
         }
+
+        // If the first coarse sample begins inside geometry, retain the old
+        // conservative tolerance rather than manufacturing a false bracket.
+        if (depthDelta <= 0.0 && depthDelta > -stepLength * 0.75 && sceneSample.a >= 0.5) {
+            vec2 edgeDistance = min(sampleUV, vec2(1.0) - sampleUV);
+            float edgeFade = smoothstep(0.0, 0.08, min(edgeDistance.x, edgeDistance.y));
+            float distanceFade = 1.0 - smoothstep(16.0, maxDistance, travelDistance);
+            float depthConfidence = 1.0 - smoothstep(
+                0.0, stepLength * 0.75, abs(depthDelta)
+            );
+            hitConfidence = edgeFade * distanceFade * depthConfidence;
+            return sceneSample.rgb;
+        }
+
+        previousDepthDelta = depthDelta;
+        previousTravelDistance = travelDistance;
     }
 
     return reflectionColor;

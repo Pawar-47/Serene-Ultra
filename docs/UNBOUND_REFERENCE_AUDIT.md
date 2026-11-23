@@ -228,3 +228,11 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Cross-checked Minecraft 26.3 Vanilla-stock `core/terrain.fsh` (sampled atlas colour multiplied by vertex colour, then fog while preserving alpha), `core/terrain.vsh` (vertex colour multiplied by vanilla lightmap), and `include/fog.glsl` (fog affects RGB while preserving alpha). Those native inputs remain intact; the Unbound surface-alpha treatment is isolated to Iris' water program.
 - Added validator assertions for the Unbound base tint and above-/underwater alpha branches.
 - This is a source-parity correction, not a runtime-verified visual claim. Validate above-water, underwater, shore and transparent-boundary scenes in Iris.
+
+
+## Bounded water SSR hit refinement — 2026-11-23
+- Compared Serene's water SSR with Complementary Unbound's shared reflection method. Unbound's high-quality path uses a substantially larger coarse ray budget and a refinement phase; copying that sample count would be inappropriate for Intel HD 5500.
+- Added a positive-to-negative view-space depth-crossing test to the water SSR ray marcher. A bracketed opaque hit receives exactly two binary refinement steps; the existing 4/6/8 coarse quality presets and 24-block maximum ray distance remain unchanged.
+- Sky fallback, screen-edge fade, distance fade, invalid snapshot alpha rejection and the conservative first-sample-inside-geometry path are preserved.
+- Extended structural validation to require the bounded two-step refinement loop.
+- The extra depth/colour reads occur only after a candidate hit, rather than for every ray step. This is a source-level bounded-cost improvement; actual GPU cost, temporal stability and visual hit quality still require Iris runtime testing.
