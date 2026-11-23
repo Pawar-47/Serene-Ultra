@@ -942,7 +942,7 @@ entity_translucent = sources.get("gbuffers_entities_translucent.fsh", "")
 block_translucent = sources.get("gbuffers_block_translucent.fsh", "")
 for name, source in (("gbuffers_entities_translucent", entity_translucent),
                      ("gbuffers_block_translucent", block_translucent)):
-    for token in ("/* RENDERTARGETS: 0 */", "textureGrad(gtexture", "texture(lightmap",
+    for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
                   "sampler2DShadow shadowtex0", "shadowModelView", "shadowProjection",
                   "calculateForwardLighting", "calculateForwardFog", "outColor = vec4("):
         if token not in source:
