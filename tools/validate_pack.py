@@ -1150,7 +1150,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
 
 for token in ("calculateWaterParallaxUv", "#define POM_STRENGTH",
               "#define POM_QUALITY", "#define POM_DISTANCE",
-              "vMidTexCoord - vTexHalfSize", "textureGrad(normals, baseUv",
+              "vMidTexCoord - vTexHalfSize", "sampleAnisotropicAtlas(normals, baseUv, uvDx, uvDy, spriteBounds)",
               "waterMaterialUv", "appliedWaterParallax > 0.0001",
               "calculateTranslucentNormalMap("):
     if token not in water:
