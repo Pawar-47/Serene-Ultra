@@ -288,7 +288,7 @@ vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out f
 
         // View-space Z is negative in front of the camera. A positive-to-negative
         // transition brackets the opaque surface and can be refined with two taps.
-        if (depthDelta <= 0.0 && previousDepthDelta > 0.0 && i > 0) {
+        if (depthDelta <= 0.0 && previousDepthDelta > 0.0 && i > 0 && sceneSample.a >= 0.5) {
             float refineLow = previousTravelDistance;
             float refineHigh = travelDistance;
             vec2 hitUV = sampleUV;
