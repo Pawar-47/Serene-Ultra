@@ -1102,6 +1102,12 @@ for token in ("#version 130", "/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLI
               "outColor1 = vec4(0.0)"):
     if token not in line_overlay:
         errors.append(f"Line overlay is missing Iris render-stage component: {token}")
+line_vertex = sources.get("gbuffers_line.vsh", "")
+for token in ("#version 130", "gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex"):
+    if token not in line_vertex:
+        errors.append(f"Line vertex stage is missing Iris core-transform-compatible component: {token}")
+if "ftransform()" in line_vertex:
+    errors.append("Line vertex stage must not call compatibility-only ftransform()")
 sky_basic = sources.get("gbuffers_skybasic.fsh", "")
 sky_basic_vertex = sources.get("gbuffers_skybasic.vsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAGE_SUNSET",
