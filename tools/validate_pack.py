@@ -2185,12 +2185,13 @@ for vertex_name in ("gbuffers_water.vsh", "gbuffers_entities_translucent.vsh",
 
 anisotropic_defaults = []
 for fragment_name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
-                       "gbuffers_block_translucent.fsh"):
+                       "gbuffers_block_translucent.fsh", "gbuffers_weather.fsh",
+                       "gbuffers_particles_translucent.fsh"):
     match = re.search(r"^#define ANISOTROPIC_FILTER_QUALITY\s+(\d+)", sources.get(fragment_name, ""), re.M)
     if match:
         anisotropic_defaults.append(match.group(1))
-if len(anisotropic_defaults) != 3 or len(set(anisotropic_defaults)) != 1:
-    errors.append("Translucent passes must share one ANISOTROPIC_FILTER_QUALITY default")
+if len(anisotropic_defaults) != 5 or len(set(anisotropic_defaults)) != 1:
+    errors.append("All five translucent passes must share one ANISOTROPIC_FILTER_QUALITY default")
 
 if errors:
     print("Serene Ultra structural validation FAILED:")
