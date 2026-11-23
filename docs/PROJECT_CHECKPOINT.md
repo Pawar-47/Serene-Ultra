@@ -1586,3 +1586,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - The extended vanilla emitter dispatch now covers unique mapped IDs `32131–32137` and `32140–32152`, plus the existing `10352`/`10608` mineral IDs where applicable. Duplicate redstone/lapis assignments were removed; their existing material IDs remain the sole source of identity.
 - The latest full GitHub Actions validation passed on commit `8d7f334e434de2475ee5767d4e7bd82fe02b13ce`, run `45228817698`: all vertex/fragment stages, configured Iris/LabPBR/POM/water macro branches, alpha-height inspection, program links and structural validation succeeded.
 - This confirms source compilation and structural consistency, not visual/runtime behavior in Minecraft/Iris.
+
+
+### Reference color pipeline implementation — 2026-11-23
+- Compared the supplied Complementary Reimagined `shaders/lib/program/composite5.glsl` and `lib/common.glsl` controls against Serene's final pass. The reference uses a Lottes 2016 tone mapper, linear-to-display transfer, dark-region readability lift, highlight-to-white path, dark desaturation and a separate BSL-style saturation/vibrance pass.
+- Replaced Serene's previous simple HDR shoulder with a Lottes-based display transform. `HDR_LOOK` now selects 8/12/16 input highlight ceilings; existing exposure stops, contrast and RGB gains are preserved. Added user controls for `VIBRANCE`, `TM_WHITE_PATH` and `TM_DARK_DESATURATION`, exposed them in the Color menu and set consistent defaults in all five profiles.
+- Added structural checks for the new functions, menu entries and profile values.
+- Commits: final shader `d1b997dde7a618874f02be764ef545be2d62b1a9`; profile/menu `dda36dee664c33ca0965660df98e0baad01a1cbf`; validator `f830aac6ce58e529cc2dc01c56204e3117579c9d`; feature matrix `1c5dba35e3d83cadfbd4b4810ddba6cdca3a7e91`.
+- Runtime color parity, gamma behavior and HDR display calibration remain unverified; the shader compiler/structural CI run is pending.
