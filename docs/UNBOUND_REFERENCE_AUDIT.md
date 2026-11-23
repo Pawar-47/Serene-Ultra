@@ -290,3 +290,9 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Run #1068 (45110765737) passed all nine stages after generated normals and coated textures were extended to opaque entity models. Entity item frames/glow item frames are explicitly excluded.
 - Added a dedicated CI step that compiles and links the opt-in entity POM branch twice: oldPBR and LabPBR, both with POM_ENTITY_STRENGTH forced to 20. The default entity profile remains POM-off to protect low-end GPUs; this test ensures the optional code path cannot silently rot.
 - Structural validation now requires the CI opt-in POM variants. This is a test-coverage improvement, not a runtime visual verification.
+
+
+## Unbound water octave and phase continuity — 2026-11-23
+- The 0.05 very-large normal octave is optional and adds one sample only in higher quality profiles. The three-scale baseline remains unchanged for low-cost profiles.
+- Stable water coordinates use a 2560-block period; every configured wave-scale preset yields integer repeats across the 1.0, 4.0, 0.25 and 0.05 octaves. Wind multipliers are checked against all configured speed presets to prevent a visible jump at Iris' 3600-second timer wrap.
+- Water parallax is not enabled because the custom normal texture's alpha height encoding has not yet been verified. This avoids silently sampling an undefined height channel.

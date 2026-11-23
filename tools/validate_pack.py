@@ -765,6 +765,18 @@ for octave in (1.0, 4.0, 0.25, 0.05):
     repeats = water_period * octave
     if abs(repeats - round(repeats)) > 1e-6:
         errors.append(f"Water normal octave {octave} does not tile the stable-world period")
+for wave_speed in (15, 30, 45, 60, 75, 90, 120):
+    for wind_multiplier in (40.0, 80.0, 20.0, 20.0):
+        wrapped_cycles = wave_speed * 0.01 * wind_multiplier
+        if abs(wrapped_cycles - round(wrapped_cycles)) > 1e-6:
+            errors.append(f"Water wind speed {wave_speed} causes a timer-wrap phase discontinuity")
+for wave_scale in (50, 75, 100, 125, 150, 200):
+    base_repeats = 2560.0 * 0.03125 * wave_scale * 0.01
+    for octave in (1.0, 4.0, 0.25, 0.05):
+        repeats = base_repeats * octave
+        if abs(repeats - round(repeats)) > 1e-6:
+            errors.append(f"Water wave scale {wave_scale} does not tile octave {octave}")
+
 for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureLod(noisetex, noiseUV, 0.0)",
               "vec3 baseColor = 0.375 * biomeTint", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "WATER_ABSORPTION_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
     if token not in water:
@@ -788,7 +800,7 @@ for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt
               "uniform sampler2D waterNormalTex;",
               "waterNormalTex, waterCoord + wind, waterCoordDx, waterCoordDy",
               "waterCoord * 4.0 - wind * 2.0", "waterCoord * 0.25 - wind * 0.5",
-              "float waveCycles = frameTimeCounter / 3600.0",
+              "float waveCycles = frameTimeCounter / 3600.0", "waveCycles * 40.0",
               "WATER_WAVE_SCALE <= 0",
               "#if WATER_WAVE_DETAIL > 0", "waterCoord * 0.05 - wind * 0.5",
               "geometricNormal + vec3(-slope.x * strength * faceSign",

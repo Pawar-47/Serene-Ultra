@@ -810,3 +810,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - The water-normal implementation now uses a 2560-block stable-world period. This is required for the optional 0.05 very-large normal octave to repeat at the wrap boundary: at the 0.03125 world scale, the four octave frequencies (1.0, 4.0, 0.25, 0.05) produce integer repeat counts (80, 320, 20, 4).
 - Updated structural validation to assert the 2560-block integer-camera wrap, the fractional-camera offset, and integer repeat counts for every selected octave. Also added checks that WATER_WAVE_DETAIL is exposed with a tooltip and remains disabled on Ultra-Light/Smooth while enabled only on Ultra/HDR profiles.
 - This is a validator correction, not a shader behavior change. Await the new CI result before marking the expanded water-normal branch validated.
+
+
+## Unbound water-normal octave validation — 2026-11-23
+- Run #1073 (45111506086) passed all nine stages after the validator was updated from the old 256-block camera period to the 2560-block stable period and taught to verify the optional 0.05 octave.
+- WATER_WAVE_DETAIL adds one texture lookup only in Ultra/HDR/Ultra-HDR. Ultra-Light and Smooth retain the three-sample baseline.
+- Structural validation now checks all six WATER_WAVE_SCALE presets against all four octave frequencies and all seven WATER_WAVE_SPEED presets against integer wind cycles at Iris' 3600-second timer wrap.
+- The language tooltip now describes WATER_WAVE_SPEED as a relative speed control, not an inaccurate literal cycle count.
+- Water parallax remains deferred until the custom normal texture's alpha/height data can be verified. Runtime visual and performance calibration remain pending.
