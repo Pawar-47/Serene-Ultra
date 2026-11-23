@@ -158,7 +158,7 @@ vec2 calculateWaterParallaxUv(
 
     vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
     vec2 localUv = clamp((baseUv - spriteBounds.xy) / tileSize, vec2(0.0), vec2(1.0));
-    vec4 initialNormal = textureGrad(normals, baseUv, uvDx, uvDy);
+    vec4 initialNormal = sampleAnisotropicAtlas(normals, baseUv, uvDx, uvDy, spriteBounds);
     if (initialNormal.a >= 0.9995) return baseUv;
 
     vec2 totalOffset = tangentView.xy / max(-tangentView.z, 0.12) * heightScale;
@@ -185,7 +185,7 @@ vec2 calculateWaterParallaxUv(
         vec2 sampleUv = clamp(
             spriteBounds.xy + currentLocal * tileSize, lowerBound, upperBound
         );
-        float sampledHeight = textureGrad(normals, sampleUv, uvDx, uvDy).a;
+        float sampledHeight = sampleAnisotropicAtlas(normals, sampleUv, uvDx, uvDy, spriteBounds).a;
         currentSurfaceDepth = 1.0 - sampledHeight;
     }
     float beforeDelta = previousLayerDepth - previousSurfaceDepth;
