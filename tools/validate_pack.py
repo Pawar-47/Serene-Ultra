@@ -717,6 +717,19 @@ for token in ("block.32160=minecraft:stone", "block.32161=minecraft:deepslate",
     if token not in block_properties:
         errors.append(f"Missing Complementary-guided stone/earth material mapping: {token}")
 
+# OldPBR/vanilla terrain uses conservative block-ID porosity when no LabPBR porosity code exists.
+for token in ("float sereneVanillaMaterialPorosity(int materialId)",
+              "if (materialId == 32160) return 0.14", "if (materialId == 32161) return 0.12",
+              "if (materialId == 32162) return 0.30", "if (materialId == 32163) return 0.88",
+              "if (materialId == 32164) return 0.03", "if (materialId == 32165) return 0.62",
+              "if (materialId == 32166) return 0.82",
+              "materialPorosity = sereneVanillaMaterialPorosity(vMaterialId)"):
+    if token not in sources.get("gbuffers_terrain.fsh", ""):
+        errors.append(f"Terrain vanilla porosity fallback is missing component: {token}")
+for token in ("block.32165=minecraft:oak_planks", "block.32166=minecraft:sand"):
+    if token not in block_properties:
+        errors.append(f"Missing vanilla wetness fallback material mapping: {token}")
+
 terrain_material_source = sources.get("gbuffers_terrain.fsh", "")
 for token in ("vMaterialId == 32160", "pow(albedo.g, 4.0) * 2.0",
               "vMaterialId == 32161", "pow(albedo.g, 1.5) * 0.55",
