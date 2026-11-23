@@ -851,6 +851,10 @@ for token in ("flat in vec2 vMidTexCoord", "flat in vec2 vTexHalfSize",
         errors.append(f"Atlas-safe portal distortion path is missing component: {token}")
 for token in ("vMaterialId == 32008", "vMaterialId == 32001", "vMaterialId >= 31000 && vMaterialId <= 31031",
               "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
+              "float closeGlassFactor = (1.0 - smoothstep(0.5, 4.0, glassCameraDistance)) * 0.5",
+              "translucentAlbedo.a * translucentAlbedo.a",
+              "float closeReflectionFade = smoothstep(0.3, 1.8, glassCameraDistance)",
+              "glassFresnel * materialReflectionScale * closeReflectionFade",
               "sampleTranslucentScreenReflection(", "GLASS_REFLECTION_STRENGTH",
               "PORTAL_EMISSION_STRENGTH", "float portalEmissionSignal = 0.0", "portalEmissionSignal = max(translucentAlbedo.r, 0.0)", "float portalEmission = isPortal"):
     if token not in water:

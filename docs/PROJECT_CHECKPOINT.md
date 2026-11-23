@@ -1107,3 +1107,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Compared the water foam dispatch with Complementary Unbound's `water.glsl`: its shoreline foam branch explicitly requires material ID 32000 (actual fluid water), while cauldron water is classified separately.
 - Split `isFluidWater` from the broader water-surface predicate. Flowing water and water cauldrons retain shared depth, refraction, absorption and underwater treatment, but shoreline foam calculation/application now runs only on actual fluid water.
 - Added validator assertions for both the foam-generation and foam-composition gates. This is a source-parity correction; runtime shoreline/cauldron appearance still needs Iris testing.
+
+
+## Near-camera glass response — 2026-11-23
+- Compared the working Complementary reference's `translucentTweaks.glsl`: it reduces glass reflectivity within roughly 1.8 blocks and slightly reduces pane opacity within 4 blocks to avoid an overpowering near-camera surface.
+- Serene now applies the same bounded distance response to clear, stained and tinted glass: reflection fades to zero at very close range, while alpha blends halfway toward alpha-squared at point-blank distance and returns to the sampled alpha by four blocks.
+- The change uses the existing view-space position and adds no texture reads, loops or render targets. CI asserts both distance gates. Runtime tuning across panes, connected-texture packs and resource-pack alpha variants remains outstanding.

@@ -325,3 +325,7 @@ Glass and ice retain Fresnel-weighted sky/horizon environment reflections when `
 
 ### Flowing-water-only shoreline foam — 2026-11-23
 Complementary Unbound's water material code gates shoreline foam to material ID 32000 (actual fluid water). Serene now keeps the shared `isWater` surface treatment for fluid water and water cauldrons, but uses a separate `isFluidWater` predicate for foam generation and composition. Water cauldrons therefore retain depth/refraction/absorption/underwater response without receiving shoreline foam. Structural regression checks cover both gates; runtime validation remains pending.
+
+
+### Near-camera glass response — 2026-11-23
+The supplied Complementary reference's `materialMethods/translucentTweaks.glsl` fades glass reflection toward zero inside 1.8 blocks and slightly reduces opacity inside 4 blocks. Serene now mirrors that close-range response for clear/stained/tinted glass using `length(vViewPosition)`: reflection uses `smoothstep(0.3, 1.8, distance)`, and alpha blends toward alpha-squared with a maximum 0.5 weight at the camera. It reuses the existing position varying and adds no texture samples. Runtime visual calibration remains pending.

@@ -720,11 +720,25 @@ void main() {
         glassReflectionLinear = sampleEnvironmentReflection(glassReflectionDirection);
         #endif
         float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : ((isClearGlass || isStainedGlass) ? 0.50 : 0.32));
+        float glassCameraDistance = length(vViewPosition);
+        float closeReflectionFade = smoothstep(0.3, 1.8, glassCameraDistance);
         float glassReflectionWeight = clamp(
-            glassFresnel * materialReflectionScale * (GLASS_REFLECTION_STRENGTH * 0.01),
+            glassFresnel * materialReflectionScale * closeReflectionFade * (GLASS_REFLECTION_STRENGTH * 0.01),
             0.0, 0.85
         );
         litLinear = mix(litLinear, glassReflectionLinear, glassReflectionWeight);
+    }
+
+    if (isGlass) {
+        // Complementary's translucent tweaks slightly reduce glass opacity
+        // at very close range to avoid an overpowering near-camera pane.
+        float glassCameraDistance = length(vViewPosition);
+        float closeGlassFactor = (1.0 - smoothstep(0.5, 4.0, glassCameraDistance)) * 0.5;
+        translucentAlbedo.a = mix(
+            translucentAlbedo.a,
+            translucentAlbedo.a * translucentAlbedo.a,
+            closeGlassFactor
+        );
     }
 
     if (isWater) {
