@@ -284,7 +284,9 @@ for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = RGBA8",
               "vShadowMaterialId == 32004", "vShadowMaterialId == 30020"):
     if token not in shadow_fragment:
         errors.append(f"Iris shadowcolor water caustics path is missing component: {token}")
-for token in ("shadowTranslucent=true", "blend.shadow.shadowcolor0=off", "flip.shadow.shadowcolor0=false"):
+if "blend.shadow.shadowcolor0" in props:
+    errors.append("Invalid Iris buffer-blend target: shadowcolor0 is not a colortex or legacy render-target index")
+for token in ("shadowTranslucent=true", "flip.shadow.shadowcolor0=false"):
     if token not in props:
         errors.append(f"Iris translucent shadowcolor configuration is missing: {token}")
 

@@ -1188,3 +1188,10 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - A closer read of Complementary's current Unbound-style water branch showed that the 0.75 alpha reduction previously attributed to modern Unbound is not applied for current Minecraft versions; the underwater branch preserves the sampled texture alpha.
 - Removed Serene's extra `translucentAlbedo.a *= 0.75` underwater multiplier. Above water, Unbound style 3 continues to force alpha to 0.98 and then applies depth opacity; underwater Serene now keeps the sampled alpha before its grazing-angle blend.
 - Updated structural validation to reject the obsolete multiplier and require the above-water-only 0.98 assignment. Runtime underwater/waterline validation remains outstanding.
+
+
+### Iris buffer-blend parser startup failure — 2026-11-23
+- User-reported Iris startup error: `Failed to parse buffer blend! Index = -1`, with shaderpack visuals remaining vanilla.
+- Traced Iris 26.1 `ShaderProperties` parser: for `blend.<program>.<buffer>`, the buffer name must resolve to a legacy render target or a numeric `colortexN`. `shadowcolor0` resolves to index -1 and is rejected. The offending directive was `blend.shadow.shadowcolor0=off`.
+- Removed the invalid buffer-blend override. Retained `shadowTranslucent=true` and the separate `flip.shadow.shadowcolor0=false` setting; no color-buffer blend directive is needed for the shadow-color target.
+- Added a structural regression guard to reject any future `blend.shadow.shadowcolor0` directive. This is a pack-loading fix; test the new alpha in Iris to confirm startup proceeds past the reported parser error.
