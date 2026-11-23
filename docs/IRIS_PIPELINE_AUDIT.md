@@ -61,13 +61,13 @@ Iris fallback entries remain for standard subprograms without dedicated source p
 
 Source presence is not proof of correct runtime routing, visual behavior, or performance. In particular, the forward water/weather/hand-water and translucent entity/block/particle paths still require in-game verification.
 
-## High-priority attachment/order hazard to resolve
+## Historical attachment/order hazard (source-level correction committed; runtime pending)
 
 Serene previously wrote deferred-lit opaque output to `colortex3` and copied it over `colortex0` in composite. That design risked overwriting geometry rendered after deferred. This design has since been replaced with Iris main/alternate buffer flipping; the remainder of this section is retained as the historical diagnosis.
 
-Iris documents that translucent terrain/water, weather and hand-water are among the gbuffers programs that execute after deferred. In the current pack, those program names are absent, so Iris routes them through fallback shaders: `gbuffers_water` → `gbuffers_terrain`, `gbuffers_weather` → `gbuffers_textured_lit`, and `gbuffers_hand_water` → `gbuffers_hand`. These fallback shaders are not tailored to the full water/weather material requirements.
+At the time this hazard was first diagnosed, dedicated `gbuffers_water`, `gbuffers_weather` and `gbuffers_hand_water` files were absent, so Iris used the fallbacks `gbuffers_terrain`, `gbuffers_textured_lit` and `gbuffers_hand`, respectively. **That absence is historical and no longer describes current `main`: all three dedicated program pairs now exist.**
 
-This created a likely overwrite hazard: post-deferred geometry rendered into the scene-color path could be replaced by the subsequent composite copy. The source-level hazard was addressed in the pipeline correction below; in-game behaviour remains to be confirmed.
+The original architecture also risked replacing post-deferred geometry with a later composite copy of an opaque-only scene. The source-level attachment flow was corrected using Iris main/alternate buffer flips. Runtime behavior—including alpha blending, depth ordering and actual scene preservation—still needs in-game confirmation.
 
 Historical investigation checklist (the attachment-flow correction is now committed). Before adding feature-specific water/weather shading:
 1. Inspect Complementary's actual `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, relevant composite passes and their `shaders.properties` blending/ordering/target directives.
