@@ -50,6 +50,7 @@ void main() {
         displacedViewPosition.xyz += mat3(gl_ModelViewMatrix)
             * vec3(wind.x, 0.0, wind.y);
         gl_Position = gl_ProjectionMatrix * displacedViewPosition;
+        viewPosition = displacedViewPosition;
         vPlayerPosition.xz += wind;
     }
 #endif
