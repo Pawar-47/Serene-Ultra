@@ -689,3 +689,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Sky fallback, screen-edge fade, distance fade, invalid snapshot alpha rejection and the conservative first-sample-inside-geometry path are preserved.
 - Extended structural validation to require the bounded two-step refinement loop.
 - The extra depth/colour reads occur only after a candidate hit, rather than for every ray step. This is a source-level bounded-cost improvement; actual GPU cost, temporal stability and visual hit quality still require Iris runtime testing.
+
+
+## Water SSR refinement validation — 2026-11-23
+- Commit `d9413778a0f03627a23171cbabac178139a80790` added two bounded binary refinement steps after a positive-to-negative view-space depth crossing in the water SSR marcher.
+- Follow-up `235415b1fae9f8a8dfb7a9665b441def4cc7e6f9` explicitly rejects invalid deferred-snapshot alpha at the coarse hit, preventing hand/transparent-mask pixels from being returned as reflection hits.
+- CI run `45107408270` (run #1045) passed all nine stages on the follow-up commit. This validates GLSL compilation and structural assertions only; water reflection quality, temporal stability and Intel HD 5500 cost remain unmeasured in Iris.
