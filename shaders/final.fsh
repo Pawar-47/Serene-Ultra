@@ -8,6 +8,11 @@ uniform sampler2D depthtex0;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2D noisetex;
 uniform int frameCounter;
+uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferPreviousModelView;
+uniform mat4 gbufferPreviousProjection;
+uniform vec3 cameraPosition;
+uniform vec3 previousCameraPosition;
 
 in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -31,6 +36,8 @@ layout(location = 0) out vec4 outColor;
 #define CHROMATIC_ABERRATION 0 // [0 10 20 30 40 50 60 70 80 90 100] Radial lens colour separation
 #define VIGNETTE_STRENGTH 0 // [0 10 20 30 40 50 60 70 80 90 100] Edge darkening strength
 #define FILM_GRAIN_STRENGTH 0 // [0 5 10 15 20 25 30 40 50] Animated fine-grain intensity
+#define MOTION_BLUR_STRENGTH 0 // [0 5 10 15 20 25 30 40 50 60 75 100] Camera-motion blur strength
+#define MOTION_BLUR_QUALITY 4 // [0 4 6 8] Camera-motion blur samples
 
 // Edge-adaptive FXAA using the final scene buffer. It avoids temporal history
 // and extra render targets, so it remains usable on older integrated GPUs.
@@ -135,6 +142,60 @@ vec3 sampleBloomChain(vec2 uv) {
 }
 
 
+
+vec2 getPreviousFrameUv(vec2 uv, float depth) {
+    vec4 currentClip = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec4 currentView = gbufferProjectionInverse * currentClip;
+    vec4 previousClip;
+
+    if (depth >= 0.999999) {
+        vec3 currentRay = normalize(currentView.xyz / max(abs(currentView.w), 0.000001));
+        vec3 playerRay = normalize(mat3(gbufferModelViewInverse) * currentRay);
+        vec3 previousViewRay = normalize(mat3(gbufferPreviousModelView) * playerRay);
+        previousClip = gbufferPreviousProjection * vec4(previousViewRay, 0.0);
+    } else {
+        vec3 playerPosition = (gbufferModelViewInverse * currentView).xyz / max(abs(currentView.w), 0.000001);
+        vec3 previousPlayerPosition = playerPosition + cameraPosition - previousCameraPosition;
+        vec4 previousViewPosition = gbufferPreviousModelView * vec4(previousPlayerPosition, 1.0);
+        previousClip = gbufferPreviousProjection * previousViewPosition;
+    }
+
+    if (previousClip.w <= 0.0001) return uv;
+    return previousClip.xy / previousClip.w * 0.5 + 0.5;
+}
+
+// Reprojects static world points through Iris' previous camera matrices and
+// gathers along the resulting camera-motion vector. Depth rejection protects
+// silhouettes; moving entities do not have object-space velocity in this path.
+vec3 sampleCameraMotionBlur(vec2 uv, vec3 centerColor) {
+#if MOTION_BLUR_STRENGTH > 0 && MOTION_BLUR_QUALITY > 0
+    float centerDepthRaw = texture(depthtex0, uv).r;
+    vec2 previousUv = getPreviousFrameUv(uv, centerDepthRaw);
+    vec2 motion = uv - previousUv;
+    motion *= float(MOTION_BLUR_STRENGTH) * 0.01;
+    float motionLength = length(motion);
+    if (motionLength < (1.0 / max(viewWidth, viewHeight)) * 0.75) return centerColor;
+
+    motion = clamp(motion, vec2(-0.035), vec2(0.035));
+    float centerDepth = getLinearViewDepth(uv);
+    float depthTolerance = max(0.08, centerDepth * 0.02);
+    vec3 accumulated = centerColor * 2.0;
+    float totalWeight = 2.0;
+
+    for (int i = 0; i < MOTION_BLUR_QUALITY; ++i) {
+        float alongMotion = (float(i) + 0.5) / float(MOTION_BLUR_QUALITY) - 0.5;
+        vec2 sampleUv = clamp(uv - motion * alongMotion, vec2(0.001), vec2(0.999));
+        float sampleDepth = getLinearViewDepth(sampleUv);
+        float depthWeight = exp(-abs(sampleDepth - centerDepth) / depthTolerance);
+        accumulated += texture(colortex0, sampleUv).rgb * depthWeight;
+        totalWeight += depthWeight;
+    }
+    return accumulated / max(totalWeight, 0.0001);
+#else
+    return centerColor;
+#endif
+}
+
 vec3 applyChromaticAberration(vec3 source, vec2 uv, vec2 texelSize) {
 #if CHROMATIC_ABERRATION > 0
     vec2 radial = uv - 0.5;
@@ -214,6 +275,7 @@ void main() {
     color += bloom * (float(BLOOM_STRENGTH) * 0.01);
 #endif
 
+    color = sampleCameraMotionBlur(vTexCoord, color);
     color = applyChromaticAberration(color, vTexCoord, texelSize);
 
     // Exposure is expressed in photographic stops.
