@@ -127,6 +127,24 @@ jobs:
                /^\/\/#define ENTITY_GN_AND_CT/ { print "#define ENTITY_GN_AND_CT"; next }
                { print }' shaders/gbuffers_entities.fsh > "$tmpdir/entities-pom-labpbr.frag"
           glslangValidator -l "$tmpdir/entities.vert" "$tmpdir/entities-pom-labpbr.frag"
+      - name: Compile opt-in Unbound water wave detail
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          cp shaders/gbuffers_water.vsh "$tmpdir/water.vert"
+
+          # Compile the fourth very-large normal octave in the oldPBR branch.
+          sed 's/^#define WATER_WAVE_DETAIL 0.*/#define WATER_WAVE_DETAIL 1/' \
+            shaders/gbuffers_water.fsh > "$tmpdir/water-detail-oldpbr.frag"
+          glslangValidator -l "$tmpdir/water.vert" "$tmpdir/water-detail-oldpbr.frag"
+
+          # Compile the same opt-in octave with LabPBR normal-map handling.
+          awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next }
+               /^#define WATER_WAVE_DETAIL 0/ { print "#define WATER_WAVE_DETAIL 1"; next }
+               { print }' shaders/gbuffers_water.fsh > "$tmpdir/water-detail-labpbr.frag"
+          glslangValidator -l "$tmpdir/water.vert" "$tmpdir/water-detail-labpbr.frag"
       - name: Link vertex and fragment shader programs
         shell: bash
         run: |

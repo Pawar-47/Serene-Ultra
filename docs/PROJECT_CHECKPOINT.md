@@ -818,3 +818,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Structural validation now checks all six WATER_WAVE_SCALE presets against all four octave frequencies and all seven WATER_WAVE_SPEED presets against integer wind cycles at Iris' 3600-second timer wrap.
 - The language tooltip now describes WATER_WAVE_SPEED as a relative speed control, not an inaccurate literal cycle count.
 - Water parallax remains deferred until the custom normal texture's alpha/height data can be verified. Runtime visual and performance calibration remain pending.
+
+
+## Opt-in water-wave branch CI coverage — 2026-11-23
+- Run #1074 (45111618598) passed all nine stages, including all wave-scale and timer-wrap math checks.
+- Added a dedicated CI step to force WATER_WAVE_DETAIL=1 and compile/link the optional fourth 0.05 octave in both oldPBR and LabPBR branches. This prevents the higher-profile-only water code from being validated only in its default-off configuration.
+- Water parallax remains deferred until alpha-height data is verified; visual water calibration and target-GPU profiling are still pending.

@@ -1106,6 +1106,9 @@ if "MC_TEXTURE_FORMAT_LAB_PBR 1" not in workflow_text:
     errors.append("CI must compile entity POM with the LabPBR format branch")
 if "ENTITY_GN_AND_CT" not in workflow_text:
     errors.append("CI must compile the opt-in entity generated-normal/coating branch")
+if "Compile opt-in Unbound water wave detail" not in workflow_text or "WATER_WAVE_DETAIL 1" not in workflow_text:
+    errors.append("CI must compile the optional fourth Unbound water-normal octave")
+
 for option in ("GENERATED_NORMAL_STRENGTH", "COATED_TEXTURE_STRENGTH"):
     definitions = []
     for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
