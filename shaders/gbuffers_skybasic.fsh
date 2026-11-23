@@ -58,9 +58,9 @@ vec3 reconstructPlayerDirection() {
 #define NEBULA_STRENGTH 35 // [0 10 20 35 50 65 80 100] Procedural night-sky nebulae
 #define RAINBOW_STRENGTH 45 // [0 10 25 40 55 70 85 100] Atmospheric rainbow arc
 #define SUN_SIZE 100 // [50 75 100 125 150 175 200] Procedural sun angular size
-#define SUN_INTENSITY 100 // [0 25 50 75 100 125 150 200] Procedural sun disc brightness
-#define SUN_GLOW_STRENGTH 45 // [0 25 50 75 100 125 150] Soft solar halo intensity
-#define SKY_TWILIGHT_STRENGTH 60 // [0 25 50 75 100 125 150] Twilight colour intensity
+#define SUN_INTENSITY 100 // [0 25 50 75 100 110 115 125 150 200] Procedural sun disc brightness
+#define SUN_GLOW_STRENGTH 45 // [0 25 30 40 50 55 60 75 100 125 150] Soft solar halo intensity
+#define SKY_TWILIGHT_STRENGTH 60 // [0 25 50 55 60 65 70 75 100 125 150] Twilight colour intensity
 #define CLOUD_SHAPE 0 // [0 1 2] Cumulus, stratus or wispy cloud morphology
 #define CLOUD_SIZE 100 // [50 75 100 125 150 200] Cloud feature size
 
