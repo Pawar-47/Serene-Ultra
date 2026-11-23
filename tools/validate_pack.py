@@ -910,7 +910,9 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape",
               "uniform int isEyeInWater", "uniform float alphaTestRef",
               "WEATHER_TEX_OPACITY", "rainTexOpacity", "snowTexOpacity",
-              "weatherColor.a < max(0.1, alphaTestRef)", "isEyeInWater == 3"):
+              "weatherColor.a < max(0.1, alphaTestRef)", "isEyeInWater == 3",
+              "sampleSereneCloudShadow(vPlayerPosition, weatherLightDirection, weatherDayFactor)",
+              "weatherSkyLight * 0.45", "weatherSkyTint", "CLOUD_SHADOW_STRENGTH"):
     if token not in weather:
         errors.append(f"Forward weather shader is missing Iris fog/light component: {token}")
 if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in weather:
