@@ -1,6 +1,5 @@
 #version 330 compatibility
 
-uniform sampler2D gtexture;
 uniform float alphaTestRef;
 uniform int isEyeInWater;
 uniform vec3 fogColor;
@@ -12,7 +11,6 @@ uniform int fogShape;
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 
-in vec2 vTexCoord;
 in vec4 vVertexColor;
 in vec3 vViewPosition;
 
@@ -37,9 +35,10 @@ float calculateCloudFog(float distanceToCamera) {
 void main() {
     if (isEyeInWater != 0) discard;
 
-    // Match the reference path: texture RGB is retained; vertex alpha modulates
-    // cloud opacity without tinting the cloud atlas a second time.
-    vec4 cloudColor = texture(gtexture, vTexCoord) * vec4(vec3(1.0), vVertexColor.a);
+    // Minecraft 26.3's cloud mesh uses Iris ShaderKey.CLOUDS / POSITION_COLOR.
+    // The vertex color already contains CloudColor and the generated face shading;
+    // there is no cloud atlas UV in this vertex format.
+    vec4 cloudColor = vVertexColor;
     if (cloudColor.a < alphaTestRef) discard;
 
     // Keep vanilla cloud texture/vertex lighting intact. Clouds are an overlay,
@@ -69,7 +68,7 @@ void main() {
     cloudLinear *= mix(0.72, 1.12, solarElevation);
     cloudLinear += cloudLinear * silverLining * (0.35 + 0.45 * solarElevation);
 
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateCloudFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     cloudColor.rgb = pow(max(mix(cloudLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));

@@ -38,7 +38,7 @@ void main() {
     // Spider/enderman/dragon eyes are emissive overlays. Mark the pixel as
     // ineligible for opaque deferred lighting so the body normal behind it
     // cannot darken the emissive eye texture.
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateEyeFog(fogDistance);
     vec3 eyeLinear = pow(max(emissiveColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));

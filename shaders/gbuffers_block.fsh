@@ -300,7 +300,7 @@ void main() {
     // Sign text is already vertex-colored and should not inherit the wooden
     // sign's directional shading. Bypass deferred lighting and fog it here.
     if (signText) {
-        float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+        float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
         float fogFactor = calculateBlockFog(fogDistance);
         vec3 textLinear = pow(max(albedo.rgb, vec3(0.0)), vec3(2.2));
         vec3 fogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));

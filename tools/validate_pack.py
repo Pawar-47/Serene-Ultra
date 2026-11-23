@@ -921,6 +921,30 @@ if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
 if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in water:
     errors.append("Iris cylindrical fog must use max(horizontal distance, absolute vertical distance)")
+
+# Every fragment stage that implements Iris fog must use the stock cylindrical
+# distance metric: max(horizontal distance, absolute vertical distance). The
+# horizontal-only approximation under-fogs steep upward/downward view rays.
+cylindrical_fog_metric = re.compile(
+    r"max\s*\(\s*length\s*\(\s*(\w+)\.xz\s*\)\s*,\s*abs\s*\(\s*\1\.y\s*\)\s*\)"
+)
+for fog_path in SHADERS.rglob("*.fsh"):
+    fog_source = fog_path.read_text(encoding="utf-8")
+    if re.search(r"\bfogShape\b", fog_source) and not cylindrical_fog_metric.search(fog_source):
+        errors.append(
+            f"{fog_path.relative_to(ROOT)}: cylindrical fog must use "
+            "max(length(viewPosition.xz), abs(viewPosition.y))"
+        )
+
+# Minecraft 26.3 Iris CLOUDS is POSITION_COLOR, not a textured terrain vertex format.
+cloud_vertex = sources.get("gbuffers_clouds.vsh", "")
+cloud_fragment = sources.get("gbuffers_clouds.fsh", "")
+if "gl_MultiTexCoord0" in cloud_vertex or "vTexCoord" in cloud_vertex:
+    errors.append("gbuffers_clouds vertex stage must not read texture coordinates on the 26.3 POSITION_COLOR path")
+if "gtexture" in cloud_fragment or "texture(gtexture" in cloud_fragment:
+    errors.append("gbuffers_clouds fragment stage must use the 26.3 vertex color, not a cloud atlas sampler")
+if "vec4 cloudColor = vVertexColor;" not in cloud_fragment:
+    errors.append("gbuffers_clouds must preserve the CloudColor/face shading carried by POSITION_COLOR")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
               "vec3 sampleTranslucentShadow(", "float centerShadow0 = texture(shadowtex0",
               "float centerShadow1 = texture(shadowtex1",

@@ -314,7 +314,7 @@ void main() {
     // attenuated by contact AO or the celestial shadow term.
     litLinear += albedoLinear * (emissionData.r * 5.0);
 
-    float fogDistance = (fogShape == 1) ? length(viewPosition.xz) : length(viewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(viewPosition.xz), abs(viewPosition.y)) : length(viewPosition);
     float fogFactor = calculateFogFactor(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     litLinear = mix(litLinear, fogColorLinear, fogFactor);

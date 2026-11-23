@@ -117,7 +117,7 @@ void main() {
 
     vec3 albedoLinear = pow(max(albedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = calculateForwardLighting(albedoLinear);
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateForwardFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     litLinear = mix(litLinear, fogColorLinear, fogFactor);

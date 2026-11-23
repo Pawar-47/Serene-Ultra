@@ -39,7 +39,7 @@ void main() {
     // without a lighting path). Preserve the supplied texture/vertex color and
     // prevent deferred from borrowing the opaque surface normal behind it.
     vec3 colorLinear = pow(max(texturedColor.rgb, vec3(0.0)), vec3(2.2));
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateTexturedFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     texturedColor.rgb = pow(max(mix(colorLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));

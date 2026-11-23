@@ -29,7 +29,7 @@ float calculateBasicFog(float distanceToCamera) {
 }
 
 void main() {
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateBasicFog(fogDistance);
     vec3 colorLinear = pow(max(vVertexColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 fogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));

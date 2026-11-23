@@ -181,7 +181,7 @@ void main() {
 
     vec3 particleLinear = pow(max(particle.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = particleLinear * (ambient + direct) + particleLinear * emission;
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateParticleFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     particle.rgb = pow(max(mix(litLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));

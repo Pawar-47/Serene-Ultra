@@ -39,7 +39,7 @@ void main() {
     vec3 tintLinear = pow(max(entityColor.rgb, vec3(0.0)), vec3(2.2));
     beamLinear = mix(beamLinear, tintLinear, entityColor.a);
 
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateLightningFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     beamColor.rgb = pow(max(mix(beamLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));
