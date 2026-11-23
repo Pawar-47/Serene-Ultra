@@ -6,7 +6,7 @@ float sampleSereneCloudShadow(
     vec3 worldLightDirection,
     float dayFactor
 ) {
-#if CLOUD_SHADOW_STRENGTH > 0
+#if CLOUD_SHADOW_STRENGTH > 0 && VOLUMETRIC_CLOUDS > 0
     if (dayFactor <= 0.001 || worldLightDirection.y <= 0.02) return 1.0;
 
     // 62500 * 0.0016 = 100 base repeats; 100 * 2.73 = 273 detail repeats.
@@ -16,6 +16,7 @@ float sampleSereneCloudShadow(
     vec2 stableWorldXZ = sereneStableWorldXZ(playerPosition, CLOUD_SHADOW_WORLD_PERIOD);
     float sunHeight = max(worldLightDirection.y, 0.20);
     float receiverWorldY = float(cameraPositionInt.y) + cameraPositionFract.y + playerPosition.y;
+    if (receiverWorldY >= float(CLOUD_ALTITUDE)) return 1.0;
     float cloudHeightAboveReceiver = max(float(CLOUD_ALTITUDE) - receiverWorldY, 16.0);
     vec2 cloudOffset = worldLightDirection.xz * (cloudHeightAboveReceiver / sunHeight);
     float offsetLength = length(cloudOffset);
@@ -26,13 +27,16 @@ float sampleSereneCloudShadow(
     vec2 cloudWorldXZ = mod(stableWorldXZ + cloudOffset, vec2(CLOUD_SHADOW_WORLD_PERIOD));
     vec2 cloudUv = cloudWorldXZ * CLOUD_SHADOW_UV_SCALE + wind + vec2(0.0, 0.11);
     float broadNoise = texture(noisetex, cloudUv).r;
+    float cloudNoise = broadNoise;
+#if CLOUD_SHADOW_STRENGTH >= 50
     float detailNoise = texture(noisetex, cloudUv * CLOUD_SHADOW_DETAIL_SCALE + vec2(0.37, 0.19)).g;
     float detailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
-    float cloudNoise = mix(
+    cloudNoise = mix(
         broadNoise,
         broadNoise * 0.72 + detailNoise * 0.28,
         detailStrength
     );
+#endif
 
     float coverage = mix(
         float(CLOUD_COVERAGE) * 0.01,
