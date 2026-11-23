@@ -1312,7 +1312,25 @@ for token in ("/* RENDERTARGETS: 0,1,2,3 */", "uniform int blockEntityId",
               "calculateBlockFog", "outEmissionData"):
     if token not in block_shader:
         errors.append(f"Block-entity shader is missing Iris blockEntityId component: {token}")
-if block_shader.index("outLightmapData = vec4(vanillaLight, skyLight)") < block_shader.index("if (blockEntityId == 5020)"):
+
+# Deferred coloured emissive bounce must remain depth/normal gated and profile controlled.
+deferred_shader = sources.get("deferred.fsh", "")
+for token in ("#define EMISSIVE_BOUNCE_STRENGTH", "sampleEmissiveColorBounce",
+              "sourceEmission.r * 5.0", "worldDistance > 2.75",
+              "texture(colortex0, sampleUv)"):
+    if token not in deferred_shader:
+        errors.append(f"Deferred emissive bounce is missing required component: {token}")
+if "EMISSIVE_BOUNCE_STRENGTH" not in properties:
+    errors.append("Emissive bounce must be exposed in the shader Quality menu")
+for profile, expected in (("Ultra-Light", "EMISSIVE_BOUNCE_STRENGTH:0"),
+                          ("Smooth", "EMISSIVE_BOUNCE_STRENGTH:20"),
+                          ("Ultra", "EMISSIVE_BOUNCE_STRENGTH:45"),
+                          ("HDR", "EMISSIVE_BOUNCE_STRENGTH:55"),
+                          ("Ultra-HDR", "EMISSIVE_BOUNCE_STRENGTH:65")):
+    if expected not in properties:
+        errors.append(f"{profile} profile is missing emissive bounce budget: {expected}")
+
+if block_shader.index("outLightmapData = vec4(vanillaLight") < block_shader.index("if (blockEntityId == 5020)"):
     errors.append("Block-entity lightmap output must be written after conduit lightmap boost")
 if "float goldGreenSquared = albedo.g * albedo.g;" not in block_shader:
     errors.append("Bell gold smoothness must use the block-entity color.g squared reference mapping")
