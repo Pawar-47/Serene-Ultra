@@ -216,3 +216,6 @@ option.CLOUD_DENSITY.comment = Controls optical depth and cloud opacity through 
 
 option.CLOUD_SPEED = Cloud Wind Speed
 option.CLOUD_SPEED.comment = Controls the world-stable cloud drift and matching projected cloud-shadow motion.
+
+option.FOG_HEIGHT_STRENGTH = Height Fog Strength
+option.FOG_HEIGHT_STRENGTH.comment = Adds altitude-aware atmospheric haze to all rendered geometry in the final composite. Rain increases density; dimensions without skylight retain their native fog.

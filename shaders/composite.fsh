@@ -14,6 +14,9 @@ uniform mat4 gbufferModelViewInverse;
 
 uniform vec3 skyColor;
 uniform vec3 fogColor;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
+uniform float rainStrength;
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
@@ -29,6 +32,7 @@ layout(location = 0) out vec4 outColor;
 #define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
 #define SCREEN_GI_STRENGTH 25 // [0 5 10 15 20 25 30 35 40 45 50] Screen-space local colour bounce
 #define SCREEN_GI_QUALITY 8 // [0 4 8 12] Number of depth-aware colour-bounce samples
+#define FOG_HEIGHT_STRENGTH 45 // [0 20 35 50 65 80 100] World-height fog strength
 
 #if LIGHT_SHAFT_QUALITY > 0
 vec3 sampleScreenSpaceLightShafts(vec2 uv) {
@@ -213,6 +217,31 @@ vec3 sampleOpaqueEnvironmentReflection(vec3 viewReflectionDirection) {
     );
 }
 
+
+vec3 applySereneHeightFog(vec3 sceneLinear, float sceneDepth, vec2 uv) {
+#if FOG_HEIGHT_STRENGTH > 0
+    if (!hasSkylight || sceneDepth >= 0.999999) return sceneLinear;
+
+    vec3 ndc = vec3(uv, sceneDepth) * 2.0 - 1.0;
+    vec4 viewPosition4 = gbufferProjectionInverse * vec4(ndc, 1.0);
+    vec3 viewPosition = viewPosition4.xyz / max(viewPosition4.w, 0.0001);
+    vec3 playerPosition = (gbufferModelViewInverse * vec4(viewPosition, 1.0)).xyz;
+
+    float cameraWorldY = float(cameraPositionInt.y) + cameraPositionFract.y;
+    float averageWorldY = cameraWorldY + playerPosition.y * 0.5;
+    float altitudeFalloff = exp(-max(averageWorldY - 64.0, 0.0) * 0.012);
+    float weatherDensity = 1.0 + clamp(rainStrength, 0.0, 1.0) * 1.25;
+    float strength = float(FOG_HEIGHT_STRENGTH) * 0.01;
+    float opticalDepth = length(viewPosition) * 0.00055
+        * altitudeFalloff * weatherDensity * strength;
+    float heightFog = clamp(1.0 - exp(-opticalDepth), 0.0, 0.90);
+    vec3 fogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
+    return mix(sceneLinear, fogLinear, heightFog);
+#else
+    return sceneLinear;
+#endif
+}
+
 void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
     vec4 sceneColor = texelFetch(colortex0, pixel, 0);
@@ -238,6 +267,9 @@ void main() {
     if (normalData.a <= 0.525 || PBR_REFLECTION_STRENGTH <= 0) {
         vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
         sceneLinearNoReflection += lightShafts + screenGi;
+        sceneLinearNoReflection = applySereneHeightFog(
+            sceneLinearNoReflection, currentDepthAll, vTexCoord
+        );
         outColor = vec4(pow(max(sceneLinearNoReflection, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
         return;
     }
@@ -247,6 +279,9 @@ void main() {
     if (!opaqueReceiver) {
         vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
         sceneLinearNoReflection += lightShafts;
+        sceneLinearNoReflection = applySereneHeightFog(
+            sceneLinearNoReflection, currentDepthAll, vTexCoord
+        );
         outColor = vec4(pow(max(sceneLinearNoReflection, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
         return;
     }
@@ -304,5 +339,6 @@ void main() {
     vec3 sceneLinear = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 resultLinear = mix(sceneLinear, reflectionLinear, reflectionWeight);
     resultLinear += lightShafts + screenGi;
+    resultLinear = applySereneHeightFog(resultLinear, currentDepthAll, vTexCoord);
     outColor = vec4(pow(max(resultLinear, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
 }
