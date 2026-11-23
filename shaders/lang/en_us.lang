@@ -4,6 +4,9 @@ screen.QUALITY = Quality & Profiles
 screen.COLOR = Color & HDR Controls
 
 option.SHADOW_ALPHA_CUTOFF = Shadow Alpha Cutoff
+option.DOF_STRENGTH = Depth of Field Strength
+option.DOF_FOCUS_DISTANCE = Focus Distance
+option.DOF_FOCUS_RANGE = Focus Range
 option.AO_STRENGTH = Contact AO Strength
 option.AO_RADIUS = Contact AO Radius
 option.RED_GAIN = Red Channel
@@ -15,6 +18,9 @@ option.CONTRAST = Contrast
 option.SATURATION = Saturation
 option.HDR_LOOK = HDR Tone Mapping
 
+option.DOF_STRENGTH.comment = Adds a bounded depth-aware photographic blur outside the selected focus range. Higher values increase the blur radius; Ultra-Light disables it.
+option.DOF_FOCUS_DISTANCE.comment = Sets the in-focus distance from the camera in blocks.
+option.DOF_FOCUS_RANGE.comment = Sets the depth interval around the focus distance that remains sharp.
 option.SHADOW_ALPHA_CUTOFF.comment = Controls which transparent texels are removed from shadow casters. Lower values preserve finer foliage detail.
 option.AO_STRENGTH.comment = Controls local screen-space contact shading. AO affects ambient light only.
 option.AO_RADIUS.comment = Sets the view-space radius used to detect nearby occluding surfaces. Larger values affect broader contact regions.
