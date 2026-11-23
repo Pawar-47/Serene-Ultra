@@ -44,6 +44,8 @@ uniform int fogMode;
 uniform int fogShape;
 
 in vec2 vTexCoord;
+flat in vec2 vMidTexCoord;
+flat in vec2 vTexHalfSize;
 in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vViewPosition;
@@ -52,6 +54,9 @@ in vec3 vPlayerNormal;
 
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
+
+#define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level atlas filtering taps
+#include "/lib/materials/anisotropic_sampling.glsl"
 
 #include "/lib/lighting/cloud_shadows.glsl"
 
@@ -76,7 +81,12 @@ float calculateParticleFog(float distanceToCamera) {
 #include "/lib/lighting/held_item_lighting.glsl"
 
 void main() {
-    vec4 particleTexture = texture(gtexture, vTexCoord);
+    vec2 materialUvDx = dFdx(vTexCoord);
+    vec2 materialUvDy = dFdy(vTexCoord);
+    vec4 spriteBounds = vec4(vMidTexCoord - vTexHalfSize, vTexHalfSize * 2.0);
+    vec4 particleTexture = sampleAnisotropicAtlas(
+        gtexture, vTexCoord, materialUvDx, materialUvDy, spriteBounds
+    );
     vec4 particle = particleTexture * vVertexColor;
     if (particle.a < 0.01) discard;
 
