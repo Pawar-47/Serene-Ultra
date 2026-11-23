@@ -1325,6 +1325,7 @@ for token in ("#define HELD_LIGHTING_STRENGTH 50",
               "vec3 getHeldItemLightColor(", "vec3 calculateHeldItemLighting(",
               "getHeldItemLightEnergy(heldItemId, heldBlockLightValue)",
               "getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2)",
+              "if (itemId == 44013)", "energy = 1.0;",
               "ambient = sqrt(ambient * ambient + heldLighting)",
               "return mainLight * mainLight + offLight * offLight"):
     if token not in held_shader:

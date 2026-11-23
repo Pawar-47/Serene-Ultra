@@ -173,56 +173,64 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
 float getHeldItemLightEnergy(int itemId, int lightValue) {
     float energy = clamp(float(lightValue) / 15.0, 0.0, 1.0);
 
-    // Iris' vanilla light value is authoritative. These small floors cover
-    // emissive held items whose inventory form reports little/no block light.
+    // Complementary's held-light reference explicitly promotes the lava bucket
+    // to full light; all other items use Iris' actual held block-light value.
     if (itemId == 44013) {
-        energy = max(energy, 0.85); // Lava bucket
-    } else if (itemId == 44007 || itemId == 44008 ||
-               itemId == 44009 || itemId == 44084) {
-        energy = max(energy, 0.80); // Froglights and copper lantern/torch group
-    } else if (itemId == 44053) {
-        energy = max(energy, 0.60); // End crystal
-    } else if (itemId == 44040 || itemId == 44085 || itemId == 44086) {
-        energy = max(energy, 0.22); // Spectral arrow group, trident, XP bottle
-    } else if (itemId == 44034 || itemId == 44036 || itemId == 44081 ||
-               itemId == 44083 || itemId == 44090 || itemId == 44092 ||
-               itemId == 44093 || itemId == 44094 || itemId == 44095 ||
-               itemId == 44096 || itemId == 44097 || itemId == 45096 ||
-               itemId == 45112) {
-        energy = max(energy, 0.14); // Low-level emissive item families
+        energy = 1.0;
     }
 
     return energy;
 }
 
 vec3 getHeldItemLightColor(int itemId) {
-    if (itemId == 44028 || itemId == 44029 || itemId == 44030) {
-        return vec3(0.30, 0.62, 1.0); // Soul fire family
-    } else if (itemId == 44035) {
-        return vec3(1.0, 0.18, 0.10); // Redstone torch
+    if (itemId == 44002 || itemId == 44011 || itemId == 44012 || itemId == 44015) {
+        return vec3(1.0, 0.62, 0.34); // Torch, jack-o-lantern, lantern and campfire
+    } else if (itemId == 44003) {
+        return vec3(1.0, 1.0, 1.0); // End rod
     } else if (itemId == 44007) {
-        return vec3(1.0, 0.58, 0.25); // Ochre froglight
+        return vec3(1.0, 0.78, 0.32); // Ochre froglight
     } else if (itemId == 44008) {
-        return vec3(0.45, 1.0, 0.52); // Verdant froglight
+        return vec3(0.46, 1.0, 0.46); // Verdant froglight
     } else if (itemId == 44009) {
-        return vec3(0.92, 0.56, 1.0); // Pearlescent froglight
-    } else if (itemId == 44003 || itemId == 44004 ||
-               itemId == 44018 || itemId == 44096 || itemId == 44097) {
-        return vec3(0.72, 0.86, 1.0); // Cool white / ice
-    } else if (itemId == 44013 || itemId == 44010 || itemId == 44011 ||
-               itemId == 44012 || itemId == 44015 || itemId == 44019 ||
-               itemId == 44084 || itemId == 44093 || itemId == 44094) {
-        return vec3(1.0, 0.66, 0.36); // Fire, lava, lantern and copper family
-    } else if (itemId == 44040 || itemId == 44085) {
-        return vec3(0.42, 0.72, 1.0); // Spectral / trident
+        return vec3(1.0, 0.46, 0.82); // Pearlescent froglight
+    } else if (itemId == 44010 || itemId == 44094) {
+        return vec3(1.0, 0.54, 0.22); // Glowstone and glowstone dust
+    } else if (itemId == 44013) {
+        return vec3(1.0, 0.30, 0.08); // Lava bucket
+    } else if (itemId == 44018 || itemId == 44095) {
+        return vec3(0.68, 0.84, 1.0); // Sea lantern and prismarine crystals
+    } else if (itemId == 44019) {
+        return vec3(1.0, 0.34, 0.08); // Shroomlight
+    } else if (itemId == 44028 || itemId == 44029 || itemId == 44030) {
+        return vec3(0.36, 0.66, 1.0); // Soul fire family
+    } else if (itemId == 44034) {
+        return vec3(0.40, 0.55, 0.55); // Glow lichen
+    } else if (itemId == 44035) {
+        return vec3(1.0, 0.16, 0.10); // Redstone torch
+    } else if (itemId == 44036) {
+        return vec3(0.52, 0.24, 0.72); // Amethyst cluster
+    } else if (itemId == 44040) {
+        return vec3(1.0, 0.48, 0.16); // Brewing stand / spectral arrow / torchflower group
     } else if (itemId == 44053) {
-        return vec3(0.72, 0.32, 1.0); // End crystal
-    } else if (itemId == 44086 || itemId == 44090 || itemId == 45096) {
-        return vec3(0.38, 1.0, 0.48); // XP bottle, eye and glow berries
-    } else if (itemId == 44092 || itemId == 44095) {
-        return vec3(0.25, 0.82, 1.0); // Glow ink and prismarine crystals
-    } else if (itemId == 45112) {
-        return vec3(1.0, 0.74, 0.32); // Trial keys
+        return vec3(1.0, 0.18, 1.0); // Spawner / end crystal item group
+    } else if (itemId == 44081 || itemId == 45112) {
+        return vec3(1.0, 0.44, 0.12); // Open eyeblossom / trial key
+    } else if (itemId == 44083) {
+        return vec3(1.0, 0.82, 0.46); // Firefly bush
+    } else if (itemId == 44084) {
+        return vec3(0.52, 1.0, 0.62); // Copper torch and lantern
+    } else if (itemId == 44085 || itemId == 44092) {
+        return vec3(0.48, 1.0, 1.0); // Trident / drowned / glow squid / glow ink
+    } else if (itemId == 44086) {
+        return vec3(1.0, 1.0, 0.48); // Experience orb / bottle
+    } else if (itemId == 44090) {
+        return vec3(0.10, 1.0, 1.0); // Eye of ender
+    } else if (itemId == 44093) {
+        return vec3(1.0, 0.48, 0.18); // Blaze rod and powder
+    } else if (itemId == 44096) {
+        return vec3(1.0, 1.0, 1.0); // Nether star
+    } else if (itemId == 44097) {
+        return vec3(0.30, 0.56, 0.85); // Ice crystal
     }
 
     return vec3(1.0, 0.80, 0.62);

@@ -963,7 +963,7 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 
 ## Held-item world lighting — implemented, runtime calibration pending
 - Deferred ambient now consumes Iris heldBlockLightValue/heldBlockLightValue2, heldItemId/heldItemId2 and relativeEyePosition.
-- oldHandLight=false exposes independent main/offhand values. Item IDs select warm, cool, soul-blue, redstone, froglight, copper and emissive-item colors; lava buckets and selected emissive items receive conservative light-value floors.
+- oldHandLight=false exposes independent main/offhand values. Item IDs select warm, cool, soul-blue, redstone, froglight, copper and emissive-item colors. The lava bucket alone receives the reference's explicit full-light override; all other items use Iris' actual held block-light value.
 - Light energy is attenuated by player-space distance from the player-head origin. Main/offhand contributions are combined quadratically with existing ambient; no extra texture fetches are introduced.
 - HELD_LIGHTING_STRENGTH is a Quality slider: Ultra-Light=0 (compiled out), Smooth=50, Ultra/HDR/Ultra-HDR=100.
 - This is a screen-space ambient approximation. It does not cast shadows, respect occluders, or illuminate the forward translucent-water pass yet. Runtime range/color calibration and target-GPU cost remain pending.
@@ -1015,3 +1015,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Extended the existing terrain coating helper with a scalar material factor, matching the already-used block-entity coating design. The same single noisetex lookup is retained; no new texture fetches are added.
 - Explicit PBR metal maps remain protected from coating. Fallback gold/iron/copper retain subtle reference-style coating without letting the default material threshold suppress their calibrated metal response.
 - CI must compile both PBR branches and validate per-material factors. Runtime appearance and GPU cost remain unverified.
+
+
+## Held-light item-energy parity refinement — 2026-11-23
+- Compared the held-light path against Complementary's heldLighting.glsl and blocklightColors.glsl. The reference explicitly promotes only the lava bucket to full held light; other mapped items retain Iris' actual heldBlockLightValue.
+- Removed unsupported light floors from spectral arrows, end crystals, tridents, experience bottles and other inventory items so non-light-emitting items do not glow merely because of their item ID.
+- Updated the low-cost color table to match the reference families more closely: soul fire, redstone, froglights, copper lights, end rods, sea lantern, shroomlight, glow lichen, amethyst, end crystal, trident, experience bottle, eye of ender, glow ink, blaze, glowstone dust, prismarine crystals, nether star and ice crystal.
+- CI now asserts the lava-bucket-only light override. Runtime color and range calibration remain pending.
