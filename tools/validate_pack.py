@@ -2135,7 +2135,7 @@ for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:15"),
 
 # Water/glass/ice/portal use sprite-bounded anisotropic filtering for translucent material atlases.
 water_filter_shader = sources.get("gbuffers_water.fsh", "")
-for token in ("#define ANISOTROPIC_FILTER_QUALITY", "vec4 sampleAnisotropicAtlas(",
+for token in ("#define ANISOTROPIC_FILTER_QUALITY", '#include "/lib/materials/anisotropic_sampling.glsl"',
               "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, spriteBounds)",
               "sampleAnisotropicAtlas(", "materialSpriteBounds",
               "gtexture, vTexCoord, materialUvDx, materialUvDy, materialSpriteBounds"):
