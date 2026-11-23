@@ -10,7 +10,6 @@
 #define CLOUD_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 100] Procedural sky-cloud reflections on glossy materials
 
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
-#define ANISOTROPIC_FILTER_QUALITY 4 // [1 2 4] Sprite-bounded translucent material filtering taps
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
