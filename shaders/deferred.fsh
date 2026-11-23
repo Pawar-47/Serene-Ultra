@@ -417,12 +417,12 @@ void main() {
     // LabPBR blue stores porosity (0-64) or subsurface scattering (65-255).
     // Decode the SSS range here; porosity remains packed for later wet-surface work.
     float materialSSS = 0.0;
-#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+// LabPBR SSS codes and Serene's non-LabPBR material-ID fallbacks share
+    // this channel. Non-SSS surfaces write zero, so oldPBR/vanilla remain neutral.
     float materialSurfaceCode = floor(emissionData.a * 255.0 + 0.5);
     if (materialSurfaceCode >= 65.0) {
         materialSSS = clamp((materialSurfaceCode - 65.0) / 190.0, 0.0, 1.0);
     }
-#endif
     float sssStrength = materialSSS * MATERIAL_SSS_STRENGTH * 0.01;
     if (sssStrength > 0.001 && celestialGate > 0.001) {
         float backLighting = pow(max(dot(-normal, worldLightDirection), 0.0), 2.0);
