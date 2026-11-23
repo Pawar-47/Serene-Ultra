@@ -1231,7 +1231,10 @@ for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAG
               "MC_RENDER_STAGE_STARS", "MC_RENDER_STAGE_VOID", "skyColor", "fogColor",
               "gbufferProjectionInverse", "outDeferredValidity = vec4(0.0)",
               "uniform mat4 gbufferModelView;", "uniform vec3 shadowLightPosition;",
-              "dot(viewDirection, normalize(shadowLightPosition))",
+              "abs(viewPosition.w) > 0.00001", "rayLength > 0.00001",
+              "float lightLength = length(shadowLightPosition)",
+              "hasSkylight && lightLength > 0.0001",
+              "shadowLightPosition / lightLength", "SKY_ATMOSPHERE_STRENGTH",
               "celestialGlare *= 0.7 * (1.0 - 0.8 * rainStrength)",
               "colorLinear += glareColor * celestialGlare"):
     if token not in sky_basic and token not in sky_basic_vertex:
@@ -1274,7 +1277,8 @@ clouds = sources.get("gbuffers_clouds.fsh", "")
 for token in ("uniform float alphaTestRef", "vec4 cloudColor = vVertexColor;",
               "cloudColor.a < alphaTestRef", "outDeferredValidity = vec4(0.0)",
               "uniform vec3 shadowLightPosition", "uniform float sunAngle",
-              "solarElevation", "silverLining", "cloudLinear *= mix("):
+              "solarElevation", "silverLining", "CLOUD_SCATTERING_STRENGTH",
+              "cloudLinear *= mix("):
     if token not in clouds:
         errors.append(f"Cloud shader is missing Iris/reference component: {token}")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")
@@ -1631,6 +1635,26 @@ for option in ("BLOOM_STRENGTH", "BLOOM_THRESHOLD", "FXAA_ENABLED"):
         errors.append(f"{option} must appear in the Color screen")
     if option not in slider_line:
         errors.append(f"{option} must be exposed as a slider")
+
+# Sky and cloud scattering controls must be exposed consistently in UI and profiles.
+quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
+for option in ("SKY_ATMOSPHERE_STRENGTH", "CLOUD_SCATTERING_STRENGTH"):
+    if option not in quality_screen or option not in slider_line:
+        errors.append(f"{option} must be exposed in the Quality screen and slider list")
+    if f"option.{option} =" not in held_lang or f"option.{option}.comment =" not in held_lang:
+        errors.append(f"{option} requires a user-facing label and tooltip")
+for profile, sky_value, cloud_value in (
+    ("Ultra-Light", "65", "60"),
+    ("Smooth", "100", "80"),
+    ("Ultra", "100", "100"),
+    ("HDR", "100", "100"),
+    ("Ultra-HDR", "100", "100"),
+):
+    line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"SKY_ATMOSPHERE_STRENGTH:{sky_value}" not in line:
+        errors.append(f"{profile} has incorrect atmospheric scattering strength")
+    if f"CLOUD_SCATTERING_STRENGTH:{cloud_value}" not in line:
+        errors.append(f"{profile} has incorrect cloud scattering strength")
 if "option.BLOOM_STRENGTH.comment =" not in held_lang:
     errors.append("Bloom strength requires a user-facing tooltip")
 if "option.BLOOM_THRESHOLD.comment =" not in held_lang:
