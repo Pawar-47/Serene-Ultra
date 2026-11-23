@@ -74,6 +74,7 @@ in vec2 vTexCoord;
 #define MATERIAL_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material AO lighting strength
 #define MATERIAL_SSS_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] LabPBR subsurface scattering strength
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
+#define EMISSIVE_BOUNCE_STRENGTH 45 // [0 15 30 45 60 75 100] Screen-space coloured bounce from emissive materials
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
 
 // Deferred is a composite-style pass: it reads the main colortex0 image and
@@ -212,6 +213,47 @@ float accumulateContactAoHistory(
     }
 #endif
     return currentAo;
+}
+
+
+vec3 sampleEmissiveColorBounce(vec2 uv, float receiverDepth, vec3 receiverViewPosition, vec3 receiverNormal) {
+#if EMISSIVE_BOUNCE_STRENGTH > 0
+    const vec2 offsets[8] = vec2[8](
+        vec2(-1.0, -1.0), vec2(0.0, -1.0), vec2(1.0, -1.0), vec2(1.0, 0.0),
+        vec2(1.0, 1.0), vec2(0.0, 1.0), vec2(-1.0, 1.0), vec2(-1.0, 0.0)
+    );
+    vec2 texel = 1.0 / vec2(textureSize(depthtex2, 0));
+    vec3 accumulatedLight = vec3(0.0);
+    float accumulatedWeight = 0.0;
+    for (int i = 0; i < 8; ++i) {
+        vec2 sampleUv = uv + offsets[i] * texel * 3.0;
+        if (sampleUv.x <= 0.001 || sampleUv.x >= 0.999 ||
+            sampleUv.y <= 0.001 || sampleUv.y >= 0.999) continue;
+        float sourceDepth = texture(depthtex2, sampleUv).r;
+        if (sourceDepth >= 0.999999 || abs(sourceDepth - receiverDepth) < 0.000002) continue;
+        vec4 sourceEmission = texture(colortex3, sampleUv);
+        float sourceEnergy = clamp(sourceEmission.r * 5.0, 0.0, 5.0);
+        if (sourceEnergy <= 0.025) continue;
+        vec4 sourceNormalData = texture(colortex2, sampleUv);
+        if (sourceNormalData.a < 0.5) continue;
+        vec3 sourceNdc = vec3(sampleUv, sourceDepth) * 2.0 - 1.0;
+        vec3 sourceViewPosition = projectAndDivide(gbufferProjectionInverse, sourceNdc);
+        vec3 separation = sourceViewPosition - receiverViewPosition;
+        float worldDistance = length(separation);
+        if (worldDistance < 0.025 || worldDistance > 2.75) continue;
+        vec3 sourceNormal = normalize(mat3(gbufferModelView) * (sourceNormalData.rgb * 2.0 - 1.0));
+        float facingWeight = mix(0.18, 1.0, smoothstep(-0.35, 0.65, dot(receiverNormal, sourceNormal)));
+        float distanceWeight = exp(-worldDistance * 1.15);
+        float sampleWeight = facingWeight * distanceWeight;
+        vec3 sourceAlbedo = pow(max(texture(colortex0, sampleUv).rgb, vec3(0.0)), vec3(2.2));
+        accumulatedLight += sourceAlbedo * sourceEnergy * sampleWeight;
+        accumulatedWeight += sampleWeight;
+    }
+    if (accumulatedWeight > 0.0001) {
+        return accumulatedLight / max(accumulatedWeight, 1.0) * (float(EMISSIVE_BOUNCE_STRENGTH) * 0.01) * 0.28;
+    }
+#endif
+    return vec3(0.0);
 }
 
 #include "/lib/lighting/held_item_lighting.glsl"
@@ -393,6 +435,11 @@ void main() {
     // Emission is stored separately from albedo/lightmap/normal so it is not
     // attenuated by contact AO or the celestial shadow term.
     litLinear += albedoLinear * (emissionData.r * 5.0);
+    // Screen-space coloured bounce is an inexpensive local approximation; it
+    // does not replace voxel/world-space coloured-light propagation.
+    litLinear += sampleEmissiveColorBounce(
+        vTexCoord, opaqueWorldDepth, viewPosition, viewNormal
+    );
 
     float fogDistance = (fogShape == 1) ? max(length(viewPosition.xz), abs(viewPosition.y)) : length(viewPosition);
     float fogFactor = calculateFogFactor(fogDistance);
