@@ -457,3 +457,25 @@ The pack sets `separateEntityDraws=true` and provides dedicated `gbuffers_entiti
 The current Iris source snapshot inspected for the pipeline still parses and stores the directive, sets the world-rendering setting, and maps translucent entity/item pipelines to the translucent shader keys. That source-level evidence does not resolve the documentation warning or prove the target runtime's draw routing. Keep this as a release-blocking runtime check, not a source-complete claim.
 
 The explicit `particles.ordering=mixed` setting is different: Iris documents it as opaque particles before deferred and translucent particles after deferred, matching the pack's split opaque-MRT and translucent-forward particle programs.
+
+
+## Minecraft 26.3 native OIT versus the Iris shaderpack pipeline — 2026-11-23
+
+The supplied Vanilla-stock archive contains Minecraft 26.3's native order-independent transparency implementation. The inspected stock files include:
+
+- `core/terrain.fsh`, which includes `minecraft:oit.glsl` and supports `OIT_DEPTH_BOUNDS`, `OIT_TRANSMITTANCE`, `OIT_ACCUMULATE` and `OIT_ALPHA_ONLY` phases.
+- `include/oit.glsl`, `include/oit_common.glsl`, `include/oit_add_transmittance.glsl`, `include/oit_depth_bounds.glsl`, `include/oit_depth_sample.glsl` and `include/oit_sample.glsl`.
+- `core/oit_composite.fsh` and `core/oit_depth_bounds_cull.fsh`.
+- `core/rendertype_water_mask.vsh/.fsh`, where the mask fragment writes `ColorModulator`.
+
+This native stock OIT path is not the same interface as an Iris shaderpack's gbuffers pipeline. In the inspected Iris source snapshot (`IrisShaders/Iris`, commit `bff1e69cb6c5519d8745784aa9c8b92984de67e7)):
+
+- `IrisPipelines` maps `RenderPipelines.TRANSLUCENT_TERRAIN` to `ShaderKey.TERRAIN_TRANSLUCENT`, and `ShaderKey.TERRAIN_TRANSLUCENT` resolves to `ProgramId.Water` (`gbuffers_water`).
+- `RenderPipelines.WATER_MASK` maps to `ShaderKey.BASIC`.
+- `RenderPipelines.TRANSLUCENT_PARTICLE` maps to `ShaderKey.PARTICLES_TRANS`.
+- `SodiumPrograms.getAlphaTest` uses the ordinary non-zero-alpha fallback for its translucent pass.
+- The inspected Iris shaderpack source contains no `OIT_DEPTH_BOUNDS`, `OIT_TRANSMITTANCE` or `OIT_ACCUMULATE` shaderpack phase integration.
+
+**Implementation decision:** do not transplant Minecraft's native OIT includes, attachment layout or composite stages into Serene's Iris shaderpack. Keep the Iris gbuffers routes and explicit alpha blending in `shaders.properties` unless a future Iris API exposes a shaderpack OIT contract. The current water, weather, translucent entity/block and particle programs remain conventional Iris forward-translucent passes.
+
+**Verification boundary:** this is a source-level compatibility decision, not proof of how every Iris 26.3 build behaves at runtime. The test plan now includes overlapping translucent geometry, water masks, particles and weather while Serene is active. Record the exact Iris build and inspect its logs before claiming runtime compatibility.
