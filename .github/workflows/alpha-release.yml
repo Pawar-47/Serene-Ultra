@@ -14,8 +14,8 @@ on:
         default: true
 
 permissions:
-  contents: write
-  actions: read
+  contents: read
+  actions: write
 
 jobs:
   publish-alpha:
@@ -47,19 +47,12 @@ jobs:
           echo "archive=${archive}" >> "$GITHUB_OUTPUT"
           echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
 
-      - name: Publish GitHub alpha pre-release
-        uses: softprops/action-gh-release@v2
+      - name: Upload testable shader ZIP
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: alpha-${{ steps.package.outputs.short_sha }}
-          target_commitish: ${{ github.event.workflow_run.head_sha || github.sha }}
-          name: Serene Ultra Alpha ${{ steps.package.outputs.short_sha }}
-          prerelease: true
-          draft: false
-          generate_release_notes: true
-          body: |
-            Experimental test build from the exact commit that passed shader validation.
-
-            **This is an alpha, not a stable release.** CI verifies shader compilation and pack structure only. In-game visual correctness, Minecraft/Iris compatibility and performance still require testing.
-          files: |
+          name: Serene-Ultra-alpha-${{ steps.package.outputs.short_sha }}
+          path: |
             ${{ steps.package.outputs.archive }}
             ${{ steps.package.outputs.archive }}.sha256
+          if-no-files-found: error
+          retention-days: 30
