@@ -111,10 +111,34 @@ void main() {
             materialSmoothness = clamp(albedo.g * 0.7, 0.0, 1.0);
         } else if (currentRenderedItemId == 45068) {
             materialSmoothness = 1.0;
-        } else if (currentRenderedItemId == 45076 || currentRenderedItemId == 45080) {
-            float dialGreenFourth = pow(albedo.g, 4.0);
-            materialSmoothness = clamp(max(albedo.g, 0.8) - dialGreenFourth * 0.5, 0.0, 1.0);
+        } else if (currentRenderedItemId == 45076 || currentRenderedItemId == 45108) {
+            // Clock and totem use the reference's gold-block response.
+            float goldGreenFourth = pow(albedo.g, 4.0);
+            materialSmoothness = clamp(max(albedo.g, 0.8) - goldGreenFourth * 0.5, 0.0, 1.0);
             materialMetalness = 0.75;
+            float goldLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+            albedo.rgb *= 0.5 + 0.4 * goldLuminance;
+        } else if (currentRenderedItemId == 45080 || currentRenderedItemId == 45084) {
+            // Compass, echo shard, recovery compass and music disc 5 use iron response.
+            materialSmoothness = clamp(pow(albedo.r, 2.0), 0.0, 1.0);
+            materialMetalness = 0.75;
+            float ironLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+            albedo.rgb *= 0.6 + 0.5 * ironLuminance;
+        } else if (currentRenderedItemId == 44013 &&
+                   albedo.r + albedo.g <= albedo.b * 2.0) {
+            // Non-lava contents of a lava bucket fall back to iron material response.
+            materialSmoothness = clamp(pow(albedo.r, 2.0), 0.0, 1.0);
+            materialMetalness = 0.75;
+        } else if (currentRenderedItemId == 44085) {
+            materialSmoothness = clamp(albedo.g, 0.0, 1.0);
+            materialMetalness = 0.65;
+        } else if (currentRenderedItemId == 45116 || currentRenderedItemId == 45117) {
+            float copperSmoothness = pow(albedo.r, 4.0)
+                + pow(max(albedo.g - albedo.r * 0.5, 0.0), 2.0) * 0.3;
+            materialSmoothness = clamp(copperSmoothness, 0.0, 1.0);
+            materialMetalness = 0.65;
+            float copperLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+            albedo.rgb *= clamp(0.6 + 0.7 * copperLuminance, 0.0, 1.0);
         }
         f0 = mix(vec3(0.04), handLinear, materialMetalness);
     }
@@ -123,6 +147,24 @@ void main() {
         if (currentRenderedItemId == 44090) {
             if (!hasSpecularMap) materialSmoothness = 1.0;
             pbrEmission = max(albedo.g - albedo.b * 0.25, 0.0);
+        } else if (currentRenderedItemId == 44013) {
+            if (albedo.r + albedo.g > albedo.b * 2.0) {
+                pbrEmission = max(albedo.r + albedo.g - albedo.b * 1.5, 0.0) * 1.8;
+                albedo.rg += albedo.b * vec2(0.4, 0.15);
+                albedo.b *= 0.8;
+            }
+        } else if (currentRenderedItemId == 44040) {
+            pbrEmission = 1.0;
+        } else if (currentRenderedItemId == 44053) {
+            if (albedo.g < albedo.r) {
+                pbrEmission = 3.0;
+                albedo.r *= 1.1;
+            }
+        } else if (currentRenderedItemId == 44085) {
+            float tridentFactor = min(dot(albedo.rgb, albedo.rgb), 2.5);
+            pbrEmission = min(max(tridentFactor - 1.0, 0.0) * 6.0, 1.0);
+        } else if (currentRenderedItemId == 44086) {
+            pbrEmission = albedo.b * 2.0;
         } else if (currentRenderedItemId == 44092) {
             pbrEmission = albedo.b * 2.0;
         } else if (currentRenderedItemId == 44093) {
@@ -137,6 +179,12 @@ void main() {
             pbrEmission = max(albedo.r + albedo.g - albedo.b * 0.5, 0.0);
         } else if (currentRenderedItemId == 45052) {
             pbrEmission = max(albedo.b * 2.0 - albedo.r, 0.0) * 1.5;
+        } else if (currentRenderedItemId == 45084) {
+            pbrEmission = max(albedo.b + albedo.g - albedo.r * 2.0, 0.0);
+        } else if (currentRenderedItemId == 45112) {
+            float trialKeyEmission = abs(albedo.r - albedo.b) * 3.0;
+            pbrEmission = trialKeyEmission;
+            albedo.rgb = pow(max(albedo.rgb, vec3(0.0)), vec3(1.0 + 0.5 * sqrt(trialKeyEmission)));
         } else if (currentRenderedItemId == 44002 || currentRenderedItemId == 44003 ||
                    currentRenderedItemId == 44010 || currentRenderedItemId == 44011 ||
                    currentRenderedItemId == 44012 || currentRenderedItemId == 44018 ||

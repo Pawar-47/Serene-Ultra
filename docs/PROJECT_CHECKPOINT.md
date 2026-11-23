@@ -923,3 +923,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Serene's current root LICENSE declares MIT for original project files and states the reference shader is not included/copied/redistributed. Because material algorithms and item-ID mappings have been ported or adapted from the supplied Complementary reference, this needs deliberate compatibility review before public release.
 - No license file or project license was changed. Keep this as a release gate: confirm applicable permissions/attribution with the rights holder or legal counsel, or replace directly derived material tables/code with independently authored equivalents before publishing releases.
 - Official Complementary documentation states Unbound and Reimagined share the same engine and differ in default settings; Unbound remains the primary style reference for water/material tuning.
+
+
+## Held-item material fallback coverage — 2026-11-23
+- Compared gbuffers_hand material handling against the supplied Complementary irisIPBR.glsl and its iron/gold/diamond/copper/trident material helpers.
+- Corrected clock versus compass classification: clocks/totems use the gold response; compass and echo/recovery-compass/music-disc items use the iron response. Added copper tool/armor fallbacks and the trident's smoothness/emission treatment.
+- Added reference-aligned fallbacks for lava buckets, spectral-arrow group, end crystals, experience bottles and trial keys. Explicit PBR specular/emission maps still take priority; these are fallback heuristics only.
+- Added CI assertions for the new item branches. Some reference item classes (notably harnesses, elytra and less common block-item IDs) still need a dedicated material review; held-item visuals and target-GPU cost remain unverified.

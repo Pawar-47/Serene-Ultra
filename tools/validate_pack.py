@@ -1257,6 +1257,11 @@ for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemI
               "uniform sampler2D normals", "uniform sampler2D specular", "uniform vec3 shadowLightPosition",
               "textureGrad(normals", "textureGrad(specular", "MC_TEXTURE_FORMAT_LAB_PBR",
               "currentRenderedItemId == 45012", "currentRenderedItemId == 44094",
+              "currentRenderedItemId == 44013", "currentRenderedItemId == 44040",
+              "currentRenderedItemId == 44053", "currentRenderedItemId == 44085",
+              "currentRenderedItemId == 44086", "currentRenderedItemId == 45080",
+              "currentRenderedItemId == 45084", "currentRenderedItemId == 45108",
+              "currentRenderedItemId == 45112", "currentRenderedItemId == 45116",
               "outColor = albedo"):
     if token not in hand_shader:
         errors.append(f"Hand PBR path is missing component: {token}")
