@@ -693,7 +693,7 @@ void main() {
         vec3 iceHalfVector = normalize(viewLightDirectionForIce + iceViewDirection);
         float iceSpecularExponent = mix(8.0, 128.0, iceSmoothness);
         float iceSpecular = pow(max(dot(normalize(viewNormal), iceHalfVector), 0.0),
-                                iceSpecularExponent) * iceHighlight * 0.7;
+                                iceSpecularExponent) * iceHighlight * nDotL * 0.7;
         litLinear += celestialColor * celestialIntensity * shadow * celestialGate * iceSpecular;
     }
     // Lava shares the post-deferred fluid pass but retains its self-emission.

@@ -335,3 +335,7 @@ The supplied Complementary reference's `materialMethods/translucentTweaks.glsl` 
 - The supplied Complementary reference's translucent IPBR dispatch derives ice smoothness from the cube of the texture green channel, scales the highlight with the squared green-channel response, and uses a 0.7 reflection multiplier.
 - Serene previously gave ice only the shared Fresnel reflection path; it had no direct specular highlight. Added a bounded Blinn-Phong highlight using the existing geometric/PBR normal, view vector, celestial light and translucent shadow result. Smoothness controls an 8–128 exponent; the reference-inspired green-channel highlight multiplier and 0.7 scale are retained.
 - The implementation is ice-only and adds arithmetic but no texture samples, loops, render targets or new varyings. It remains subject to in-game appearance/performance calibration.
+
+
+### Ice direct-highlight angular attenuation — 2026-11-23
+A follow-up review against Unbound's GGX implementation found its direct highlight includes an explicit light-facing term. Serene's lightweight Blinn approximation now multiplies the ice highlight by the existing world-space (N\cdot L) term as well, preventing a bright specular response at grazing/back-facing light angles. This is arithmetic-only and adds no sampling.
