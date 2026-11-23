@@ -404,7 +404,18 @@ void main() {
     }
 
     if (pbrEmission < 0.01) {
-        if (currentRenderedItemId == 44090) {
+        // Entity-specific vanilla emissive fallbacks. Restrict these cues to
+        // mapped entity IDs so unrelated orange/blue textures are unaffected.
+        if (entityId == 50140) { // Glow squid
+            pbrEmission = clamp(albedo.b * 0.85 + albedo.g * 0.15, 0.0, 1.0);
+        } else if (entityId == 50144) { // Blaze rods/body
+            pbrEmission = clamp(max(albedo.r + albedo.g * 0.35 - albedo.b, 0.0) * 0.42, 0.0, 0.85);
+        } else if (entityId == 50148) { // Magma cube hot core
+            float hotCore = max(albedo.r - albedo.g * 0.72, 0.0);
+            pbrEmission = clamp(hotCore * 0.65, 0.0, 0.75);
+        } else if (entityId == 50152) { // End crystal
+            pbrEmission = clamp(max(albedo.r, max(albedo.g, albedo.b)) * 0.72, 0.0, 0.9);
+        } else if (currentRenderedItemId == 44090) {
             if (!hasMaterialSpecularMap) materialSmoothness = 1.0;
             pbrEmission = max(albedo.g - albedo.b * 0.25, 0.0);
         } else if (currentRenderedItemId == 44013) {
