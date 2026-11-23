@@ -2135,12 +2135,14 @@ for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:15"),
 
 # Water/glass/ice/portal use sprite-bounded anisotropic filtering for translucent material atlases.
 water_filter_shader = sources.get("gbuffers_water.fsh", "")
-for token in ("#define ANISOTROPIC_FILTER_QUALITY", '#include "/lib/materials/anisotropic_sampling.glsl"',
+for token in ('#include "/lib/materials/anisotropic_sampling.glsl"',
               "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, spriteBounds)",
               "sampleAnisotropicAtlas(", "materialSpriteBounds",
               "gtexture, vTexCoord, materialUvDx, materialUvDy, materialSpriteBounds"):
     if token not in water_filter_shader:
         errors.append(f"Translucent water material filtering is missing component: {token}")
+if "#define ANISOTROPIC_FILTER_QUALITY" not in sources.get("gbuffers_terrain.fsh", ""):
+    errors.append("ANISOTROPIC_FILTER_QUALITY must have one shared source default")
 if "ANISOTROPIC_FILTER_QUALITY" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
     errors.append("Translucent anisotropic filtering must use the existing Quality control")
 
