@@ -1466,3 +1466,27 @@ After adding the DOF and lens/motion controls, the profile values were reconcile
 ## Camera-motion blur pipeline refinement — 2026-11-23
 
 The initial camera-motion blur prototype was moved out of `final.fsh` into a dedicated `composite5` pass so blur is applied to the scene before final FXAA, depth of field, bloom composition and color grading. Added `shaders/composite5.vsh` and `shaders/composite5.fsh`; the pass reads the completed composite scene and depth, reprojects through Iris previous-camera matrices, applies depth-aware 4/6/8-tap camera blur, and writes the resolved scene to colortex0 using the standard composite output flip. The final pass no longer owns motion-blur uniforms or code. This improves effect ordering and keeps the post stack modular. Still source-only and untested in Minecraft/Iris.
+
+
+## Feature implementation cycle — POM, temporal stability, reflections, clouds and dimension fog — 2026-11-23
+
+Continued feature-first implementation on `main` after the user reiterated that development should be completed before requesting a Minecraft test.
+
+### Source changes delivered
+- `shaders/gbuffers_terrain.fsh`, `gbuffers_block.fsh`, `gbuffers_entities.fsh`: added height-map slope normals blended into LabPBR/oldPBR tangent normals; added four-step tangent-space height-field self-shadowing that attenuates the direct-light sky factor. Entity-model support follows its opt-in POM strength.
+- `shaders/shaders.properties`, `shaders/lang/en_us.lang`: exposed POM slope-normal and self-shadow strengths across all five profiles.
+- `shaders/deferred.fsh`: added normal-edge-aware contact AO and a persistent RGBA16F history buffer (`colortex13`) with previous-camera reprojection, depth rejection and bounded history clamping. Added the `AO_TEMPORAL_STRENGTH` control.
+- `shaders/composite.fsh`: added persistent RGBA16F temporal history for screen-space GI (`colortex12`), with previous-camera reprojection, depth rejection and clamped history. Added `SCREEN_GI_TEMPORAL_STRENGTH`.
+- `shaders/composite.fsh`: added roughness-scaled, depth-rejected cross filtering for opaque SSR hits. Added `PBR_REFLECTION_BLUR_STRENGTH`.
+- `shaders/gbuffers_skybasic.fsh`: added two-/three-step light-direction density sampling for volumetric cloud self-shadowing and a bounded multiple-scattering floor. Cloud self-shadow sample count scales with volumetric cloud quality.
+- `shaders/composite.fsh`: added a separate low-altitude height-fog density profile for ceiling dimensions, preserving Iris' native dimension fog color.
+- Updated `docs/REFERENCE_FEATURE_MATRIX.md` and `docs/SHADER_MENU_AND_PROFILES.md` to distinguish these source implementations from runtime-verified behavior.
+
+### Current status boundary
+These are source implementations only. No Minecraft 26.3 + Iris runtime, visual parity, performance or Intel HD 5500 test has been performed. Temporal GI/AO are temporal accumulation features, **not** full jittered TAA. Full TAA, texture filtering strategy, remaining reference-specific feature parity, and runtime calibration remain open.
+
+### Reference archive availability
+The supplied ZIPs exist in the conversation runtime, but data analysis became temporarily unavailable during the latest attempt to enumerate/read them. Do not claim that their contents have been audited or that these additions match Complementary formulas until their actual relevant files are inspected.
+
+### Latest code checkpoint
+Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009dc8ec6139c`. Continue feature implementation from current `main`; do not request user testing yet.
