@@ -1220,3 +1220,10 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - The two supplied archives remain mandatory comparison sources. No new file-by-file archive comparison is claimed in this continuation.
 - Alpha publishing remains disabled by default; do not set `ENABLE_ALPHA_PUBLISH=true` until runtime smoke tests and visual checks pass.
 - Next: continue stage-by-stage review of translucent paths and their buffer/blend contracts, then reconcile corresponding Vanilla-stock and Complementary source files before feature changes.
+
+
+## Follow-up correction — historical wording and weather-state test (2026-11-23)
+
+- Clarified the Iris pipeline audit so its original fallback/attachment hazard is explicitly historical; it no longer says the current source lacks water, weather or hand-water program pairs.
+- Added an Iris-uniform contract note: `isEyeInWater == 3` means powdered snow, and added a runtime test for weather rendering across camera states.
+- CI runs #1168–#1170 were triggered by the documentation/checkpoint commits; #1166 remains the latest confirmed successful run at this point. Check the newest run before treating these documentation commits as CI-validated.
