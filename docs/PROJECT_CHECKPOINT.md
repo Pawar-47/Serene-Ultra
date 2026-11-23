@@ -695,3 +695,13 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Commit `d9413778a0f03627a23171cbabac178139a80790` added two bounded binary refinement steps after a positive-to-negative view-space depth crossing in the water SSR marcher.
 - Follow-up `235415b1fae9f8a8dfb7a9665b441def4cc7e6f9` explicitly rejects invalid deferred-snapshot alpha at the coarse hit, preventing hand/transparent-mask pixels from being returned as reflection hits.
 - CI run `45107408270` (run #1045) passed all nine stages on the follow-up commit. This validates GLSL compilation and structural assertions only; water reflection quality, temporal stability and Intel HD 5500 cost remain unmeasured in Iris.
+
+
+## Bounded terrain POM implementation — 2026-11-23
+- Added a shared shaders/lib/materials/parallax.glsl implementation for Iris normals.a height data (LabPBR and oldPBR), with compile-time 4/6/8 sample limits, distance fade, capped UV displacement and linear intersection interpolation.
+- Terrain vertex stage forwards Iris mc_midTexCoord sprite bounds plus tangent-space view direction derived from at_tangent and handedness. Height samples wrap within the current sprite and clamp by half an atlas texel to avoid adjacent atlas-tile sampling.
+- Terrain fragment stage resamples albedo, normal and specular data at the displaced UV. A displaced albedo sample below alphaTestRef is rejected in favour of the original UV to protect cutout silhouettes.
+- Added POM_STRENGTH, POM_QUALITY and POM_DISTANCE Iris settings. Ultra-Light disables POM; Smooth uses 4 samples and a short fade; Ultra/HDR use 6 samples. The feature remains neutral when the normal atlas has no height data (alpha near 1).
+- Reference comparison: supplied working shader pomEffects.glsl/customMaterials.glsl use normals.a, tangent-space view direction, per-quad atlas bounds, textureGrad and distance fade. This implementation adopts those principles with fewer samples and a shorter displacement cap for low-end GPUs.
+- Iris documentation confirms normals is the normal-map atlas, at_tangent provides model-space tangent and handedness, mc_midTexCoord is the current quad texture centre, and LabPBR 1.3 stores linear height in normal-map alpha (0 = 25% depth, 255 = no depth).
+- Static validation is not runtime proof. Remaining checks: oldPBR/LabPBR resource packs, oblique camera angles, sprite edges, cutout foliage and Intel HD 5500 frame cost in Minecraft 26.3 + Iris.

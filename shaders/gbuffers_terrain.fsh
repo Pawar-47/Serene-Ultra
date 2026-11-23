@@ -14,6 +14,8 @@ uniform float rainfall;
 uniform int biome_precipitation;
 uniform float alphaTestRef;
 
+#include "/lib/materials/parallax.glsl"
+
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
 in vec3 vPlayerPosition;
@@ -21,6 +23,8 @@ in vec4 vVertexColor;
 in vec3 vPlayerNormal;
 in vec3 vPlayerTangent;
 flat in float vTangentHandedness;
+in vec3 vTangentView;
+flat in vec4 vTexCoordAM;
 flat in int vMaterialId;
 
 /* RENDERTARGETS: 0,1,2,3 */
@@ -34,8 +38,8 @@ layout(location = 3) out vec4 outEmissionData;
 #define RAIN_PUDDLE_STRENGTH 70 // [0 25 50 70 85 100] Unbound-inspired exposed-surface puddle coverage
 #define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
 
-vec3 calculateOpaquePbrNormal(vec3 geometricNormal, out float materialAO) {
-    vec4 normalTexel = texture(normals, vTexCoord);
+vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, out float materialAO) {
+    vec4 normalTexel = texture(normals, materialUv);
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     // LabPBR blue stores material AO; XY are the DirectX Y- tangent normal.
@@ -69,8 +73,29 @@ vec3 calculateOpaquePbrNormal(vec3 geometricNormal, out float materialAO) {
 
 
 void main() {
-    vec4 albedo = texture(gtexture, vTexCoord) * vVertexColor;
+    vec2 uvDx = dFdx(vTexCoord);
+    vec2 uvDy = dFdy(vTexCoord);
+    vec2 materialUv = vTexCoord;
+    vec4 albedo = texture(gtexture, materialUv) * vVertexColor;
     if (albedo.a < alphaTestRef) discard;
+
+    float parallaxOffset = 0.0;
+#if POM_STRENGTH > 0
+    if (gl_FrontFacing) {
+        vec2 parallaxUv = calculateParallaxUv(
+            vTexCoord, uvDx, uvDy, vTexCoordAM, vTangentView,
+            length(vTangentView), parallaxOffset
+        );
+        if (parallaxOffset > 0.00001) {
+            vec4 parallaxAlbedo = textureGrad(gtexture, parallaxUv, uvDx, uvDy) * vVertexColor;
+            // Preserve cutout silhouettes when a displaced lookup lands in a transparent texel.
+            if (parallaxAlbedo.a >= alphaTestRef) {
+                materialUv = parallaxUv;
+                albedo = parallaxAlbedo;
+            }
+        }
+    }
+#endif
 
     // Preserve the vanilla lightmap's RGB tint (including warm block light
     // and skylight color) plus a separate sky-light factor for direct sun.
@@ -80,11 +105,11 @@ void main() {
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     float materialAO = 1.0;
-    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO);
+    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, materialAO);
     // Iris exposes the resource-pack specular atlas for oldPBR and LabPBR.
     // Both formats store smoothness in red; green is metalness (oldPBR) or
     // dielectric F0 / metal code (LabPBR).
-    vec4 pbrSpecular = texture(specular, vTexCoord);
+    vec4 pbrSpecular = textureGrad(specular, materialUv, uvDx, uvDy);
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
     float materialReflectance = 0.0;
     float pbrEmission = 0.0;

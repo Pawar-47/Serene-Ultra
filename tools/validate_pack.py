@@ -314,6 +314,36 @@ terrain_vertex = sources.get("gbuffers_terrain.vsh", "")
 for token in ("in vec2 mc_Entity", "flat out int vMaterialId", "vMaterialId = int(mc_Entity.x + 0.5)"):
     if token not in terrain_vertex:
         errors.append(f"Terrain vertex stage is missing Iris mc_Entity material classification: {token}")
+# POM uses Iris per-quad sprite bounds and tangent attributes. Keep the implementation
+# bounded, opt-out for Ultra-Light, and atlas-safe for terrain.
+pom_source = (SHADERS / "lib" / "materials" / "parallax.glsl").read_text(encoding="utf-8")
+for token in ("textureGrad(normals, sampleUv, uvDx, uvDy)", "textureSize(normals, 0)",
+              "for (int stepIndex = 0; stepIndex < POM_QUALITY; ++stepIndex)",
+              "POM_DISTANCE", "POM_STRENGTH", "currentSurfaceDepth",
+              "spriteBounds.xy + hitLocal * tileSize", "appliedOffset"):
+    if token not in pom_source:
+        errors.append(f"Shared POM implementation is missing component: {token}")
+terrain_vertex_source = sources.get("gbuffers_terrain.vsh", "")
+for token in ("in vec2 mc_midTexCoord", "flat out vec4 vTexCoordAM",
+              "out vec3 vTangentView", "cross(viewTangent, viewNormal)",
+              "vec4(mc_midTexCoord, 0.0, 1.0)"):
+    if token not in terrain_vertex_source:
+        errors.append(f"Terrain vertex stage is missing Iris sprite-safe POM input: {token}")
+for token in ("#include \"/lib/materials/parallax.glsl\"", "flat in vec4 vTexCoordAM",
+              "in vec3 vTangentView", "calculateParallaxUv(",
+              "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
+              "parallaxAlbedo.a >= alphaTestRef",
+              "textureGrad(specular, materialUv, uvDx, uvDy)"):
+    if token not in sources.get("gbuffers_terrain.fsh", ""):
+        errors.append(f"Terrain fragment stage is missing POM integration: {token}")
+for option in ("POM_STRENGTH", "POM_QUALITY", "POM_DISTANCE"):
+    if option not in props or option not in slider_options_line:
+        errors.append(f"{option} must be exposed as an Iris Quality slider")
+if "POM_STRENGTH:0" not in props or "POM_QUALITY:4" not in props:
+    errors.append("Ultra-Light profile must disable POM and use the minimum sample count")
+if "option.POM_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("POM strength requires a user-facing tooltip")
+
 terrain_fragment = sources.get("gbuffers_terrain.fsh", "")
 for token in ("uniform sampler2D specular", "texture(specular, vTexCoord)",
               "MC_TEXTURE_FORMAT_LAB_PBR", "pbrSpecular.r", "pbrSpecular.g",
