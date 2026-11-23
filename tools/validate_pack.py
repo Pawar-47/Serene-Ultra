@@ -382,7 +382,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
              "gbuffers_spidereyes.fsh", "gbuffers_damagedblock.fsh"):
     source = sources.get(name, "")
     if "uniform sampler2D gtexture" not in source or not any(
-        token in source for token in ("texture(gtexture", "textureGrad(gtexture")
+        token in source for token in ("texture(gtexture", "textureGrad(gtexture", "sampleAnisotropicAtlas(")
     ):
         errors.append(f"{name} must sample the Iris block/entity atlas through gtexture")
 if "#define SHADOW_ALPHA_CUTOFF " not in shadow_fragment:
