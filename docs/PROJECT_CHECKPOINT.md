@@ -1704,3 +1704,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Updated `tools/validate_pack.py` to assert the common helper, macro defaults, and flat sprite-bound varyings in all five forward paths; updated the feature matrix.
 - Additional commits: translucent-particle sampling `7b353c2aa6ec58c34fb0cb98698dc93d54b269a6`; validator coverage `cb01ff846f578f618323edb8a13839cd9cd7ad94`; matrix `260c4d3f00015ab21d32a195f585f8102128b800`.
 - Runtime texture shimmer, alpha-edge quality and Intel HD 5500 cost still require measurement.
+
+
+### Lava surface vertex animation — 2026-11-23
+- Added `LAVA_WAVE_STRENGTH` to terrain and shadow vertex programs. Vanilla lava and lava-cauldron material IDs receive a low-amplitude two-frequency wave on fluid surface/top vertices, using a 4096-block periodic world coordinate and an hourly time phase that wraps on an integer number of cycles.
+- The same displacement formula updates player-relative G-buffer positions and shadow caster positions so the animated surface and its shadow remain aligned. Default strength is 50; profile values are Ultra-Light 20, Smooth 35, Ultra 50, HDR 65 and Ultra-HDR 75.
+- Added the Quality menu control, localized tooltip, feature-matrix row and structural checks for material mapping, both vertex paths and profile budgets.
+- This is source-level parity with the reference's waving-lava behavior. No Minecraft/Iris runtime or shadow-alignment test has been performed; geometry coverage and performance still need visual calibration.
