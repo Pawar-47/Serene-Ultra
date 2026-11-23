@@ -1355,6 +1355,12 @@ if "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;" not in 
 if "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;" not in sky_textured_vertex:
     errors.append("Sky-textured vertex stage is missing the explicit textured transform")
 sky_basic = sources.get("gbuffers_skybasic.fsh", "")
+if "vec3 playerDirection = vec3(0.0, 1.0, 0.0);" not in sky_basic:
+    errors.append("Sky ray direction must be declared in main scope for both atmosphere and volumetric clouds")
+if "playerDirection = reconstructPlayerDirection();" not in sky_basic:
+    errors.append("Sky ray direction must be reconstructed for sky and sunset render stages")
+if "calculateVolumetricClouds(\n                playerDirection" not in sky_basic:
+    errors.append("Volumetric clouds must use the reconstructed sky ray direction")
 sky_basic_vertex = sources.get("gbuffers_skybasic.vsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAGE_SUNSET",
               "MC_RENDER_STAGE_STARS", "MC_RENDER_STAGE_VOID", "skyColor", "fogColor",
