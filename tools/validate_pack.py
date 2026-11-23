@@ -898,6 +898,15 @@ for token in ("#define MATERIAL_AO_STRENGTH 100", "#define MATERIAL_SSS_STRENGTH
               "mix(shadow, vec3(1.0), sssStrength * 0.65)"):
     if token not in sources.get("deferred.fsh", ""):
         errors.append(f"Deferred material AO/SSS path is missing: {token}")
+
+terrain_sss = sources.get("gbuffers_terrain.fsh", "")
+for token in ("vMaterialId == 10009", "vMaterialId == 10011",
+              "vMaterialId == 32130", "vMaterialId == 30012", "vMaterialId == 30016",
+              "materialSurfaceData = 0.52", "materialSurfaceData = 0.46",
+              "materialSurfaceData = 0.38", "materialSurfaceData = 0.48"):
+    if token not in terrain_sss:
+        errors.append(f"Non-LabPBR subsurface fallback is missing: {token}")
+
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     if "outEmissionData = vec4(pbrEmission, materialReflectance, materialAO, materialSurfaceData)" not in source and name == "gbuffers_entities.fsh":
