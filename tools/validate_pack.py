@@ -1017,6 +1017,16 @@ for token in ("cameraPositionInt % ivec3(4096)", "mod(frameTimeCounter, 3600.0)"
               "TWO_PI * waveSpeed / 3600.0", "return (firstWave + secondWave) * 0.0125 * strength * 0.01"):
     if token not in water_wave_helper:
         errors.append(f"Shared periodic water-wave helper is missing component: {token}")
+water_speed_line = next((line for line in water_vertex_shader.splitlines() if line.startswith("#define WATER_WAVE_SPEED ")), "")
+water_speed_match = re.search(r"\\[([0-9 ]+)\\]", water_speed_line)
+if not water_speed_match or any(int(value) % 10 != 0 for value in water_speed_match.group(1).split()):
+    errors.append("Water wave speed options must preserve integer cycles at the hourly timer wrap")
+for profile in ("Ultra-Light", "Smooth", "Ultra", "HDR", "Ultra-HDR"):
+    profile_line = next((line for line in props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    speed_match = re.search(r"WATER_WAVE_SPEED:(\\d+)", profile_line)
+    if not speed_match or int(speed_match.group(1)) % 10 != 0:
+        errors.append(f"{profile} water wave speed must preserve the hourly phase wrap")
+
 if "block.32000=minecraft:water flowing_water" not in (SHADERS / "block.properties").read_text(encoding="utf-8"):
     errors.append("Water vertex wave material ID must map to vanilla water")
 if "option.WATER_WAVE_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
