@@ -61,7 +61,7 @@ for path in SHADERS.rglob("*"):
     # Iris routes gbuffers_line through its dedicated core-profile transform
     # when the source version is below 150. Keep this pair on GLSL 130 so Iris
     # upgrades it internally instead of requesting a driver compatibility profile.
-    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh"} else r"^\s*#version\s+330\b"
+    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh", "gbuffers_clouds.vsh", "gbuffers_clouds.fsh"} else r"^\s*#version\s+330\b"
     if path.suffix != ".glsl" and not re.search(expected_version, source, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: unexpected GLSL source version")
     if source.count("{") != source.count("}"):
@@ -1279,7 +1279,7 @@ for token in ("/* RENDERTARGETS: 0,2 */", "texture(gtexture", "alphaTestRef",
         errors.append(f"Textured fallback is missing Iris overlay component: {token}")
 clouds = sources.get("gbuffers_clouds.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "isEyeInWater != 0", "fogColor",
-              "fogDensity", "fogMode", "fogShape", "outDeferredValidity = vec4(0.0)"):
+              "fogDensity", "fogMode", "fogShape", "outColor1 = vec4(0.0)"):
     if token not in clouds:
         errors.append(f"Cloud overlay is missing Iris forward component: {token}")
 for name in ("gbuffers_lightning.fsh", "gbuffers_beaconbeam.fsh"):
@@ -1300,7 +1300,7 @@ if "fogColor" not in spidereyes or "calculateEyeFog" not in spidereyes:
     errors.append("Spider-eye pass must preserve Iris fog while bypassing deferred lighting")
 clouds = sources.get("gbuffers_clouds.fsh", "")
 for token in ("uniform float alphaTestRef", "vec4 cloudColor = vVertexColor;",
-              "cloudColor.a < alphaTestRef", "outDeferredValidity = vec4(0.0)",
+              "cloudColor.a < alphaTestRef", "outColor1 = vec4(0.0)",
               "uniform vec3 shadowLightPosition", "uniform float sunAngle",
               "solarElevation", "silverLining", "CLOUD_SCATTERING_STRENGTH",
               "hasSkylight && lightLength > 0.0001", "vec3 lightingTint = hasSkylight",
