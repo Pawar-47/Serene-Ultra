@@ -1,6 +1,7 @@
 #version 330 compatibility
 
 #include "/lib/taa_jitter.glsl"
+#include "/lib/animation/foliage_wind.glsl"
 #include "/lib/animation/lava_waves.glsl"
 
 uniform mat4 gbufferModelViewInverse;
@@ -39,13 +40,12 @@ void main() {
     // for stable wind phase at large world coordinates. Existing leaf IDs are
     // reused; the additional ID covers vanilla ground and aquatic vegetation.
     if (vMaterialId == 10009 || vMaterialId == 10011 || vMaterialId == 32130) {
-        vec3 stableWorld = vec3(cameraPositionInt) + cameraPositionFract + vPlayerPosition;
-        vec2 windPosition = mod(stableWorld.xz, vec2(4096.0));
-        float windStrength = float(WAVING_FOLIAGE_STRENGTH) * 0.00045;
-        float broadWave = sin(dot(windPosition, vec2(0.071, 0.053)) + frameTimeCounter * 0.85);
-        float detailWave = sin(dot(windPosition, vec2(-0.113, 0.097)) - frameTimeCounter * 1.27);
-        vec2 wind = vec2(broadWave + detailWave * 0.28, detailWave + broadWave * 0.22)
-            * windStrength;
+        vec3 stableWorld = sereneStableFoliageWorldPosition(
+            cameraPositionInt, cameraPositionFract, vPlayerPosition
+        );
+        vec2 wind = sereneFoliageWind(
+            stableWorld, frameTimeCounter, float(WAVING_FOLIAGE_STRENGTH)
+        );
         vec4 displacedViewPosition = viewPosition;
         displacedViewPosition.xyz += mat3(gl_ModelViewMatrix)
             * vec3(wind.x, 0.0, wind.y);
