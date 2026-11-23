@@ -1718,3 +1718,12 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - The shared 1/2/4-tap anisotropic sampler now covers terrain, opaque block/entity materials, water/glass/ice/portal, translucent block/entity materials, weather and translucent particles. It filters along the principal eigenvector of the UV-derivative covariance and clamps taps to flat Iris sprite bounds.
 - Added a shared world-stable lava displacement function in `shaders/lib/animation/lava_waves.glsl`; visible terrain and shadow passes use identical displacement so animated lava silhouettes remain aligned. Commit: `b1f53afab5c9e39e176b6fdeb7eb2abca5ca0e0d`.
 - Hardware texture anisotropy, runtime shimmer/performance, lava geometry compatibility and visual calibration remain runtime checks.
+
+
+### Lava surface wave stability and shadow parity — 2026-11-23
+- Consolidated the terrain and shadow vertex displacement into `lib/animation/lava_waves.glsl`. Both passes now share the exact same surface gate, wave field, amplitude, and timing.
+- The camera origin is reduced with integer modulo before conversion to float. The 4096-block spatial period uses integer cycle counts (638/1278 and 913/-456); the one-hour `frameTimeCounter` wrap uses 60 base cycles so both animated waves meet at the wrap without visible phase jumps.
+- The shadow pass now uses the same top/sides vertex gate as the visible terrain pass, preventing the bottom face from moving only in the shadow map. The terrain view-space position is updated after displacement so tangent-view varyings remain consistent.
+- `LAVA_WAVE_STRENGTH` is now present in the Quality slider list; existing per-profile values and language label/tooltip are retained. Validator checks the shared helper, period/timer constants, both receivers, slider and profile values.
+- Commits: helper `b1f53afab5c9e39e176b6fdeb7eb2abca5ca0e0d`; terrain `4546bdceaa3d4fad6d48e4ea1471b158c8ec0289`, view-space follow-up `7e030e6870c719aff2474f5a42a080383020e4ea`; shadow `2be49c647ea38108e2f9a12642a695c2efd84700`; slider `349b23a19d30c6a6300a47c5d1e57aace3b05ae8`; validator `fc53156637904b57788f45d738eb1cfa0acb6b26`; matrix `8ecd33e3fc35f443081c6d8b60cea75058b6296b`.
+- Runtime surface geometry, lava cauldron behaviour, shadow alignment and performance still require Minecraft/Iris verification.
