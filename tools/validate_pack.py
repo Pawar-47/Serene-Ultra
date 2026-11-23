@@ -1056,6 +1056,12 @@ brief = ROOT / "PROJECT_BRIEF.md"
 if not brief.is_file():
     errors.append("Missing cumulative PROJECT_BRIEF.md")
 
+workflow_text = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+if "Compile opt-in entity POM branches" not in workflow_text or "POM_ENTITY_STRENGTH 20" not in workflow_text:
+    errors.append("CI must compile both opt-in entity POM variants")
+if "MC_TEXTURE_FORMAT_LAB_PBR 1" not in workflow_text:
+    errors.append("CI must compile entity POM with the LabPBR format branch")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:

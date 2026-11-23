@@ -107,6 +107,24 @@ jobs:
           compile_labpbr_pair entities shaders/gbuffers_entities.vsh shaders/gbuffers_entities.fsh
           compile_labpbr_pair block_entities shaders/gbuffers_block.vsh shaders/gbuffers_block.fsh
           compile_labpbr_pair deferred shaders/deferred.vsh shaders/deferred.fsh
+      - name: Compile opt-in entity POM branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          cp shaders/gbuffers_entities.vsh "$tmpdir/entities.vert"
+
+          # Compile the non-LabPBR branch with POM enabled.
+          sed 's/^#define POM_ENTITY_STRENGTH 0.*/#define POM_ENTITY_STRENGTH 20/' \
+            shaders/gbuffers_entities.fsh > "$tmpdir/entities-pom-oldpbr.frag"
+          glslangValidator -l "$tmpdir/entities.vert" "$tmpdir/entities-pom-oldpbr.frag"
+
+          # Also compile the LabPBR branch with the opt-in POM path enabled.
+          awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next }
+               /^#define POM_ENTITY_STRENGTH 0/ { print "#define POM_ENTITY_STRENGTH 20"; next }
+               { print }' shaders/gbuffers_entities.fsh > "$tmpdir/entities-pom-labpbr.frag"
+          glslangValidator -l "$tmpdir/entities.vert" "$tmpdir/entities-pom-labpbr.frag"
       - name: Link vertex and fragment shader programs
         shell: bash
         run: |

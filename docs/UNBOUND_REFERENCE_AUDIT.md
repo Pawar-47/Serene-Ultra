@@ -284,3 +284,9 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Generated normals run only when no explicit normal-map XY detail exists, on opaque texels with visible albedo contrast. Coated texture noise skips item frames/glow item frames, transparent texels, emissive materials and high-F0/high-smoothness surfaces.
 - POM_ENTITY_STRENGTH remains separately opt-in; entity POM is disabled in Ultra-Light/Smooth and enabled only in Ultra/HDR. Generic translucent entities and held items remain outside this pass.
 - This extends source coverage; runtime resource-pack compatibility, entity-specific visual checks and GPU cost remain unverified.
+
+
+## Entity material-feature coverage + CI expansion — 2026-11-23
+- Run #1068 (45110765737) passed all nine stages after generated normals and coated textures were extended to opaque entity models. Entity item frames/glow item frames are explicitly excluded.
+- Added a dedicated CI step that compiles and links the opt-in entity POM branch twice: oldPBR and LabPBR, both with POM_ENTITY_STRENGTH forced to 20. The default entity profile remains POM-off to protect low-end GPUs; this test ensures the optional code path cannot silently rot.
+- Structural validation now requires the CI opt-in POM variants. This is a test-coverage improvement, not a runtime visual verification.
