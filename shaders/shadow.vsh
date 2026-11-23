@@ -1,5 +1,7 @@
 #version 130
 
+#include "/lib/animation/lava_waves.glsl"
+
 uniform mat4 shadowModelViewInverse;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
@@ -50,14 +52,13 @@ void main() {
 #endif
 #if LAVA_WAVE_STRENGTH > 0
     if (vShadowMaterialId == 32118 || vShadowMaterialId == 32132) {
-        vec3 stableWorld = vec3(cameraPositionInt) + cameraPositionFract + vShadowPlayerPosition;
+        vec3 stableWorld = sereneStableLavaWorldPosition(
+            cameraPositionInt, cameraPositionFract, vShadowPlayerPosition
+        );
         if (fract(stableWorld.y + 0.005) > 0.06) {
-            vec2 lavaPosition = mod(stableWorld.xz, vec2(4096.0));
-            float lavaTime = mod(frameTimeCounter, 3600.0) * 0.10471975512;
-            float waveA = sin(lavaTime * 0.7 - dot(lavaPosition, vec2(0.9790, 1.9602)));
-            float waveB = sin(lavaTime * 0.5 - dot(lavaPosition, vec2(1.4008, -0.6995)));
-            float lavaDisplacement = (waveA + waveB)
-                * 0.0125 * float(LAVA_WAVE_STRENGTH) * 0.01;
+            float lavaDisplacement = sereneLavaSurfaceDisplacement(
+                stableWorld, frameTimeCounter, float(LAVA_WAVE_STRENGTH)
+            );
             vShadowPlayerPosition.y += lavaDisplacement;
             shadowViewPosition = gl_ModelViewMatrix * vec4(vShadowPlayerPosition, 1.0);
         }
