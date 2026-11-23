@@ -4,6 +4,7 @@ uniform sampler2D colortex0;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
 uniform sampler2D colortex4;
+uniform sampler2D colortex12;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 
@@ -11,6 +12,11 @@ uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferPreviousModelView;
+uniform mat4 gbufferPreviousProjection;
+uniform vec3 cameraPosition;
+uniform vec3 previousCameraPosition;
+uniform int frameCounter;
 
 uniform vec3 skyColor;
 uniform vec3 fogColor;
@@ -24,8 +30,13 @@ uniform bool hasCeiling;
 
 in vec2 vTexCoord;
 
-/* RENDERTARGETS: 0 */
+/* RENDERTARGETS: 0,12 */
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outGiHistory;
+
+/*
+const int colortex12Format = RGBA16F;
+*/
 
 #define PBR_REFLECTION_STRENGTH 75 // [0 25 50 75 100 125 150] Opaque material reflection strength
 #define PBR_REFLECTION_QUALITY 4 // [0 4 6 8] Opaque screen-space reflection steps
@@ -33,6 +44,7 @@ layout(location = 0) out vec4 outColor;
 #define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
 #define SCREEN_GI_STRENGTH 25 // [0 5 10 15 20 25 30 35 40 45 50] Screen-space local colour bounce
 #define SCREEN_GI_QUALITY 8 // [0 4 8 12] Number of depth-aware colour-bounce samples
+#define SCREEN_GI_TEMPORAL_STRENGTH 75 // [0 25 50 75 90] Reprojected GI history weight
 #define FOG_HEIGHT_STRENGTH 45 // [0 20 35 50 65 80 100] World-height fog strength
 
 #if LIGHT_SHAFT_QUALITY > 0
@@ -219,6 +231,57 @@ vec3 sampleOpaqueEnvironmentReflection(vec3 viewReflectionDirection) {
 }
 
 
+
+vec3 accumulateScreenGiHistory(
+    vec3 currentGi,
+    vec2 uv,
+    float currentDepth,
+    vec3 currentViewPosition,
+    out float historyDepth
+) {
+    historyDepth = currentDepth;
+#if SCREEN_GI_STRENGTH > 0 && SCREEN_GI_TEMPORAL_STRENGTH > 0
+    if (frameCounter > 1 && currentDepth < 0.999999) {
+        vec3 playerPosition = (
+            gbufferModelViewInverse * vec4(currentViewPosition, 1.0)
+        ).xyz;
+        vec3 previousPlayerPosition = playerPosition
+            + cameraPosition - previousCameraPosition;
+        vec4 previousViewPosition = gbufferPreviousModelView
+            * vec4(previousPlayerPosition, 1.0);
+        vec4 previousClipPosition = gbufferPreviousProjection
+            * previousViewPosition;
+
+        if (previousClipPosition.w > 0.0001) {
+            vec3 previousNdc = previousClipPosition.xyz / previousClipPosition.w;
+            vec2 previousUv = previousNdc.xy * 0.5 + 0.5;
+            float expectedPreviousDepth = previousNdc.z * 0.5 + 0.5;
+            if (previousUv.x > 0.001 && previousUv.x < 0.999
+                && previousUv.y > 0.001 && previousUv.y < 0.999
+                && expectedPreviousDepth > 0.0 && expectedPreviousDepth < 1.0) {
+                vec4 previousHistory = texture(colortex12, previousUv);
+                float depthTolerance = max(
+                    0.00065, expectedPreviousDepth * 0.0015
+                );
+                if (previousHistory.a > 0.0
+                    && abs(previousHistory.a - expectedPreviousDepth) < depthTolerance) {
+                    // Clamp old irradiance around the current estimate so
+                    // disocclusions and abrupt lighting changes cannot leave
+                    // a long-lived bright/dark trail.
+                    vec3 historyUpper = currentGi * 2.5 + vec3(0.008);
+                    vec3 clampedHistory = clamp(
+                        previousHistory.rgb, vec3(0.0), historyUpper
+                    );
+                    float historyWeight = float(SCREEN_GI_TEMPORAL_STRENGTH) * 0.01;
+                    currentGi = mix(currentGi, clampedHistory, historyWeight);
+                }
+            }
+        }
+    }
+#endif
+    return currentGi;
+}
+
 vec3 applySereneHeightFog(vec3 sceneLinear, float sceneDepth, vec2 uv) {
 #if FOG_HEIGHT_STRENGTH > 0
     if ((!hasSkylight && !hasCeiling) || sceneDepth >= 0.999999) return sceneLinear;
@@ -275,12 +338,21 @@ void main() {
             vTexCoord, centerDepth, centerViewPosition, centerNormal, normalData.a
         )
         : vec3(0.0);
+    float historyDepth = 0.0;
+    vec3 temporallyStableGi = opaqueReceiver
+        ? accumulateScreenGiHistory(
+            screenGi, vTexCoord, centerDepth, centerViewPosition, historyDepth
+        )
+        : vec3(0.0);
+    outGiHistory = opaqueReceiver
+        ? vec4(temporallyStableGi, historyDepth)
+        : vec4(0.0);
 
     // The alpha channel below 0.525 is sky/unlit geometry or a surface without
     // a meaningful PBR smoothness value. Avoid all reflection work for it.
     if (normalData.a <= 0.525 || PBR_REFLECTION_STRENGTH <= 0) {
         vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
-        sceneLinearNoReflection += lightShafts + screenGi;
+        sceneLinearNoReflection += lightShafts + temporallyStableGi;
         sceneLinearNoReflection = applySereneHeightFog(
             sceneLinearNoReflection, currentDepthAll, vTexCoord
         );
@@ -352,7 +424,7 @@ void main() {
 
     vec3 sceneLinear = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 resultLinear = mix(sceneLinear, reflectionLinear, reflectionWeight);
-    resultLinear += lightShafts + screenGi;
+    resultLinear += lightShafts + temporallyStableGi;
     resultLinear = applySereneHeightFog(resultLinear, currentDepthAll, vTexCoord);
     outColor = vec4(pow(max(resultLinear, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
 }
