@@ -63,6 +63,15 @@ vec3 reconstructPlayerDirection() {
 #define SKY_TWILIGHT_STRENGTH 60 // [0 25 50 55 60 65 70 75 100 125 150] Twilight colour intensity
 #define CLOUD_SHAPE 0 // [0 1 2] Cumulus, stratus or wispy cloud morphology
 #define CLOUD_SIZE 100 // [50 75 100 125 150 200] Cloud feature size
+#define SUN_COLOR_R 100 // [0 25 50 75 100 125 150 175 200] Sun disc red multiplier
+#define SUN_COLOR_G 100 // [0 25 50 75 100 125 150 175 200] Sun disc green multiplier
+#define SUN_COLOR_B 100 // [0 25 50 75 100 125 150 175 200] Sun disc blue multiplier
+#define SKY_COLOR_R 100 // [0 25 50 75 100 125 150 175 200] Sky red multiplier
+#define SKY_COLOR_G 100 // [0 25 50 75 100 125 150 175 200] Sky green multiplier
+#define SKY_COLOR_B 100 // [0 25 50 75 100 125 150 175 200] Sky blue multiplier
+#define CLOUD_COLOR_R 100 // [0 25 50 75 100 125 150 175 200] Cloud red multiplier
+#define CLOUD_COLOR_G 100 // [0 25 50 75 100 125 150 175 200] Cloud green multiplier
+#define CLOUD_COLOR_B 100 // [0 25 50 75 100 125 150 175 200] Cloud blue multiplier
 
 vec3 calculateAtmosphericScattering(
     vec3 viewDirection,
@@ -299,14 +308,6 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
         if (sampleDistance > endDistance) break;
 
         vec3 samplePosition = cameraWorldPosition + rayDirection * sampleDistance;
-        float heightFraction = clamp(
-            (samplePosition.y - cloudBase) / max(float(CLOUD_THICKNESS), 1.0),
-            0.0, 1.0
-        );
-        float verticalProfile = smoothstep(0.02, 0.18, heightFraction)
-            * (1.0 - smoothstep(0.72, 1.0, heightFraction));
-        if (verticalProfile <= 0.001) continue;
-
         float density = sampleCloudDensity(
             samplePosition, cloudBase, float(CLOUD_THICKNESS),
             wind, coverage, detailStrength, rain
@@ -355,6 +356,7 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
 
         float cloudFog = smoothstep(600.0, 1400.0, sampleDistance);
         sampleColor = mix(sampleColor, vFogLinear, cloudFog * 0.75);
+        sampleColor *= vec3(float(CLOUD_COLOR_R), float(CLOUD_COLOR_G), float(CLOUD_COLOR_B)) * 0.01;
 
         cloudRadiance += cloudRadiance * 0.0 + transmittance * sampleAlpha * sampleColor;
         transmittance *= 1.0 - sampleAlpha;
@@ -513,6 +515,7 @@ void main() {
         colorLinear += calculateRainbow(
             viewDirection, solarElevation, rainStrength
         );
+        colorLinear *= vec3(float(SKY_COLOR_R), float(SKY_COLOR_G), float(SKY_COLOR_B)) * 0.01;
 
         // Volumetric clouds are integrated into the sky pass so they use the
         // exact same sky ray, fog, celestial direction and depth ordering.
@@ -569,6 +572,7 @@ void main() {
                 vec3(1.0, 0.94, 0.80),
                 smoothstep(-0.08, 0.35, sunElevation)
             );
+            sunDiskColor *= vec3(float(SUN_COLOR_R), float(SUN_COLOR_G), float(SUN_COLOR_B)) * 0.01;
             float sunEnergy = float(SUN_INTENSITY) * 0.01;
             colorLinear = mix(
                 colorLinear,
