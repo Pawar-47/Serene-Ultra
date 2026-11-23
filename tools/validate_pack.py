@@ -543,7 +543,8 @@ for option, names in (
         errors.append(f"{option} numeric value must match across its terrain/block/entity/water consumers")
 
 water_pom_source = re.sub(r"\s+", " ", sources.get("gbuffers_water.fsh", ""))
-for token in ("vec2 calculateWaterParallaxUv(", "textureGrad(normals, baseUv, uvDx, uvDy)",
+for token in ("vec2 calculateWaterParallaxUv(", "sampleAnisotropicAtlas(normals, baseUv, uvDx, uvDy, spriteBounds)",
+              "sampleAnisotropicAtlas(normals, sampleUv, uvDx, uvDy, spriteBounds).a",
               "initialNormal.a >= 0.9995", "spriteBounds.xy + hitLocal * tileSize",
               "for (int stepIndex = 0; stepIndex < POM_QUALITY; ++stepIndex)",
               "waterMaterialUv = calculateWaterParallaxUv(",
