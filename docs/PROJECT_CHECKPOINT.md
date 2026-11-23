@@ -824,3 +824,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1074 (45111618598) passed all nine stages, including all wave-scale and timer-wrap math checks.
 - Added a dedicated CI step to force WATER_WAVE_DETAIL=1 and compile/link the optional fourth 0.05 octave in both oldPBR and LabPBR branches. This prevents the higher-profile-only water code from being validated only in its default-off configuration.
 - Water parallax remains deferred until alpha-height data is verified; visual water calibration and target-GPU profiling are still pending.
+
+
+## Low-end and high-quality profile calibration — 2026-11-23
+- Rebalanced Ultra-Light and Smooth presets across water, reflections, material specular/SSS/AO, glass and portal effects. Ultra-Light keeps features available but lowers sample counts/strengths; it uses 4-step water/opaque SSR, 25% wave/foam/caustics, reduced refraction/reflection, and disables POM/generated normals/coating. Smooth uses intermediate strengths and 6-step water SSR.
+- Ultra/HDR retain higher-quality water and material settings and enable the optional fourth very-large water-normal scale. WATER_WAVE_DETAIL is a checkbox with an explicit one-extra-texture-sample tooltip.
+- Water caustics are implemented in the shadow pass through WATER_CAUSTICS_STRENGTH/SCALE and translucent shadow-colour output; these profile values tune that existing path.
+- This is preset-level performance intent, not measured FPS. Target-device profiling on Intel HD 5500 remains required.

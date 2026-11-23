@@ -824,6 +824,21 @@ for profile in ("Ultra", "HDR", "Ultra-HDR"):
     profile_line = next((line for line in props.splitlines() if line.startswith(f"profile.{profile} =")), "")
     if "WATER_WAVE_DETAIL:1" not in profile_line:
         errors.append(f"{profile} must enable the optional very-large Unbound water-normal octave")
+ultra_light_profile = next((line for line in props.splitlines() if line.startswith("profile.Ultra-Light =")), "")
+smooth_profile = next((line for line in props.splitlines() if line.startswith("profile.Smooth =")), "")
+ultra_profile = next((line for line in props.splitlines() if line.startswith("profile.Ultra =")), "")
+for token in ("WATER_WAVE_STRENGTH:25", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:25",
+              "WATER_FOAM_STRENGTH:25", "PBR_REFLECTION_STRENGTH:25", "PBR_REFLECTION_QUALITY:4",
+              "AO_STRENGTH:0.40", "MATERIAL_SSS_STRENGTH:25"):
+    if token not in ultra_light_profile:
+        errors.append(f"Ultra-Light profile is missing low-cost setting: {token}")
+for token in ("WATER_WAVE_STRENGTH:75", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:60",
+              "WATER_FOAM_STRENGTH:60", "PBR_REFLECTION_STRENGTH:50", "AO_STRENGTH:0.55"):
+    if token not in smooth_profile:
+        errors.append(f"Smooth profile is missing balanced setting: {token}")
+for token in ("WATER_WAVE_DETAIL:1", "POM_ENTITY_STRENGTH:20", "PBR_REFLECTION_QUALITY:8"):
+    if token not in ultra_profile:
+        errors.append(f"Ultra profile is missing high-quality setting: {token}")
 if "option.WATER_WAVE_DETAIL.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
     errors.append("Very-large water wave detail requires a user-facing tooltip")
 if "cross(geometricNormal, tangent)" in water:

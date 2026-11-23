@@ -296,3 +296,10 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - The 0.05 very-large normal octave is optional and adds one sample only in higher quality profiles. The three-scale baseline remains unchanged for low-cost profiles.
 - Stable water coordinates use a 2560-block period; every configured wave-scale preset yields integer repeats across the 1.0, 4.0, 0.25 and 0.05 octaves. Wind multipliers are checked against all configured speed presets to prevent a visible jump at Iris' 3600-second timer wrap.
 - Water parallax is not enabled because the custom normal texture's alpha height encoding has not yet been verified. This avoids silently sampling an undefined height channel.
+
+
+## Low-end and high-quality profile calibration — 2026-11-23
+- Rebalanced Ultra-Light and Smooth presets across water, reflections, material specular/SSS/AO, glass and portal effects. Ultra-Light keeps features available but lowers sample counts/strengths; it uses 4-step water/opaque SSR, 25% wave/foam/caustics, reduced refraction/reflection, and disables POM/generated normals/coating. Smooth uses intermediate strengths and 6-step water SSR.
+- Ultra/HDR retain higher-quality water and material settings and enable the optional fourth very-large water-normal scale. WATER_WAVE_DETAIL is a checkbox with an explicit one-extra-texture-sample tooltip.
+- Water caustics are implemented in the shadow pass through WATER_CAUSTICS_STRENGTH/SCALE and translucent shadow-colour output; these profile values tune that existing path.
+- This is preset-level performance intent, not measured FPS. Target-device profiling on Intel HD 5500 remains required.
