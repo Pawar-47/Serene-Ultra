@@ -4,6 +4,7 @@ screen.QUALITY = Quality & Profiles
 screen.COLOR = Color & HDR Controls
 
 option.SHADOW_ALPHA_CUTOFF = Shadow Alpha Cutoff
+option.SPECULAR_AA_STRENGTH = Specular Anti-Aliasing
 option.MOTION_BLUR_STRENGTH = Camera Motion Blur
 option.MOTION_BLUR_QUALITY = Motion Blur Quality
 option.DOF_STRENGTH = Depth of Field Strength
@@ -28,6 +29,7 @@ option.MOTION_BLUR_QUALITY.comment = Selects 0, 4, 6 or 8 blur taps. Higher sett
 option.DOF_STRENGTH.comment = Adds a bounded depth-aware photographic blur outside the selected focus range. Higher values increase the blur radius; Ultra-Light disables it.
 option.DOF_FOCUS_DISTANCE.comment = Sets the in-focus distance from the camera in blocks.
 option.DOF_FOCUS_RANGE.comment = Sets the depth interval around the focus distance that remains sharp.
+option.SPECULAR_AA_STRENGTH.comment = Filters sub-pixel normal-map variation into GGX roughness to reduce sparkling highlights on detailed and distant materials. Zero disables the extra derivative work.
 option.SHADOW_ALPHA_CUTOFF.comment = Controls which transparent texels are removed from shadow casters. Lower values preserve finer foliage detail.
 option.AO_STRENGTH.comment = Controls local screen-space contact shading. AO affects ambient light only.
 option.AO_RADIUS.comment = Sets the view-space radius used to detect nearby occluding surfaces. Larger values affect broader contact regions.
