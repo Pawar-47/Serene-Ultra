@@ -15,8 +15,8 @@ void main() {
     // pixel's actual source-space footprint so odd viewport edges are retained.
     // The footprint spans at most three source texels per axis at half scale.
     ivec2 destinationPixel = ivec2(gl_FragCoord.xy);
-    ivec2 destinationSize = max(sourceSize / 2, ivec2(1));
     ivec2 sourceSize = textureSize(colortex0, 0);
+    ivec2 destinationSize = max(sourceSize / 2, ivec2(1));
     vec2 sourceStart = vec2(destinationPixel) * vec2(sourceSize) / vec2(destinationSize);
     vec2 sourceEnd = vec2(destinationPixel + ivec2(1)) * vec2(sourceSize) / vec2(destinationSize);
     ivec2 sourceBase = ivec2(floor(sourceStart));
