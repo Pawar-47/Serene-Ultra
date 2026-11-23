@@ -1,6 +1,7 @@
 #version 130
 
 #include "/lib/animation/lava_waves.glsl"
+#include "/lib/animation/water_waves.glsl"
 
 uniform mat4 shadowModelViewInverse;
 uniform ivec3 cameraPositionInt;
@@ -22,6 +23,8 @@ in vec2 mc_Entity;
 
 #define WAVING_FOLIAGE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Wind-driven foliage motion
 #define LAVA_WAVE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Animated lava surface vertex motion
+#define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated water surface and normal strength
+#define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
 
 void main() {
     // Preserve the original block/entity texture coordinates so cutout
@@ -62,6 +65,19 @@ void main() {
             vShadowPlayerPosition.y += lavaDisplacement;
             shadowViewPosition = gl_ModelViewMatrix * vec4(vShadowPlayerPosition, 1.0);
         }
+    }
+#endif
+#if WATER_WAVE_STRENGTH > 0
+    if (vShadowMaterialId == 32000 && vShadowFluidRenderType > 0.5) {
+        vec3 stableWaterWorld = sereneStableWaterWavePosition(
+            cameraPositionInt, cameraPositionFract, vShadowPlayerPosition
+        );
+        float waterDisplacement = sereneWaterSurfaceDisplacement(
+            stableWaterWorld, frameTimeCounter,
+            float(WATER_WAVE_STRENGTH), float(WATER_WAVE_SPEED)
+        );
+        vShadowPlayerPosition.y += waterDisplacement;
+        shadowViewPosition = gl_ModelViewMatrix * vec4(vShadowPlayerPosition, 1.0);
     }
 #endif
     gl_Position = gl_ProjectionMatrix * shadowViewPosition;
