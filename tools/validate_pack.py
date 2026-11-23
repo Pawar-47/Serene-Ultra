@@ -138,6 +138,21 @@ props_path = SHADERS / "shaders.properties"
 props = ""
 if props_path.is_file():
     props = props_path.read_text(encoding="utf-8")
+    # Iris accepts both program-wide blend directives and per-buffer overrides.
+    # A dotted directive with an unknown buffer suffix reaches Iris's
+    # "Failed to parse buffer blend! index = -1" error path.
+    for line_number, raw_line in enumerate(props.splitlines(), 1):
+        directive = raw_line.split("#", 1)[0].strip()
+        if not directive.startswith("blend.") or "=" not in directive:
+            continue
+        key = directive.split("=", 1)[0].strip()
+        blend_target = key[len("blend."):]
+        if "." in blend_target:
+            _program, buffer_name = blend_target.split(".", 1)
+            if not re.fullmatch(r"colortex\\d+", buffer_name):
+                errors.append(
+                    f"shaders.properties line {line_number}: unknown Iris blend buffer {buffer_name!r}"
+                )
     for profile in ("Ultra-Light", "Smooth", "Ultra", "HDR", "Ultra-HDR"):
         if f"profile.{profile} =" not in props:
             errors.append(f"Missing shader profile: {profile}")
