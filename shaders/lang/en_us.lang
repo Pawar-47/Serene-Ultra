@@ -146,3 +146,8 @@ option.HAND_PBR_STRENGTH.comment = Enables tangent-space normal maps, material r
 
 option.HELD_LIGHTING_STRENGTH = Held Item World Lighting
 option.HELD_LIGHTING_STRENGTH.comment = Adds low-cost colored light from luminous main/offhand items to nearby opaque surfaces. Ultra-Light compiles it out; it adds no texture samples and does not cast shadows.
+
+option.BLOOM_STRENGTH = Bloom Strength
+option.BLOOM_STRENGTH.comment = Adds a low-cost five-tap highlight glow in the final pass. It uses the existing scene buffer and no extra render target; higher values increase the glow.
+option.BLOOM_THRESHOLD = Bloom Highlight Threshold
+option.BLOOM_THRESHOLD.comment = Sets the brightness level where bloom begins. Lower values make more surfaces glow; higher values restrict the effect to bright emissive and highlight pixels.
