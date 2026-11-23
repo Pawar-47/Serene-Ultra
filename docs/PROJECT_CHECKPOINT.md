@@ -1259,3 +1259,11 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Added strength and 0/4/8/12-sample quality controls to the Quality screen, sliders, tooltips and all five profiles. Ultra-Light compiles the effect out; Smooth, Ultra and HDR tiers progressively increase the sample budget.
 - Added structural checks for the shader path, UI exposure and per-profile settings.
 - This is not full volumetric fog/cloud-shadow integration or a world-space volumetric system. It is a low-cost screen-space baseline and needs Iris runtime/visual validation before being considered complete.
+
+
+## Verified post-processing continuation checkpoint — 2026-11-23
+- Latest source commit: `79737edaeeb68f6c4be2798d512d04f98a754590`.
+- CI run `45197005372` passed all stages: standalone GLSL compilation, Iris render-stage macro branches, LabPBR, entity POM, Unbound water-wave detail, Ultra-Light reflection branch, water-normal asset inspection, vertex/fragment linking and structural validation.
+- This verifies shader compilation/linking and declared structural contracts only. It does not verify Minecraft 26.3 + Iris runtime loading, image quality, performance or visual parity.
+- Alpha publication remains disabled; workflow run `45197020825` was skipped.
+- Bloom, FXAA and screen-space sunlight shafts are implemented as low-cost source-level approximations with profile controls. Multi-scale bloom, TAA, full volumetric integration, world-space GI, procedural cloud layers, custom colored-light propagation and archive-level feature-by-feature source reconciliation remain outstanding.
