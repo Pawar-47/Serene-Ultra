@@ -27,6 +27,7 @@ layout(location = 0) out vec4 outColor;
 #define PBR_REFLECTION_QUALITY 4 // [0 4 6 8] Opaque screen-space reflection steps
 #define LIGHT_SHAFT_STRENGTH 45 // [0 10 20 30 40 50 60 70 80 90 100] Screen-space sunlight scattering strength
 #define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
+#define SCREEN_GI_STRENGTH 25 // [0 5 10 15 20 25 30 35 40 45 50] Screen-space local colour bounce
 
 #if LIGHT_SHAFT_QUALITY > 0
 vec3 sampleScreenSpaceLightShafts(vec2 uv) {
@@ -63,6 +64,61 @@ vec3 sampleScreenSpaceLightShafts(vec2 uv) {
 #else
 vec3 sampleScreenSpaceLightShafts(vec2 uv) { return vec3(0.0); }
 #endif
+
+
+vec3 sampleScreenSpaceColorBleed(
+    vec2 uv,
+    float centerDepth,
+    vec3 centerViewPosition,
+    vec3 centerNormal,
+    float normalValidity
+) {
+#if SCREEN_GI_STRENGTH > 0
+    if (centerDepth >= 0.999999 || normalValidity < 0.49) return vec3(0.0);
+
+    vec2 texel = 1.0 / vec2(textureSize(depthtex2, 0));
+    const vec2 offsets[4] = vec2[4](
+        vec2(-2.0, 0.0), vec2(2.0, 0.0),
+        vec2(0.0, -2.0), vec2(0.0, 2.0)
+    );
+    vec3 bouncedLight = vec3(0.0);
+    float totalWeight = 0.0;
+
+    for (int i = 0; i < 4; ++i) {
+        vec2 sampleUv = uv + offsets[i] * texel;
+        if (sampleUv.x <= 0.0 || sampleUv.x >= 1.0 ||
+            sampleUv.y <= 0.0 || sampleUv.y >= 1.0) continue;
+
+        float sampleDepth = texture(depthtex2, sampleUv).r;
+        if (sampleDepth >= 0.999999) continue;
+        vec3 sampleNdc = vec3(sampleUv, sampleDepth) * 2.0 - 1.0;
+        vec4 sampleView4 = gbufferProjectionInverse * vec4(sampleNdc, 1.0);
+        vec3 sampleViewPosition = sampleView4.xyz / max(sampleView4.w, 0.0001);
+        vec3 delta = sampleViewPosition - centerViewPosition;
+        float sampleDistance = length(delta);
+        if (sampleDistance <= 0.0001 || sampleDistance >= 1.5) continue;
+
+        float facing = max(dot(centerNormal, delta / sampleDistance), 0.0);
+        float distanceWeight = 1.0 - smoothstep(0.15, 1.5, sampleDistance);
+        float depthWeight = 1.0 - smoothstep(0.05, 1.25, abs(delta.z));
+        float weight = facing * distanceWeight * depthWeight;
+        if (weight <= 0.001) continue;
+
+        vec3 sampleLinear = pow(
+            max(texture(colortex0, sampleUv).rgb, vec3(0.0)),
+            vec3(2.2)
+        );
+        bouncedLight += sampleLinear * weight;
+        totalWeight += weight;
+    }
+
+    if (totalWeight <= 0.001) return vec3(0.0);
+    return (bouncedLight / totalWeight)
+        * (float(SCREEN_GI_STRENGTH) * 0.01) * 0.12;
+#else
+    return vec3(0.0);
+#endif
+}
 
 #if PBR_REFLECTION_QUALITY > 0
 vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
@@ -144,12 +200,20 @@ void main() {
     vec4 sceneColor = texelFetch(colortex0, pixel, 0);
     vec4 normalData = texelFetch(colortex2, pixel, 0);
     vec3 lightShafts = sampleScreenSpaceLightShafts(vTexCoord);
+    float centerDepth = texelFetch(depthtex2, pixel, 0).r;
+    vec3 centerNdc = vec3(vTexCoord, centerDepth) * 2.0 - 1.0;
+    vec4 centerView4 = gbufferProjectionInverse * vec4(centerNdc, 1.0);
+    vec3 centerViewPosition = centerView4.xyz / max(centerView4.w, 0.0001);
+    vec3 centerNormal = normalize(mat3(gbufferModelView) * (normalData.rgb * 2.0 - 1.0));
+    vec3 screenGi = sampleScreenSpaceColorBleed(
+        vTexCoord, centerDepth, centerViewPosition, centerNormal, normalData.a
+    );
 
     // The alpha channel below 0.525 is sky/unlit geometry or a surface without
     // a meaningful PBR smoothness value. Avoid all reflection work for it.
     if (normalData.a <= 0.525 || PBR_REFLECTION_STRENGTH <= 0) {
         vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
-        sceneLinearNoReflection += lightShafts;
+        sceneLinearNoReflection += lightShafts + screenGi;
         outColor = vec4(pow(max(sceneLinearNoReflection, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
         return;
     }
@@ -217,6 +281,6 @@ void main() {
 
     vec3 sceneLinear = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 resultLinear = mix(sceneLinear, reflectionLinear, reflectionWeight);
-    resultLinear += lightShafts;
+    resultLinear += lightShafts + screenGi;
     outColor = vec4(pow(max(resultLinear, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
 }
