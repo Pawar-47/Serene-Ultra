@@ -1022,3 +1022,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Removed unsupported light floors from spectral arrows, end crystals, tridents, experience bottles and other inventory items so non-light-emitting items do not glow merely because of their item ID.
 - Updated the low-cost color table to match the reference families more closely: soul fire, redstone, froglights, copper lights, end rods, sea lantern, shroomlight, glow lichen, amethyst, end crystal, trident, experience bottle, eye of ender, glow ink, blaze, glowstone dust, prismarine crystals, nether star and ice crystal.
 - CI now asserts the lava-bucket-only light override. Runtime color and range calibration remain pending.
+
+
+## Vanilla gemstone/mineral terrain fallbacks — 2026-11-23
+- Extended the Complementary-guided terrain material ID set to diamond, amethyst/budding amethyst, emerald, lapis, quartz-family and redstone blocks.
+- These are treated as glossy dielectrics rather than metals: only smoothness is inferred from the existing albedo sample, while neutral dielectric F0 remains unchanged.
+- Per-material coating factors follow the reference families (0.5 for diamond/emerald/lapis/quartz, 0.77 for redstone, disabled for amethyst). Explicit resource-pack specular maps remain authoritative for smoothness and reflectance.
+- No extra texture reads or render targets are added. CI must validate the new IDs and both PBR branches; runtime appearance remains pending.

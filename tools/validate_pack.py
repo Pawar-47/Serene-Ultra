@@ -509,7 +509,10 @@ for token in (
     "block.10248=minecraft:netherite_block", "block.10264=minecraft:iron_block",
     "block.10268=minecraft:raw_iron_block", "block.10280=minecraft:raw_copper_block",
     "block.10292=minecraft:copper_block", "block.10296=minecraft:raw_gold_block",
-    "block.10312=minecraft:gold_block",
+    "block.10312=minecraft:gold_block", "block.10316=minecraft:diamond_block",
+    "block.10328=minecraft:amethyst_block", "block.10336=minecraft:emerald_block",
+    "block.10352=minecraft:lapis_block", "block.10364=minecraft:quartz_block",
+    "block.10608=minecraft:redstone_block",
 ):
     if token not in block_properties:
         errors.append(f"Missing Complementary-guided vanilla metal material mapping: {token}")
@@ -599,8 +602,12 @@ for token in (
     "bool hasMaterialSpecularMap", "if (!hasMaterialSpecularMap)",
     "vMaterialId == 10248", "vMaterialId == 10264", "vMaterialId == 10268",
     "vMaterialId == 10280", "vMaterialId == 10292", "vMaterialId == 10296",
-    "vMaterialId == 10312", "fallbackMetalMaterial",
+    "vMaterialId == 10312", "vMaterialId == 10316", "vMaterialId == 10328",
+    "vMaterialId == 10336", "vMaterialId == 10352", "vMaterialId == 10364",
+    "vMaterialId == 10608", "fallbackMetalMaterial",
     "float materialCoatingFactor = fallbackMetalMaterial ? 0.0 : 1.0;",
+    "materialCoatingFactor = 0.5;", "materialCoatingFactor = 0.77;",
+    "materialSmoothness, 0.4", "quartzGreenEighth", "mineralLuminance",
     "materialCoatingFactor = 0.33;", "materialCoatingFactor = 0.5;",
     "* materialCoatingFactor", "materialReflectance = 1.0;",
     "materialReflectance, 0.75", "materialReflectance, 0.65", "materialReflectance, 0.90",

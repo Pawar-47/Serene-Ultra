@@ -337,6 +337,15 @@ void main() {
     // Complementary's raw-metal and netherite handlers have no coated-texture
     // factor; gold/iron use 0.33 and copper uses 0.5.
     float materialCoatingFactor = fallbackMetalMaterial ? 0.0 : 1.0;
+    // Reference coating factors for dielectric minerals remain active with PBR maps.
+    if (vMaterialId == 10316 || vMaterialId == 10336 ||
+        vMaterialId == 10352 || vMaterialId == 10364) {
+        materialCoatingFactor = 0.5;
+    } else if (vMaterialId == 10608) {
+        materialCoatingFactor = 0.77;
+    } else if (vMaterialId == 10328) {
+        materialCoatingFactor = 0.0;
+    }
 
     // Vanilla fallback heuristics mirror Complementary's terrain material
     // dispatch and run only when the resource pack has no specular map.
@@ -397,6 +406,27 @@ void main() {
 #else
             materialReflectance = max(materialReflectance, 0.90);
 #endif
+        } else if (vMaterialId == 10316) { // Diamond block: glossy dielectric
+            float factor = max(albedo.g, 0.8);
+            materialSmoothness = max(materialSmoothness,
+                clamp(factor - pow(albedo.g, 4.0) * 0.4, 0.0, 1.0));
+        } else if (vMaterialId == 10328) { // Amethyst and budding amethyst
+            materialSmoothness = max(materialSmoothness,
+                clamp(0.8 - pow(albedo.r, 2.0) * 0.3, 0.0, 1.0));
+        } else if (vMaterialId == 10336) { // Emerald block: glossy dielectric
+            float mineralLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+            materialSmoothness = max(materialSmoothness,
+                clamp(mineralLuminance - pow(mineralLuminance, 4.0) * 0.4, 0.0, 1.0));
+        } else if (vMaterialId == 10352) { // Lapis block
+            materialSmoothness = max(materialSmoothness, pow(albedo.b, 2.0) * 0.8);
+        } else if (vMaterialId == 10364) { // Quartz block family
+            float quartzGreenSquared = pow(albedo.g, 2.0);
+            float quartzGreenFourth = pow(quartzGreenSquared, 2.0);
+            float quartzGreenEighth = pow(quartzGreenFourth, 2.0);
+            materialSmoothness = max(materialSmoothness,
+                clamp(albedo.g - quartzGreenEighth * 0.5, 0.0, 1.0));
+        } else if (vMaterialId == 10608) { // Redstone block
+            materialSmoothness = max(materialSmoothness, 0.4);
         }
     }
 
