@@ -47,8 +47,8 @@ uniform int fogMode;
 uniform int fogShape;
 
 in vec2 vTexCoord;
-in vec2 vMidTexCoord;
-in vec2 vTexHalfSize;
+flat in vec2 vMidTexCoord;
+flat in vec2 vTexHalfSize;
 in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vPlayerNormal;
