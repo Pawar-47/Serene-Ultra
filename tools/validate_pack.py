@@ -1662,7 +1662,7 @@ composite_programs = {"begin", "shadowcomp", "prepare", "deferred", "composite"}
 for line_number, raw_line in enumerate(props.splitlines(), 1):
     directive = raw_line.split("#", 1)[0].strip()
     flip_match = re.fullmatch(
-        r"flip\.(.+)\.([^.=\\s]+)\s*=\s*(true|false)",
+        r"flip\.(.+)\.([^.=\s]+)\s*=\s*(true|false)",
         directive,
     )
     if not flip_match:
