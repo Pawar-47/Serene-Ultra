@@ -10,6 +10,7 @@
 #define CLOUD_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 100] Procedural sky-cloud reflections on translucent materials
 
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
+#define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level translucent atlas filtering taps
 
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
 #define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Fresnel environment reflections for translucent surfaces
@@ -45,6 +46,8 @@ uniform int fogMode;
 uniform int fogShape;
 
 in vec2 vTexCoord;
+in vec2 vMidTexCoord;
+in vec2 vTexHalfSize;
 in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vPlayerNormal;
@@ -53,6 +56,8 @@ in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
+
+#include "/lib/materials/anisotropic_sampling.glsl"
 
 #include "/lib/lighting/cloud_shadows.glsl"
 
@@ -123,7 +128,12 @@ vec3 calculateForwardLighting(vec3 albedoLinear) {
 }
 
 void main() {
-    vec4 albedo = texture(gtexture, vTexCoord) * vVertexColor;
+    vec2 materialUvDx = dFdx(vTexCoord);
+    vec2 materialUvDy = dFdy(vTexCoord);
+    vec4 spriteBounds = vec4(vMidTexCoord - vTexHalfSize, vTexHalfSize * 2.0);
+    vec4 albedo = sampleAnisotropicAtlas(
+        gtexture, vTexCoord, materialUvDx, materialUvDy, spriteBounds
+    ) * vVertexColor;
     if (albedo.a <= 0.001) discard;
 
     vec3 albedoLinear = pow(max(albedo.rgb, vec3(0.0)), vec3(2.2));
