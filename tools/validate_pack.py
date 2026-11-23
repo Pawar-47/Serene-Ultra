@@ -61,7 +61,7 @@ for path in SHADERS.rglob("*"):
     # Iris routes gbuffers_line through its dedicated core-profile transform
     # when the source version is below 150. Keep this pair on GLSL 130 so Iris
     # upgrades it internally instead of requesting a driver compatibility profile.
-    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh", "gbuffers_clouds.vsh", "gbuffers_clouds.fsh"} else r"^\s*#version\s+330\b"
+    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh", "gbuffers_clouds.vsh", "gbuffers_clouds.fsh", "shadow.vsh", "shadow.fsh"} else r"^\s*#version\s+330\b"
     if path.suffix != ".glsl" and not re.search(expected_version, source, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: unexpected GLSL source version")
     if source.count("{") != source.count("}"):
@@ -372,6 +372,13 @@ if "const int shadowMapResolution" not in shadow_vertex or "const float shadowDi
 if "const float shadowDistanceRenderMul = 1.0;" not in shadow_vertex:
     errors.append("Shadow pass must enable Iris shadow-distance culling")
 
+if "gl_Position = gl_ProjectionMatrix * shadowViewPosition;" not in shadow_vertex:
+    errors.append("Shadow vertex stage must use an explicit Iris-compatible model-view/projection transform")
+if "ftransform()" in shadow_vertex:
+    errors.append("Shadow vertex stage must not call compatibility-only ftransform()")
+if not shadow_fragment.startswith("#version 130") or "out vec4 outColor0;" not in shadow_fragment:
+    errors.append("Shadow fragment stage must use GLSL 130 and the Iris outColor0 shadowcolor attachment interface")
+
 for token in ("uniform mat4 shadowModelViewInverse", "in vec2 mc_Entity",
               "vShadowPlayerPosition = (shadowModelViewInverse * shadowViewPosition).xyz",
               "vShadowMaterialId = int(mc_Entity.x + 0.5)"):
@@ -386,8 +393,8 @@ for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = RGBA8",
               "return clamp(1.0 + (causticPattern - 1.0) * causticsStrength, 0.0, 1.0)",
               "vec3 absoluteWorldPosition = getStableShadowWorldPosition(vShadowPlayerPosition)",
               "float caustic = calculateWaterCaustics(absoluteWorldPosition)",
-              "outShadowColor = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12)",
-              "outShadowColor = vec4(1.0, 1.0, 1.0, 0.0)",
+              "outColor0 = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12)",
+              "outColor0 = vec4(1.0, 1.0, 1.0, 0.0)",
               "vShadowMaterialId == 30008", "vShadowMaterialId == 32001", "vShadowMaterialId >= 31000 && vShadowMaterialId <= 31031",
               "vShadowMaterialId == 32001 && materialAlpha < 0.999",
               "vShadowMaterialId == 32008 || vShadowMaterialId == 32012",

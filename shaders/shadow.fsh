@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 uniform sampler2D gtexture;
 uniform float alphaTestRef;
@@ -15,7 +15,7 @@ flat in float vShadowFluidRenderType;
 /* RENDERTARGETS: 0 */
 /* const int shadowcolor0Format = RGBA8; */
 
-layout(location = 0) out vec4 outShadowColor;
+out vec4 outColor0;
 
 // Keep the cutoff conservative: it removes transparent texels while
 // retaining thin foliage and partially transparent cutout edges.
@@ -64,25 +64,25 @@ void main() {
 
     // Default unknown translucent materials to full white transmission.
     // Opaque blockers are distinguished by shadowtex1 in deferred.
-    outShadowColor = vec4(1.0, 1.0, 1.0, 0.0);
+    outColor0 = vec4(1.0, 1.0, 1.0, 0.0);
 
     if ((vShadowMaterialId == 32000 && vShadowFluidRenderType > 0.5) ||
         (vShadowMaterialId == 32001 && materialAlpha < 0.999)) {
         vec3 absoluteWorldPosition = getStableShadowWorldPosition(vShadowPlayerPosition);
         float caustic = calculateWaterCaustics(absoluteWorldPosition);
-        outShadowColor = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12);
+        outColor0 = vec4(vec3(caustic * 0.82, caustic * 0.92, caustic), 0.12);
     } else if (vShadowMaterialId == 30008) {
         // Tinted glass transmits less light and keeps a cool neutral cast.
-        outShadowColor = vec4(vec3(0.42, 0.46, 0.52), 0.72);
+        outColor0 = vec4(vec3(0.42, 0.46, 0.52), 0.72);
     } else if (vShadowMaterialId >= 31000 && vShadowMaterialId <= 31031) {
         // Preserve the stained-glass hue without making its shadow fully opaque.
         vec3 stainedTint = mix(vec3(1.0), clamp(materialSample.rgb, 0.0, 1.0), 0.55);
-        outShadowColor = vec4(stainedTint, 0.38);
+        outColor0 = vec4(stainedTint, 0.38);
     } else if (vShadowMaterialId == 32008 || vShadowMaterialId == 32012) {
-        outShadowColor = vec4(vec3(0.92, 0.96, 1.0), 0.15);
+        outColor0 = vec4(vec3(0.92, 0.96, 1.0), 0.15);
     } else if (vShadowMaterialId == 32004) {
-        outShadowColor = vec4(vec3(0.72, 0.88, 1.0), 0.22);
+        outColor0 = vec4(vec3(0.72, 0.88, 1.0), 0.22);
     } else if (vShadowMaterialId == 30020) {
-        outShadowColor = vec4(vec3(0.82, 0.52, 1.0), 0.78);
+        outColor0 = vec4(vec3(0.82, 0.52, 1.0), 0.78);
     }
 }

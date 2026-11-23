@@ -59,3 +59,8 @@ These counts reinforce the per-program policy: vanilla core shaders and Iris sha
 ## Targeted GLSL 130 migration — Minecraft 26.3 clouds
 
 The dedicated `gbuffers_clouds.vsh/.fsh` stages now use GLSL 130. The Iris cloud key supplies only `POSITION_COLOR`; the stages need no 330-only language feature. The vertex stage uses the explicit model-view/projection transform (not `ftransform()`), and the fragment stage uses sequential `outColor0`/`outColor1` outputs for `RENDERTARGETS: 0,2`. This follows the supplied working Complementary pack's legacy-stage strategy and the Iris transform path. Keep other stages on their individually audited versions; this is not a blanket downgrade.
+
+
+## Targeted GLSL 130 migration — shadow stages
+
+The Serene shadow vertex/fragment pair now uses GLSL 130. The stages use only legacy vertex inputs/matrices, integer varyings, texture sampling and ordinary fragment outputs; no 330-only feature is required. The vertex stage replaces `ftransform()` with the explicit `gl_ProjectionMatrix * shadowViewPosition` transform. The fragment stage writes the Iris `RENDERTARGETS: 0` attachment through `outColor0`. This is a targeted compatibility improvement, not a blanket version downgrade; the supplied reference's GLSL 400 compatibility shadow vertex path remains a separate implementation choice and does not require Serene to use 400 when its own shader uses no 400-only feature.

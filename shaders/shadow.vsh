@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 uniform mat4 shadowModelViewInverse;
 
@@ -26,5 +26,5 @@ void main() {
     vShadowMaterialId = int(mc_Entity.x + 0.5);
     if (vShadowMaterialId == 10049) vShadowMaterialId = 32001; // Water cauldron
     vShadowFluidRenderType = mc_Entity.y;
-    gl_Position = ftransform();
+    gl_Position = gl_ProjectionMatrix * shadowViewPosition;
 }
