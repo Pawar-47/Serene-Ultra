@@ -274,3 +274,10 @@ option.PBR_REFLECTION_DISTANCE = Opaque Reflection Distance
 option.PBR_REFLECTION_DISTANCE.comment = Maximum screen-space ray distance for opaque block reflections; longer traces improve coverage but cost more depth samples.
 option.WATER_REFLECTION_DISTANCE = Water/Glass Reflection Distance
 option.WATER_REFLECTION_DISTANCE.comment = Maximum screen-space ray distance for water and glass reflections; longer traces can reach more distant visible geometry.
+
+option.TAA_ENABLED = Temporal Anti-Aliasing
+option.TAA_ENABLED.comment = Uses an 8-phase Halton projection jitter and depth-rejected previous-frame reprojection. Disable for compatibility troubleshooting.
+option.TAA_HISTORY_STRENGTH = TAA History Weight
+option.TAA_HISTORY_STRENGTH.comment = Controls how strongly valid previous-frame samples contribute after neighborhood clamping and depth rejection.
+option.TAA_SHARPEN_STRENGTH = TAA Resolve Sharpening
+option.TAA_SHARPEN_STRENGTH.comment = Restores local edge detail after temporal accumulation.
