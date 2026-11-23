@@ -481,7 +481,8 @@ void main() {
         vMaterialId == 32118 || vMaterialId == 32120 || vMaterialId == 32121 ||
         vMaterialId == 32122 || vMaterialId == 32123 ||
         vMaterialId == 32124 || vMaterialId == 32125 || vMaterialId == 32126 ||
-        vMaterialId == 32127 || vMaterialId == 32128 || vMaterialId == 32129;
+        vMaterialId == 32127 || vMaterialId == 32128 || vMaterialId == 32129 ||
+        (vMaterialId >= 32131 && vMaterialId <= 32152);
     bool fallbackMetalMaterial =
         vMaterialId == 10248 || vMaterialId == 10264 || vMaterialId == 10268 ||
         vMaterialId == 10280 || vMaterialId == 10292 || vMaterialId == 10296 ||
@@ -690,6 +691,28 @@ void main() {
         emissionStrength = 0.90; // Charged respawn anchors.
     } else if (vMaterialId == 32127) {
         emissionStrength = 0.90; // Lit copper bulbs.
+    } else if (vMaterialId == 32131) {
+        emissionStrength = 0.70; // Lit furnace, smoker and blast furnace.
+    } else if (vMaterialId == 32132) {
+        emissionStrength = 0.85; // Lava cauldron.
+    } else if (vMaterialId == 32133) {
+        emissionStrength = 0.35; // Crying obsidian.
+    } else if (vMaterialId == 32134) {
+        emissionStrength = 0.30; // Magma block.
+    } else if (vMaterialId == 32135 || vMaterialId == 32136) {
+        emissionStrength = 0.25; // Dragon egg and chorus flower.
+    } else if (vMaterialId == 32137 || vMaterialId == 32138 || vMaterialId == 32139) {
+        emissionStrength = 0.18; // Brewing stand, redstone block and lapis block.
+    } else if (vMaterialId >= 32140 && vMaterialId <= 32148) {
+        emissionStrength = 0.22; // Subtle ore/mineral and ancient-debris accents.
+    } else if (vMaterialId == 32149) {
+        emissionStrength = 0.35; // Active end portal frame.
+    } else if (vMaterialId == 32150) {
+        emissionStrength = 0.45; // Cave vines with glow berries.
+    } else if (vMaterialId == 32151) {
+        emissionStrength = 0.10; // Powered redstone wire/repeater/comparator.
+    } else if (vMaterialId == 32152) {
+        emissionStrength = 0.25; // Spawner core.
     }
 
     emissionStrength = max(emissionStrength, pbrEmission * 5.0);
