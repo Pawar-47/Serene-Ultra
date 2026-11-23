@@ -74,9 +74,13 @@ void main() {
     float cloudQuality = float(CLOUD_SCATTERING_STRENGTH) * 0.01;
     vec3 dayTint = vec3(1.0, 0.97, 0.90);
     vec3 nightTint = vec3(0.42, 0.50, 0.72);
-    vec3 weatherTint = mix(vec3(1.0), vec3(0.72, 0.78, 0.88), rainStrength * 0.65);
+    vec3 weatherTint = mix(
+        vec3(1.0),
+        vec3(0.72, 0.78, 0.88),
+        rainStrength * 0.65 * cloudQuality
+    );
     vec3 lightingTint = mix(nightTint, dayTint, solarElevation);
-    cloudLinear *= mix(vec3(0.72), lightingTint, cloudQuality);
+    cloudLinear *= mix(vec3(1.0), lightingTint, cloudQuality);
     cloudLinear *= weatherTint;
     cloudLinear += cloudLinear * silverLining
         * (0.35 + 0.45 * solarElevation) * cloudQuality * (1.0 - rainStrength * 0.65);
