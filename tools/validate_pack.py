@@ -972,6 +972,15 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
 
+for token in ("calculateWaterParallaxUv", "#define POM_STRENGTH",
+              "#define POM_QUALITY", "#define POM_DISTANCE",
+              "vMidTexCoord - vTexHalfSize", "textureGrad(normals, baseUv",
+              "waterMaterialUv", "appliedWaterParallax > 0.0001",
+              "calculateTranslucentNormalMap("):
+    if token not in water:
+        errors.append(f"Water POM path is missing sprite-safe height-map component: {token}")
+
+
 for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
               "uniform mat4 gbufferProjectionInverse", "WATER_REFLECTION_QUALITY",
               "sampleTranslucentScreenReflection(", "for (int refineStep = 0; refineStep < 2; ++refineStep)", "refineLow", "refineHigh", "i > 0 && sceneSample.a >= 0.5", "texelFetch(depthtex2, depthPixel, 0)",
