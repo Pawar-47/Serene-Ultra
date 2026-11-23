@@ -36,6 +36,10 @@ REQUIRED = (
     "deferred.vsh", "deferred.fsh",
     "deferred1.vsh", "deferred1.fsh",
     "composite.vsh", "composite.fsh",
+    "composite1.vsh", "composite1.fsh",
+    "composite2.vsh", "composite2.fsh",
+    "composite3.vsh", "composite3.fsh",
+    "composite4.vsh", "composite4.fsh",
     "final.vsh", "final.fsh",
     "lang/en_us.lang",
 )
@@ -1569,9 +1573,9 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
 
 # Final-pass bloom is a real shader effect, not a menu-only placeholder.
 final_shader = sources.get("final.fsh", "")
-for token in ("#define BLOOM_STRENGTH", "#define BLOOM_THRESHOLD", "#define FXAA_ENABLED",
-              "vec3 sampleFxaa(", "float lumaMin", "vec3 extractBloomHighlights(", "vec3 sampleSingleScaleBloom(",
-              "textureSize(colortex0, 0)", "color += bloom *"):
+for token in ("#define BLOOM_STRENGTH", "#define FXAA_ENABLED",
+              "vec3 sampleFxaa(", "float lumaMin", "vec3 sampleBloomLevel(",
+              "vec3 sampleBloomChain(", "textureSize(colortex0, 0)", "color += bloom *"):
     if token not in final_shader:
         errors.append(f"Final-pass bloom is missing implementation component: {token}")
 color_screen = next((line for line in held_props.splitlines() if line.startswith("screen.COLOR =")), "")
@@ -1597,6 +1601,49 @@ for profile, value in (("Ultra-Light", "0"), ("Smooth", "1"),
     line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
     if f"FXAA_ENABLED:{value}" not in line:
         errors.append(f"{profile} has incorrect FXAA setting")
+
+# The bloom chain must exist as real stages, not a single full-resolution blur:
+# composite1 thresholds and downsamples, composite2/3 blur separably along one
+# axis each, composite4 produces the wide level, and each stage writes the buffer
+# the next one reads.
+for name, tokens in (
+    ("composite1.fsh", ("#define BLOOM_THRESHOLD", "/* RENDERTARGETS: 5 */",
+                        "uniform sampler2D colortex0", "vec3 extractHighlight(",
+                        "textureSize(colortex0, 0)")),
+    ("composite2.fsh", ("/* RENDERTARGETS: 6 */", "uniform sampler2D colortex5",
+                        "1.5 * texel.x", "0.1945945946")),
+    ("composite3.fsh", ("/* RENDERTARGETS: 5 */", "uniform sampler2D colortex6",
+                        "1.5 * texel.y", "0.1945945946")),
+    ("composite4.fsh", ("/* RENDERTARGETS: 7 */", "uniform sampler2D colortex5",
+                        "textureSize(colortex5, 0)")),
+):
+    stage = sources.get(name, "")
+    if not stage:
+        errors.append(f"Bloom chain stage is missing: {name}")
+        continue
+    for token in tokens:
+        if token not in stage:
+            errors.append(f"{name} is missing bloom chain component: {token}")
+    if "BLOOM_STRENGTH" not in stage:
+        errors.append(f"{name} must honour BLOOM_STRENGTH so low profiles skip the chain")
+
+# Flip contract: the buffer a stage writes must flip so the following stage reads
+# the new contents (as deferred1 does for colortex4), while a buffer it only reads
+# must not flip. None of these stages may flip the scene colour they sample.
+for stage_name, buffer in (("composite1", "colortex5"), ("composite2", "colortex6"),
+                           ("composite3", "colortex5"), ("composite4", "colortex7")):
+    if f"flip.{stage_name}.{buffer}=true" not in props:
+        errors.append(f"{stage_name} must flip {buffer} so the next bloom stage reads what it wrote")
+for stage_name in ("composite1", "composite2", "composite3", "composite4"):
+    if f"flip.{stage_name}.colortex0=false" not in props:
+        errors.append(f"{stage_name} must not flip colortex0, which it only samples")
+read_only_flips = (("composite2", "colortex5"), ("composite3", "colortex6"),
+                   ("composite4", "colortex5"))
+for stage_name, buffer in read_only_flips:
+    if f"flip.{stage_name}.{buffer}=false" not in props:
+        errors.append(f"{stage_name} only reads {buffer} and must not flip it")
+if "uniform sampler2D colortex5" not in final_shader or "uniform sampler2D colortex7" not in final_shader:
+    errors.append("Final pass must combine both bloom levels")
 
 # Low-cost volumetric-light approximation must be implemented and profile-budgeted.
 composite_shader = sources.get("composite.fsh", "")

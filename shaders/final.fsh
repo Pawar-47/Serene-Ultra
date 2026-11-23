@@ -1,12 +1,16 @@
 #version 330 compatibility
 
 uniform sampler2D colortex0;
+// Bloom chain levels produced by composite1-composite4.
+uniform sampler2D colortex5;
+uniform sampler2D colortex7;
 
 in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
 
 // User-facing color controls. These are defined only in this program so Iris
-// discovers one authoritative definition for each option.
+// discovers one authoritative definition for each option. BLOOM_STRENGTH is the
+// exception: the bloom stages declare it identically, as the POM options do.
 #define RED_GAIN 1.00 // [0.50 0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.40 1.50] Red channel gain
 #define GREEN_GAIN 1.00 // [0.50 0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.40 1.50] Green channel gain
 #define BLUE_GAIN 1.00 // [0.50 0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.40 1.50] Blue channel gain
@@ -15,8 +19,7 @@ layout(location = 0) out vec4 outColor;
 #define CONTRAST 1.00 // [0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.40] Contrast
 #define SATURATION 1.00 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00] Color saturation
 #define HDR_LOOK 0 // [0 1 2] 0=Neutral, 1=HDR, 2=Ultra HDR tone mapping
-#define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Single-scale emissive bloom strength
-#define BLOOM_THRESHOLD 0.90 // [0.50 0.65 0.80 0.90 1.00 1.20 1.50 2.00] Highlight threshold for bloom
+#define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Two-scale emissive bloom strength
 #define FXAA_ENABLED 1 // [0 1] Edge-adaptive fast approximate anti-aliasing
 
 // Edge-adaptive FXAA using the final scene buffer. It avoids temporal history
@@ -59,24 +62,27 @@ vec3 sampleFxaa(vec2 uv, vec2 texelSize) {
     return (lumaB < lumaMin || lumaB > lumaMax) ? sampleA : sampleB;
 }
 
-// Low-bandwidth single-scale bloom for Intel HD-class GPUs. The five-tap
-// cross filter uses the existing final scene buffer and adds no render target.
-vec3 extractBloomHighlights(vec3 sampleColor) {
-    float brightness = max(max(sampleColor.r, sampleColor.g), sampleColor.b);
-    float knee = max(BLOOM_THRESHOLD * 0.5, 0.001);
-    float soft = clamp(brightness - BLOOM_THRESHOLD + knee, 0.0, 2.0 * knee);
-    soft = soft * soft / (4.0 * knee + 0.0001);
-    float contribution = max(brightness - BLOOM_THRESHOLD, soft) / max(brightness, 0.0001);
-    return sampleColor * contribution;
+// The bloom chain is built by composite1-composite4: a thresholded half-resolution
+// bright pass, a separable Gaussian blur, and a quarter-resolution wide level.
+// This pass only combines the finished levels, so it adds no bright-pass work.
+// Four-tap tent upsampling keeps the result smooth independently of the sampler
+// filter mode Iris selects for the bloom buffers.
+vec3 sampleBloomLevel(sampler2D level, vec2 uv, float spread) {
+    vec2 texel = spread / vec2(textureSize(level, 0));
+    vec3 accumulated = texture(level, uv + vec2(-0.5, -0.5) * texel).rgb;
+    accumulated += texture(level, uv + vec2(0.5, -0.5) * texel).rgb;
+    accumulated += texture(level, uv + vec2(-0.5, 0.5) * texel).rgb;
+    accumulated += texture(level, uv + vec2(0.5, 0.5) * texel).rgb;
+    return accumulated * 0.25;
 }
 
-vec3 sampleSingleScaleBloom(vec2 uv, vec2 texelSize) {
-    vec3 bloom = extractBloomHighlights(texture(colortex0, uv).rgb) * 0.40;
-    bloom += extractBloomHighlights(texture(colortex0, uv + vec2(texelSize.x * 1.5, 0.0)).rgb) * 0.15;
-    bloom += extractBloomHighlights(texture(colortex0, uv - vec2(texelSize.x * 1.5, 0.0)).rgb) * 0.15;
-    bloom += extractBloomHighlights(texture(colortex0, uv + vec2(0.0, texelSize.y * 1.5)).rgb) * 0.15;
-    bloom += extractBloomHighlights(texture(colortex0, uv - vec2(0.0, texelSize.y * 1.5)).rgb) * 0.15;
-    return bloom;
+vec3 sampleBloomChain(vec2 uv) {
+    // Tight halo from the blurred half-resolution level, wide falloff from the
+    // quarter-resolution level. The wide level is dimmed by its own downsample,
+    // so it is weighted higher to stay visible next to the narrow one.
+    vec3 narrowScale = sampleBloomLevel(colortex5, uv, 1.0);
+    vec3 wideScale = sampleBloomLevel(colortex7, uv, 2.0);
+    return narrowScale * 0.60 + wideScale * 0.55;
 }
 
 vec3 applyHdrLook(vec3 color) {
@@ -109,7 +115,7 @@ void main() {
 #endif
 
 #if BLOOM_STRENGTH > 0
-    vec3 bloom = sampleSingleScaleBloom(vTexCoord, texelSize);
+    vec3 bloom = sampleBloomChain(vTexCoord);
     color += bloom * (float(BLOOM_STRENGTH) * 0.01);
 #endif
 

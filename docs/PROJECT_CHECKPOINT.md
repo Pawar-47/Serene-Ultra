@@ -1284,3 +1284,15 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - This is a compilation fix only; the runtime checklist from the handover is still untouched.
 
 - Follow-up on the same defect: removing the duplicate declaration also removed the only assignment to `depth`, which the reflection path still used at its view-position reconstruction. That reconstruction was identical to the `centerViewPosition` already computed from `centerDepth`, so the reflection path now reuses it instead of rebuilding the matrix product. Structural validator tokens are still satisfied.
+
+
+
+## Two-scale bloom chain — 2026-11-23
+- Replaced the single-scale five-tap full-resolution bloom with a four-stage chain. `composite1` thresholds the lit scene with a soft knee and resolves it to a half-resolution level (`colortex5`); `composite2` runs the horizontal nine-tap Gaussian into `colortex6`; `composite3` runs the vertical half back into `colortex5`; `composite4` resolves the wide quarter-resolution level (`colortex7`). `final.fsh` combines both levels with four-tap tent upsampling.
+- The previous implementation could not produce a wide halo at all: five taps around one pixel at full resolution only ever spreads a few texels. The half-resolution level now carries a real separable blur, and the quarter-resolution level supplies the wide falloff.
+- Buffer sizes are declared in `shaders.properties` (`colortex5`/`colortex6` at 0.5, `colortex7` at 0.25). Formats stay at the default RGBA8 to avoid doubling bandwidth on the HD 5500 target.
+- **Flip contract:** the first revision of this change set `flip.*=<buffer>=false` for every bloom stage, which was wrong. The existing `deferred`/`deferred1` settings show the actual contract: a buffer a pass writes must flip so the next pass reads the new contents (`flip.deferred1.colortex4=true`), and a buffer it only reads must not flip (`flip.deferred.colortex3=false`). Each stage now flips exactly the buffer it writes, and all four decline to flip `colortex0`, which they only sample. The validator asserts both directions.
+- `BLOOM_STRENGTH` is declared identically in all five participating programs, matching the existing `POM_QUALITY` and `WEATHER_TEX_OPACITY` convention for options shared across programs. `BLOOM_THRESHOLD` moved to `composite1.fsh`, where the bright pass now lives; it is still exposed in the Color screen, the slider list and the locale file.
+- Ultra-Light keeps `BLOOM_STRENGTH:0`, so the chain writes zeroed buffers and `final.fsh` adds nothing; the passes still execute, which is the honest cost of a fixed pass graph.
+- Structural validation now covers stage presence, render-target wiring, the separable axis per blur stage, declared buffer sizes, both directions of the flip contract, and that both levels reach `final.fsh`.
+- **Scope:** compiled/structural validation only. Actual appearance, halo width, threshold calibration and HD 5500 cost are unverified and need the in-game checklist. This is two scales, not the reference's full mip chain, and it still operates on the pack's display-referred LDR scene buffer rather than a linear HDR one.
