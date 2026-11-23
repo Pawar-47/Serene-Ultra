@@ -2174,7 +2174,7 @@ for vertex_name in ("gbuffers_water.vsh", "gbuffers_entities_translucent.vsh",
 anisotropic_defaults = []
 for fragment_name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
                        "gbuffers_block_translucent.fsh"):
-    match = re.search(r"^#define ANISOTROPIC_FILTER_QUALITY\\s+(\\d+)", sources.get(fragment_name, ""), re.M)
+    match = re.search(r"^#define ANISOTROPIC_FILTER_QUALITY\s+(\d+)", sources.get(fragment_name, ""), re.M)
     if match:
         anisotropic_defaults.append(match.group(1))
 if len(anisotropic_defaults) != 3 or len(set(anisotropic_defaults)) != 1:
