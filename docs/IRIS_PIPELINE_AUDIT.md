@@ -437,3 +437,17 @@ Iris documents `fogShape == 0` as spherical and `fogShape == 1` as cylindrical. 
 The same cylindrical-distance correction is enforced in the first-person hand-water pass. Both world water and hand-water now use the stock cylinder metric, preventing their fog falloff from diverging when the camera looks steeply upward or downward.
 
 The dedicated forward weather pass now uses the same documented cylindrical fog metric as world water and first-person hand-water. The previous horizontal-only distance was inconsistent with Minecraft's stock cylinder distance and could leave rain/snow under-fogged at steep vertical view angles.
+
+
+## Full Iris ProgramId fallback inventory correction — 2026-11-23
+
+A fresh read of Iris 26.1's `ProgramId.java` showed that the earlier validator inventory covered only the common gbuffers families. It omitted additional standard program IDs that have explicit Iris fallbacks. The validator now also reports these missing dedicated pairs:
+- `gbuffers_item` → `gbuffers_textured_lit`
+- `gbuffers_entities_glowing` → `gbuffers_entities`
+- `shadow_solid`, `shadow_cutout`, `shadow_water`, `shadow_entities` and `shadow_block` → `shadow`
+- `shadow_lightning` → `shadow_entities`
+
+The existing `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` entries both fall back to `gbuffers_terrain`. These are intentional Iris fallback routes at present, not missing files that cause geometry to vanish. They are still not dedicated material implementations. The validator inventory is now aligned with the standard program IDs and their fallback relationships in Iris 26.1:
+https://github.com/IrisShaders/Iris/blob/26.1/common/src/main/java/net/irisshaders/iris/shaderpack/loading/ProgramId.java
+
+The latest vertex/fragment interface audit also found matching fragment inputs for every paired vertex output across the current shader programs. CI now checks the varying name, GLSL type and interpolation qualifier to prevent interface drift. Passing that check is a source/link validation, not proof of the programs' runtime routing or visual output.
