@@ -304,7 +304,7 @@ if props_path.is_file():
         errors.append("Translucent water must use the reference-matched low alphaTestRef")
     if "WATER_FOG_MULT" not in props:
         errors.append("Water depth-opacity control must be exposed in the Quality menu")
-water_fog_option = "#define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity"
+water_fog_option = "#define WATER_FOG_MULT 125 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 125 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity"
 if water_fog_option not in sources.get("gbuffers_water.fsh", ""):
     errors.append("WATER_FOG_MULT must use the documented Iris numerical-option value-list syntax")
 if "#define WAVING_RAIN // Animate rain and snow geometry" not in sources.get("gbuffers_weather.vsh", ""):
