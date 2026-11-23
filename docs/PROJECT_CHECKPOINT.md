@@ -1449,3 +1449,10 @@ A second source feature batch followed the DOF work:
 - `docs/REFERENCE_FEATURE_MATRIX.md`: lens/post effects moved from pending to source-implemented/runtime-unverified.
 
 The two post-processing batches are source changes only. No Minecraft/Iris runtime or visual comparison was performed. The current archive inspection limitation remains; no direct Complementary parity claim is made for these effects. Continue feature work before runtime debugging.
+
+
+## Feature implementation cycle — camera motion blur — 2026-11-23
+
+Added a camera-motion blur path to `shaders/final.fsh` using Iris-documented `gbufferPreviousModelView`, `gbufferPreviousProjection`, `gbufferProjectionInverse`, `gbufferModelViewInverse`, `cameraPosition` and `previousCameraPosition`. Static world positions are reprojected into the previous camera, then the resulting screen-space vector drives a depth-rejected 4/6/8-tap gather. The Quality menu, slider list, English labels/tooltips and all five profile budgets were updated. Ultra-Light disables it; Smooth/Ultra/HDR/Ultra-HDR use progressively higher budgets.
+
+**Scope limit:** this is camera-motion blur only. Independently moving entities/blocks do not have per-object velocity vectors in this implementation and are not claimed to receive correct object-motion blur. No runtime validation has occurred. Iris uniform names were checked against the current Iris documentation; this confirms the documented interfaces, not actual Minecraft rendering behavior.
