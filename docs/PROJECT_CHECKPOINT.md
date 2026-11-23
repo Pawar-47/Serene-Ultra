@@ -1544,3 +1544,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Resolved a duplicate block ID assignment for glow lichen: it retains its dedicated emissive material ID and is no longer included in the waving-foliage material list.
 - CI run `45227697354` on commit `03d42ffb2d781af9b795c0f92203a1d7363a4e24` completed successfully. All stages passed: standalone GLSL compilation, Iris render-stage macro branches, LabPBR, entity POM, Unbound water-wave detail, Ultra-Light reflection branches, water-normal alpha-height inspection, vertex/fragment linking, and structural validation.
 - This is source/compile/link validation only; it does not replace an actual Minecraft 26.3 + Iris runtime scene test.
+
+
+### Block-entity rain puddles — 2026-11-23
+- Extended the terrain puddle treatment to upward-facing opaque block-entity surfaces, including chest lids and shulker boxes. It reuses the same rain/biome gating, sky-exposure/lightmap mask, stable world-space three-noise breakup, tangent-space ripple normal, smoothness and albedo darkening.
+- Signs, banners and portals are excluded; PBR porosity suppresses puddle formation on porous surfaces. The existing `RAIN_PUDDLE_STRENGTH` menu/profile control drives both terrain and block-entity puddles.
+- Commit: `11b5810b65a55ee325fe7708526e294682e8206c`; feature matrix: `439126f6c8ec5cadbcedb4c1226cac9c10679084`.
+- Source-level implementation only; verify chest/shulker top faces, modded block entities, rainfall, and performance in Iris.
