@@ -269,9 +269,6 @@ void main() {
         isVoid = (renderStage == MC_RENDER_STAGE_VOID);
     #endif
 
-    // Shared across the atmospheric and volumetric-cloud paths below.
-    // Declare in main scope: the cloud raymarch also consumes this sky ray.
-    vec3 playerDirection = vec3(0.0, 1.0, 0.0);
     if (isSky || isSunset) {
         playerDirection = reconstructPlayerDirection();
         viewDirection = normalize(mat3(gbufferModelView) * playerDirection);
