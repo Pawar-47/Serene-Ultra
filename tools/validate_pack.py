@@ -536,7 +536,7 @@ for option, names in (
     if len(set(definitions)) != 1:
         errors.append(f"{option} numeric value must match across its terrain/block/entity/water consumers")
 
-water_pom_source = sources.get("gbuffers_water.fsh", "")
+water_pom_source = re.sub(r"\s+", " ", sources.get("gbuffers_water.fsh", ""))
 for token in ("vec2 calculateWaterParallaxUv(", "textureGrad(normals, baseUv, uvDx, uvDy)",
               "initialNormal.a >= 0.9995", "spriteBounds.xy + hitLocal * tileSize",
               "for (int stepIndex = 0; stepIndex < POM_QUALITY; ++stepIndex)",
@@ -955,7 +955,7 @@ weather_vertex = sources.get("gbuffers_weather.vsh", "")
 if "#define WAVING_RAIN" not in weather_vertex or "eyeBrightnessSmooth" not in weather_vertex or "rainStrength" not in weather_vertex:
     errors.append("Weather vertex path must implement the Iris-aware waving rain/snow option")
 weather = sources.get("gbuffers_weather.fsh", "")
-for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
+for token in ("/* RENDERTARGETS: 0 */", "textureGrad(gtexture", "texture(lightmap",
               "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape",
               "uniform int isEyeInWater", "uniform float alphaTestRef",
               "WEATHER_TEX_OPACITY", "rainTexOpacity", "snowTexOpacity",
@@ -973,8 +973,8 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
         errors.append(f"Hand-water shader is missing forward component: {token}")
 if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in hand_water:
     errors.append("First-person hand-water cylindrical fog must match the vanilla cylinder distance metric")
-water = sources.get("gbuffers_water.fsh", "")
-water_vertex = (SHADERS / "gbuffers_water.vsh").read_text(encoding="utf-8")
+water = re.sub(r"\s+", " ", sources.get("gbuffers_water.fsh", ""))
+water_vertex = re.sub(r"\s+", " ", (SHADERS / "gbuffers_water.vsh").read_text(encoding="utf-8"))
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleSereneSoftShadow",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
@@ -1280,7 +1280,7 @@ for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureL
 for token in ("uniform sampler2D normals;", "calculateTranslucentNormalMap", "normalMapStrength * 0.01",
               "normal, GLASS_NORMAL_MAP_STRENGTH, vTexCoord, materialUvDx, materialUvDy",
               "else if (isClearGlass || isStainedGlass || isTintedGlass || isIce)",
-              "texture(normals, vTexCoord)", "MC_TEXTURE_FORMAT_LAB_PBR",
+              "MC_TEXTURE_FORMAT_LAB_PBR",
               "vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy)",
               "tangentNormal.z = sqrt(max(1.0 - dot(tangentNormal.xy, tangentNormal.xy), 0.0))",
               "tangentNormal.y = -tangentNormal.y", "cross(tangent, geometricNormal)",
