@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#include "/lib/taa_jitter.glsl"
+
 #define WAVING_RAIN // Animate rain and snow geometry
 
 out vec2 vTexCoord;
@@ -29,4 +31,5 @@ void main() {
     vLightmapCoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
     vVertexColor = gl_Color;
     vViewPosition = viewPosition.xyz;
+    applySereneTaaJitter(gl_Position);
 }
