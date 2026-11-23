@@ -1525,3 +1525,6 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Weather vertex stage now passes player-space position to its fragment stage so lightning attenuation uses the same coordinate system as the Iris bolt position.
 - These remain source-level integrations; exact visual intensity, lightning bolt visibility timing and overlay behavior require Iris runtime scenes.
 - Commits: water `7fa22c0173cf22ae317c9bccf66a31c9fb9195c6`; weather vertex `645db20beea907eddb7a33c84f1406b1df19722e`; weather fragment `60a231cf40e0eb0787ea057a55f937d301df75b0`; hand-water `19b3d2a809a432a249352f4dabe19499b9aea368`; feature matrix `4f96a272724000172f2c5893b8fce3126ab4e553`.
+
+
+- Added the same bounded lightning flash to the native `gbuffers_clouds` path (the pass used when volumetric clouds are disabled). The volumetric sky path retains its existing sky flash. Commit: `82e5ccac1c446f138cf85881a1bbb13b5d464db6`; matrix update: `6a1a885cda1b4caf0ffe4aebb76cf64e53f460e1`.
