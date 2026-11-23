@@ -1640,3 +1640,14 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - The custom `water-normal.png` remains a wave-normal-only texture because its alpha is constant 255; water POM activates only when the resource-pack normal atlas provides a varying height field. No fabricated height channel was added.
 - Commits: water shader `f109ba64b0b1403151cbb35ea4fbbb8013790986`; validator `ce7da25dcdcd21cc953bbfb120cb0ab3e989d608`; feature matrix `7d29d5375eb531762ce4089f379bd7d176034a06`.
 - Runtime checks still needed for LabPBR/oldPBR water packs, atlas edges, flowing water, and the low-profile cost. CI is being rerun against this water-POM addition.
+
+
+### Water, translucent reflection and cloud-fallback milestone — 2026-11-23 17:53 UTC
+- Added sprite-safe resource-pack water POM using LabPBR/oldPBR normals.a height data. It respects per-quad Iris atlas bounds, uses the water tangent basis, bounded 4/6/8 stepping and distance fade, and only activates when the active normal atlas actually contains a non-flat height field. Custom animated water-normal texture remains wave-only because its alpha is constant.
+- Added derivative-safe water albedo/normal sampling with textureGrad, preserving cutout alphaTestRef handling after parallax UV displacement.
+- Added profile-controlled Schlick-Fresnel environment reflections to translucent block and entity forward passes, with Iris sky/fog and procedural cloud fallback. Their existing forward lightmap, cloud shadow, lightning and fog paths remain intact.
+- Added animated spherical procedural cloud reflections to the shared environment fallback. This contributes to water and glossy/translucent material reflections when SSR misses or is disabled. It is explicitly an approximation, not a voxel/world-space reflection volume.
+- Added underwater-only animated screen-space distortion in final.fsh. It is gated by Iris isEyeInWater == 1 (not lava or powder snow), has profile controls, and uses timer frequencies/texture travel chosen to remain continuous at Iris' hourly frameTimeCounter wrap. The procedural cloud wind uses integer noise-tile travel per hour for the same reason.
+- Expanded the structural validator to cover water POM atlas/tangent inputs, shared POM option values, cloud reflection consumers/profile budgets, and the updated derivative-sampling path. The old whitespace-sensitive water alpha assertion was replaced with semantic token checks.
+- CI run `45232285056` on `815b1d9d534158ea9a64a0024511547e9cffb9e1` passed all stages: standalone GLSL, Iris macro branches, LabPBR, entity POM, Unbound water detail, Ultra-Light reflection, water-normal alpha-height inspection, program linking and structural validation.
+- Runtime visual calibration is still pending in Minecraft 26.3 + Iris. Water POM appearance, translucent reflection weight, cloud reflection noise/shape, underwater distortion intensity and cost on Intel HD 5500 must be judged in-game before release.
