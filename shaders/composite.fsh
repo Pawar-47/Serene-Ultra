@@ -25,6 +25,44 @@ layout(location = 0) out vec4 outColor;
 
 #define PBR_REFLECTION_STRENGTH 75 // [0 25 50 75 100 125 150] Opaque material reflection strength
 #define PBR_REFLECTION_QUALITY 4 // [0 4 6 8] Opaque screen-space reflection steps
+#define LIGHT_SHAFT_STRENGTH 45 // [0 10 20 30 40 50 60 70 80 90 100] Screen-space sunlight scattering strength
+#define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
+
+#if LIGHT_SHAFT_QUALITY > 0
+vec3 sampleScreenSpaceLightShafts(vec2 uv) {
+    if (!hasSkylight || sin(sunAngle * 6.28318530718) <= 0.0 || LIGHT_SHAFT_STRENGTH <= 0)
+        return vec3(0.0);
+    vec4 sunClip = gbufferProjection * vec4(normalize(shadowLightPosition), 0.0);
+    if (sunClip.w <= 0.0001) return vec3(0.0);
+    vec2 sunUv = (sunClip.xy / sunClip.w) * 0.5 + 0.5;
+    if (sunUv.x <= 0.0 || sunUv.x >= 1.0 || sunUv.y <= 0.0 || sunUv.y >= 1.0)
+        return vec3(0.0);
+
+    float receiverDepth = texture(depthtex2, uv).r;
+    float receiverMask = 1.0 - smoothstep(0.999, 1.0, receiverDepth);
+    if (receiverMask <= 0.001) return vec3(0.0);
+
+    vec2 rayStep = (sunUv - uv) / float(LIGHT_SHAFT_QUALITY);
+    vec2 sampleUv = uv;
+    float accumulatedLight = 0.0;
+    float decay = 1.0;
+    for (int i = 0; i < LIGHT_SHAFT_QUALITY; ++i) {
+        sampleUv += rayStep;
+        float sampleDepth = texture(depthtex2, sampleUv).r;
+        float skyVisibility = smoothstep(0.999, 1.0, sampleDepth);
+        vec3 sampleColor = pow(max(texture(colortex0, sampleUv).rgb, vec3(0.0)), vec3(2.2));
+        float sourceBrightness = max(max(sampleColor.r, sampleColor.g), sampleColor.b);
+        accumulatedLight += max(sourceBrightness - 0.55, 0.0) * 1.8 * skyVisibility * decay;
+        decay *= 0.92;
+    }
+    float normalizedLight = accumulatedLight / float(LIGHT_SHAFT_QUALITY);
+    float sunElevation = smoothstep(0.02, 0.35, sin(sunAngle * 6.28318530718));
+    return vec3(1.0, 0.72, 0.46) * normalizedLight * receiverMask
+        * sunElevation * (float(LIGHT_SHAFT_STRENGTH) * 0.01) * 1.8;
+}
+#else
+vec3 sampleScreenSpaceLightShafts(vec2 uv) { return vec3(0.0); }
+#endif
 
 #if PBR_REFLECTION_QUALITY > 0
 vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
@@ -105,11 +143,14 @@ void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
     vec4 sceneColor = texelFetch(colortex0, pixel, 0);
     vec4 normalData = texelFetch(colortex2, pixel, 0);
+    vec3 lightShafts = sampleScreenSpaceLightShafts(vTexCoord);
 
     // The alpha channel below 0.525 is sky/unlit geometry or a surface without
     // a meaningful PBR smoothness value. Avoid all reflection work for it.
     if (normalData.a <= 0.525 || PBR_REFLECTION_STRENGTH <= 0) {
-        outColor = sceneColor;
+        vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
+        sceneLinearNoReflection += lightShafts;
+        outColor = vec4(pow(max(sceneLinearNoReflection, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
         return;
     }
 
@@ -118,7 +159,9 @@ void main() {
     // The composite pass runs after translucent gbuffers. Skip pixels where
     // water, glass, particles or the first-person hand overlay an opaque surface.
     if (abs(currentDepthAll - depth) > 0.000001 || depth >= 0.999999) {
-        outColor = sceneColor;
+        vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
+        sceneLinearNoReflection += lightShafts;
+        outColor = vec4(pow(max(sceneLinearNoReflection, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
         return;
     }
 
@@ -174,5 +217,6 @@ void main() {
 
     vec3 sceneLinear = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 resultLinear = mix(sceneLinear, reflectionLinear, reflectionWeight);
+    resultLinear += lightShafts;
     outColor = vec4(pow(max(resultLinear, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
 }
