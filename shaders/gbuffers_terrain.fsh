@@ -469,6 +469,17 @@ void main() {
 #else
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0); // oldPBR metalness
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);        // oldPBR emissiveness
+    // Vanilla/oldPBR have no LabPBR SSS code. Use conservative material-ID
+    // fallbacks for thin foliage and soft translucent-looking block surfaces.
+    if (vMaterialId == 10009 || vMaterialId == 10011) {
+        materialSurfaceData = 0.52; // Leaves
+    } else if (vMaterialId == 32130) {
+        materialSurfaceData = 0.46; // Grass, crops, vines, flowers and roots
+    } else if (vMaterialId == 30012) {
+        materialSurfaceData = 0.38; // Slime block
+    } else if (vMaterialId == 30016) {
+        materialSurfaceData = 0.48; // Honey block
+    }
 #endif
 
     // Built-in emissive blocks are excluded even when no specular map exists.
