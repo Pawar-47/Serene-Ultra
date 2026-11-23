@@ -1,5 +1,7 @@
 #version 130
 
+#include "/lib/taa_jitter.glsl"
+
 // Minecraft 26.3 Iris ShaderKey.CLOUDS uses POSITION_COLOR: no UV or normal input.
 
 out vec4 vVertexColor;
@@ -13,4 +15,5 @@ void main() {
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
     vViewPosition = viewPosition.xyz;
     vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
+    applySereneTaaJitter(gl_Position);
 }
