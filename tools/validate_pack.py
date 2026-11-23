@@ -348,6 +348,24 @@ for option in ("RED_GAIN", "GREEN_GAIN", "BLUE_GAIN", "GAMMA", "EXPOSURE",
     if f"#define {option} " not in final:
         errors.append(f"Missing active color control: {option}")
 
+for option in ("VIBRANCE", "TM_WHITE_PATH", "TM_DARK_DESATURATION"):
+    if f"#define {option} " not in final:
+        errors.append(f"Missing reference tone-map control: {option}")
+for token in ("applyReferenceToneMap", "linearToDisplayRgb", "applyReferenceSaturation",
+              "darkLift", "whitePath", "darkDesaturation"):
+    if token not in final:
+        errors.append(f"Reference color pipeline is missing component: {token}")
+color_screen = next((line for line in props.splitlines() if line.startswith("screen.COLOR =")), "")
+for option in ("VIBRANCE", "TM_WHITE_PATH", "TM_DARK_DESATURATION"):
+    if option not in color_screen:
+        errors.append(f"Color screen is missing reference tone-map option: {option}")
+for profile in ("Ultra-Light", "Smooth", "Ultra", "HDR", "Ultra-HDR"):
+    line = next((line for line in props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    for expected in ("VIBRANCE:100", "TM_WHITE_PATH:100", "TM_DARK_DESATURATION:25"):
+        if expected not in line:
+            errors.append(f"{profile} profile is missing reference color setting: {expected}")
+
+
 shadow_vertex = sources.get("shadow.vsh", "")
 shadow_fragment = sources.get("shadow.fsh", "")
 for varying in ("vShadowTexCoord", "vShadowVertexColor"):
