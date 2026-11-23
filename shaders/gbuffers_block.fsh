@@ -370,7 +370,11 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
                 float goldGreenSquared = albedo.g * albedo.g;
                 materialSmoothness = max(materialSmoothness,
                     min(max(albedo.g, 0.8) - goldGreenSquared * 0.5, 1.0));
-                materialReflectance = max(materialReflectance, 0.72);
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+                materialReflectance = 1.0; // LabPBR metal: deferred uses albedo as F0
+#else
+                materialReflectance = max(materialReflectance, 0.72); // oldPBR fallback metalness
+#endif
             }
             albedo.rgb *= 0.5 + 0.4 * dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
         } else {
@@ -386,7 +390,11 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
             float copperSmoothness = pow(albedo.r, 4.0)
                 + pow(max(albedo.g - albedo.r * 0.5, 0.0), 2.0) * 0.3;
             materialSmoothness = max(materialSmoothness, min(copperSmoothness, 1.0));
-            materialReflectance = max(materialReflectance, 0.58);
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0; // LabPBR metal: deferred uses albedo as F0
+#else
+            materialReflectance = max(materialReflectance, 0.58); // oldPBR fallback metalness
+#endif
         }
         float copperLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
         albedo.rgb *= clamp(0.6 + 0.7 * copperLuminance, 0.0, 1.0);

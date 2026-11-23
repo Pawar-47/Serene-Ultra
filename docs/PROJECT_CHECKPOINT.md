@@ -978,3 +978,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1099 compiled every standalone shader, Iris macro branch, LabPBR branch, opt-in entity POM branch, opt-in Unbound water-detail branch and linked all vertex/fragment programs.
 - Structural validation then incorrectly required the reusable `.glsl` include to declare its own `#version 330`. Iris includes are preprocessor fragments inserted into the parent stage; they must inherit the parent's version directive instead.
 - Updated the structural check to require GLSL 330 only on standalone stage files. No runtime shader code changed.
+
+
+## Gold/copper block-entity PBR fallback correction — 2026-11-23
+- The shared deferred reflectance channel is format-dependent: oldPBR stores metalness, while LabPBR uses its G-channel F0 code and treats metal IDs (230–255) as albedo-colored conductors.
+- Updated vanilla fallback shading for gold bell parts and copper chests/statues to mirror the existing item-material convention: LabPBR uses 1.0 metal classification; oldPBR retains the calibrated fallback metalness values (gold 0.72, copper 0.58).
+- This only applies when no explicit resource-pack specular map is present. Explicit PBR maps remain authoritative.
+- Added structural regression checks for both format-specific branches. CI required; visual calibration remains pending.

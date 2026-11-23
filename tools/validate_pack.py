@@ -544,6 +544,15 @@ for token in (
     if token not in block_properties:
         errors.append(f"Complementary block-entity mapping is missing {token}")
 block_entity_source = sources.get("gbuffers_block.fsh", "")
+# The deferred reflectance channel has different meanings by format:
+# oldPBR stores metalness, while LabPBR metal IDs use albedo as F0.
+for pattern in (
+    r"#ifdef MC_TEXTURE_FORMAT_LAB_PBR\s+materialReflectance = 1\.0;[^\n]*\n#else\s+materialReflectance = max\(materialReflectance, 0\.72\);[^\n]*\n#endif",
+    r"#ifdef MC_TEXTURE_FORMAT_LAB_PBR\s+materialReflectance = 1\.0;[^\n]*\n#else\s+materialReflectance = max\(materialReflectance, 0\.58\);[^\n]*\n#endif",
+):
+    if not re.search(pattern, block_entity_source):
+        errors.append("Gold/copper block-entity fallback must separate LabPBR metal F0 from oldPBR metalness")
+
 for token in (
     "blockEntityId == 5008", "blockEntityId == 5012", "blockEntityId == 5016",
     "blockEntityId == 5020", "blockEntityId == 5028", "blockEntityId == 5032",
