@@ -442,12 +442,15 @@ if "ambient * materialAOFactor + direct" in sources.get("deferred.fsh", ""):
     errors.append("Material AO must not be applied twice in the final diffuse expression")
 for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
-    for token in ("uniform sampler2D specular;", "texture(specular, vTexCoord)",
+    for token in ("uniform sampler2D specular;",
                   "float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0)",
                   "materialReflectance", "pbrEmission",
                   "outEmissionData = vec4("):
         if token not in source:
             errors.append(f"{name} is missing resource-pack PBR specular support: {token}")
+    specular_sample = "textureGrad(specular, materialUv, uvDx, uvDy)" if name == "gbuffers_block.fsh" else "texture(specular, vTexCoord)"
+    if specular_sample not in source:
+        errors.append(f"{name} must sample specular data at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(fragment_name, "")
     normal_sample = "textureGrad(normals, materialUv, uvDx, uvDy)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh") else "texture(normals, vTexCoord)"
