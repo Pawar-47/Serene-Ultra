@@ -234,11 +234,9 @@ void main() {
         return;
     }
 
-    float depth = texelFetch(depthtex2, pixel, 0).r;
-    float currentDepthAll = texelFetch(depthtex0, pixel, 0).r;
     // The composite pass runs after translucent gbuffers. Skip pixels where
     // water, glass, particles or the first-person hand overlay an opaque surface.
-    if (abs(currentDepthAll - depth) > 0.000001 || depth >= 0.999999) {
+    if (!opaqueReceiver) {
         vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
         sceneLinearNoReflection += lightShafts;
         outColor = vec4(pow(max(sceneLinearNoReflection, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);

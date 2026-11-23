@@ -1273,3 +1273,12 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Fixed terrain, block-entity and entity-model POM traversal: UV steps now clamp to the current sprite's local [0,1] bounds instead of using `fract()`, which wrapped a ray to the opposite edge of the same atlas tile and could create visible discontinuities.
 - Added structural regression checks to reject wrapped POM traversal and require local sprite clamping.
 - Shader compilation and POM visual behavior remain subject to the next CI run and in-game resource-pack tests.
+
+
+
+## Composite depth redeclaration compile fix — 2026-11-23
+- CI job `137776432847` on `cd193d0` failed at `shaders/composite.fsh:282` with `'currentDepthAll' : redefinition`.
+- The screen-space GI commit added the opaque-receiver gate but left the previous depth block behind: `currentDepthAll` was declared twice, and `float depth` re-fetched `depthtex2`, whose value was already held in `centerDepth`.
+- Removed the duplicate declarations and reused the existing `opaqueReceiver` predicate for the translucent-overlay early return. Reflection and GI behaviour are unchanged; every structural validator token from the GI contract is preserved.
+- The compile loop aborts at the first failure, so the stages ordered after `composite.fsh` were not compiled in that run. The next CI run is the first evidence for those stages and must be checked before any status claim.
+- This is a compilation fix only; the runtime checklist from the handover is still untouched.
