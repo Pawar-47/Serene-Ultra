@@ -224,3 +224,9 @@ option.FOG_HEIGHT_STRENGTH.comment = Adds altitude-aware atmospheric haze to all
 
 option.WAVING_FOLIAGE_STRENGTH = Foliage Wind Strength
 option.WAVING_FOLIAGE_STRENGTH.comment = Controls stable wind-driven movement of leaves, grass, crops, vines and aquatic plants. Terrain and shadow vertices use the same displacement so foliage shadows remain aligned.
+
+option.BLOOM_QUALITY = Bloom Radius Quality
+option.BLOOM_QUALITY.comment = Adds very-wide and ultra-wide low-resolution bloom levels. Zero keeps the compact two-scale chain for integrated GPUs; higher levels add broader light halos.
+value.BLOOM_QUALITY.0 = Compact
+value.BLOOM_QUALITY.1 = Wide
+value.BLOOM_QUALITY.2 = Ultra Wide
