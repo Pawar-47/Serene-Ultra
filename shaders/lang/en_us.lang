@@ -168,7 +168,7 @@ option.HELD_LIGHTING_STRENGTH.comment = Adds low-cost colored light from luminou
 option.BLOOM_STRENGTH = Bloom Strength
 option.BLOOM_STRENGTH.comment = Combines a blurred half-resolution level with a wide quarter-resolution level for a soft multi-scale glow. It costs four small extra passes; Ultra-Light disables the chain entirely.
 option.BLOOM_THRESHOLD = Bloom Highlight Threshold
-option.BLOOM_THRESHOLD.comment = Sets the brightness where the bloom bright pass begins. Lower values make more surfaces glow; higher values restrict the effect to bright emissive and highlight pixels. The cutoff uses a soft knee so bloom ramps in instead of popping.
+option.BLOOM_THRESHOLD.comment = Sets the linear-light brightness where the bloom bright pass begins. Lower values make more surfaces glow; higher values restrict the effect to bright emissive and highlight pixels. The cutoff uses a soft knee so bloom ramps in instead of popping.
 
 option.FXAA_ENABLED = Fast Approximate Anti-Aliasing
 option.FXAA_ENABLED.comment = Applies edge-adaptive spatial anti-aliasing in the final pass without temporal history or an extra render target. Disable it for the lowest GPU cost.
