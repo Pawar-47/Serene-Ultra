@@ -47,6 +47,7 @@ in vec2 vTexCoord;
 #define MATERIAL_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material AO lighting strength
 #define MATERIAL_SSS_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] LabPBR subsurface scattering strength
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
+#define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
 
 // Deferred is a composite-style pass: it reads the main colortex0 image and
 // writes the alternate image. Iris flips the pair after this pass, so the
@@ -76,15 +77,34 @@ vec3 sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
         return vec3(1.0);
     }
 
-    // Four hardware-filtered comparison taps provide a wider soft edge
-    // without a large software PCF kernel on the Intel HD target.
+    // Rotated Poisson PCF broadens penumbrae without temporal history.
+    // Four taps keep the low profile inexpensive; Ultra and HDR use denser kernels.
+    const vec2 poissonDisk[12] = vec2[12](
+        vec2(-0.326, -0.406), vec2( 0.326,  0.406),
+        vec2(-0.840, -0.074), vec2( 0.840,  0.074),
+        vec2(-0.696,  0.457), vec2( 0.696, -0.457),
+        vec2(-0.203,  0.621), vec2( 0.203, -0.621),
+        vec2( 0.962, -0.195), vec2(-0.962,  0.195),
+        vec2( 0.473, -0.480), vec2(-0.473,  0.480)
+    );
     vec2 texel = 1.0 / vec2(textureSize(shadowtex0, 0));
+    float noise = fract(
+        52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))
+    );
+    float angle = noise * 6.28318530718;
+    float sineAngle = sin(angle);
+    float cosineAngle = cos(angle);
+    mat2 rotation = mat2(cosineAngle, -sineAngle, sineAngle, cosineAngle);
+    float filterRadius = shadowIntervalSize * mix(0.75, 1.75, 1.0 - normalLight);
     float visibility = 0.0;
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5, -0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5, -0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5,  0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5,  0.5), shadowPosition.z));
-    visibility *= 0.25;
+    for (int i = 0; i < SHADOW_FILTER_QUALITY; ++i) {
+        vec2 offset = rotation * poissonDisk[i] * texel * filterRadius;
+        visibility += texture(
+            shadowtex0,
+            vec3(shadowPosition.xy + offset, shadowPosition.z)
+        );
+    }
+    visibility /= float(SHADOW_FILTER_QUALITY);
 
     // shadowtex1 excludes translucent geometry. If the center sample is
     // blocked in shadowtex0 but visible in shadowtex1, the blocker is water

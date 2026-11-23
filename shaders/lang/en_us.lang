@@ -170,3 +170,6 @@ option.SKY_ATMOSPHERE_STRENGTH.comment = Controls the strength of Rayleigh sky t
 
 option.CLOUD_SCATTERING_STRENGTH = Cloud Lighting
 option.CLOUD_SCATTERING_STRENGTH.comment = Controls daylight tint, weather response and forward-scattering silver lining on Minecraft 26.3 cloud geometry.
+
+option.SHADOW_FILTER_QUALITY = Soft Shadow Samples
+option.SHADOW_FILTER_QUALITY.comment = Controls the rotated Poisson PCF sample count used to soften shadow edges. Higher values improve penumbra smoothness at additional GPU cost.
