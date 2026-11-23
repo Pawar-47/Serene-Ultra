@@ -90,7 +90,7 @@ vec2 calculateParallaxUv(
         previousLayerDepth = currentLayerDepth;
         previousSurfaceDepth = currentSurfaceDepth;
 
-        currentLocal = fract(currentLocal + stepOffset);
+        currentLocal = clamp(currentLocal + stepOffset, vec2(0.0), vec2(1.0));
         currentLayerDepth += 1.0 / float(POM_QUALITY);
         vec2 sampleUv = clamp(
             spriteBounds.xy + currentLocal * tileSize, lowerBound, upperBound
