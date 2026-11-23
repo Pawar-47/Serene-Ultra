@@ -1,6 +1,8 @@
 #version 330 compatibility
 
 #define CLOUD_SHADOW_STRENGTH 65 // [0 20 40 60 80 100] Procedural cloud-shadow strength
+#define CLOUD_ALTITUDE 192 // [128 160 192 224 256] Cloud layer centre height in blocks
+#define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
 
 /*
 const int colortex2Format = RGBA8;

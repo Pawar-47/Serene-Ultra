@@ -27,6 +27,8 @@ out vec4 outColor1;
 
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud daylight and silver-lining response
 #define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] World-stable cloud surface detail
+#define VOLUMETRIC_CLOUDS 1 // [0 1] Use procedural clouds in the sky pass
+#define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
 
 #include "/lib/lighting/stable_world_position.glsl"
 
@@ -46,6 +48,9 @@ float calculateCloudFog(float distanceToCamera) {
 
 void main() {
     if (isEyeInWater != 0) discard;
+#if VOLUMETRIC_CLOUDS > 0
+    discard; // Volumetric clouds are rendered by gbuffers_skybasic.
+#endif
 
     // Minecraft 26.3's cloud mesh uses Iris ShaderKey.CLOUDS / POSITION_COLOR.
     // The vertex color already contains CloudColor and the generated face shading;
@@ -64,7 +69,8 @@ void main() {
     const float CLOUD_DETAIL_UV_SCALE = 0.0021;
     const float CLOUD_DETAIL_NOISE_SCALE = 3.1;
     vec2 stableCloudXZ = sereneStableWorldXZ(vPlayerPosition, CLOUD_DETAIL_WORLD_PERIOD);
-    vec2 cloudDetailWind = vec2(frameTimeCounter * 0.000035, -frameTimeCounter * 0.000022);
+    float cloudSpeed = float(CLOUD_SPEED) * 0.01;
+    vec2 cloudDetailWind = vec2(frameTimeCounter * 0.000035 * cloudSpeed, -frameTimeCounter * 0.000022 * cloudSpeed);
     vec2 cloudDetailUv = stableCloudXZ * CLOUD_DETAIL_UV_SCALE + cloudDetailWind;
     float cloudBroadDetail = texture(noisetex, cloudDetailUv).r;
     float cloudFineDetail = texture(noisetex, cloudDetailUv * CLOUD_DETAIL_NOISE_SCALE + vec2(0.37, 0.19)).g;

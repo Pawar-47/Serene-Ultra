@@ -179,3 +179,24 @@ option.CLOUD_SHADOW_STRENGTH.comment = Controls moving, world-stable procedural 
 
 option.CLOUD_DETAIL_STRENGTH = Cloud Surface Detail
 option.CLOUD_DETAIL_STRENGTH.comment = Adds subtle animated, world-stable multi-scale noise variation to native cloud faces without changing their silhouette.
+
+option.VOLUMETRIC_CLOUDS = Volumetric Clouds
+option.VOLUMETRIC_CLOUDS.comment = Render a procedural cloud volume in the sky pass; disabled mode restores Minecraft's native cloud geometry.
+
+option.VOLUMETRIC_CLOUD_QUALITY = Volumetric Cloud Quality
+option.VOLUMETRIC_CLOUD_QUALITY.comment = Controls raymarch samples per sky pixel. Higher values smooth cloud edges and depth at additional GPU cost.
+
+option.CLOUD_ALTITUDE = Cloud Layer Height
+option.CLOUD_ALTITUDE.comment = Sets the centre height of the volumetric cloud layer in world blocks.
+
+option.CLOUD_THICKNESS = Cloud Layer Thickness
+option.CLOUD_THICKNESS.comment = Sets the vertical depth of the volumetric cloud layer in world blocks.
+
+option.CLOUD_COVERAGE = Cloud Coverage
+option.CLOUD_COVERAGE.comment = Controls the procedural noise threshold and overall cloud coverage.
+
+option.CLOUD_DENSITY = Cloud Density
+option.CLOUD_DENSITY.comment = Controls optical depth and cloud opacity through the raymarched layer.
+
+option.CLOUD_SPEED = Cloud Wind Speed
+option.CLOUD_SPEED.comment = Controls the world-stable cloud drift and matching projected cloud-shadow motion.

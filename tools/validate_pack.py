@@ -1356,8 +1356,11 @@ for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAG
               "colorLinear += glareColor * celestialGlare"):
     if token not in sky_basic and token not in sky_basic_vertex:
         errors.append(f"Sky-basic program is missing Iris sky-stage component: {token}")
-if "texture(" in sky_basic:
-    errors.append("Low-cost sky scattering/glare must not add texture fetches")
+for token in ("VOLUMETRIC_CLOUDS", "VOLUMETRIC_CLOUD_QUALITY",
+              "CLOUD_ALTITUDE", "CLOUD_THICKNESS", "CLOUD_COVERAGE",
+              "CLOUD_DENSITY", "CLOUD_SPEED", "textureLod(noisetex,"):
+    if token not in sky_basic:
+        errors.append(f"Sky volumetric cloud implementation is missing component: {token}")
 sky_textured = sources.get("gbuffers_skytextured.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SUN", "MC_RENDER_STAGE_MOON",
               "alphaTestRef", "sunPosition", "moonPosition", "isEyeInWater", "outDeferredValidity = vec4(0.0)"):
@@ -1400,10 +1403,11 @@ if "fogColor" not in spidereyes or "calculateEyeFog" not in spidereyes:
 clouds = sources.get("gbuffers_clouds.fsh", "")
 for token in ("uniform float alphaTestRef", "vec4 cloudColor = vVertexColor;",
               "cloudColor.a < alphaTestRef", "outColor1 = vec4(0.0)",
+              "VOLUMETRIC_CLOUDS", "discard; // Volumetric clouds are rendered by gbuffers_skybasic.",
               "uniform vec3 shadowLightPosition", "uniform float sunAngle",
               "solarElevation", "silverLining", "CLOUD_SCATTERING_STRENGTH",
-              "hasSkylight && lightLength > 0.0001", "vec3 lightingTint = hasSkylight",
-              "cloudLinear *= mix("):
+              "CLOUD_DETAIL_STRENGTH", "hasSkylight && lightLength > 0.0001",
+              "vec3 lightingTint = hasSkylight", "cloudLinear *= mix("):
     if token not in clouds:
         errors.append(f"Cloud shader is missing Iris/reference component: {token}")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")

@@ -10,6 +10,10 @@ uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 shadowLightPosition;
+uniform sampler2D noisetex;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
+uniform float frameTimeCounter;
 
 in vec3 vVertexColorLinear;
 in float vVertexAlpha;
@@ -38,6 +42,15 @@ vec3 reconstructPlayerDirection() {
 }
 
 #define SKY_ATMOSPHERE_STRENGTH 100 // [0 25 50 75 100 125 150] Atmospheric scattering intensity
+#define VOLUMETRIC_CLOUDS 1 // [0 1] Use the procedural cloud raymarch instead of native flat clouds
+#define VOLUMETRIC_CLOUD_QUALITY 12 // [6 8 12 16 20] Volumetric cloud raymarch samples
+#define CLOUD_ALTITUDE 192 // [128 160 192 224 256] Cloud layer centre height in blocks
+#define CLOUD_THICKNESS 64 // [32 48 64 80 96] Cloud layer vertical thickness
+#define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
+#define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Volumetric cloud optical density
+#define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
+#define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud lighting and silver-lining response
+#define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
 
 vec3 calculateAtmosphericScattering(
     vec3 viewDirection,
@@ -109,6 +122,122 @@ vec3 calculateAtmosphericScattering(
     return scattering;
 }
 
+
+vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float rain) {
+#if VOLUMETRIC_CLOUDS > 0
+    if (!hasSkylight) return vec4(0.0);
+
+    vec3 cameraWorldPosition = vec3(cameraPositionInt) + cameraPositionFract;
+    float cloudBase = float(CLOUD_ALTITUDE) - float(CLOUD_THICKNESS) * 0.5;
+    float cloudTop = float(CLOUD_ALTITUDE) + float(CLOUD_THICKNESS) * 0.5;
+    float startDistance = 0.0;
+    float endDistance = 0.0;
+
+    if (abs(rayDirection.y) > 0.012) {
+        float baseDistance = (cloudBase - cameraWorldPosition.y) / rayDirection.y;
+        float topDistance = (cloudTop - cameraWorldPosition.y) / rayDirection.y;
+        startDistance = max(min(baseDistance, topDistance), 0.0);
+        endDistance = min(max(baseDistance, topDistance), 1400.0);
+    } else if (cameraWorldPosition.y >= cloudBase && cameraWorldPosition.y <= cloudTop) {
+        // When the camera is inside the cloud slab and looking almost horizontally,
+        // trace a bounded distance through it instead of dividing by a near-zero Y.
+        startDistance = 0.0;
+        endDistance = 1400.0;
+    } else {
+        return vec4(0.0);
+    }
+
+    if (endDistance <= startDistance + 0.01) return vec4(0.0);
+
+    float sampleCount = float(VOLUMETRIC_CLOUD_QUALITY);
+    float stepLength = (endDistance - startDistance) / sampleCount;
+    float jitter = fract(
+        sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453
+    );
+    float cloudSpeed = float(CLOUD_SPEED) * 0.01;
+    vec2 wind = vec2(
+        frameTimeCounter * 0.00004 * cloudSpeed,
+        -frameTimeCounter * 0.000025 * cloudSpeed
+    );
+
+    float detailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
+    float coverage = float(CLOUD_COVERAGE) * 0.01;
+    float densityStrength = float(CLOUD_DENSITY) * 0.01;
+    float dayFactor = smoothstep(-0.08, 0.20, solarElevation);
+    float lightLength = length(shadowLightPosition);
+    vec3 lightDirection = lightLength > 0.0001
+        ? normalize(mat3(gbufferModelViewInverse) * shadowLightPosition)
+        : vec3(0.0, 1.0, 0.0);
+
+    vec3 ambientColor = mix(
+        vec3(0.12, 0.16, 0.25),
+        vec3(0.43, 0.53, 0.66),
+        dayFactor
+    );
+    vec3 directColor = mix(
+        vec3(0.20, 0.25, 0.38),
+        vec3(1.0, 0.84, 0.66),
+        dayFactor
+    );
+    float forwardPhase = pow(max(dot(rayDirection, lightDirection), 0.0), 4.0);
+    float scatteringStrength = float(CLOUD_SCATTERING_STRENGTH) * 0.01;
+
+    vec3 cloudRadiance = vec3(0.0);
+    float transmittance = 1.0;
+
+    for (int i = 0; i < VOLUMETRIC_CLOUD_QUALITY; ++i) {
+        float sampleDistance = startDistance + (float(i) + jitter) * stepLength;
+        if (sampleDistance > endDistance) break;
+
+        vec3 samplePosition = cameraWorldPosition + rayDirection * sampleDistance;
+        float heightFraction = clamp(
+            (samplePosition.y - cloudBase) / max(float(CLOUD_THICKNESS), 1.0),
+            0.0, 1.0
+        );
+        float verticalProfile = smoothstep(0.02, 0.18, heightFraction)
+            * (1.0 - smoothstep(0.72, 1.0, heightFraction));
+        if (verticalProfile <= 0.001) continue;
+
+        vec2 noiseUv = samplePosition.xz * 0.0016 + wind;
+        float broadNoise = textureLod(noisetex, noiseUv, 0.0).r;
+        float detailNoise = textureLod(
+            noisetex, noiseUv * 2.73 + vec2(0.37, 0.19), 0.0
+        ).g;
+        float cloudNoise = mix(
+            broadNoise,
+            broadNoise * 0.72 + detailNoise * 0.28,
+            detailStrength
+        );
+        float cloudShape = smoothstep(
+            coverage - 0.16, coverage + 0.16, cloudNoise
+        );
+        float density = cloudShape * verticalProfile * (1.0 + rain * 0.25);
+        float opticalDepth = density * stepLength * 0.0035 * densityStrength;
+        float sampleAlpha = 1.0 - exp(-opticalDepth);
+        if (sampleAlpha <= 0.001) continue;
+
+        float heightLighting = mix(0.72, 1.08, heightFraction);
+        float silverLining = pow(forwardPhase, 8.0) * 0.18 * scatteringStrength;
+        vec3 sampleColor = ambientColor * heightLighting;
+        sampleColor += directColor * (
+            0.08 + 0.20 * forwardPhase + silverLining
+        ) * scatteringStrength;
+        sampleColor *= mix(1.0, 0.56, rain * 0.85);
+
+        float cloudFog = smoothstep(600.0, 1400.0, sampleDistance);
+        sampleColor = mix(sampleColor, vFogLinear, cloudFog * 0.75);
+
+        cloudRadiance += cloudRadiance * 0.0 + transmittance * sampleAlpha * sampleColor;
+        transmittance *= 1.0 - sampleAlpha;
+        if (transmittance < 0.015) break;
+    }
+
+    return vec4(cloudRadiance, 1.0 - transmittance);
+#else
+    return vec4(0.0);
+#endif
+}
+
 void main() {
     vec3 colorLinear = vVertexColorLinear;
     float alpha = vVertexAlpha;
@@ -166,6 +295,15 @@ void main() {
             colorLinear = mix(colorLinear, twilightColor, horizonBand * twilight * 0.18);
         }
         colorLinear = mix(colorLinear, vFogLinear, 0.35 * rainStrength);
+
+        // Volumetric clouds are integrated into the sky pass so they use the
+        // exact same sky ray, fog, celestial direction and depth ordering.
+        if (isSky && VOLUMETRIC_CLOUDS > 0) {
+            vec4 cloudLayer = calculateVolumetricClouds(
+                playerDirection, solarElevation, rainStrength
+            );
+            colorLinear = cloudLayer.rgb + colorLinear * (1.0 - cloudLayer.a);
+        }
 
         // Low-cost active-celestial glare, adapted from Complementary's
         // low-quality sky path. shadowLightPosition is Iris view space.

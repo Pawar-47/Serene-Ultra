@@ -15,11 +15,13 @@ float sampleSereneCloudShadow(
     const float CLOUD_SHADOW_DETAIL_SCALE = 2.73;
     vec2 stableWorldXZ = sereneStableWorldXZ(playerPosition, CLOUD_SHADOW_WORLD_PERIOD);
     float sunHeight = max(worldLightDirection.y, 0.20);
-    vec2 cloudOffset = worldLightDirection.xz * (128.0 / sunHeight);
+    float cloudHeightAboveReceiver = max(float(CLOUD_ALTITUDE) - worldPosition.y, 16.0);
+    vec2 cloudOffset = worldLightDirection.xz * (cloudHeightAboveReceiver / sunHeight);
     float offsetLength = length(cloudOffset);
     if (offsetLength > 512.0) cloudOffset *= 512.0 / offsetLength;
 
-    vec2 wind = vec2(frameTimeCounter * 0.00004, -frameTimeCounter * 0.000025);
+    float cloudSpeed = float(CLOUD_SPEED) * 0.01;
+    vec2 wind = vec2(frameTimeCounter * 0.00004 * cloudSpeed, -frameTimeCounter * 0.000025 * cloudSpeed);
     vec2 cloudWorldXZ = mod(stableWorldXZ + cloudOffset, vec2(CLOUD_SHADOW_WORLD_PERIOD));
     vec2 cloudUv = cloudWorldXZ * CLOUD_SHADOW_UV_SCALE + wind;
     float broadNoise = texture(noisetex, cloudUv).r;
