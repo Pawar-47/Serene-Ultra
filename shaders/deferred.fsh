@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define CLOUD_SHADOW_STRENGTH 65 // [0 20 40 60 80 100] Procedural cloud-shadow strength
+
 /*
 const int colortex2Format = RGBA8;
 */
@@ -14,6 +16,11 @@ uniform sampler2D colortex3;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 uniform sampler2DShadow shadowtex0;
+uniform float rainStrength;
+uniform float frameTimeCounter;
+uniform vec3 cameraPositionFract;
+uniform ivec3 cameraPositionInt;
+uniform sampler2D noisetex;
 uniform sampler2DShadow shadowtex1;
 uniform sampler2D shadowcolor0;
 
@@ -53,6 +60,8 @@ in vec2 vTexCoord;
 // lit opaque scene becomes the main image for subsequent translucent gbuffers.
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
+
+#include "/lib/lighting/cloud_shadows.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
 
@@ -198,6 +207,7 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
+    direct *= sampleSereneCloudShadow(playerPosition, worldLightDirection, dayFactor);
 
     // Decode sampled sRGB albedo for lighting, then encode it again for the
     // existing color-grading/final pass. This keeps the output contract intact.

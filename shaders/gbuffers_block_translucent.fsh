@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define CLOUD_SHADOW_STRENGTH 65 // [0 20 40 60 80 100] Procedural cloud-shadow strength
+
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
 
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
@@ -7,6 +9,11 @@
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2DShadow shadowtex0;
+uniform float rainStrength;
+uniform float frameTimeCounter;
+uniform vec3 cameraPositionFract;
+uniform ivec3 cameraPositionInt;
+uniform sampler2D noisetex;
 uniform sampler2DShadow shadowtex1;
 uniform sampler2D shadowcolor0;
 
@@ -34,6 +41,8 @@ in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
+
+#include "/lib/lighting/cloud_shadows.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
 
@@ -91,6 +100,7 @@ vec3 calculateForwardLighting(vec3 albedoLinear) {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
+    direct *= sampleSereneCloudShadow(vPlayerPosition, worldLightDirection, dayFactor);
     return albedoLinear * (ambient + direct);
 }
 

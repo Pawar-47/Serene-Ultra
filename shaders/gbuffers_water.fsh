@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define CLOUD_SHADOW_STRENGTH 65 // [0 20 40 60 80 100] Procedural cloud-shadow strength
+
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
 
 uniform sampler2D gtexture;
@@ -13,6 +15,7 @@ uniform float alphaTestRef;
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2DShadow shadowtex0;
+uniform float rainStrength;
 uniform sampler2DShadow shadowtex1;
 uniform sampler2D shadowcolor0;
 
@@ -73,6 +76,8 @@ flat in float vFluidRenderType;
 #define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
 #define PORTAL_DISTORTION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Atlas-safe animated portal distortion
 layout(location = 0) out vec4 outColor;
+
+#include "/lib/lighting/cloud_shadows.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
 
@@ -472,6 +477,7 @@ void main() {
         ? 0.70
         : (hasSkylight ? mix(0.10, 0.70, dayFactor) : 0.0);
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
+    direct *= sampleSereneCloudShadow(vPlayerPosition, worldLightDirection, dayFactor);
     if ((isWater && cameraUnderwater) || isPortal) direct = vec3(0.0);
 
     float waterThickness = 0.0;
