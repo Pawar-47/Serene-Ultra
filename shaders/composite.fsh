@@ -40,6 +40,11 @@ layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outGiHistory;
 layout(location = 2) out vec4 outTaaHistory;
 
+// Iris supplies this format macro; provide the GL enum for standalone GLSL validation.
+#ifndef RGBA16F
+#define RGBA16F 0x881A
+#endif
+
 const int colortex12Format = RGBA16F;
 const int colortex14Format = RGBA16F;
 
