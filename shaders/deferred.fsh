@@ -14,11 +14,15 @@ const int colortex2Format = RGBA8;
 /*
 const int colortex3Format = RGBA8;
 */
+/*
+const int colortex13Format = RGBA16F;
+*/
 
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
+uniform sampler2D colortex13;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 uniform sampler2DShadow shadowtex0;
@@ -32,6 +36,11 @@ uniform sampler2D shadowcolor0;
 
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferPreviousModelView;
+uniform mat4 gbufferPreviousProjection;
+uniform vec3 cameraPosition;
+uniform vec3 previousCameraPosition;
+uniform int frameCounter;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 
@@ -57,6 +66,7 @@ in vec2 vTexCoord;
 // direct sun/moon lighting and emissive/block-light contribution are retained.
 #define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.65 0.70 0.80 0.90 1.00] Contact occlusion strength
 #define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
+#define AO_TEMPORAL_STRENGTH 65 // [0 25 50 65 80 90] Reprojected contact-AO history weight
 #define MATERIAL_SPECULAR_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Deferred specular response for smooth materials
 #define SPECULAR_AA_STRENGTH 75 // [0 25 50 75 100] Derivative-based roughness filtering for stable PBR highlights
 #define MATERIAL_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material AO lighting strength
@@ -67,8 +77,9 @@ in vec2 vTexCoord;
 // Deferred is a composite-style pass: it reads the main colortex0 image and
 // writes the alternate image. Iris flips the pair after this pass, so the
 // lit opaque scene becomes the main image for subsequent translucent gbuffers.
-/* RENDERTARGETS: 0 */
+/* RENDERTARGETS: 0,13 */
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outAoHistory;
 
 #include "/lib/lighting/cloud_shadows.glsl"
 
@@ -151,6 +162,54 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
     return clamp(1.0 - normalizedOcclusion * AO_STRENGTH * 1.8, 0.55, 1.0);
 }
 
+
+float accumulateContactAoHistory(
+    float currentAo,
+    vec2 uv,
+    float currentDepth,
+    vec3 currentViewPosition
+) {
+#if AO_TEMPORAL_STRENGTH > 0
+    if (frameCounter > 1 && currentDepth < 0.999999) {
+        vec3 playerPosition = (
+            gbufferModelViewInverse * vec4(currentViewPosition, 1.0)
+        ).xyz;
+        vec3 previousPlayerPosition = playerPosition
+            + cameraPosition - previousCameraPosition;
+        vec4 previousViewPosition = gbufferPreviousModelView
+            * vec4(previousPlayerPosition, 1.0);
+        vec4 previousClipPosition = gbufferPreviousProjection
+            * previousViewPosition;
+
+        if (previousClipPosition.w > 0.0001) {
+            vec3 previousNdc = previousClipPosition.xyz / previousClipPosition.w;
+            vec2 previousUv = previousNdc.xy * 0.5 + 0.5;
+            float expectedPreviousDepth = previousNdc.z * 0.5 + 0.5;
+            if (previousUv.x > 0.001 && previousUv.x < 0.999
+                && previousUv.y > 0.001 && previousUv.y < 0.999
+                && expectedPreviousDepth > 0.0 && expectedPreviousDepth < 1.0) {
+                vec4 previousHistory = texture(colortex13, previousUv);
+                float depthTolerance = max(
+                    0.00065, expectedPreviousDepth * 0.0015
+                );
+                if (previousHistory.a > 0.0
+                    && abs(previousHistory.a - expectedPreviousDepth) < depthTolerance) {
+                    float clampedHistory = clamp(
+                        previousHistory.r, max(currentAo - 0.12, 0.0),
+                        min(currentAo + 0.12, 1.0)
+                    );
+                    currentAo = mix(
+                        currentAo, clampedHistory,
+                        float(AO_TEMPORAL_STRENGTH) * 0.01
+                    );
+                }
+            }
+        }
+    }
+#endif
+    return currentAo;
+}
+
 #include "/lib/lighting/held_item_lighting.glsl"
 
 void main() {
@@ -167,6 +226,7 @@ void main() {
         abs(sceneDepth - opaqueWorldDepth) > 0.000001 ||
         normalData.a < 0.5) {
         outColor = scene;
+        outAoHistory = vec4(0.0);
         return;
     }
 
@@ -216,6 +276,10 @@ void main() {
     // Contact and LabPBR material AO attenuate indirect/block light only;
     // direct celestial illumination remains separate and unaffected.
     float contactAO = sampleContactAO(viewPosition, viewNormal);
+    contactAO = accumulateContactAoHistory(
+        contactAO, vTexCoord, opaqueWorldDepth, viewPosition
+    );
+    outAoHistory = vec4(contactAO, contactAO, contactAO, opaqueWorldDepth);
     ambient *= contactAO;
     ambient *= materialAOFactor;
 
