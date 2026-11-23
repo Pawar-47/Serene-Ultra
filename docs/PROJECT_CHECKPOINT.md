@@ -1113,3 +1113,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Compared the working Complementary reference's `translucentTweaks.glsl`: it reduces glass reflectivity within roughly 1.8 blocks and slightly reduces pane opacity within 4 blocks to avoid an overpowering near-camera surface.
 - Serene now applies the same bounded distance response to clear, stained and tinted glass: reflection fades to zero at very close range, while alpha blends halfway toward alpha-squared at point-blank distance and returns to the sampled alpha by four blocks.
 - The change uses the existing view-space position and adds no texture reads, loops or render targets. CI asserts both distance gates. Runtime tuning across panes, connected-texture packs and resource-pack alpha variants remains outstanding.
+
+
+## Unbound ice highlight response — 2026-11-23
+- The supplied Complementary reference's translucent IPBR dispatch derives ice smoothness from the cube of the texture green channel, scales the highlight with the squared green-channel response, and uses a 0.7 reflection multiplier.
+- Serene previously gave ice only the shared Fresnel reflection path; it had no direct specular highlight. Added a bounded Blinn-Phong highlight using the existing geometric/PBR normal, view vector, celestial light and translucent shadow result. Smoothness controls an 8–128 exponent; the reference-inspired green-channel highlight multiplier and 0.7 scale are retained.
+- The implementation is ice-only and adds arithmetic but no texture samples, loops, render targets or new varyings. It remains subject to in-game appearance/performance calibration.

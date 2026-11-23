@@ -329,3 +329,9 @@ Complementary Unbound's water material code gates shoreline foam to material ID 
 
 ### Near-camera glass response — 2026-11-23
 The supplied Complementary reference's `materialMethods/translucentTweaks.glsl` fades glass reflection toward zero inside 1.8 blocks and slightly reduces opacity inside 4 blocks. Serene now mirrors that close-range response for clear/stained/tinted glass using `length(vViewPosition)`: reflection uses `smoothstep(0.3, 1.8, distance)`, and alpha blends toward alpha-squared with a maximum 0.5 weight at the camera. It reuses the existing position varying and adds no texture samples. Runtime visual calibration remains pending.
+
+
+## Unbound ice highlight response — 2026-11-23
+- The supplied Complementary reference's translucent IPBR dispatch derives ice smoothness from the cube of the texture green channel, scales the highlight with the squared green-channel response, and uses a 0.7 reflection multiplier.
+- Serene previously gave ice only the shared Fresnel reflection path; it had no direct specular highlight. Added a bounded Blinn-Phong highlight using the existing geometric/PBR normal, view vector, celestial light and translucent shadow result. Smoothness controls an 8–128 exponent; the reference-inspired green-channel highlight multiplier and 0.7 scale are retained.
+- The implementation is ice-only and adds arithmetic but no texture samples, loops, render targets or new varyings. It remains subject to in-game appearance/performance calibration.

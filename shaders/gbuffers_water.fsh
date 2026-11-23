@@ -679,6 +679,23 @@ void main() {
 
     vec3 albedoLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = albedoLinear * (ambient + direct);
+    // Complementary Unbound derives ice smoothness and highlight strength
+    // from the green texture channel. Recreate that compact response with
+    // the existing normal/light/view vectors; no additional texture reads.
+    if (isIce && nDotL > 0.001 && celestialGate > 0.001) {
+        float iceSmoothness = translucentAlbedo.g * translucentAlbedo.g * translucentAlbedo.g;
+        float iceHighlight = pow(
+            min(translucentAlbedo.g * translucentAlbedo.g * 1.5, 1.0),
+            2.0
+        ) * 3.5;
+        vec3 viewLightDirectionForIce = normalize(mat3(gbufferModelView) * worldLightDirection);
+        vec3 iceViewDirection = normalize(-vViewPosition);
+        vec3 iceHalfVector = normalize(viewLightDirectionForIce + iceViewDirection);
+        float iceSpecularExponent = mix(8.0, 128.0, iceSmoothness);
+        float iceSpecular = pow(max(dot(normalize(viewNormal), iceHalfVector), 0.0),
+                                iceSpecularExponent) * iceHighlight * 0.7;
+        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * iceSpecular;
+    }
     // Lava shares the post-deferred fluid pass but retains its self-emission.
     float lavaEmission = (vMaterialId == 32118) ? 0.9 : 0.0;
     float portalEmission = isPortal

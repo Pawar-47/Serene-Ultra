@@ -849,6 +849,14 @@ for token in ("flat in vec2 vMidTexCoord", "flat in vec2 vTexHalfSize",
               "portalMinUV", "portalMaxUV", "textureLod(gtexture, portalUV, 0.0)"):
     if token not in water:
         errors.append(f"Atlas-safe portal distortion path is missing component: {token}")
+for token in ("float iceSmoothness = translucentAlbedo.g * translucentAlbedo.g * translucentAlbedo.g",
+               "float iceHighlight = pow(",
+               "float iceSpecularExponent = mix(8.0, 128.0, iceSmoothness)",
+               "iceSpecular * 0.7",
+               "viewLightDirectionForIce",
+               "if (isIce && nDotL > 0.001 && celestialGate > 0.001)"):
+    if token not in water:
+        errors.append(f"Unbound-guided ice highlight path is missing component: {token}")
 for token in ("vMaterialId == 32008", "vMaterialId == 32001", "vMaterialId >= 31000 && vMaterialId <= 31031",
               "vMaterialId == 30008", "vMaterialId == 30020", "vMaterialId == 32004",
               "float closeGlassFactor = (1.0 - smoothstep(0.5, 4.0, glassCameraDistance)) * 0.5",
