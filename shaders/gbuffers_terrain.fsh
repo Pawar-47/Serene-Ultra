@@ -32,6 +32,11 @@ float sereneVanillaMaterialPorosity(int materialId) {
     if (materialId == 32164) return 0.03; // Obsidian
     if (materialId == 32165) return 0.62; // Vanilla wood and planks
     if (materialId == 32166) return 0.82; // Sand, gravel, clay and mud
+    if (materialId == 32167) return 0.12; // Blackstone family
+    if (materialId == 32168) return 0.72; // Netherrack
+    if (materialId == 32169) return 0.22; // End stone family
+    if (materialId == 32170) return 0.98; // Snow and powder snow
+    if (materialId == 32171) return 0.72; // Coral block family
     if (materialId == 10009 || materialId == 10011 || materialId == 32130) return 0.92;
     return 0.0;
 }
