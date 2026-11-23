@@ -1597,6 +1597,26 @@ for profile, value in (("Ultra-Light", "0"), ("Smooth", "1"),
     if f"FXAA_ENABLED:{value}" not in line:
         errors.append(f"{profile} has incorrect FXAA setting")
 
+# Low-cost volumetric-light approximation must be implemented and profile-budgeted.
+composite_shader = sources.get("composite.fsh", "")
+for token in ("#define LIGHT_SHAFT_STRENGTH", "#define LIGHT_SHAFT_QUALITY",
+              "vec3 sampleScreenSpaceLightShafts(", "receiverMask", "skyVisibility",
+              "resultLinear += lightShafts"):
+    if token not in composite_shader:
+        errors.append(f"Screen-space light shafts are missing implementation component: {token}")
+quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
+for option in ("LIGHT_SHAFT_STRENGTH", "LIGHT_SHAFT_QUALITY"):
+    if option not in quality_screen or option not in slider_line:
+        errors.append(f"{option} must be exposed in the Quality screen and slider list")
+    if f"option.{option}.comment =" not in held_lang:
+        errors.append(f"{option} requires a user-facing tooltip")
+for profile, strength, quality in (("Ultra-Light", "0", "0"), ("Smooth", "20", "4"),
+                                  ("Ultra", "45", "8"), ("HDR", "50", "8"),
+                                  ("Ultra-HDR", "60", "12")):
+    line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"LIGHT_SHAFT_STRENGTH:{strength}" not in line or f"LIGHT_SHAFT_QUALITY:{quality}" not in line:
+        errors.append(f"{profile} has incorrect sunlight-shaft settings")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:
