@@ -54,8 +54,12 @@ for path in SHADERS.rglob("*"):
     sources[path.name] = source
     # Reusable .glsl includes are inserted into a parent stage and must not
     # declare their own #version directive. Only standalone stages require it.
-    if path.suffix != ".glsl" and not re.search(r"^\s*#version\s+330\b", source, re.MULTILINE):
-        errors.append(f"{path.relative_to(ROOT)}: expected an explicit GLSL 330 version")
+    # Iris routes gbuffers_line through its dedicated core-profile transform
+    # when the source version is below 150. Keep this pair on GLSL 130 so Iris
+    # upgrades it internally instead of requesting a driver compatibility profile.
+    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh"} else r"^\s*#version\s+330\b"
+    if path.suffix != ".glsl" and not re.search(expected_version, source, re.MULTILINE):
+        errors.append(f"{path.relative_to(ROOT)}: unexpected GLSL source version")
     if source.count("{") != source.count("}"):
         errors.append(f"{path.relative_to(ROOT)}: unbalanced brace count")
     uniform_names = re.findall(r"^\s*uniform\s+\w+\s+(\w+)\s*;", source, re.MULTILINE)
@@ -1093,8 +1097,9 @@ if "pbrEmission < 0.01" not in coating_guard:
 
 
 line_overlay = sources.get("gbuffers_line.fsh", "")
-for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLINE", "MC_RENDER_STAGE_DEBUG",
-              "fogColor", "fogDensity", "outDeferredValidity = vec4(0.0)"):
+for token in ("#version 130", "/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLINE", "MC_RENDER_STAGE_DEBUG",
+              "fogColor", "fogDensity", "out vec4 outColor0;", "out vec4 outColor1;",
+              "outColor1 = vec4(0.0)"):
     if token not in line_overlay:
         errors.append(f"Line overlay is missing Iris render-stage component: {token}")
 sky_basic = sources.get("gbuffers_skybasic.fsh", "")
