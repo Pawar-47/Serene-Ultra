@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 out vec3 vVertexColorLinear;
 out float vVertexAlpha;
@@ -9,7 +9,7 @@ uniform vec3 fogColor;
 uniform vec3 skyColor;
 
 void main() {
-    gl_Position = ftransform();
+    gl_Position = gl_ProjectionMatrix * gl_Vertex;
     vVertexColorLinear = pow(max(gl_Color.rgb, vec3(0.0)), vec3(2.2));
     vVertexAlpha = gl_Color.a;
     vFogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));

@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 uniform int renderStage;
 uniform float sunAngle;
@@ -21,8 +21,8 @@ flat in vec3 vFogLinear;
 flat in vec3 vSkyLinear;
 
 /* RENDERTARGETS: 0,2 */
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outDeferredValidity;
+out vec4 outColor0;
+out vec4 outColor1;
 
 vec3 reconstructPlayerDirection() {
     vec2 screenUV = gl_FragCoord.xy / vec2(viewWidth, viewHeight);
@@ -341,8 +341,8 @@ void main() {
         colorLinear += vec3((dither - 0.5) / 255.0);
     }
     vec3 outputColor = pow(max(colorLinear, vec3(0.0)), vec3(1.0 / 2.2));
-    outColor = vec4(outputColor, alpha);
+    outColor0 = vec4(outputColor, alpha);
     // Sky, stars and void have no deferred surface normal. Explicitly keep
     // them outside opaque deferred lighting.
-    outDeferredValidity = vec4(0.0);
+    outColor1 = vec4(0.0);
 }

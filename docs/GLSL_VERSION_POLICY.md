@@ -69,3 +69,8 @@ The Serene shadow vertex/fragment pair now uses GLSL 130. The stages use only le
 ## Targeted GLSL 130 migration — Minecraft 26.3 lightning
 
 Iris maps `ShaderKey.LIGHTNING` to `DefaultVertexFormat.POSITION_COLOR`, matching Minecraft 26.3's stock `rendertype_lightning` shaders. The dedicated Serene lightning program now consumes the vertex color directly; it no longer reads nonexistent UVs or samples `gtexture`. Its GLSL 130 vertex stage uses an explicit model-view/projection transform, and the fragment stage uses sequential `outColor0`/`outColor1` outputs for `RENDERTARGETS: 0,2`. This is a targeted interface correction, not a blanket downgrade.
+
+
+## Targeted GLSL 130 migration — sky programs
+
+The supplied working Complementary reference uses GLSL 130 for both sky programs. Serene's `gbuffers_skybasic` and `gbuffers_skytextured` require no 330-only language feature: the basic path uses position/color data, while the textured path uses the legacy texture-coordinate matrix and sampler. Both now use explicit vertex transforms and Iris-recognized `outColor0`/`outColor1` outputs for `RENDERTARGETS: 0,2`. This is another audited compatibility migration; it does not change the per-stage version policy for unrelated programs.

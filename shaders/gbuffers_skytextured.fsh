@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 uniform sampler2D gtexture;
 uniform float alphaTestRef;
@@ -14,8 +14,8 @@ in vec2 vTexCoord;
 flat in vec4 vVertexColor;
 
 /* RENDERTARGETS: 0,2 */
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outDeferredValidity;
+out vec4 outColor0;
+out vec4 outColor1;
 
 void main() {
     vec4 skyTexture = texture(gtexture, vTexCoord) * vVertexColor;
@@ -57,7 +57,7 @@ void main() {
     }
 
     skyTexture.rgb = pow(max(colorLinear, vec3(0.0)), vec3(1.0 / 2.2));
-    outColor = skyTexture;
+    outColor0 = skyTexture;
     // Sky textures are background overlays, not deferred-lit world surfaces.
-    outDeferredValidity = vec4(0.0);
+    outColor1 = vec4(0.0);
 }

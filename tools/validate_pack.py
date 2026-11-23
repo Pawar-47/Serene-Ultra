@@ -61,7 +61,7 @@ for path in SHADERS.rglob("*"):
     # Iris routes gbuffers_line through its dedicated core-profile transform
     # when the source version is below 150. Keep this pair on GLSL 130 so Iris
     # upgrades it internally instead of requesting a driver compatibility profile.
-    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh", "gbuffers_clouds.vsh", "gbuffers_clouds.fsh", "gbuffers_lightning.vsh", "gbuffers_lightning.fsh", "shadow.vsh", "shadow.fsh"} else r"^\s*#version\s+330\b"
+    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh", "gbuffers_clouds.vsh", "gbuffers_clouds.fsh", "gbuffers_lightning.vsh", "gbuffers_lightning.fsh", "gbuffers_skybasic.vsh", "gbuffers_skybasic.fsh", "gbuffers_skytextured.vsh", "gbuffers_skytextured.fsh", "shadow.vsh", "shadow.fsh"} else r"^\s*#version\s+330\b"
     if path.suffix != ".glsl" and not re.search(expected_version, source, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: unexpected GLSL source version")
     if source.count("{") != source.count("}"):
@@ -1342,11 +1342,23 @@ for token in ("#version 130", "gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Ver
         errors.append(f"Line vertex stage is missing Iris core-transform-compatible component: {token}")
 if "ftransform()" in line_vertex:
     errors.append("Line vertex stage must not call compatibility-only ftransform()")
+sky_basic_vertex = sources.get("gbuffers_skybasic.vsh", "")
+sky_textured_vertex = sources.get("gbuffers_skytextured.vsh", "")
+for name, source in (("gbuffers_skybasic.vsh", sky_basic_vertex),
+                     ("gbuffers_skytextured.vsh", sky_textured_vertex)):
+    if not source.startswith("#version 130"):
+        errors.append(f"{name} must use the GLSL 130 Iris-compatible sky path")
+    if "ftransform()" in source:
+        errors.append(f"{name} must use an explicit model-view/projection transform")
+if "gl_Position = gl_ProjectionMatrix * gl_Vertex;" not in sky_basic_vertex:
+    errors.append("Sky-basic vertex stage is missing the explicit position-only transform")
+if "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;" not in sky_textured_vertex:
+    errors.append("Sky-textured vertex stage is missing the explicit textured transform")
 sky_basic = sources.get("gbuffers_skybasic.fsh", "")
 sky_basic_vertex = sources.get("gbuffers_skybasic.vsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAGE_SUNSET",
               "MC_RENDER_STAGE_STARS", "MC_RENDER_STAGE_VOID", "skyColor", "fogColor",
-              "gbufferProjectionInverse", "outDeferredValidity = vec4(0.0)",
+              "gbufferProjectionInverse", "outColor1 = vec4(0.0)",
               "uniform mat4 gbufferModelView;", "uniform vec3 shadowLightPosition;",
               "abs(viewPosition.w) > 0.00001", "rayLength > 0.00001",
               "float lightLength = length(shadowLightPosition)",
@@ -1363,7 +1375,7 @@ for token in ("VOLUMETRIC_CLOUDS", "VOLUMETRIC_CLOUD_QUALITY",
         errors.append(f"Sky volumetric cloud implementation is missing component: {token}")
 sky_textured = sources.get("gbuffers_skytextured.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SUN", "MC_RENDER_STAGE_MOON",
-              "alphaTestRef", "sunPosition", "moonPosition", "isEyeInWater", "outDeferredValidity = vec4(0.0)"):
+              "alphaTestRef", "sunPosition", "moonPosition", "isEyeInWater", "outColor1 = vec4(0.0)"):
     if token not in sky_textured:
         errors.append(f"Sky-texture program is missing Iris stage/material handling: {token}")
 textured = sources.get("gbuffers_textured.fsh", "")
