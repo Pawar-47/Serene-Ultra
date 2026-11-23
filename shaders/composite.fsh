@@ -5,6 +5,7 @@ uniform sampler2D colortex2;
 uniform sampler2D colortex3;
 uniform sampler2D colortex4;
 uniform sampler2D colortex12;
+uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex2;
 uniform sampler2D noisetex;
@@ -34,13 +35,16 @@ uniform bool hasCeiling;
 
 in vec2 vTexCoord;
 
-/* RENDERTARGETS: 0,12 */
+/* RENDERTARGETS: 0,12,14 */
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outGiHistory;
+layout(location = 2) out vec4 outTaaHistory;
 
-/*
 const int colortex12Format = RGBA16F;
-*/
+const int colortex14Format = RGBA16F;
+
+#define SERENE_TAA_EXTERNAL_UNIFORMS
+#include "/lib/taa_jitter.glsl"
 
 #define PBR_REFLECTION_STRENGTH 75 // [0 25 50 75 100 125 150] Opaque material reflection strength
 #define PBR_REFLECTION_QUALITY 4 // [0 4 6 8] Opaque screen-space reflection steps
@@ -52,6 +56,7 @@ const int colortex12Format = RGBA16F;
 #define SCREEN_GI_STRENGTH 25 // [0 5 10 15 20 25 30 35 40 45 50] Screen-space local colour bounce
 #define SCREEN_GI_QUALITY 8 // [0 4 8 12] Number of depth-aware colour-bounce samples
 #define SCREEN_GI_TEMPORAL_STRENGTH 75 // [0 25 50 75 90] Reprojected GI history weight
+#define TAA_HISTORY_STRENGTH 80 // [0 25 50 65 75 80 85 90] Depth-rejected temporal colour history strength
 #define FOG_HEIGHT_STRENGTH 45 // [0 20 35 50 65 80 100] World-height fog strength
 #define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
 #define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Cloud optical density
@@ -404,21 +409,106 @@ vec3 applySereneHeightFog(vec3 sceneLinear, float sceneDepth, vec2 uv) {
 #endif
 }
 
+vec4 resolveSereneTaaColor(
+    vec4 currentScene,
+    vec2 currentUv,
+    float currentDepth,
+    vec3 currentViewPosition,
+    bool validOpaqueSurface,
+    out vec4 historyOutput
+) {
+    vec3 currentLinear = pow(max(currentScene.rgb, vec3(0.0)), vec3(2.2));
+    historyOutput = vec4(0.0);
+#if TAA_ENABLED > 0 && TAA_HISTORY_STRENGTH > 0
+    if (validOpaqueSurface && frameCounter > 1) {
+        vec3 playerPosition = (
+            gbufferModelViewInverse * vec4(currentViewPosition, 1.0)
+        ).xyz;
+        vec3 previousPlayerPosition = playerPosition
+            + cameraPosition - previousCameraPosition;
+        vec4 previousViewPosition = gbufferPreviousModelView
+            * vec4(previousPlayerPosition, 1.0);
+        vec4 previousClipPosition = gbufferPreviousProjection
+            * previousViewPosition;
+
+        if (previousClipPosition.w > 0.0001) {
+            vec3 previousNdc = previousClipPosition.xyz / previousClipPosition.w;
+            vec2 previousJitter = sereneTaaJitterNdc(frameCounter - 1) * 0.5;
+            vec2 previousUv = previousNdc.xy * 0.5 + 0.5 + previousJitter;
+            float expectedPreviousDepth = previousNdc.z * 0.5 + 0.5;
+            if (previousUv.x > 0.001 && previousUv.x < 0.999
+                && previousUv.y > 0.001 && previousUv.y < 0.999
+                && expectedPreviousDepth > 0.0 && expectedPreviousDepth < 1.0) {
+                vec4 previousHistory = texture(colortex14, previousUv);
+                float depthTolerance = max(0.00055, expectedPreviousDepth * 0.00125);
+                if (previousHistory.a > 0.0
+                    && abs(previousHistory.a - expectedPreviousDepth) < depthTolerance) {
+                    ivec2 pixel = ivec2(gl_FragCoord.xy);
+                    ivec2 bufferSize = textureSize(colortex0, 0);
+                    vec3 neighborhoodMin = currentLinear;
+                    vec3 neighborhoodMax = currentLinear;
+                    for (int y = -1; y <= 1; ++y) {
+                        for (int x = -1; x <= 1; ++x) {
+                            ivec2 samplePixel = clamp(
+                                pixel + ivec2(x, y), ivec2(0), bufferSize - ivec2(1)
+                            );
+                            vec3 sampleLinear = pow(
+                                max(texelFetch(colortex0, samplePixel, 0).rgb, vec3(0.0)),
+                                vec3(2.2)
+                            );
+                            neighborhoodMin = min(neighborhoodMin, sampleLinear);
+                            neighborhoodMax = max(neighborhoodMax, sampleLinear);
+                        }
+                    }
+                    vec3 neighborhoodRange = max(
+                        neighborhoodMax - neighborhoodMin, vec3(0.012)
+                    );
+                    vec3 clampedHistory = clamp(
+                        previousHistory.rgb,
+                        neighborhoodMin - neighborhoodRange * 0.25,
+                        neighborhoodMax + neighborhoodRange * 0.25
+                    );
+                    float historyWeight = clamp(
+                        float(TAA_HISTORY_STRENGTH) * 0.01, 0.0, 0.92
+                    );
+                    currentLinear = mix(currentLinear, clampedHistory, historyWeight);
+                }
+            }
+        }
+    }
+#endif
+    if (validOpaqueSurface) {
+        historyOutput = vec4(currentLinear, currentDepth);
+    }
+    return vec4(pow(max(currentLinear, vec3(0.0)), vec3(1.0 / 2.2)), currentScene.a);
+}
+
 void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
-    vec4 sceneColor = texelFetch(colortex0, pixel, 0);
+    vec4 currentSceneColor = texelFetch(colortex0, pixel, 0);
     vec4 normalData = texelFetch(colortex2, pixel, 0);
     vec3 lightShafts = sampleScreenSpaceLightShafts(vTexCoord);
     vec3 lensFlare = sampleCelestialLensFlare(vTexCoord);
     float centerDepth = texelFetch(depthtex2, pixel, 0).r;
-    vec3 centerNdc = vec3(vTexCoord, centerDepth) * 2.0 - 1.0;
-    vec4 centerView4 = gbufferProjectionInverse * vec4(centerNdc, 1.0);
-    vec3 centerViewPosition = centerView4.xyz / max(centerView4.w, 0.0001);
-    vec3 centerNormal = normalize(mat3(gbufferModelView) * (normalData.rgb * 2.0 - 1.0));
     float currentDepthAll = texelFetch(depthtex0, pixel, 0).r;
     bool opaqueReceiver = centerDepth < 0.999999
         && abs(currentDepthAll - centerDepth) <= 0.000001
         && normalData.a >= 0.5;
+    vec2 currentJitter = vec2(0.0);
+#if TAA_ENABLED > 0
+    currentJitter = sereneTaaJitterNdc(frameCounter) * 0.5;
+#endif
+    vec2 unjitteredUv = vTexCoord - currentJitter;
+    vec3 centerNdc = vec3(unjitteredUv, centerDepth) * 2.0 - 1.0;
+    vec4 centerView4 = gbufferProjectionInverse * vec4(centerNdc, 1.0);
+    vec3 centerViewPosition = centerView4.xyz / max(centerView4.w, 0.0001);
+    vec3 centerNormal = normalize(mat3(gbufferModelView) * (normalData.rgb * 2.0 - 1.0));
+    vec4 taaHistoryOutput;
+    vec4 sceneColor = resolveSereneTaaColor(
+        currentSceneColor, unjitteredUv, centerDepth, centerViewPosition,
+        opaqueReceiver, taaHistoryOutput
+    );
+    outTaaHistory = taaHistoryOutput;
     vec3 screenGi = opaqueReceiver
         ? sampleScreenSpaceColorBleed(
             vTexCoord, centerDepth, centerViewPosition, centerNormal, normalData.a
