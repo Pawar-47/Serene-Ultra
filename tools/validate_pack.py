@@ -1667,11 +1667,14 @@ for token in ("uniform int currentRenderedItemId", "bool hasMaterialSpecularMap"
 held_shader = sources.get("held_item_lighting.glsl", "")
 for token in ("uniform int heldBlockLightValue;", "uniform int heldBlockLightValue2;",
               "uniform int heldItemId;", "uniform int heldItemId2;",
-              "uniform vec3 relativeEyePosition;", "float getHeldItemLightEnergy(",
-              "vec3 getHeldItemLightColor(", "vec3 calculateHeldItemLighting(",
+              "uniform vec3 relativeEyePosition;", "float getHeldItemLightBoost(",
+              "float getHeldItemLightEnergy(", "vec3 getHeldItemLightColor(",
+              "vec3 calculateHeldItemLighting(",
               "getHeldItemLightEnergy(heldItemId, heldBlockLightValue)",
               "getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2)",
+              "1.0 - pow(1.0 - max(specialAlpha, 0.1), 8.0)",
               "if (itemId == 44013)", "energy = 1.0;",
+              "if (itemId == 44094 || itemId == 44095 || itemId == 44096) return 0.2;",
               "if (mainEnergy <= 0.0 && offEnergy <= 0.0) return vec3(0.0)",
               "return mainLight * mainLight + offLight * offLight"):
     if token not in held_shader:

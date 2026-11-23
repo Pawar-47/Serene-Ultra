@@ -5,14 +5,35 @@ uniform int heldItemId2;
 uniform vec3 relativeEyePosition;
 
 #if HELD_LIGHTING_STRENGTH > 0
+float getHeldItemLightBoost(int itemId) {
+    // Port the special-alpha boosts from the supplied Complementary reference.
+    // Iris' heldBlockLightValue can be zero for several luminous inventory items;
+    // the reference adds 15 * sqrt3(alpha), where sqrt3(x) = 1 - (1 - x)^8.
+    if (itemId == 44013) return 0.8; // Lava bucket
+    if (itemId == 44028 || itemId == 44029 || itemId == 44030) return 0.3; // Soul fire family
+    if (itemId == 44034) return 0.1; // Glow lichen
+    if (itemId == 44036 || itemId == 44040 || itemId == 44081 || itemId == 44083) return 0.05;
+    if (itemId == 44053) return 0.15; // Spawner / end crystal
+    if (itemId == 44085) return 0.2; // Trident
+    if (itemId == 44086) return 0.175; // Experience bottle
+    if (itemId == 44090 || itemId == 44092) return 0.001; // Eye of ender / glow ink
+    if (itemId == 44093 || itemId == 44094 || itemId == 44095 || itemId == 44096) return 0.2;
+    if (itemId == 44097) return 0.1; // Ice crystal
+    return 0.0;
+}
+
 float getHeldItemLightEnergy(int itemId, int lightValue) {
     float energy = clamp(float(lightValue) / 15.0, 0.0, 1.0);
+    float specialAlpha = getHeldItemLightBoost(itemId);
+
+    if (specialAlpha > 0.0) {
+        float referenceBoost = 1.0 - pow(1.0 - max(specialAlpha, 0.1), 8.0);
+        energy = min(energy + referenceBoost, 1.0);
+    }
 
     // Complementary's held-light reference explicitly promotes the lava bucket
-    // to full light; all other items use Iris' actual held block-light value.
-    if (itemId == 44013) {
-        energy = 1.0;
-    }
+    // to full light; preserve that special case even when its lightmap is zero.
+    if (itemId == 44013) energy = 1.0;
 
     return energy;
 }
