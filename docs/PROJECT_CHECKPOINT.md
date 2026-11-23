@@ -1518,3 +1518,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Structural validation then failed on numerous stale exact-string assertions unrelated to the new shader compilation. Examples include expecting old `textureGrad(...)` calls where current code uses `sampleAnisotropicAtlas(...)`, an outdated deferred target declaration, old sky shader expressions and an outdated FXAA menu contract. One stale assertion also expected the block lightmap output before conduit logic using an exact string that no longer matches the current `skyLight * pomSelfShadow` output; that assertion was changed to match the current assignment prefix and ordering.
 - The validator is not green yet. Its assertions need to be reconciled against current source semantics without weakening real coverage. Do not interpret this structural-validator failure as a GLSL compile failure: all GLSL compile/link stages passed in run `45226274621`, job `137873673354`.
 - This is not an Iris/Minecraft runtime test.
+
+
+### Lightning receiver coverage expansion — 2026-11-23
+- Extended the existing Iris bolt-position flash to the dedicated translucent water/glass/ice/portal pass, the weather particle pass (rain/snow) and the first-person hand-water overlay.
+- Weather vertex stage now passes player-space position to its fragment stage so lightning attenuation uses the same coordinate system as the Iris bolt position.
+- These remain source-level integrations; exact visual intensity, lightning bolt visibility timing and overlay behavior require Iris runtime scenes.
+- Commits: water `7fa22c0173cf22ae317c9bccf66a31c9fb9195c6`; weather vertex `645db20beea907eddb7a33c84f1406b1df19722e`; weather fragment `60a231cf40e0eb0787ea057a55f937d301df75b0`; hand-water `19b3d2a809a432a249352f4dabe19499b9aea368`; feature matrix `4f96a272724000172f2c5893b8fce3126ab4e553`.
