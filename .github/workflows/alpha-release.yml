@@ -5,6 +5,15 @@ on:
     workflows: ["Shaderpack structural and GLSL validation"]
     types: [completed]
     branches: [main]
+  # Manual trigger so a testable build can be produced on demand without enabling
+  # automatic publishing. Automatic publishing stays gated behind the repository
+  # Actions variable ENABLE_ALPHA_PUBLISH.
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish an alpha pre-release from the current main commit"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -12,13 +21,18 @@ permissions:
 
 jobs:
   publish-alpha:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && vars.ENABLE_ALPHA_PUBLISH == 'true'
+    if: |
+      (github.event_name == 'workflow_run'
+        && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.event == 'push'
+        && vars.ENABLE_ALPHA_PUBLISH == 'true')
+      || (github.event_name == 'workflow_dispatch' && inputs.publish)
     runs-on: ubuntu-latest
     steps:
       - name: Check out the exact validated commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Recheck pack structure
         run: python tools/validate_pack.py
@@ -39,7 +53,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: alpha-${{ steps.package.outputs.short_sha }}
-          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          target_commitish: ${{ github.event.workflow_run.head_sha || github.sha }}
           name: Serene Ultra Alpha ${{ steps.package.outputs.short_sha }}
           prerelease: true
           draft: false

@@ -1239,7 +1239,9 @@ if "fogColor" not in spidereyes or "calculateEyeFog" not in spidereyes:
     errors.append("Spider-eye pass must preserve Iris fog while bypassing deferred lighting")
 clouds = sources.get("gbuffers_clouds.fsh", "")
 for token in ("uniform float alphaTestRef", "texture(gtexture", "vec4(vec3(1.0), vVertexColor.a)",
-              "cloudColor.a < alphaTestRef", "outDeferredValidity = vec4(0.0)"):
+              "cloudColor.a < alphaTestRef", "outDeferredValidity = vec4(0.0)",
+              "uniform vec3 shadowLightPosition", "uniform float sunAngle",
+              "solarElevation", "silverLining", "cloudLinear *= mix("):
     if token not in clouds:
         errors.append(f"Cloud shader is missing Iris/reference component: {token}")
 translucent_particles = sources.get("gbuffers_particles_translucent.fsh", "")

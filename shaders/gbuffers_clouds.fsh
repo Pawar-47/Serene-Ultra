@@ -9,6 +9,8 @@ uniform float fogEnd;
 uniform float fogDensity;
 uniform int fogMode;
 uniform int fogShape;
+uniform vec3 shadowLightPosition;
+uniform float sunAngle;
 
 in vec2 vTexCoord;
 in vec4 vVertexColor;
@@ -43,6 +45,30 @@ void main() {
     // Keep vanilla cloud texture/vertex lighting intact. Clouds are an overlay,
     // not an opaque surface; do not reuse the terrain normal beneath them.
     vec3 cloudLinear = pow(max(cloudColor.rgb, vec3(0.0)), vec3(2.2));
+
+    // Vanilla cloud geometry carries no surface lighting: the sampled colour is the
+    // atlas tinted by the biome sky, so without these terms the layer reads as flat
+    // paint. Both terms are bounded and use only uniforms this pass already has.
+    // shadowLightPosition is the view-space direction of the active celestial body
+    // (sun by day, moon by night), normalised here with a guard so dimensions
+    // without a celestial body cannot produce a NaN.
+    float solarElevation = smoothstep(-0.15, 0.35, sin(sunAngle * 6.28318530718));
+    float lightLength = length(shadowLightPosition);
+    vec3 lightDirection = lightLength > 0.0001
+        ? shadowLightPosition / lightLength
+        : vec3(0.0);
+    float viewLength = length(vViewPosition);
+    vec3 viewDirection = viewLength > 0.0001 ? -vViewPosition / viewLength : vec3(0.0, 1.0, 0.0);
+
+    // Forward scattering: looking through a cloud toward the light brightens it,
+    // which is the silver lining visible at dawn and dusk.
+    float towardLight = max(dot(viewDirection, lightDirection), 0.0);
+    float silverLining = pow(towardLight, 6.0);
+
+    // Day/night exposure of the whole layer, then the sunward scattering highlight.
+    cloudLinear *= mix(0.72, 1.12, solarElevation);
+    cloudLinear += cloudLinear * silverLining * (0.35 + 0.45 * solarElevation);
+
     float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
     float fogFactor = calculateCloudFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
