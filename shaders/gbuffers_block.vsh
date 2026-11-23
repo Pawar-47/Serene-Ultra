@@ -4,6 +4,8 @@ in vec4 at_tangent;
 in vec2 mc_midTexCoord;
 
 uniform mat4 gbufferModelViewInverse;
+uniform int blockEntityId;
+uniform vec3 cameraPositionFract;
 
 out vec2 vTexCoord;
 out vec2 vLightmapCoord;
@@ -25,6 +27,15 @@ void main() {
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
     vViewPosition = viewPosition.xyz;
     vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;
+
+    // Complementary chest seam correction, using Iris' split camera position
+    // so the fractional world height remains stable at large coordinates.
+    if (blockEntityId == 5008) {
+        float fractWorldPosY = fract(vPlayerPosition.y + cameraPositionFract.y);
+        if (fractWorldPosY > 0.56 && fractWorldPosY < 0.57) {
+            gl_Position.z -= 0.0001;
+        }
+    }
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
     vec3 viewTangent = normalize(gl_NormalMatrix * normalize(at_tangent.xyz));

@@ -420,6 +420,13 @@ for token in ("pbrEmission < 0.01", "materialReflectance < 0.8",
         errors.append(f"Block-entity fallback coating is missing priority condition: {token}")
 if "out vec3 vPlayerPosition;" not in sources.get("gbuffers_block.vsh", "") or "vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;" not in sources.get("gbuffers_block.vsh", ""):
     errors.append("Block-entity vertex stage must provide stable player-relative position for coated texture noise")
+for token in ("uniform int blockEntityId;", "uniform vec3 cameraPositionFract;",
+              "fract(vPlayerPosition.y + cameraPositionFract.y)",
+              "if (fractWorldPosY > 0.56 && fractWorldPosY < 0.57)",
+              "gl_Position.z -= 0.0001"):
+    if token not in sources.get("gbuffers_block.vsh", ""):
+        errors.append(f"Block-entity chest seam correction is missing: {token}")
+
 if "out vec3 vPlayerPosition;" not in sources.get("gbuffers_entities.vsh", "") or "vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;" not in sources.get("gbuffers_entities.vsh", ""):
     errors.append("Entity vertex stage must provide stable player-relative position for coated texture noise")
 if "in vec3 vPlayerPosition;" not in sources.get("gbuffers_entities.fsh", ""):

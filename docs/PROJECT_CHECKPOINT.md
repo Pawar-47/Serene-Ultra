@@ -864,3 +864,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1080 (45112397002) compiled and linked all shaders but the structural validator still required the old generic block-entity smoothness/emission gates. The reference-guided material-factor path intentionally allows ender-chest fallback coating while keeping explicit PBR-map emission/specular priority.
 - Updated the validator to keep the generic smoothness gate for terrain/entities, but validate block entities through their explicit materialCoatingFactor and PBR-map priority conditions instead.
 - A fresh CI run is required for this validator correction.
+
+
+## Chest block-entity seam correction — 2026-11-23
+- Added Complementary's narrow chest depth-bias correction for blockEntityId 5008 when the fractional world Y coordinate is in the 0.56–0.57 seam band.
+- Uses vPlayerPosition.y + cameraPositionFract.y rather than a large absolute cameraPosition float, preserving the fractional coordinate with Iris' split integer/fractional camera uniforms.
+- The bias is a 0.0001 clip-space Z adjustment and applies only to chest/trapped-chest block entities. CI validation is pending; visual confirmation of the chest seam in-game remains required.

@@ -308,3 +308,8 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 ## Block-entity material-dispatch refinements — 2026-11-23
 - Reference factors are now applied per block entity rather than uniformly: chest/ender chest 0.66, shulker/head/bed 0.2, bell gold 0.33, bell stone 0.77, copper 0.5, banner 0.2. Explicit PBR specular maps keep priority.
 - Conduit output order matters: update vanillaLight first, then write outLightmapData. Preserve reference emission response at albedo.r * 16 for blue/wind pixels and 20.0 for red-eye pixels. Bell gold smoothness uses color.g squared; stone uses color.g to the fourth power times two.
+
+
+## Chest seam reference parity — 2026-11-23
+- Complementary's gbuffers_block vertex path applies a 0.0001 clip-space depth bias to chest block entities when fract(worldY) is between 0.56 and 0.57. Serene now mirrors this correction for blockEntityId 5008.
+- The world-Y fraction is reconstructed from player-relative position plus Iris cameraPositionFract, avoiding loss of precision from a large absolute camera-position float.
