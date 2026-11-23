@@ -266,3 +266,6 @@ option.END_NEBULA_STRENGTH.comment = Adds violet/cyan nebula clouds and faint di
 
 option.LENS_FLARE_STRENGTH = Celestial Lens Flare
 option.LENS_FLARE_STRENGTH.comment = Adds screen-space spectral ghosting and a soft ring around the visible sun; opaque depth suppresses flare when the sun is blocked.
+
+option.IMAGE_SHARPENING = Image Sharpening
+option.IMAGE_SHARPENING.comment = Edge-aware unsharp masking after FXAA/DOF and before bloom; increases local detail without sharpening the bloom halo.
