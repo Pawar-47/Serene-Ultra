@@ -127,3 +127,14 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Sun uses a procedural antialiased circular disc in the sky pass, with independent disc size, intensity and halo controls; the vanilla square sun texture is discarded.
 - Sky separates twilight tint from the general Rayleigh/Mie atmospheric scattering and night effects.
 - Clouds use coherent hash-based value-noise fBm with domain warping, selectable cumulus/stratus/wispy morphology, size, coverage, density, height and wind controls. The prior blue-noise texture sampling is no longer used to define cloud silhouettes.
+
+
+## Water tuning — 2026-11-24
+- Reduced the default animated normal slope and wave speed to avoid the exaggerated, streaky surface motion seen in the user's Iris screenshot.
+- Reduced default screen-space reflection and refraction strength so the water surface does not smear the sky/shoreline as aggressively.
+- Increased depth fog and Beer-Lambert absorption; deep water now attenuates red and green much faster and should hide the seabed sooner.
+- Reduced animated colour-noise and shoreline foam defaults, and shifted the base tint slightly toward cool blue rather than warm/purple.
+- Water-related controls and profiles are grouped under the dedicated Water page.
+
+## Better Clouds compatibility note
+The user's uploaded log identifies Better Clouds 1.15.0 running its independent Blaze3D cloud renderer. Iris logs a missing override for `betterclouds:blaze_3d_renderer` followed by `GL_INVALID_OPERATION`. Serene's own volumetric cloud pass is independent of that mod renderer. For a clean shader-only comparison, use Better Clouds settings with **Cloud Override off** and **Iris Support off**, or temporarily disable the Better Clouds mod. The pack sets `clouds=off` to prevent vanilla cloud geometry from competing with its own volumetric sky.
