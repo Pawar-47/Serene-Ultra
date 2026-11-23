@@ -839,3 +839,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Explicit oldPBR/LabPBR specular maps retain priority for material smoothness and reflectance; fallback dispatch is used only when no specular map exists. PBR-map emission retains priority over fallback emissive cues.
 - Banner surfaces skip generated normals and POM to preserve their flat patterned appearance. Other block entities keep existing atlas-safe material paths.
 - Added structural regression checks for all mapped IDs and dispatch branches. Await CI before treating the new material branch as validated; no runtime visuals or Intel HD 5500 performance are claimed.
+
+
+## Block-entity fallback priority correction — 2026-11-23
+- Follow-up audit separated fallback smoothness/reflectance from fallback emission. Smoothness and reflectance remain fallback-only when no specular map exists; ender-chest, conduit and enchanting-book emission cues now remain available when a specular map exists but does not encode emission.
+- The conduit lightmap-coordinate boost is now applied independently of specular-map emission, matching the reference's material lighting behavior.
+- Added regression assertions for the separated material-map and emission fallback branches. CI must pass before validation is complete.

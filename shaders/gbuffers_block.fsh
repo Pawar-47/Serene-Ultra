@@ -350,17 +350,10 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
     // Explicit oldPBR/LabPBR specular maps retain priority for smoothness and reflectance.
     if (!hasMaterialSpecularMap) {
         if (blockEntityId == 5008) { // Chest and trapped chest
-            materialSmoothness = pow(albedo.g, 2.0);
+            materialSmoothness = clamp(pow(albedo.g, 2.0), 0.0, 1.0);
         } else if (blockEntityId == 5012) { // Ender chest
             float enderChestFactor = min(pow(albedo.g, 2.0), 0.25);
             materialSmoothness = enderChestFactor * 2.0;
-            if (pbrEmission < 0.01) {
-                float enderChestEmission = 0.35;
-                if (albedo.g > albedo.r || albedo.b > albedo.g) {
-                    enderChestEmission += enderChestFactor * enderChestFactor * 20.0;
-                }
-                emissionStrength = max(emissionStrength, enderChestEmission);
-            }
         } else if (blockEntityId == 5028) { // Bell: distinguish gold from stone
             if (albedo.r + albedo.g > albedo.b + 0.5) {
                 float goldGreenSquared = pow(albedo.g, 2.0);
@@ -380,13 +373,26 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
             materialReflectance = max(materialReflectance, 0.58);
             float copperLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
             albedo.rgb *= clamp(0.6 + 0.7 * copperLuminance, 0.0, 1.0);
+        } else if (blockEntityId == 10548) { // Enchanting-table book
+            materialSmoothness = max(materialSmoothness, clamp(pow(albedo.g, 2.0) * 0.35, 0.0, 1.0));
         }
     }
 
-    // Material-map emission wins; otherwise use the reference's block-entity colour cues.
+    // The conduit lightmap adjustment is independent of whether its texture has a PBR emission map.
+    if (blockEntityId == 5020) {
+        vanillaLight = texture(lightmap, vec2(0.9, vLightmapCoord.y)).rgb;
+    }
+
+    // Explicit PBR-map emission wins; use the reference's colour cues only when emission is absent.
     if (pbrEmission < 0.01) {
-        if (blockEntityId == 5020) { // Conduit
-            vanillaLight = texture(lightmap, vec2(0.9, vLightmapCoord.y)).rgb;
+        if (blockEntityId == 5012) { // Ender chest
+            float enderChestFactor = min(pow(albedo.g, 2.0), 0.25);
+            float enderChestEmission = 0.35;
+            if (albedo.g > albedo.r || albedo.b > albedo.g) {
+                enderChestEmission += enderChestFactor * enderChestFactor * 20.0;
+            }
+            emissionStrength = max(emissionStrength, enderChestEmission);
+        } else if (blockEntityId == 5020) { // Conduit
             if (albedo.b > albedo.r) {
                 emissionStrength = max(emissionStrength, min(albedo.r * 16.0, 5.0));
             } else if (albedo.r > albedo.b * 2.5) {
@@ -394,7 +400,6 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
                 albedo.rgb *= vec3(1.0, 0.25, 0.1);
             }
         } else if (blockEntityId == 10548) { // Enchanting-table book
-            materialSmoothness = max(materialSmoothness, pow(albedo.g, 2.0) * 0.35);
             if (albedo.b < 0.0001 && albedo.r > albedo.g) {
                 emissionStrength = max(emissionStrength, albedo.g * 3.5);
             }
