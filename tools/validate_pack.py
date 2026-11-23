@@ -960,12 +960,16 @@ for fog_path in SHADERS.rglob("*.fsh"):
 # Minecraft 26.3 Iris CLOUDS is POSITION_COLOR, not a textured terrain vertex format.
 cloud_vertex = sources.get("gbuffers_clouds.vsh", "")
 cloud_fragment = sources.get("gbuffers_clouds.fsh", "")
+if not cloud_vertex.startswith("#version 130") or not cloud_fragment.startswith("#version 130"):
+    errors.append("gbuffers_clouds must use the GLSL 130 path supported by the Iris POSITION_COLOR cloud program")
 if "gl_MultiTexCoord0" in cloud_vertex or "vTexCoord" in cloud_vertex:
     errors.append("gbuffers_clouds vertex stage must not read texture coordinates on the 26.3 POSITION_COLOR path")
 if "gtexture" in cloud_fragment or "texture(gtexture" in cloud_fragment:
     errors.append("gbuffers_clouds fragment stage must use the 26.3 vertex color, not a cloud atlas sampler")
 if "vec4 cloudColor = vVertexColor;" not in cloud_fragment:
     errors.append("gbuffers_clouds must preserve the CloudColor/face shading carried by POSITION_COLOR")
+if "out vec4 outColor0;" not in cloud_fragment or "out vec4 outColor1;" not in cloud_fragment:
+    errors.append("GLSL 130 gbuffers_clouds must expose sequential Iris outColorN outputs for RENDERTARGETS 0,2")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
               '#include "/lib/lighting/soft_shadow.glsl"',
               "vec3 shadowNormal = normal;",

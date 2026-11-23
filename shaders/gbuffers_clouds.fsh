@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 uniform float alphaTestRef;
 uniform int isEyeInWater;
@@ -17,8 +17,8 @@ in vec4 vVertexColor;
 in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0,2 */
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outDeferredValidity;
+out vec4 outColor0;
+out vec4 outColor1;
 
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud daylight and silver-lining response
 
@@ -94,6 +94,6 @@ void main() {
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     cloudColor.rgb = pow(max(mix(cloudLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));
 
-    outColor = cloudColor;
-    outDeferredValidity = vec4(0.0);
+    outColor0 = cloudColor;
+    outColor1 = vec4(0.0);
 }

@@ -54,3 +54,8 @@ GitHub Actions validates GLSL syntax, program linking, shaderpack structure, and
 The supplied Minecraft 26.3 stock archive contains 89 shader/include sources: 72 declare `#version 330` (without an explicit compatibility profile) and 17 are include fragments. The working Complementary archive contains 415 shader/include sources: 213 declare GLSL 130, 3 declare GLSL 400 compatibility, and 199 are include fragments without their own version declaration.
 
 These counts reinforce the per-program policy: vanilla core shaders and Iris shaderpack stages are different source interfaces. The stock archive's GLSL 330 core declarations do not justify converting Iris shaderpack stages to GLSL 330 core; the working Iris pack's GLSL 130 declarations do not justify downgrading all stock engine shaders. Keep the line-stage GLSL 130 workaround targeted and audit every other stage against Iris' transform path and its required legacy built-ins.
+
+
+## Targeted GLSL 130 migration — Minecraft 26.3 clouds
+
+The dedicated `gbuffers_clouds.vsh/.fsh` stages now use GLSL 130. The Iris cloud key supplies only `POSITION_COLOR`; the stages need no 330-only language feature. The vertex stage uses the explicit model-view/projection transform (not `ftransform()`), and the fragment stage uses sequential `outColor0`/`outColor1` outputs for `RENDERTARGETS: 0,2`. This follows the supplied working Complementary pack's legacy-stage strategy and the Iris transform path. Keep other stages on their individually audited versions; this is not a blanket downgrade.
