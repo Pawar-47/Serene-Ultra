@@ -14,6 +14,8 @@ uniform sampler2D noisetex;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
 uniform float frameTimeCounter;
+uniform float thunderStrength;
+uniform vec4 lightningBoltPosition;
 
 in vec3 vVertexColorLinear;
 in float vVertexAlpha;
@@ -421,6 +423,10 @@ void main() {
         colorLinear *= nightFactor * (1.0 - 0.9 * rainStrength);
     } else if (isSky || isSunset) {
         colorLinear = mix(vFogLinear, vSkyLinear, horizonBlend);
+        float lightningSkyFlash = (lightningBoltPosition.w > 0.5)
+            ? clamp(thunderStrength, 0.0, 1.0) * 0.42
+            : 0.0;
+        colorLinear = mix(colorLinear, vec3(0.82, 0.88, 1.0), lightningSkyFlash);
         colorLinear += calculateAtmosphericScattering(
             viewDirection, upDot, solarElevation, rainStrength
         );
