@@ -55,3 +55,5 @@ Additional runtime checks:
 - [ ] Re-test the same scene after shader reload and after a full game restart to distinguish stale shaderpack cache from source behavior.
 
 - [ ] Verify falling rain/snow behavior with camera outside, underwater, in lava and inside powdered snow; confirm the `isEyeInWater == 3` suppression branch matches intended vanilla behavior.
+
+- [ ] On the target Iris/Minecraft version, verify translucent living entities and translucent block entities actually enter `gbuffers_entities_translucent` and `gbuffers_block_translucent` with `separateEntityDraws=true`; confirm with a debug marker or temporary per-program output, then test glass entities, armor/item translucency and block-entity glass in the real pack.
