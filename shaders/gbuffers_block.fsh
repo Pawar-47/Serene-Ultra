@@ -11,6 +11,8 @@ uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
 uniform float alphaTestRef;
 uniform float wetness;
+uniform float rainStrength;
+uniform float frameTimeCounter;
 uniform float rainfall;
 uniform int biome_precipitation;
 uniform int blockEntityId;
@@ -27,6 +29,7 @@ uniform int fogShape;
 #define GENERATED_NORMAL_STRENGTH 25 // [0 10 20 35 50 75 100] Albedo-derived normal detail when no normal map is present
 #define COATED_TEXTURE_STRENGTH 20 // [0 10 20 35 50 75 100] Stable subtle noise coating on opaque material colour
 #define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
+#define RAIN_PUDDLE_STRENGTH 70 // [0 25 50 70 100 125 150] Rain puddles on upward-facing block-entity surfaces
 #include "/lib/materials/porosity_wetness.glsl"
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
@@ -614,6 +617,60 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
             materialPorosity, wetnessFactor, emissionStrength
         );
     }
+    // Apply the terrain puddle model to horizontal block-entity surfaces
+    // (chest lids, shulker boxes and similar); signs, banners and portals are excluded.
+    float puddlePrecipitation = biome_precipitation == 1
+        ? clamp(rainfall, 0.0, 1.0) : 0.0;
+    float puddleWetness = clamp(wetness * puddlePrecipitation, 0.0, 1.0);
+    float puddleRain = clamp(rainStrength * puddlePrecipitation, 0.0, 1.0);
+#if RAIN_PUDDLE_STRENGTH > 0
+    if (!signText && blockEntityId != 5025 && blockEntityId != 5036
+        && puddleWetness > 0.001 && puddleRain > 0.001) {
+        float puddleLightFactor = max(0.0, vLightmapCoord.y * 32.0 - 31.0)
+            * clamp((1.0 - 1.15 * vLightmapCoord.x) * 10.0, 0.0, 1.0);
+        float puddleNormalFactor = pow(
+            max(0.0, dot(surfaceNormal, vec3(0.0, 1.0, 0.0)) - 0.5) * 2.0, 2.0
+        );
+        float puddleMixer = puddleLightFactor * puddleRain * puddleNormalFactor;
+        if (puddleMixer > 0.0001) {
+            vec3 puddleWorldPosition = vec3(cameraPositionInt)
+                + cameraPositionFract + vPlayerPosition;
+            puddleWorldPosition.xz = mod(puddleWorldPosition.xz, 2560.0);
+            vec2 puddleCoord = puddleWorldPosition.xz * 0.1;
+            float puddleTime = mod(frameTimeCounter, 60.0);
+            vec2 puddleWind = vec2(puddleTime / 30.0, puddleTime / 60.0);
+            vec3 puddleNoise1 = texture(noisetex, puddleCoord + puddleWind).rgb;
+            vec3 puddleNoise2 = texture(noisetex, puddleCoord * 1.7
+                - puddleWind * vec2(1.5, 2.0)).rgb;
+            vec3 puddleNoise3 = texture(noisetex, puddleCoord * 0.5
+                + puddleWind * vec2(0.5, 2.0)).rgb;
+            float puddleForm = clamp(puddleNoise1.b * 3.0 + puddleNoise2.b * 5.0
+                + puddleNoise3.b * 8.0 - 7.0, 0.0, 1.0);
+            float noPuddles = clamp(materialPorosity, 0.0, 1.0);
+            float wetnessSquared = puddleWetness * puddleWetness;
+            float puddleMask = clamp(wetnessSquared * wetnessSquared * puddleMixer
+                * puddleForm * (1.0 - noPuddles)
+                * (float(RAIN_PUDDLE_STRENGTH) * 0.01), 0.0, 1.0);
+            if (puddleMask > 0.001) {
+                vec2 normalOffset = (puddleNoise1.xy + puddleNoise2.xy - vec2(1.0)) * 0.03;
+                vec3 tangentCandidate = vPlayerTangent
+                    - surfaceNormal * dot(surfaceNormal, vPlayerTangent);
+                float tangentLengthSquared = dot(tangentCandidate, tangentCandidate);
+                if (tangentLengthSquared > 0.000001) {
+                    vec3 tangent = tangentCandidate * inversesqrt(tangentLengthSquared);
+                    vec3 bitangent = normalize(cross(tangent, surfaceNormal)) * vTangentHandedness;
+                    vec3 puddleNormal = normalize(
+                        surfaceNormal + tangent * normalOffset.x + bitangent * normalOffset.y
+                    );
+                    surfaceNormal = normalize(mix(surfaceNormal, puddleNormal, sqrt(puddleMask) * 0.98));
+                }
+                materialSmoothness = mix(materialSmoothness, 0.7 - puddleRain * 0.3, puddleMask);
+                albedo.rgb *= 1.0 - puddleMask * 0.12;
+            }
+        }
+    }
+#endif
+
     outColor = albedo;
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5 + 0.5 * materialSmoothness);
     outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData);
