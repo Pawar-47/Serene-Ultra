@@ -1082,3 +1082,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Added shared dynamic held-item lighting to the forward translucent-block program (glass and other translucent block surfaces), using the existing player-space position varying.
 - Preserves vanilla lightmap RGB, shadowed celestial direct light, fog, alpha and the color-only post-deferred output. No extra texture samples are introduced beyond the shared helper's Iris held-item uniforms; the helper exits early when both hand-light values are zero.
 - Added the program to CI's shared-helper/quality-gate/quadratic-ambient regression checks. Iris runtime sorting and glass brightness still require visual testing.
+
+
+## LabPBR porosity wetness on entity materials — 2026-11-23
+- Extended the existing terrain porosity wet-darkening to opaque entities and block entities through a shared helper. LabPBR blue codes 0-64 are decoded to normalized porosity; codes 65-255 remain SSS data and metal blue channels remain reserved.
+- Entity/block wetness uses Iris wetness, rainfall and biome_precipitation uniforms, with the same coefficients as the terrain path. Emissive and non-porous surfaces are unchanged.
+- Explicit PBR maps remain authoritative. OldPBR has no porosity channel. The puddle accumulation effect remains terrain-only.
+- No extra texture samples or render targets are added. CI and in-game wet-weather visual calibration are required.

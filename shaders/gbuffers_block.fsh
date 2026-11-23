@@ -8,6 +8,9 @@ uniform sampler2D noisetex;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
 uniform float alphaTestRef;
+uniform float wetness;
+uniform float rainfall;
+uniform int biome_precipitation;
 uniform int blockEntityId;
 uniform vec3 fogColor;
 uniform float fogStart;
@@ -21,8 +24,10 @@ uniform int fogShape;
 #define POM_STRENGTH 25 // [0 10 20 35 50 75 100] LabPBR/oldPBR height-map parallax strength
 #define GENERATED_NORMAL_STRENGTH 25 // [0 10 20 35 50 75 100] Albedo-derived normal detail when no normal map is present
 #define COATED_TEXTURE_STRENGTH 20 // [0 10 20 35 50 75 100] Stable subtle noise coating on opaque material colour
+#define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
+#include "/lib/materials/porosity_wetness.glsl"
 
 vec2 calculateParallaxUv(
     vec2 baseUv,
@@ -328,10 +333,16 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
     float materialReflectance = 0.0;
     float pbrEmission = 0.0;
     float materialSurfaceData = 0.0;
+    float materialPorosity = 0.0;
     float materialCoatingFactor = 0.0;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     materialSurfaceData = clamp(pbrSpecular.b, 0.0, 1.0);
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
+    float labSurfaceCode = floor(pbrSpecular.b * 255.0 + 0.5);
+    if (labF0Code < 65.0) {
+        materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0);
+        materialSurfaceData = 0.0; // Blue is porosity here, not SSS.
+    }
     float pbrMapPresent = hasMaterialSpecularMap ? 1.0 : 0.0;
     if (pbrMapPresent < 0.5) {
         materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
@@ -444,6 +455,15 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
     }
 #endif
     emissionStrength = max(emissionStrength, pbrEmission * 5.0);
+    if (materialPorosity > 0.0 && emissionStrength < 0.01) {
+        float precipitationFactor = biome_precipitation == 1
+            ? clamp(rainfall, 0.0, 1.0) : 0.0;
+        float wetnessFactor = clamp(wetness * precipitationFactor, 0.0, 1.0);
+        applyPorosityWetness(
+            albedo.rgb, materialReflectance, materialSmoothness,
+            materialPorosity, wetnessFactor, emissionStrength
+        );
+    }
     outColor = albedo;
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5 + 0.5 * materialSmoothness);
     outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData);

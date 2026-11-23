@@ -1408,6 +1408,24 @@ for profile, value in (("Ultra-Light", "0"), ("Smooth", "50"), ("Ultra", "100"))
     if f"HAND_PBR_STRENGTH:{value}" not in line:
         errors.append(f"{profile} has incorrect held-item PBR strength")
 
+porosity_wetness_source = sources.get("porosity_wetness.glsl", "")
+for token in ("float porousWetness = clamp(",
+              "MATERIAL_WETNESS_STRENGTH * 0.01",
+              "materialReflectance *= 1.0 - porousWetness * 0.45",
+              "materialSmoothness *= 1.0 - porousWetness * 0.35"):
+    if token not in porosity_wetness_source:
+        errors.append(f"Shared porosity wetness helper is missing component: {token}")
+for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
+    source = sources.get(name, "")
+    for token in ("uniform float wetness", "uniform float rainfall",
+                  "uniform int biome_precipitation", "MATERIAL_WETNESS_STRENGTH 100",
+                  '#include "/lib/materials/porosity_wetness.glsl"',
+                  "float materialPorosity = 0.0;", "labF0Code < 65.0",
+                  "materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0)",
+                  "applyPorosityWetness("):
+        if token not in source:
+            errors.append(f"{name} is missing LabPBR porosity wetness handling: {token}")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:
