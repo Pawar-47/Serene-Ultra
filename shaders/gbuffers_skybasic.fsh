@@ -161,7 +161,11 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
     );
 
     float detailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
-    float coverage = float(CLOUD_COVERAGE) * 0.01;
+    float coverage = mix(
+        float(CLOUD_COVERAGE) * 0.01,
+        float(CLOUD_COVERAGE) * 0.01 - 0.08,
+        clamp(rain, 0.0, 1.0)
+    );
     float densityStrength = float(CLOUD_DENSITY) * 0.01;
     float dayFactor = smoothstep(-0.08, 0.20, solarElevation);
     float lightLength = length(shadowLightPosition);
