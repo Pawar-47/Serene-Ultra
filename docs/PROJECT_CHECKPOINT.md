@@ -1696,3 +1696,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Updated structural validation to check the weather/particle fragment calls and vertex atlas-bound varyings. Hardware anisotropy remains outside shader control; runtime shimmer/performance calibration remains.
 - Commits: weather vertex `7d4007a1f28dbc48602b868462e37896770776df`, weather fragment `9f96af303828b532a41bf036b32e85822b15c84d`, particle vertex `4662b73853e86401efcf8c5baf2bc600718f35d0`, particle fragment `7b353c2aa6ec58c34fb0cb98698dc93d54b269a6`, validator `699c6205dbaaff494c2f8fa1cf8d6dd795f7142f`, matrix `9eb6c032e44f7e61d39939c494fd920b72386b79`.
 - CI is pending for this final filtering expansion.
+
+
+### Full translucent receiver filtering coverage — 2026-11-23
+- Extended the shared sprite-bounded anisotropic sampler across all five forward translucent receivers: water, translucent entities, translucent block entities, weather, and translucent particles. Weather and particle vertices now provide flat Iris mid-texcoord sprite bounds; their fragments sample through the shared 1/2/4-tap helper instead of a single isotropic lookup.
+- The shared filter uses the principal UV-derivative axis and clamps each tap to the current sprite, avoiding cross-sprite atlas contamination. Water/glass/ice resource-pack normal atlases also use the helper.
+- Updated `tools/validate_pack.py` to assert the common helper, macro defaults, and flat sprite-bound varyings in all five forward paths; updated the feature matrix.
+- Additional commits: translucent-particle sampling `7b353c2aa6ec58c34fb0cb98698dc93d54b269a6`; validator coverage `cb01ff846f578f618323edb8a13839cd9cd7ad94`; matrix `260c4d3f00015ab21d32a195f585f8102128b800`.
+- Runtime texture shimmer, alpha-edge quality and Intel HD 5500 cost still require measurement.
