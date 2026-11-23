@@ -33,8 +33,6 @@ uniform vec3 shadowLightPosition;
 uniform vec3 skyColor;
 uniform float sunAngle;
 uniform bool hasSkylight;
-uniform float sunAngle;
-uniform bool hasSkylight;
 uniform float endFlashIntensity;
 uniform float thunderStrength;
 uniform vec4 lightningBoltPosition;
