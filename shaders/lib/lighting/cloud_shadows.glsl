@@ -15,7 +15,8 @@ float sampleSereneCloudShadow(
     const float CLOUD_SHADOW_DETAIL_SCALE = 2.73;
     vec2 stableWorldXZ = sereneStableWorldXZ(playerPosition, CLOUD_SHADOW_WORLD_PERIOD);
     float sunHeight = max(worldLightDirection.y, 0.20);
-    float cloudHeightAboveReceiver = max(float(CLOUD_ALTITUDE) - worldPosition.y, 16.0);
+    float receiverWorldY = float(cameraPositionInt.y) + cameraPositionFract.y + playerPosition.y;
+    float cloudHeightAboveReceiver = max(float(CLOUD_ALTITUDE) - receiverWorldY, 16.0);
     vec2 cloudOffset = worldLightDirection.xz * (cloudHeightAboveReceiver / sunHeight);
     float offsetLength = length(cloudOffset);
     if (offsetLength > 512.0) cloudOffset *= 512.0 / offsetLength;
