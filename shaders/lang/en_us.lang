@@ -258,3 +258,8 @@ option.NEBULA_STRENGTH = Night Nebula Intensity
 option.NEBULA_STRENGTH.comment = Adds slow-moving multi-scale nebula clouds to clear night skies.
 option.RAINBOW_STRENGTH = Rainbow Intensity
 option.RAINBOW_STRENGTH.comment = Adds an anti-solar atmospheric rainbow arc when sunlight and rain overlap.
+
+option.NETHER_STORM_STRENGTH = Nether Ember Storms
+option.NETHER_STORM_STRENGTH.comment = Animated ember-red storm bands in the Nether sky.
+option.END_NEBULA_STRENGTH = End Nebula Intensity
+option.END_NEBULA_STRENGTH.comment = Adds violet/cyan nebula clouds and faint distant stars to the End sky.
