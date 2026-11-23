@@ -159,3 +159,6 @@ option.LIGHT_SHAFT_STRENGTH = Sunlight Shafts
 option.LIGHT_SHAFT_STRENGTH.comment = Adds a screen-space radial scattering approximation from bright visible sky toward opaque surfaces. It is strongest in clear daylight and uses no extra render target.
 option.LIGHT_SHAFT_QUALITY = Light Shaft Quality
 option.LIGHT_SHAFT_QUALITY.comment = Number of radial sky samples. Higher settings increase composite-pass texture reads; zero disables the effect.
+
+option.SCREEN_GI_STRENGTH = Screen-Space Indirect Light
+option.SCREEN_GI_STRENGTH.comment = Adds subtle depth-aware colour bounce from nearby visible surfaces. This is a low-cost screen-space approximation, not full world-space global illumination; it uses four neighbouring scene/depth samples.
