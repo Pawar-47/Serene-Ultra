@@ -1627,6 +1627,22 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fs
     if "currentLocal = fract(currentLocal + stepOffset);" in source:
         errors.append(f"{name} POM traversal must not wrap across sprite edges")
 
+# Screen-space GI must be depth-aware, profile-scaled and explicitly described as an approximation.
+for token in ("#define SCREEN_GI_STRENGTH", "vec3 sampleScreenSpaceColorBleed(",
+              "normalValidity < 0.49", "sampleDistance >= 1.5",
+              "bouncedLight / totalWeight", "lightShafts + screenGi"):
+    if token not in composite_shader:
+        errors.append(f"Screen-space indirect lighting is missing component: {token}")
+if "SCREEN_GI_STRENGTH" not in quality_screen or "SCREEN_GI_STRENGTH" not in slider_line:
+    errors.append("Screen-space indirect lighting must be exposed in the Quality screen and slider list")
+if "option.SCREEN_GI_STRENGTH.comment =" not in held_lang:
+    errors.append("Screen-space indirect lighting requires a user-facing tooltip")
+for profile, value in (("Ultra-Light", "0"), ("Smooth", "10"), ("Ultra", "25"),
+                       ("HDR", "30"), ("Ultra-HDR", "35")):
+    line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"SCREEN_GI_STRENGTH:{value}" not in line:
+        errors.append(f"{profile} has incorrect screen-space indirect-light strength")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:
