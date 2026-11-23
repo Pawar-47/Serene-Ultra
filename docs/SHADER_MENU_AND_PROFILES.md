@@ -62,3 +62,10 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added two low-resolution separable Gaussian blur pairs for broader halos.
 - `BLOOM_QUALITY` selects compact, wide or ultra-wide output; Ultra-Light uses compact bloom while Smooth and higher profiles use wider levels.
 - The additional stages operate at low resolutions to limit cost on integrated GPUs.
+
+
+## POM self-shadowing — 2026-11-23
+- Added four-step tangent-space height-field light occlusion to terrain and block-entity parallax materials.
+- The self-shadow factor attenuates the direct-light sky factor, preserving ambient light rather than darkening the entire material.
+- `POM_SELF_SHADOW_STRENGTH` is exposed in Quality and scaled across all five profiles.
+- Opaque entity-model POM self-shadowing remains pending.
