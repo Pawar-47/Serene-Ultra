@@ -770,6 +770,8 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "fogColor", "fogDensity", "calculateHandWaterFog"):
     if token not in hand_water:
         errors.append(f"Hand-water shader is missing forward component: {token}")
+if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in hand_water:
+    errors.append("First-person hand-water cylindrical fog must match the vanilla cylinder distance metric")
 water = sources.get("gbuffers_water.fsh", "")
 water_vertex = (SHADERS / "gbuffers_water.vsh").read_text(encoding="utf-8")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",

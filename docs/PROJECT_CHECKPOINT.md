@@ -1164,3 +1164,8 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Corrected `gbuffers_water.fsh` cylindrical fog distance to `max(length(vViewPosition.xz), abs(vViewPosition.y))`, matching Minecraft's stock `fog_cylindrical_distance` implementation and Iris' documented `fogShape == 1` meaning.
 - Spherical fog remains Euclidean `length(vViewPosition)`.
 - Added a structural regression guard. GLSL/structure CI does not validate visual fog calibration; verify vertical look angles and waterline transitions in-game.
+
+
+### First-person hand-water fog consistency — 2026-11-23
+- Applied the same vanilla cylindrical fog distance to `gbuffers_hand_water.fsh` as the world-water pass: `max(length(vViewPosition.xz), abs(vViewPosition.y))`.
+- Extended structural validation to prevent the first-person water pass from regressing independently.

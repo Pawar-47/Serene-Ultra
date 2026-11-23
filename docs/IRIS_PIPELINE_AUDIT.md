@@ -433,3 +433,5 @@ The forward translucent block pass uses the same shared Iris held-item light hel
 
 ## Water-pass fog shape correction — 2026-11-23
 Iris documents `fogShape == 0` as spherical and `fogShape == 1` as cylindrical. The stock Minecraft fog helper defines cylindrical distance as `max(length(position.xz), abs(position.y))`. The water pass previously used only `length(position.xz)` for cylindrical fog, underestimating fog distance when the view ray has a large vertical component. Updated `gbuffers_water.fsh` to match the stock cylinder metric; spherical fog remains `length(position)`. The validator now guards the cylindrical expression. Sources: Iris rendering-uniform documentation and the supplied Vanilla-stock `include/fog.glsl`. Runtime water/fog calibration remains pending.
+
+The same cylindrical-distance correction is enforced in the first-person hand-water pass. Both world water and hand-water now use the stock cylinder metric, preventing their fog falloff from diverging when the camera looks steeply upward or downward.

@@ -39,7 +39,9 @@ void main() {
     vec3 lightmapLinear = pow(max(texture(lightmap, vLightmapCoord).rgb, vec3(0.0)), vec3(2.2));
     vec3 handWaterLinear = pow(max(handWaterColor.rgb, vec3(0.0)), vec3(2.2)) * lightmapLinear;
 
-    float fogDistance = (fogShape == 1) ? length(vViewPosition.xz) : length(vViewPosition);
+    float fogDistance = (fogShape == 1)
+        ? max(length(vViewPosition.xz), abs(vViewPosition.y))
+        : length(vViewPosition);
     float fogFactor = calculateHandWaterFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     handWaterColor.rgb = pow(max(mix(handWaterLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));
