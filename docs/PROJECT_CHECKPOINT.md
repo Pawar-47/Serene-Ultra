@@ -705,3 +705,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Reference comparison: supplied working shader pomEffects.glsl/customMaterials.glsl use normals.a, tangent-space view direction, per-quad atlas bounds, textureGrad and distance fade. This implementation adopts those principles with fewer samples and a shorter displacement cap for low-end GPUs.
 - Iris documentation confirms normals is the normal-map atlas, at_tangent provides model-space tangent and handedness, mc_midTexCoord is the current quad texture centre, and LabPBR 1.3 stores linear height in normal-map alpha (0 = 25% depth, 255 = no depth).
 - Static validation is not runtime proof. Remaining checks: oldPBR/LabPBR resource packs, oblique camera angles, sprite edges, cutout foliage and Intel HD 5500 frame cost in Minecraft 26.3 + Iris.
+
+
+## POM CI checkpoint — 2026-11-23
+- Latest POM source commit: 3d68fdf80f05c4c8377d48a58469cb1589cef5bf.
+- GitHub Actions run #1050 (45108422197) passed all nine stages: shader compilation, Iris render-stage macro compilation, LabPBR branches, vertex/fragment linking and structural validation.
+- Earlier runs #1047–#1049 failed during the POM bring-up due to (1) a direct-compiler include directive, then (2) stale validator paths and (3) stale terrain-normal assertions. These were corrected; the latest run is green.
+- Scope remains terrain-only POM. Do not claim runtime or target-GPU performance verification.

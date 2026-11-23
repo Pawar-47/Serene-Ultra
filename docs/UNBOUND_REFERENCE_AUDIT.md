@@ -236,3 +236,12 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Sky fallback, screen-edge fade, distance fade, invalid snapshot alpha rejection and the conservative first-sample-inside-geometry path are preserved.
 - Extended structural validation to require the bounded two-step refinement loop.
 - The extra depth/colour reads occur only after a candidate hit, rather than for every ray step. This is a source-level bounded-cost improvement; actual GPU cost, temporal stability and visual hit quality still require Iris runtime testing.
+
+
+## Terrain POM first implementation — 2026-11-23
+- Compared the supplied working shader's pomEffects.glsl and customMaterials.glsl against the Iris pipeline. The reference uses the normal atlas alpha height, tangent-space view direction, per-quad UV bounds and gradient-based atlas sampling; its 128+ default sample budget is not suitable for the low-end target.
+- Implemented a bounded terrain-only POM path using 4/6/8 compile-time samples, a 32-block default fade distance, capped UV offset and a linear hit interpolation. POM reads the alpha height channel from either LabPBR or oldPBR normal maps and stays neutral on the Iris flat-normal fallback (alpha near 1).
+- Iris mc_midTexCoord (vec2) is used to derive each quad's atlas rectangle. Every height lookup wraps within that sprite and clamps to a half-texel inset. at_tangent and its handedness produce the tangent-space view vector.
+- Albedo, normal and specular atlases are sampled at the displaced UV. If the displaced albedo lookup would cross into a transparent texel, the original UV is retained to protect cutout silhouettes. The first pass is terrain only; block entities, self-shadowing and slope-normal reconstruction are not yet enabled.
+- Ultra-Light disables POM. Smooth uses 4 steps and a shorter fade; Ultra/HDR use 6. These are quality presets, not proof of a performance gain on the target GPU.
+- CI run #1050 (45108422197) passed all nine stages on commit 3d68fdf. This validates GLSL syntax, Iris macro branches, LabPBR compilation/linking and structural checks only. Runtime checks with real PBR resource packs and Minecraft 26.3 + Iris remain outstanding.
