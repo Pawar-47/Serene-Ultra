@@ -24,6 +24,18 @@ uniform float alphaTestRef;
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
 
+float sereneVanillaMaterialPorosity(int materialId) {
+    if (materialId == 32160) return 0.14; // Stone and polished stone families
+    if (materialId == 32161) return 0.12; // Deepslate family
+    if (materialId == 32162) return 0.30; // Cobblestone and mossy cobblestone
+    if (materialId == 32163) return 0.88; // Dirt, podzol and mycelium
+    if (materialId == 32164) return 0.03; // Obsidian
+    if (materialId == 32165) return 0.62; // Vanilla wood and planks
+    if (materialId == 32166) return 0.82; // Sand, gravel, clay and mud
+    if (materialId == 10009 || materialId == 10011 || materialId == 32130) return 0.92;
+    return 0.0;
+}
+
 vec2 calculateParallaxUv(
     vec2 baseUv,
     vec2 uvDx,
@@ -228,7 +240,7 @@ layout(location = 3) out vec4 outEmissionData;
 #define OPAQUE_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack PBR normal-map detail
 #define PBR_AO_STRENGTH 100 // [0 25 50 75 100]
 #define RAIN_PUDDLE_STRENGTH 70 // [0 25 50 70 85 100] Unbound-inspired exposed-surface puddle coverage
-#define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
+#define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR/vanilla material porosity wet darkening
 
 vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, vec2 uvDy, out float materialAO, out bool hasExplicitNormal) {
     vec4 normalTexel = sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, vTexCoordAM);
@@ -455,6 +467,7 @@ void main() {
     float pbrMapPresent = hasMaterialSpecularMap ? 1.0 : 0.0;
     if (pbrMapPresent < 0.5) {
         materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
+        materialPorosity = sereneVanillaMaterialPorosity(vMaterialId);
     } else if (labF0Code >= 230.0) {
         materialReflectance = 1.0; // Metal: use albedo as F0 in deferred.
         materialPorosity = 0.0;
@@ -462,13 +475,16 @@ void main() {
     } else {
         materialReflectance = labF0Code / 255.0;
         materialSurfaceData = clamp(pbrSpecular.b, 0.0, 1.0);
-        if (labSurfaceCode < 65.0) materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0);
+        materialPorosity = labSurfaceCode < 65.0
+            ? clamp(labSurfaceCode / 64.0, 0.0, 1.0)
+            : sereneVanillaMaterialPorosity(vMaterialId);
     }
     float labEmissionCode = floor(pbrSpecular.a * 255.0 + 0.5);
     if (labEmissionCode < 254.5) pbrEmission = labEmissionCode / 254.0;
 #else
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0); // oldPBR metalness
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);        // oldPBR emissiveness
+    materialPorosity = sereneVanillaMaterialPorosity(vMaterialId);
     // Vanilla/oldPBR have no LabPBR SSS code. Use conservative material-ID
     // fallbacks for thin foliage and soft translucent-looking block surfaces.
     if (vMaterialId == 10009 || vMaterialId == 10011) {
@@ -638,9 +654,8 @@ void main() {
         );
     }
 #endif
-    // LabPBR porosity (blue codes 0-64) makes a wet material darker and
-    // less reflective. The map-influence and overall lighting controls remain
-    // separate; non-LabPBR and SSS-coded materials stay neutral here.
+    // LabPBR blue codes 0-64 take priority; vanilla/oldPBR and SSS-coded
+    // surfaces use conservative material-ID porosity fallbacks when available.
     float precipitationFactor = biome_precipitation == 1
         ? clamp(rainfall, 0.0, 1.0) : 0.0;
     float wetnessFactor = clamp(wetness * precipitationFactor, 0.0, 1.0);
