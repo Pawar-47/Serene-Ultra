@@ -4,6 +4,8 @@ uniform sampler2D colortex0;
 // Bloom chain levels produced by composite1-composite4.
 uniform sampler2D colortex5;
 uniform sampler2D colortex7;
+uniform sampler2D colortex8;
+uniform sampler2D colortex10;
 uniform sampler2D depthtex0;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2D noisetex;
@@ -28,6 +30,7 @@ layout(location = 0) out vec4 outColor;
 #define SATURATION 1.00 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00] Color saturation
 #define HDR_LOOK 0 // [0 1 2] 0=Neutral, 1=HDR, 2=Ultra HDR tone mapping
 #define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Two-scale emissive bloom strength
+#define BLOOM_QUALITY 2 // [0 1 2] Additional wide bloom pyramid levels
 #define FXAA_ENABLED 1 // [0 1] Edge-adaptive fast approximate anti-aliasing
 #define DOF_STRENGTH 0 // [0 10 20 30 40 50 60 70 80 90 100] Depth-of-field blur strength
 #define DOF_FOCUS_DISTANCE 8.0 // [2.0 4.0 6.0 8.0 10.0 12.0 16.0 24.0 32.0 48.0 64.0] Focus distance in blocks
@@ -135,7 +138,16 @@ vec3 sampleBloomChain(vec2 uv) {
     // so it is weighted higher to stay visible next to the narrow one.
     vec3 narrowScale = sampleBloomLevel(colortex5, uv, 1.0);
     vec3 wideScale = sampleBloomLevel(colortex7, uv, 2.0);
-    return narrowScale * 0.60 + wideScale * 0.55;
+    vec3 bloom = narrowScale * 0.48 + wideScale * 0.38;
+#if BLOOM_QUALITY >= 1
+    vec3 veryWideScale = sampleBloomLevel(colortex8, uv, 3.0);
+    bloom += veryWideScale * 0.24;
+#endif
+#if BLOOM_QUALITY >= 2
+    vec3 ultraWideScale = sampleBloomLevel(colortex10, uv, 4.0);
+    bloom += ultraWideScale * 0.14;
+#endif
+    return bloom;
 }
 
 
