@@ -1528,3 +1528,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 
 
 - Added the same bounded lightning flash to the native `gbuffers_clouds` path (the pass used when volumetric clouds are disabled). The volumetric sky path retains its existing sky flash. Commit: `82e5ccac1c446f138cf85881a1bbb13b5d464db6`; matrix update: `6a1a885cda1b4caf0ffe4aebb76cf64e53f460e1`.
+
+
+### Expanded vanilla emissive material coverage — 2026-11-23
+- Compared the Complementary Reimagined `blocklightColors.glsl` material table and `block.properties` mappings against Serene's terrain material-ID dispatch. Added stable Iris IDs for sea pickles, all lit candle/candle-cake colours, charged respawn anchors, lit copper bulbs, amethyst buds/clusters and lit redstone/deepslate-redstone ores.
+- Added corresponding terrain G-buffer emission fallback strengths. Sea-pickle fallback is gated by the vanilla block-light coordinate so dry sea pickles do not glow. Existing albedo supplies emitter hue to the screen-space emissive bounce.
+- Removed the duplicate glow-lichen assignment from the waving-foliage ID; glow lichen keeps its dedicated emissive material ID instead of being overwritten by a second ID mapping.
+- Commits: block mappings `8bc9cdd88ac137e50e1351fc9f1a1fe246eba685`; terrain emission fallbacks `654c37a45730637c4e37957fad9b96d59b04a263`; matrix `c36549dff70e42b59b7ae46c8d42f9ba21b718f6`.
+- These are source-level material mappings; block-state parsing, colour/intensity and light-bounce appearance still require Iris runtime checks.
