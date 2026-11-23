@@ -1873,7 +1873,8 @@ for token in ("uniform int isEyeInWater;", "applyUnderwaterDistortion(",
 underwater_quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
 if "UNDERWATER_DISTORTION" not in underwater_quality_screen:
     errors.append("UNDERWATER_DISTORTION must appear in the Quality screen")
-if "UNDERWATER_DISTORTION" not in slider_line:
+underwater_slider_line = next((line for line in held_props.splitlines() if line.startswith("sliders =")), "")
+if "UNDERWATER_DISTORTION" not in underwater_slider_line:
     errors.append("UNDERWATER_DISTORTION must be exposed as a slider")
 if "option.UNDERWATER_DISTORTION =" not in held_lang or "option.UNDERWATER_DISTORTION.comment =" not in held_lang:
     errors.append("UNDERWATER_DISTORTION requires a user-facing label and tooltip")
