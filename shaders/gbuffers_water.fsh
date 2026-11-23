@@ -568,12 +568,9 @@ void main() {
             waterFoam = clamp(waterFoam, 0.0, 1.0);
         }
 
-        // Complementary Unbound style 3 uses a stable 0.98 surface alpha
-        // above water, then applies depth opacity. Underwater it retains the
-        // sampled material alpha and applies the reference's 0.75 reduction.
-        if (cameraUnderwater) {
-            translucentAlbedo.a *= 0.75;
-        } else {
+        // Complementary Unbound style 3 forces 0.98 alpha above water.
+        // Underwater it leaves the sampled material alpha unchanged.
+        if (!cameraUnderwater) {
             translucentAlbedo.a = 0.98;
         }
         float waterAlpha = cameraUnderwater

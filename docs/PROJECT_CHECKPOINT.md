@@ -1182,3 +1182,9 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Serene previously used a Schlick reflection-style Fresnel term and multiplied its opacity blend by 0.25, leaving water noticeably more transparent at grazing angles than the reference response.
 - Separated the opacity curve from the Schlick reflection curve: the water opacity now uses `(1 - NdotV)^4` at full strength, while the independent reflection Fresnel remains unchanged.
 - Added structural regression checks. Validate the waterline, shallow shorelines, and oblique camera angles in Iris at runtime; compiler CI cannot confirm visual calibration.
+
+
+### Correct modern Unbound underwater alpha parity — 2026-11-23
+- A closer read of Complementary's current Unbound-style water branch showed that the 0.75 alpha reduction previously attributed to modern Unbound is not applied for current Minecraft versions; the underwater branch preserves the sampled texture alpha.
+- Removed Serene's extra `translucentAlbedo.a *= 0.75` underwater multiplier. Above water, Unbound style 3 continues to force alpha to 0.98 and then applies depth opacity; underwater Serene now keeps the sampled alpha before its grazing-angle blend.
+- Updated structural validation to reject the obsolete multiplier and require the above-water-only 0.98 assignment. Runtime underwater/waterline validation remains outstanding.
