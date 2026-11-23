@@ -35,7 +35,7 @@ The supplied archive is a Complementary Reimagined shaderpack and is used as a t
 | Parallax/POM | Parallax occlusion material detail | Terrain, block-entity and opt-in opaque entity-model LabPBR/oldPBR height mapping from Iris normals.a; per-quad mc_midTexCoord atlas bounds; at_tangent view direction; bounded 4/6/8-step intersection, distance fade, capped displacement and cutout-safe albedo fallback | Partial; POM self-shadowing, slope normals and runtime calibration pending |
 | Texture filtering | Texture quality and anisotropic behavior | Hardware filtering where supported; quality controls | Pending |
 | TAA | Temporal anti-aliasing | Motion-aware history, rejection and sharpening controls | Pending |
-| Other anti-aliasing | Additional AA modes/quality settings | Configurable AA path and edge validation | Pending |
+| Other anti-aliasing | Additional AA modes/quality settings | Edge-adaptive FXAA in final pass; Ultra-Light can disable it, Smooth and higher enable it | Partial; FXAA edge quality and TAA remain unimplemented/unverified |
 | Bloom/emissive | Emissive contribution and glow/post effects | Five-tap single-scale highlight bloom in final pass; no extra render target, with strength/threshold controls | Partial; multi-scale blur, temporal stability and visual calibration remain pending |
 | Color grading | Tonemapping, exposure, saturation and contrast | Reference-matched color pipeline | Foundation; parity pending |
 | Depth of field | Focus/depth post-processing if present in Ultra | Depth-aware bounded blur | Pending |
