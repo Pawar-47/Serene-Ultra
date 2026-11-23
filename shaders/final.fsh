@@ -29,7 +29,7 @@ layout(location = 0) out vec4 outColor;
 #define CONTRAST 1.00 // [0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.40] Contrast
 #define SATURATION 1.00 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00] Color saturation
 #define HDR_LOOK 0 // [0 1 2] 0=Neutral, 1=HDR, 2=Ultra HDR tone mapping
-#define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Two-scale emissive bloom strength
+#define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Linear-light emissive bloom strength
 #define BLOOM_QUALITY 2 // [0 1 2] Additional wide bloom pyramid levels
 #define FXAA_ENABLED 1 // [0 1] Edge-adaptive fast approximate anti-aliasing
 #define IMAGE_SHARPENING 20 // [0 10 20 30 40 50 60 70 80 90 100] Edge-aware post-AA sharpening
@@ -266,6 +266,10 @@ void main() {
 
     color = applyImageSharpening(color, vTexCoord, texelSize);
 
+    // G-buffer/deferred/composite output is display-encoded. Decode once before
+    // bloom addition, exposure, grading and tone mapping; re-encode only at output.
+    color = pow(max(color, vec3(0.0)), vec3(2.2));
+
 #if BLOOM_STRENGTH > 0
     vec3 bloom = sampleBloomChain(vTexCoord);
     color += bloom * (float(BLOOM_STRENGTH) * 0.01);
@@ -292,8 +296,8 @@ void main() {
     color = applyVignette(color, vTexCoord);
     color = applyFilmGrain(color, vTexCoord);
 
-    // Gamma is an explicit user control. 1.0 leaves the tone-mapped result unchanged.
-    color = pow(max(color, vec3(0.0)), vec3(1.0 / GAMMA));
+    // Encode linear scene values for display. GAMMA=1.0 is the standard 2.2 transfer.
+    color = pow(max(color, vec3(0.0)), vec3(1.0 / (2.2 * GAMMA)));
 
     outColor = vec4(color, scene.a);
 }
