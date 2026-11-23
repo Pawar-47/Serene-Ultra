@@ -134,3 +134,6 @@ option.COATED_TEXTURE_STRENGTH.comment = Adds subtle stable noise variation to d
 
 option.POM_ENTITY_STRENGTH = Entity Parallax / POM Strength
 option.POM_ENTITY_STRENGTH.comment = Enables bounded LabPBR/oldPBR height mapping on opaque entity models. Item frames are excluded. Disabled in Ultra-Light and Smooth to protect low-end GPUs.
+
+option.ENTITY_GN_AND_CT = Entity Generated Normals + Coating
+option.ENTITY_GN_AND_CT.comment = Enables albedo-derived normal detail and stable noise coating on opaque entity models. Disabled by default to avoid extra texture reads on low-end GPUs; terrain and block-entity settings remain independent.

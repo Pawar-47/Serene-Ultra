@@ -32,6 +32,7 @@ layout(location = 3) out vec4 outEmissionData;
 #define POM_ENTITY_STRENGTH 0 // [0 10 20 35 50] Entity-model POM
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
+//#define ENTITY_GN_AND_CT // Optional entity generated normals and coated textures; off by default
 #define GENERATED_NORMAL_STRENGTH 25 // [0 10 20 35 50 75 100] Albedo-derived normal detail when no normal map is present
 #define COATED_TEXTURE_STRENGTH 20 // [0 10 20 35 50 75 100] Stable subtle noise coating on opaque material colour
 
@@ -275,11 +276,13 @@ void main() {
     float materialAO = 1.0;
     bool hasExplicitNormal = false;
     surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal);
+#ifdef ENTITY_GN_AND_CT
 #if GENERATED_NORMAL_STRENGTH > 0
     if (gl_FrontFacing && !hasExplicitNormal && albedo.a >= 0.999 && albedoDetail > 0.002 &&
         entityId != 50128 && entityId != 50132) {
         surfaceNormal = calculateGeneratedAlbedoNormal(surfaceNormal, materialUv, uvDx, uvDy, uvFootprint, vTexCoordAM);
     }
+#endif
 #endif
     vec4 pbrSpecular = textureGrad(specular, materialUv, uvDx, uvDy);
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
@@ -304,11 +307,13 @@ void main() {
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0);
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
+#ifdef ENTITY_GN_AND_CT
 #if COATED_TEXTURE_STRENGTH > 0
     if (entityId != 50128 && entityId != 50132 && albedo.a >= 0.999 &&
         pbrEmission < 0.01 && materialReflectance < 0.8 && materialSmoothness < 0.85) {
         albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
     }
+#endif
 #endif
     outColor = albedo;
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5 + 0.5 * materialSmoothness);

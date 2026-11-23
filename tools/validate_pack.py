@@ -371,6 +371,16 @@ if "POM_ENTITY_STRENGTH:0" not in props or "POM_ENTITY_STRENGTH:20" not in props
     errors.append("Entity POM must remain disabled in low-end profiles and opt-in for Ultra/HDR")
 if "option.POM_ENTITY_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
     errors.append("Entity POM strength requires a user-facing tooltip")
+entity_shader = sources.get("gbuffers_entities.fsh", "")
+if "//#define ENTITY_GN_AND_CT" not in entity_shader:
+    errors.append("Entity generated normals/coating must be disabled by default")
+if entity_shader.count("#ifdef ENTITY_GN_AND_CT") != 2:
+    errors.append("ENTITY_GN_AND_CT must gate both generated normals and coated textures")
+if "ENTITY_GN_AND_CT" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("ENTITY_GN_AND_CT must be exposed in the Quality settings screen")
+if "option.ENTITY_GN_AND_CT.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("ENTITY_GN_AND_CT requires a user-facing tooltip")
+
 
 for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
     source = sources.get(name, "")
