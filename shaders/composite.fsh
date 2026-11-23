@@ -12,6 +12,8 @@ uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
+uniform float viewWidth;
+uniform float viewHeight;
 uniform mat4 gbufferPreviousModelView;
 uniform mat4 gbufferPreviousProjection;
 uniform vec3 cameraPosition;
@@ -43,10 +45,51 @@ const int colortex12Format = RGBA16F;
 #define PBR_REFLECTION_BLUR_STRENGTH 65 // [0 25 50 65 80 100] Roughness-aware reflection filtering
 #define LIGHT_SHAFT_STRENGTH 45 // [0 10 20 30 40 50 60 70 80 90 100] Screen-space sunlight scattering strength
 #define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
+#define LENS_FLARE_STRENGTH 35 // [0 10 20 35 50 65 80 100] Screen-space celestial lens flare
 #define SCREEN_GI_STRENGTH 25 // [0 5 10 15 20 25 30 35 40 45 50] Screen-space local colour bounce
 #define SCREEN_GI_QUALITY 8 // [0 4 8 12] Number of depth-aware colour-bounce samples
 #define SCREEN_GI_TEMPORAL_STRENGTH 75 // [0 25 50 75 90] Reprojected GI history weight
 #define FOG_HEIGHT_STRENGTH 45 // [0 20 35 50 65 80 100] World-height fog strength
+
+
+vec3 sampleCelestialLensFlare(vec2 uv) {
+#if LENS_FLARE_STRENGTH > 0
+    if (!hasSkylight || sin(sunAngle * 6.28318530718) <= 0.04) return vec3(0.0);
+    vec4 sunClip = gbufferProjection * vec4(normalize(shadowLightPosition), 0.0);
+    if (sunClip.w <= 0.0001) return vec3(0.0);
+    vec2 sunUv = sunClip.xy / sunClip.w * 0.5 + 0.5;
+    if (sunUv.x <= 0.0 || sunUv.x >= 1.0 || sunUv.y <= 0.0 || sunUv.y >= 1.0)
+        return vec3(0.0);
+
+    float sunDepth = texture(depthtex2, sunUv).r;
+    float visibility = smoothstep(0.992, 1.0, sunDepth);
+    if (visibility <= 0.001) return vec3(0.0);
+    vec3 sunSource = pow(
+        max(texture(colortex0, sunUv).rgb, vec3(0.0)), vec3(2.2)
+    );
+    float sourceEnergy = clamp(
+        max(max(sunSource.r, sunSource.g), sunSource.b) * 1.8, 0.0, 2.0
+    );
+    vec2 aspect = vec2(viewWidth / max(viewHeight, 1.0), 1.0);
+    vec2 axis = (vec2(0.5) - sunUv);
+    vec2 ghostA = vec2(0.5) + axis * 0.55;
+    vec2 ghostB = vec2(0.5) + axis * 1.15;
+    vec2 ghostC = vec2(0.5) + axis * 1.75;
+    float flareA = exp(-dot((uv - ghostA) * aspect, (uv - ghostA) * aspect) / 0.00055);
+    float flareB = exp(-dot((uv - ghostB) * aspect, (uv - ghostB) * aspect) / 0.0018);
+    float flareC = exp(-dot((uv - ghostC) * aspect, (uv - ghostC) * aspect) / 0.0009);
+    float ringDistance = abs(length((uv - sunUv) * aspect) - 0.045);
+    float flareRing = exp(-ringDistance * ringDistance / 0.000025);
+    vec3 flareColor = vec3(1.0, 0.62, 0.34) * flareA
+        + vec3(0.32, 0.58, 1.0) * flareB
+        + vec3(0.85, 0.32, 0.58) * flareC
+        + vec3(0.45, 0.62, 1.0) * flareRing * 0.22;
+    return flareColor * sourceEnergy * visibility
+        * (float(LENS_FLARE_STRENGTH) * 0.01) * 0.12;
+#else
+    return vec3(0.0);
+#endif
+}
 
 #if LIGHT_SHAFT_QUALITY > 0
 vec3 sampleScreenSpaceLightShafts(vec2 uv) {
@@ -358,6 +401,7 @@ void main() {
     vec4 sceneColor = texelFetch(colortex0, pixel, 0);
     vec4 normalData = texelFetch(colortex2, pixel, 0);
     vec3 lightShafts = sampleScreenSpaceLightShafts(vTexCoord);
+    vec3 lensFlare = sampleCelestialLensFlare(vTexCoord);
     float centerDepth = texelFetch(depthtex2, pixel, 0).r;
     vec3 centerNdc = vec3(vTexCoord, centerDepth) * 2.0 - 1.0;
     vec4 centerView4 = gbufferProjectionInverse * vec4(centerNdc, 1.0);
@@ -386,7 +430,7 @@ void main() {
     // a meaningful PBR smoothness value. Avoid all reflection work for it.
     if (normalData.a <= 0.525 || PBR_REFLECTION_STRENGTH <= 0) {
         vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
-        sceneLinearNoReflection += lightShafts + temporallyStableGi;
+        sceneLinearNoReflection += lightShafts + lensFlare + temporallyStableGi;
         sceneLinearNoReflection = applySereneHeightFog(
             sceneLinearNoReflection, currentDepthAll, vTexCoord
         );
@@ -398,7 +442,7 @@ void main() {
     // water, glass, particles or the first-person hand overlay an opaque surface.
     if (!opaqueReceiver) {
         vec3 sceneLinearNoReflection = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
-        sceneLinearNoReflection += lightShafts;
+        sceneLinearNoReflection += lightShafts + lensFlare;
         sceneLinearNoReflection = applySereneHeightFog(
             sceneLinearNoReflection, currentDepthAll, vTexCoord
         );
@@ -458,7 +502,7 @@ void main() {
 
     vec3 sceneLinear = pow(max(sceneColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 resultLinear = mix(sceneLinear, reflectionLinear, reflectionWeight);
-    resultLinear += lightShafts + temporallyStableGi;
+    resultLinear += lightShafts + lensFlare + temporallyStableGi;
     resultLinear = applySereneHeightFog(resultLinear, currentDepthAll, vTexCoord);
     outColor = vec4(pow(max(resultLinear, vec3(0.0)), vec3(1.0 / 2.2)), sceneColor.a);
 }
