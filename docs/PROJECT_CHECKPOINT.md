@@ -742,3 +742,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Noise coordinates combine the sprite's atlas centre with floored world-cell position, so the variation is stable in world space rather than swimming with the camera. The noise modulation is reduced for bright materials and fades with mip level/distance.
 - Added COATED_TEXTURE_STRENGTH control; Ultra-Light disables it, Smooth uses a subtle value, and Ultra/HDR use a stronger preset. It is one noise lookup per eligible opaque fragment and is skipped for transparent/cutout texels, sign text and portal surfaces.
 - This is a source-level low-cost adaptation. Entity-model coverage, material appearance and GPU cost require runtime validation.
+
+
+## Generated normals + coated textures validation — 2026-11-23
+- Terrain and block entities now have four-tap albedo-gradient generated normals, gated by screen-space albedo contrast and skipped when explicit normal-map XY detail is present. Cutout/partial-alpha neighbour samples reject generated-normal synthesis.
+- Terrain and block entities also have optional stable noise coating. Noise is keyed by sprite-atlas centre and floored world-cell position, then attenuated for bright materials and distant/mipmapped surfaces.
+- Run #1058 (45109244596) passed all nine stages for generated normals. Run #1060 (45109448675) passed all nine stages for coated textures and the corrected uniform declarations.
+- Source-level validation only: visual material response, atlas seams, oldPBR/LabPBR pack compatibility and Intel HD 5500 GPU cost still require Minecraft 26.3 + Iris runtime testing.
+- Remaining reference gaps include generic entity/held-item POM, POM self-shadowing, slope-normal reconstruction and runtime calibration.

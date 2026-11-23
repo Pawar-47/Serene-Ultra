@@ -259,3 +259,11 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Both terrain and block-entity programs compile and link with the same Iris mc_midTexCoord/at_tangent POM varyings. Structural validation confirms atlas bounds, bounded sampling, cutout fallback, and sign-text/portal exclusions.
 - Tuned the depth control mapping to give the low-end 20/35 presets a more visible displacement while retaining a 0.20 UV-offset cap and 4/6/8 sample limit. This is a source-level calibration only; real resource-pack appearance and Intel HD 5500 cost still need runtime checks.
 - POM remains unavailable for generic entity models and held items; their stable per-object exclusions are not yet mapped in this pack. Self-shadowing and slope-normal reconstruction also remain pending.
+
+
+## Generated normals + coated textures validation — 2026-11-23
+- Terrain and block entities now have four-tap albedo-gradient generated normals, gated by screen-space albedo contrast and skipped when explicit normal-map XY detail is present. Cutout/partial-alpha neighbour samples reject generated-normal synthesis.
+- Terrain and block entities also have optional stable noise coating. Noise is keyed by sprite-atlas centre and floored world-cell position, then attenuated for bright materials and distant/mipmapped surfaces.
+- Run #1058 (45109244596) passed all nine stages for generated normals. Run #1060 (45109448675) passed all nine stages for coated textures and the corrected uniform declarations.
+- Source-level validation only: visual material response, atlas seams, oldPBR/LabPBR pack compatibility and Intel HD 5500 GPU cost still require Minecraft 26.3 + Iris runtime testing.
+- Remaining reference gaps include generic entity/held-item POM, POM self-shadowing, slope-normal reconstruction and runtime calibration.
