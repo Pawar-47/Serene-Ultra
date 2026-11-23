@@ -149,7 +149,7 @@ if props_path.is_file():
         blend_target = key[len("blend."):]
         if "." in blend_target:
             _program, buffer_name = blend_target.split(".", 1)
-            if not re.fullmatch(r"colortex\\d+", buffer_name):
+            if not re.fullmatch(r"colortex\d+", buffer_name):
                 errors.append(
                     f"shaders.properties line {line_number}: unknown Iris blend buffer {buffer_name!r}"
                 )
