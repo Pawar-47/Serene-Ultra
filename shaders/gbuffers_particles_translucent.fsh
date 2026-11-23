@@ -32,6 +32,8 @@ uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float rainStrength;
 uniform float endFlashIntensity;
+uniform float thunderStrength;
+uniform vec4 lightningBoltPosition;
 uniform int isEyeInWater;
 uniform vec3 cameraPosition;
 uniform vec3 fogColor;
@@ -54,6 +56,8 @@ layout(location = 0) out vec4 outColor;
 #include "/lib/lighting/cloud_shadows.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
+
+#include "/lib/lighting/lightning_flash.glsl"
 
 float calculateParticleFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -186,6 +190,7 @@ void main() {
 
     vec3 particleLinear = pow(max(particle.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = particleLinear * (ambient + direct) + particleLinear * emission;
+    litLinear += particleLinear * sampleSereneLightningFlash(vPlayerPosition, normal);
     float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateParticleFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
