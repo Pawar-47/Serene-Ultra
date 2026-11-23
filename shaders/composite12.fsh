@@ -5,6 +5,7 @@
 uniform sampler2D colortex0;
 uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
+uniform sampler2D depthtex2;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferPreviousModelView;
@@ -51,9 +52,12 @@ void main() {
     vec2 texel = 1.0 / vec2(textureSize(colortex0, 0));
     vec3 currentLinear = pow(max(currentColor.rgb, vec3(0.0)), vec3(2.2));
     vec3 resolvedLinear = currentLinear;
+    float opaqueDepth = texture(depthtex2, vTexCoord).r;
+    bool historyEligible = currentDepth >= 0.999999
+        || abs(currentDepth - opaqueDepth) <= 0.000001;
 
 #if TAA_ENABLED > 0 && TAA_HISTORY_STRENGTH > 0
-    if (frameCounter > 1) {
+    if (frameCounter > 1 && historyEligible) {
         vec2 currentJitterNdc = sereneTaaJitterNdc(frameCounter);
         vec2 unjitteredUv = vTexCoord - currentJitterNdc * 0.5;
         vec3 currentNdc = vec3(unjitteredUv, currentDepth) * 2.0 - 1.0;
@@ -138,5 +142,7 @@ void main() {
         pow(max(resolvedLinear, vec3(0.0)), vec3(1.0 / 2.2)),
         currentColor.a
     );
-    outTaaHistory = vec4(resolvedLinear, currentDepth);
+    outTaaHistory = historyEligible
+        ? vec4(resolvedLinear, currentDepth)
+        : vec4(0.0);
 }
