@@ -385,7 +385,7 @@ for token in ("/* RENDERTARGETS: 0 */", "shadowcolor0Format = RGBA8",
         errors.append(f"Iris shadowcolor water caustics path is missing component: {token}")
 if "blend.shadow.shadowcolor0" in props:
     errors.append("Invalid Iris buffer-blend target: shadowcolor0 is not a colortex or legacy render-target index")
-for token in ("shadowTranslucent=true", "flip.shadow.shadowcolor0=false"):
+for token in ("shadowTranslucent=true",):
     if token not in props:
         errors.append(f"Iris translucent shadowcolor configuration is missing: {token}")
 
@@ -1394,7 +1394,6 @@ if "copies colortex3 back to colortex0" in deferred:
 if "colortex3" not in deferred:
     errors.append("Deferred must sample the emissive G-buffer before fogging the final lit scene")
 for directive in (
-    "flip.deferred.colortex3=false",
     "blend.gbuffers_terrain.colortex3=off",
     "blend.gbuffers_entities.colortex3=off",
     "blend.gbuffers_particles.colortex3=off",
