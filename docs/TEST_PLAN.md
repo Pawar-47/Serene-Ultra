@@ -88,3 +88,13 @@ Do not add vanilla `OIT_*` macros or native OIT attachment declarations to the s
 2. Test translucent entity textures, glass armor/armor trims, translucent held items, item frames, block entities with translucent materials, water/glass overlap and particles both in front of and behind entities.
 3. Confirm whether geometry actually reaches `gbuffers_entities_translucent` and `gbuffers_block_translucent` after deferred. Use shader debug output/logging if available; the presence of the files and parser support is not proof of routing because Iris documents this feature as potentially broken in newer versions.
 4. Compare sorting, depth writes and blending against shaders disabled and the working reference. If routing fails, record it as an Iris runtime limitation rather than changing the shader stages blindly.
+
+
+## World-stable native cloud detail and projected cloud shadows
+
+1. Set `CLOUD_DETAIL_STRENGTH=0` and `CLOUD_SHADOW_STRENGTH=0` separately; each control must independently return its path to the neutral native-cloud/direct-light response.
+2. Move continuously while observing fixed terrain and cloud faces. Noise must remain world-anchored and must not swim with the camera.
+3. Test at large positive and negative world coordinates and cross the 62,500-block cloud-shadow period and 100,000-block cloud-detail period. Neither broad nor detail noise may show a seam or phase jump.
+4. Compare clear weather, rain, dusk, night and dimensions without skylight. Cloud shadows should attenuate direct celestial light only; they must not darken block light or emissive materials.
+5. Compare terrain, items, water, translucent entities, block entities and particles to ensure all direct-light receiver paths share the same cloud-shadow pattern. Record GPU cost at every profile.
+6. Compare against the supplied working Complementary reference at identical coordinates/time/weather. Mark the feature visually complete only after screenshots and a runtime log are saved.

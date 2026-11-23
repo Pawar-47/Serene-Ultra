@@ -968,6 +968,64 @@ if "gtexture" in cloud_fragment or "texture(gtexture" in cloud_fragment:
     errors.append("gbuffers_clouds fragment stage must use the 26.3 vertex color, not a cloud atlas sampler")
 if "vec4 cloudColor = vVertexColor;" not in cloud_fragment:
     errors.append("gbuffers_clouds must preserve the CloudColor/face shading carried by POSITION_COLOR")
+
+# World-space cloud noise must reduce integer camera coordinates before float
+# conversion. Both base/detail octaves must tile exactly at their chosen periods.
+stable_world = sources.get("stable_world_position.glsl", "")
+for token in ("vec2 sereneStableWorldXZ(vec3 playerPosition, float worldPeriod)",
+              "cameraPositionInt.xz % ivec2(periodInt)",
+              "mod(vec2(cameraModuloInt), vec2(worldPeriod))",
+              "cameraModulo + cameraPositionFract.xz + playerPosition.xz"):
+    if token not in stable_world:
+        errors.append(f"Stable world-position helper is missing: {token}")
+if '#include "/lib/lighting/stable_world_position.glsl"' not in cloud_fragment or "sereneStableWorldXZ(vPlayerPosition, CLOUD_DETAIL_WORLD_PERIOD)" not in cloud_fragment:
+    errors.append("Native cloud detail must use integer-modulo stable world coordinates")
+for token in ("const float CLOUD_DETAIL_WORLD_PERIOD = 100000.0;",
+              "const float CLOUD_DETAIL_UV_SCALE = 0.0021;",
+              "const float CLOUD_DETAIL_NOISE_SCALE = 3.1;",
+              "cloudDetailUv * CLOUD_DETAIL_NOISE_SCALE"):
+    if token not in cloud_fragment:
+        errors.append(f"Native cloud detail period/scale contract is missing: {token}")
+
+cloud_shadow = sources.get("cloud_shadows.glsl", "")
+if '#include "/lib/lighting/stable_world_position.glsl"' not in cloud_shadow or "sereneStableWorldXZ(playerPosition, CLOUD_SHADOW_WORLD_PERIOD)" not in cloud_shadow:
+    errors.append("Procedural cloud shadows must use integer-modulo stable world coordinates")
+for token in ("const float CLOUD_SHADOW_WORLD_PERIOD = 62500.0;",
+              "const float CLOUD_SHADOW_UV_SCALE = 0.0016;",
+              "const float CLOUD_SHADOW_DETAIL_SCALE = 2.73;",
+              "cloudWorldXZ * CLOUD_SHADOW_UV_SCALE",
+              "cloudUv * CLOUD_SHADOW_DETAIL_SCALE"):
+    if token not in cloud_shadow:
+        errors.append(f"Procedural cloud-shadow period/scale contract is missing: {token}")
+
+cloud_shadow_programs = (
+    "deferred.fsh", "gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
+    "gbuffers_block_translucent.fsh", "gbuffers_particles_translucent.fsh",
+)
+for program_name in cloud_shadow_programs:
+    source = sources.get(program_name, "")
+    if '#include "/lib/lighting/cloud_shadows.glsl"' not in source or "sampleSereneCloudShadow(" not in source:
+        errors.append(f"{program_name} must apply the shared procedural cloud-shadow term")
+    for declaration in (
+        "uniform float rainStrength;", "uniform float frameTimeCounter;",
+        "uniform vec3 cameraPositionFract;", "uniform ivec3 cameraPositionInt;",
+        "uniform sampler2D noisetex;", "#define CLOUD_SHADOW_STRENGTH ",
+    ):
+        if declaration not in source:
+            errors.append(f"{program_name} is missing cloud-shadow input/option: {declaration}")
+
+if "CLOUD_SHADOW_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("CLOUD_SHADOW_STRENGTH must be exposed in the Iris Quality screen")
+if "CLOUD_SHADOW_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
+    errors.append("CLOUD_SHADOW_STRENGTH must be included in the Iris slider list")
+if "CLOUD_DETAIL_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("CLOUD_DETAIL_STRENGTH must be exposed in the Iris Quality screen")
+if "CLOUD_DETAIL_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
+    errors.append("CLOUD_DETAIL_STRENGTH must be included in the Iris slider list")
+cloud_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
+for option in ("CLOUD_SHADOW_STRENGTH", "CLOUD_DETAIL_STRENGTH"):
+    if f"option.{option} =" not in cloud_lang or f"option.{option}.comment =" not in cloud_lang:
+        errors.append(f"{option} requires a user-facing label and tooltip")
 if "out vec4 outColor0;" not in cloud_fragment or "out vec4 outColor1;" not in cloud_fragment:
     errors.append("GLSL 130 gbuffers_clouds must expose sequential Iris outColorN outputs for RENDERTARGETS 0,2")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",

@@ -28,6 +28,8 @@ out vec4 outColor1;
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud daylight and silver-lining response
 #define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] World-stable cloud surface detail
 
+#include "/lib/lighting/stable_world_position.glsl"
+
 float calculateCloudFog(float distanceToCamera) {
     if (fogMode == 9729) {
         return clamp((distanceToCamera - fogStart) / max(fogEnd - fogStart, 0.0001), 0.0, 1.0);
@@ -57,11 +59,15 @@ void main() {
 
     // World-stable multi-scale detail adds subtle mottling to Minecraft's native
     // POSITION_COLOR cloud faces without changing the vanilla cloud silhouette.
-    vec3 cloudWorldPosition = vec3(cameraPositionInt) + cameraPositionFract + vPlayerPosition;
+    // 100000 * 0.0021 = 210 base repeats; 210 * 3.1 = 651 detail repeats.
+    const float CLOUD_DETAIL_WORLD_PERIOD = 100000.0;
+    const float CLOUD_DETAIL_UV_SCALE = 0.0021;
+    const float CLOUD_DETAIL_NOISE_SCALE = 3.1;
+    vec2 stableCloudXZ = sereneStableWorldXZ(vPlayerPosition, CLOUD_DETAIL_WORLD_PERIOD);
     vec2 cloudDetailWind = vec2(frameTimeCounter * 0.000035, -frameTimeCounter * 0.000022);
-    vec2 cloudDetailUv = cloudWorldPosition.xz * 0.0021 + cloudDetailWind;
+    vec2 cloudDetailUv = stableCloudXZ * CLOUD_DETAIL_UV_SCALE + cloudDetailWind;
     float cloudBroadDetail = texture(noisetex, cloudDetailUv).r;
-    float cloudFineDetail = texture(noisetex, cloudDetailUv * 3.1 + vec2(0.37, 0.19)).g;
+    float cloudFineDetail = texture(noisetex, cloudDetailUv * CLOUD_DETAIL_NOISE_SCALE + vec2(0.37, 0.19)).g;
     float cloudDetailNoise = cloudBroadDetail * 0.68 + cloudFineDetail * 0.32;
     float cloudDetailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
     float cloudSurfaceVariation = mix(
