@@ -988,6 +988,31 @@ for token in ("cameraPositionInt % ivec3(4096)", "TWO_PI / 4096.0",
               "mod(frameTimeCounter, 3600.0)", "TWO_PI * 60.0 / 3600.0"):
     if token not in lava_wave_helper:
         errors.append(f"Shared lava wave helper is missing seamless-period component: {token}")
+# Water vertex motion must match the same fluid geometry in the shadow pass.
+water_vertex_shader = sources.get("gbuffers_water.vsh", "")
+water_shadow_shader = sources.get("shadow.vsh", "")
+water_wave_helper = (SHADERS / "lib" / "animation" / "water_waves.glsl").read_text(encoding="utf-8")
+for token in ('#include "/lib/animation/water_waves.glsl"', "#define WATER_WAVE_STRENGTH",
+              "#define WATER_WAVE_SPEED", "vMaterialId == 32000 && vFluidRenderType > 0.5",
+              "sereneStableWaterWavePosition(", "sereneWaterSurfaceDisplacement(",
+              "vPlayerPosition.y += waterDisplacement"):
+    if token not in water_vertex_shader:
+        errors.append(f"Water vertex wave path is missing component: {token}")
+for token in ('#include "/lib/animation/water_waves.glsl"', "#define WATER_WAVE_STRENGTH",
+              "#define WATER_WAVE_SPEED", "vShadowMaterialId == 32000 && vShadowFluidRenderType > 0.5",
+              "sereneStableWaterWavePosition(", "sereneWaterSurfaceDisplacement(",
+              "vShadowPlayerPosition.y += waterDisplacement"):
+    if token not in water_shadow_shader:
+        errors.append(f"Water shadow wave path is missing matching displacement: {token}")
+for token in ("cameraPositionInt % ivec3(4096)", "mod(frameTimeCounter, 3600.0)",
+              "WATER_WAVE_SPEED / 3600.0", "return (firstWave + secondWave) * 0.0125 * strength * 0.01"):
+    if token not in water_wave_helper:
+        errors.append(f"Shared periodic water-wave helper is missing component: {token}")
+if "block.32000=minecraft:water flowing_water" not in (SHADERS / "block.properties").read_text(encoding="utf-8"):
+    errors.append("Water vertex wave material ID must map to vanilla water")
+if "option.WATER_WAVE_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("Water wave strength requires a user-facing tooltip")
+
 if "block.32118=minecraft:lava" not in (SHADERS / "block.properties").read_text(encoding="utf-8"):
     errors.append("Lava wave material ID must map to vanilla lava")
 quality_line = next((line for line in props.splitlines() if line.startswith("screen.QUALITY =")), "")
