@@ -17,11 +17,11 @@ These profiles are defined in `shaders/shaders.properties` and exposed through I
 Important: profiles must never silently disable a reference Ultra feature. Lower profiles may tune sampling, resolution, shadow distance, filtering and reconstruction quality. Any feature-specific quality change must be explicit and documented. As new renderers land, each profile must configure their quality budgets consistently.
 
 ## Current menu screens
-- Main screen: profile selector, Quality, Color.
+- Main screen: profile selector, Quality, Water, Sun, Sky, Clouds, Anti-Aliasing and Color.
 - Quality: shadow-map resolution and shadow distance.
 - Color: independent RGB channel gains, gamma, exposure, contrast, saturation and HDR tone-mapping mode.
 
-The menu uses Iris-native `screen`, `sliders`, `profile.*` and `.lang` mechanisms. Labels and hover tooltips are localized in `shaders/lang/en_us.lang`.
+The menu uses Iris-native `screen`, `sliders`, `profile.*` and `.lang` mechanisms. Water, Sun, Sky and Clouds each have dedicated sub-screens; labels and hover tooltips are localized in `shaders/lang/en_us.lang`.
 
 ## Color controls implemented
 - Red, green and blue gain sliders.
