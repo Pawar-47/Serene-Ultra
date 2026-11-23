@@ -633,6 +633,27 @@ void main() {
                 materialSmoothness, clamp(obsidianFactor, 0.0, 1.0)
             );
             materialReflectance = max(materialReflectance, 0.08);
+        } else if (vMaterialId == 32167) { // Blackstone family
+            materialSmoothness = max(materialSmoothness, albedo.r);
+        } else if (vMaterialId == 32168) { // Netherrack
+            materialSmoothness = max(
+                materialSmoothness, clamp(pow(albedo.r, 2.0) * 1.5, 0.0, 1.0)
+            );
+        } else if (vMaterialId == 32169) { // End stone and end-stone bricks
+            materialSmoothness = max(
+                materialSmoothness, clamp(pow(albedo.r, 4.0) * 0.65, 0.0, 1.0)
+            );
+            materialCoatingFactor = 0.66;
+        } else if (vMaterialId == 32170) { // Snow and powder snow
+            float snowSmoothness = (1.0 - pow(albedo.g, 64.0) * 0.3) * 0.4;
+            materialSmoothness = max(
+                materialSmoothness, clamp(snowSmoothness, 0.0, 1.0)
+            );
+        } else if (vMaterialId == 32171) { // Coral block family
+            materialSmoothness = max(
+                materialSmoothness, clamp(length(albedo.rgb) * 0.2, 0.0, 1.0)
+            );
+            materialCoatingFactor = 0.66;
         }
     }
 
@@ -692,7 +713,7 @@ void main() {
             float puddleForm = clamp(puddleNoise1.b * 3.0 + puddleNoise2.b * 5.0
                 + puddleNoise3.b * 8.0 - 7.0, 0.0, 1.0);
             float noPuddles = clamp(materialPorosity, 0.0, 1.0);
-            if (vMaterialId == 10009 || vMaterialId == 10011 || vMaterialId == 10129 || vMaterialId == 10137) noPuddles = 1.0; // Leaves and farmland
+            if (vMaterialId == 10009 || vMaterialId == 10011 || vMaterialId == 10129 || vMaterialId == 10137 || vMaterialId == 32170) noPuddles = 1.0; // Leaves, farmland and snow
             float wetnessSquared = wetnessFactor * wetnessFactor;
             puddleMask = clamp(wetnessSquared * wetnessSquared * puddleMixer * puddleForm
                 * (1.0 - noPuddles) * (RAIN_PUDDLE_STRENGTH * 0.01), 0.0, 1.0);
