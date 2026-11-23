@@ -4,6 +4,8 @@ screen.QUALITY = Quality & Profiles
 screen.COLOR = Color & HDR Controls
 
 option.SHADOW_ALPHA_CUTOFF = Shadow Alpha Cutoff
+option.MOTION_BLUR_STRENGTH = Camera Motion Blur
+option.MOTION_BLUR_QUALITY = Motion Blur Quality
 option.DOF_STRENGTH = Depth of Field Strength
 option.DOF_FOCUS_DISTANCE = Focus Distance
 option.DOF_FOCUS_RANGE = Focus Range
@@ -21,6 +23,8 @@ option.CHROMATIC_ABERRATION = Chromatic Aberration
 option.VIGNETTE_STRENGTH = Lens Vignette
 option.FILM_GRAIN_STRENGTH = Film Grain
 
+option.MOTION_BLUR_STRENGTH.comment = Adds depth-rejected blur along the camera motion vector reconstructed from Iris previous-frame matrices. This path covers camera motion; independently animated entity velocity is not available here.
+option.MOTION_BLUR_QUALITY.comment = Selects 0, 4, 6 or 8 blur taps. Higher settings increase final-pass texture reads.
 option.DOF_STRENGTH.comment = Adds a bounded depth-aware photographic blur outside the selected focus range. Higher values increase the blur radius; Ultra-Light disables it.
 option.DOF_FOCUS_DISTANCE.comment = Sets the in-focus distance from the camera in blocks.
 option.DOF_FOCUS_RANGE.comment = Sets the depth interval around the focus distance that remains sharp.
