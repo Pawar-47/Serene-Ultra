@@ -479,3 +479,15 @@ This native stock OIT path is not the same interface as an Iris shaderpack's gbu
 **Implementation decision:** do not transplant Minecraft's native OIT includes, attachment layout or composite stages into Serene's Iris shaderpack. Keep the Iris gbuffers routes and explicit alpha blending in `shaders.properties` unless a future Iris API exposes a shaderpack OIT contract. The current water, weather, translucent entity/block and particle programs remain conventional Iris forward-translucent passes.
 
 **Verification boundary:** this is a source-level compatibility decision, not proof of how every Iris 26.3 build behaves at runtime. The test plan now includes overlapping translucent geometry, water masks, particles and weather while Serene is active. Record the exact Iris build and inspect its logs before claiming runtime compatibility.
+
+
+## Corrected Iris flip contract and shadow-colour separation — 2026-11-23
+
+A direct read of Iris 26.1 `CompositeRenderer.java`, `PackDirectives.java` and `PackRenderTargetDirectives.java` corrects several earlier flip notes in this file and older checkpoint entries:
+
+- Composite-style passes automatically flip their declared draw buffers after rendering. Explicit `flip=false` disables that output flip; explicit `flip=true` is an additional flip after the default and can cancel the intended output hand-off.
+- Read-only inputs are not automatically flipped, so explicit `flip=false` on them is redundant. The current pack now relies on defaults and has no active `flip.*` directives.
+- The accepted flip buffer names are the legacy colour-target aliases and `colortexN`. `shadowcolor0` is not one of them. Shadow colour attachments are a separate shadow-pass resource family, not a ping-pong colortex target. Both the old `flip.shadow.shadowcolor0=false` and any `blend.shadow.shadowcolor0=off` directive must remain absent.
+- The current validator checks target names and rejects explicit flips on a pass's own `RENDERTARGETS` outputs. It also accepts dimension-qualified composite pass names.
+
+Consequently, do not restore old instructions saying `flip.deferred.colortex0=true`, `flip.deferred1.colortex4=true`, or that read-only inputs need explicit `false`. The default flip is the correct publication mechanism for the current deferred, scene-copy, composite and bloom outputs.
