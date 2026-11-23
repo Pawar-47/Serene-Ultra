@@ -1334,3 +1334,36 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - The 4-sample tier uses cardinal taps; 8 adds diagonal coverage; 12 adds a wider cardinal ring. The pass retains its opaque receiver/depth/normal rejection.
 - Updated structural validation to require the 12-sample pattern, quality loop, UI exposure and exact profile values.
 - This remains a spatial single-bounce screen-space approximation, not full GI. Higher tap counts increase texture sampling and have not been benchmarked on Intel HD 5500. CI and in-game runtime validation are required before calling the change verified.
+
+
+
+## Continuation update — 2026-11-23 (reference archives, validator and 26.3 transparency)
+
+### Source archives inspected
+The two user-supplied archives are now available in the active workspace and have been inspected directly; this supersedes the earlier checkpoint note that their bytes were unavailable.
+
+- Working Complementary Reimagined archive: 415 shader/include sources under `shaders/`; 213 declare GLSL 130, 3 declare GLSL 400 compatibility (shadow vertex exceptions), and 199 are include fragments without their own version declaration. Relevant water/weather files inspected include `world0/gbuffers_water.vsh/.fsh`, `program/gbuffers_water.glsl`, `world0/gbuffers_weather.vsh/.fsh` and `program/gbuffers_weather.glsl`.
+- Vanilla-stock Minecraft 26.3 archive: 89 shader/include sources; 72 declare GLSL 330 and 17 are includes without a version declaration. The stock terrain and OIT files were inspected, including `core/terrain.vsh/.fsh`, `core/rendertype_water_mask.vsh/.fsh`, `core/oit_composite.fsh`, `core/oit_depth_bounds_cull.fsh` and the OIT include family.
+
+### Iris 26.3 transparency decision
+Inspected Iris source snapshot `IrisShaders/Iris@bff1e69cb6c5519d8745784aa9c8b92984de67e7`. It maps translucent terrain to `ProgramId.Water` / `gbuffers_water`, water mask to `gbuffers_basic`, and translucent particles to `gbuffers_particles_translucent`. The inspected shaderpack path does not expose Minecraft's native `OIT_*` phases. Serene will keep Iris-specific forward alpha blending; no native OIT shader files or attachments will be copied into the pack. Runtime testing on the exact target Iris 26.3 build remains mandatory.
+
+### Validator defects corrected
+- Fixed indentation that had accidentally nested alpha-test and deferred-mask blending checks under the missing-`WAVING_RAIN` branch.
+- Moved particle material option/label checks outside the per-file weather loop.
+- Added output-slot validation for GLSL 130 `outColorN` declarations against ordered `RENDERTARGETS`, while retaining explicit-layout validation for GLSL 330.
+- Tightened Iris buffer-format validation so the required RGBA8 directives must appear in valid block comments.
+- Corrected buffer-flip validation to match Iris documentation: flipping is enabled by default; `flip=false` disables a sampler's swap. Written attachments must retain the default swap; read-only/preserved attachments are pinned with `false`. Removed the incorrect claim that explicit `true` causes a second flip.
+
+### Commits and validation
+- `a1e4ffca863c0a2ce5f1be2c9e33b65e06998313` — skipped validation checks and GLSL 130 output-slot validation.
+- `e60eda79e075b3b1bc6374e4a381ce3b5afc55fc` — correct Iris buffer-flip validation semantics.
+- `cc9ef59d445696a3c3728c541b36632b1869ed11` — correct buffer-flip comments in `shaders.properties`.
+- Latest recorded main HEAD: `cc9ef59d445696a3c3728c541b36632b1869ed11`.
+- CI run `45210941836` passed on that exact HEAD, including standalone GLSL compilation, Iris macro branches, LabPBR, opt-in entity POM, Unbound water detail, Ultra-Light reflection branch, water-normal inspection, program linking and structural validation.
+- Alpha publishing remains skipped/disabled. No Minecraft/Iris runtime or visual test has been performed.
+
+### Next work
+1. Run the 26.3 transparency regression on the exact Iris/Sodium build.
+2. Continue exact-file comparisons for shadow, terrain, entities, block entities, hand, particles, sky and post-processing against both supplied archives.
+3. Fix source-level gaps found by those comparisons, with validator coverage where the invariant can be checked statically.
