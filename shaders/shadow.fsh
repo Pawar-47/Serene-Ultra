@@ -20,7 +20,7 @@ out vec4 outColor0;
 // Keep the cutoff conservative: it removes transparent texels while
 // retaining thin foliage and partially transparent cutout edges.
 #define SHADOW_ALPHA_CUTOFF 0.10 // [0.05 0.10 0.15 0.20 0.25 0.30 0.40 0.50] Alpha threshold for shadow casters
-#define WATER_WAVE_SPEED 50 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
+#define WATER_WAVE_SPEED 50 // [20 30 40 50 55 60 70 80 90 100 120] Water wave cycles per real-time hour
 #define WATER_CAUSTICS_STRENGTH 100 // [0 25 50 75 100 125 150] Water caustic contrast
 #define WATER_CAUSTICS_SCALE 100 // [50 75 100 125 150 200] Water caustic spatial frequency
 
