@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#include "/lib/taa_jitter.glsl"
+
 in vec4 at_tangent;
 in vec2 mc_midTexCoord;
 
@@ -57,4 +59,5 @@ void main() {
         abs(texMinMidCoord) * 2.0
     );
     vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0;
+    applySereneTaaJitter(gl_Position);
 }
