@@ -417,3 +417,7 @@ Verified Iris' `specular` sampler and `MC_TEXTURE_FORMAT_LAB_PBR` macro. Terrain
 
 ## colortex1 lightmap write audit — 2026-11-23
 A source audit found that the terrain, entity and block-entity fragment programs computed vanilla lightmap RGB and a sky-light factor but did not assign their declared `outLightmapData` output. Restored `outLightmapData = vec4(vanillaLight, skyLight);` in all three programs. `tools/validate_pack.py` now requires this write in terrain, entities, block entities, particles and textured-lit programs so a future edit cannot silently leave deferred lighting without its G-buffer input.
+
+
+## Translucent entity held-light integration
+The translucent entity fragment stage uses the shared `held_item_lighting.glsl` helper. Its varying `vPlayerPosition` is camera-relative player space, matching the documented Iris `relativeEyePosition` correction used by deferred and water. The shared helper's early return avoids distance/color work when both held-light values are zero. The ambient term is combined quadratically; the forward translucent stage continues to write only colortex0 and does not sample any colortex attachment, preserving post-deferred blend ordering.

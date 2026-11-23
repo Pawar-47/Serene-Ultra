@@ -1063,3 +1063,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - This ports the low-quality glare concept from Complementary's sky path without its additional noise sampling. The implementation adds no texture reads or render targets.
 - Iris documentation confirms shadowLightPosition is the view-space position of the highest celestial body (sun by day, moon by night), length 100, and gbufferModelView maps player space to view space.
 - Full Rayleigh/Mie atmospheric scattering, volumetric light transport and visual calibration remain pending.
+
+
+## Translucent entity held-item lighting — 2026-11-23
+- Extended the shared Iris held-item lighting path to translucent entity models (for example, translucent entity layers) using the same player-relative position and relativeEyePosition correction as opaque and water paths.
+- The path is controlled by HELD_LIGHTING_STRENGTH and exits early when both held-light values are zero; ambient contribution is combined quadratically to avoid a linear brightness spike.
+- CI now requires the shared include, quality option and ambient combine in the translucent entity shader. This is source/CI coverage only; verify entity layers in Iris runtime, especially glass-like modded entities and third-person held-light placement.
