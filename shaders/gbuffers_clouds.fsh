@@ -9,18 +9,24 @@ uniform float fogDensity;
 uniform int fogMode;
 uniform int fogShape;
 uniform vec3 shadowLightPosition;
+uniform sampler2D noisetex;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
+uniform float frameTimeCounter;
 uniform float sunAngle;
 uniform float rainStrength;
 uniform bool hasSkylight;
 
 in vec4 vVertexColor;
 in vec3 vViewPosition;
+in vec3 vPlayerPosition;
 
 /* RENDERTARGETS: 0,2 */
 out vec4 outColor0;
 out vec4 outColor1;
 
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud daylight and silver-lining response
+#define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] World-stable cloud surface detail
 
 float calculateCloudFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -48,6 +54,27 @@ void main() {
     // Preserve the native CloudColor and per-face vertex shading. Clouds are an
     // overlay, not an opaque surface; do not reuse the terrain normal beneath them.
     vec3 cloudLinear = pow(max(cloudColor.rgb, vec3(0.0)), vec3(2.2));
+
+    // World-stable multi-scale detail adds subtle mottling to Minecraft's native
+    // POSITION_COLOR cloud faces without changing the vanilla cloud silhouette.
+    vec3 cloudWorldPosition = vec3(cameraPositionInt) + cameraPositionFract + vPlayerPosition;
+    vec2 cloudDetailWind = vec2(frameTimeCounter * 0.000035, -frameTimeCounter * 0.000022);
+    vec2 cloudDetailUv = cloudWorldPosition.xz * 0.0021 + cloudDetailWind;
+    float cloudBroadDetail = texture(noisetex, cloudDetailUv).r;
+    float cloudFineDetail = texture(noisetex, cloudDetailUv * 3.1 + vec2(0.37, 0.19)).g;
+    float cloudDetailNoise = cloudBroadDetail * 0.68 + cloudFineDetail * 0.32;
+    float cloudDetailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
+    float cloudSurfaceVariation = mix(
+        1.0,
+        mix(0.88, 1.08, smoothstep(0.18, 0.82, cloudDetailNoise)),
+        cloudDetailStrength
+    );
+    cloudLinear *= cloudSurfaceVariation;
+    cloudColor.a *= mix(
+        1.0,
+        mix(0.94, 1.0, smoothstep(0.25, 0.82, cloudDetailNoise)),
+        cloudDetailStrength
+    );
 
     // The POSITION_COLOR cloud mesh has no per-pixel normal; its vertex color already
     // carries engine face shading and CloudColor. Add only bounded exposure and
