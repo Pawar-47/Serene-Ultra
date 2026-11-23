@@ -357,3 +357,9 @@ A follow-up review against Unbound's GGX implementation found its direct highlig
 - Unbound's clear-glass branch uses smoothness 1.0 and a direct-highlight multiplier of 3.5 when the minimum sampled alpha is above 0.001. Stained glass instead uses smoothness 0.5 and multiplier 1.5.
 - Serene now distinguishes clear glass from stained glass in the forward translucent lighting path. Clear glass receives a sharper exponent-128 Blinn approximation gated by its existing sampled alpha product, celestial visibility and N·L; stained glass retains its medium exponent-32 approximation. Both reuse existing vectors and shadowing, adding no texture samples or render targets.
 - This follows the reference's material split while remaining a low-cost approximation rather than an identical GGX implementation. Runtime visual tuning remains pending.
+
+
+### Tinted-glass grazing opacity — 2026-11-23
+- Complementary Unbound's default tinted-glass path adjusts opacity as alpha^(1-Fresnel), making the pane more opaque toward grazing angles while retaining its Fresnel reflection response.
+- Serene now applies the same alpha curve to tinted glass using the existing view normal and camera vector, with the same camera-facing normal orientation used by its reflection path. The change is arithmetic-only and adds no texture reads.
+- Optional Unbound mirror-tint modes are not copied; the default material behavior is the reference target. Runtime opacity calibration remains pending.

@@ -1127,3 +1127,7 @@ Stained glass now receives a low-cost direct specular highlight and reference-al
 
 ### Clear-glass specular distinction — 2026-11-23
 Clear glass now receives a sharper exponent-128 direct highlight with the Unbound reference multiplier 3.5, gated by sampled alpha > 0.001. Stained glass keeps its medium exponent-32 highlight and 1.5 multiplier. The two materials no longer share one direct-highlight response. No additional texture samples or render targets; visual calibration remains pending.
+
+
+### Tinted-glass grazing opacity — 2026-11-23
+Tinted glass now follows Unbound's default alpha^(1-Fresnel) opacity curve, increasing opacity toward grazing angles while preserving the existing reflection scale. The calculation reuses view-space normals and adds no texture samples. Runtime visual calibration remains pending.

@@ -778,6 +778,22 @@ void main() {
         litLinear = mix(litLinear, glassReflectionLinear, glassReflectionWeight);
     }
 
+    if (isTintedGlass) {
+        // Unbound raises tinted-glass opacity toward grazing angles using
+        // alpha^(1-Fresnel); reuse the reflection path's camera-facing normal.
+        vec3 tintedGlassNormal = normalize(viewNormal);
+        if (dot(normalize(vViewPosition), tintedGlassNormal) > 0.0) {
+            tintedGlassNormal = -tintedGlassNormal;
+        }
+        float tintedGlassNdotV = clamp(
+            dot(tintedGlassNormal, normalize(-vViewPosition)), 0.0, 1.0
+        );
+        float tintedGlassFresnel = 0.02 + 0.98 * pow(1.0 - tintedGlassNdotV, 5.0);
+        translucentAlbedo.a = pow(
+            max(translucentAlbedo.a, 0.0), 1.0 - tintedGlassFresnel
+        );
+    }
+
     if (isGlass) {
         // Complementary's translucent tweaks slightly reduce glass opacity
         // at very close range to avoid an overpowering near-camera pane.
