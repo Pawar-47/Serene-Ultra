@@ -7,8 +7,6 @@ uniform sampler2D specular;
 uniform sampler2D noisetex;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
-uniform ivec3 cameraPositionInt;
-uniform vec3 cameraPositionFract;
 uniform float frameTimeCounter;
 uniform float wetness;
 uniform float rainStrength;
