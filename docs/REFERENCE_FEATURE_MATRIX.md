@@ -36,7 +36,7 @@ The supplied archive is a Complementary Reimagined shaderpack and is used as a t
 | Texture filtering | Texture quality and anisotropic behavior | Hardware filtering where supported; quality controls | Pending |
 | TAA | Temporal anti-aliasing | Motion-aware history, rejection and sharpening controls | Pending |
 | Other anti-aliasing | Additional AA modes/quality settings | Configurable AA path and edge validation | Pending |
-| Bloom/emissive | Emissive contribution and glow/post effects | Thresholded multi-scale bloom with bandwidth-aware buffers | Pending |
+| Bloom/emissive | Emissive contribution and glow/post effects | Five-tap single-scale highlight bloom in final pass; no extra render target, with strength/threshold controls | Partial; multi-scale blur, temporal stability and visual calibration remain pending |
 | Color grading | Tonemapping, exposure, saturation and contrast | Reference-matched color pipeline | Foundation; parity pending |
 | Depth of field | Focus/depth post-processing if present in Ultra | Depth-aware bounded blur | Pending |
 | Motion blur | Motion-dependent post-processing if present | Velocity-aware path; avoid ghosting | Pending |
