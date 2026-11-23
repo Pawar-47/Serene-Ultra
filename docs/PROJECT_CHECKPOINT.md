@@ -1095,3 +1095,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1117 found the new helper was included before the MATERIAL_WETNESS_STRENGTH macro in the entity shader, so standalone GLSL compilation correctly rejected the undefined macro.
 - Moved the helper include below the option macro in both entity and block passes and added a structural ordering assertion.
 - No shader behavior changed; CI must revalidate both material paths.
+
+
+## Ultra-Light glass reflection fallback — 2026-11-23
+- Fixed a quality-tier gap in the Unbound-guided glass/ice path: previously all glass reflections were compiled out whenever `WATER_REFLECTION_QUALITY=0`, even though Ultra-Light retains the shared low-cost environment reflection helper.
+- Clear, stained and tinted glass plus ice now retain Fresnel-weighted sky/horizon environment reflections in the zero-SSR branch. Higher tiers continue to blend screen-space hits with environment fallback.
+- The zero-quality branch performs no SSR depth/color sampling. CI's existing zero-quality macro build and a new structural assertion cover the fallback; runtime intensity/tint calibration remains outstanding.

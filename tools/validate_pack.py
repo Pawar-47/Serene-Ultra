@@ -803,6 +803,7 @@ for token in ("uniform vec3 skyColor;", "vec3 sampleEnvironmentReflection(vec3 v
               "float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : ((isClearGlass || isStainedGlass) ? 0.50 : 0.32))",
               "glassReflectionLinear = mix(",
               "glassEnvironmentLinear, glassScreenReflectionLinear, glassReflectionConfidence",
+              "glassReflectionLinear = sampleEnvironmentReflection(glassReflectionDirection)",
               "environmentReflectionLinear, screenReflectionLinear, reflectionConfidence",
               "return calculateEnvironmentReflection("):
     if token not in water:

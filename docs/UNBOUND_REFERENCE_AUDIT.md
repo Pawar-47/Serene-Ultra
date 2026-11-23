@@ -317,3 +317,7 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 
 ## Texture-driven Unbound-style water normals — 2026-11-23
 The analytic wave substitute has been superseded by an original tileable 64x64 tangent-normal texture bound as Iris customTexture.waterNormalTex. The fragment path samples medium, small and large scales; an optional fourth very-large octave is enabled only in Ultra/HDR profiles. Stable player/world coordinates use a 2560-block wrap period so every octave tiles without a phase jump. The texture's alpha is constant 255, so it is not a height map; water POM remains disabled. CI #1084 successfully decoded the replacement PNG and confirmed its constant alpha, and #1092 passed the full compile/link/structure matrix after the held-item material fallback update. Runtime water appearance and Intel HD 5500 cost still require in-game testing.
+
+
+## Glass/ice environment reflection quality fallback
+Glass and ice retain Fresnel-weighted sky/horizon environment reflections when `WATER_REFLECTION_QUALITY=0`. Higher tiers continue to use screen-space hits with environment fallback for misses; the zero-quality branch directly uses the shared environment helper and does not sample SSR depth/color buffers.

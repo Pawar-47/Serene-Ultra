@@ -692,34 +692,38 @@ void main() {
     litLinear = mix(litLinear, fogColorLinear, fogFactor);
 
     if ((isGlass || isIce) && GLASS_REFLECTION_STRENGTH > 0.001) {
-        #if WATER_REFLECTION_QUALITY > 0
         vec3 glassViewNormal = normalize(viewNormal);
         if (dot(normalize(vViewPosition), glassViewNormal) > 0.0) {
             glassViewNormal = -glassViewNormal;
         }
         float glassNdotV = clamp(dot(glassViewNormal, normalize(-vViewPosition)), 0.0, 1.0);
         float glassFresnel = 0.02 + 0.98 * pow(1.0 - glassNdotV, 5.0);
+        vec3 glassReflectionDirection = normalize(
+            reflect(normalize(vViewPosition), glassViewNormal)
+        );
+        vec3 glassReflectionLinear;
+        #if WATER_REFLECTION_QUALITY > 0
         float glassReflectionConfidence = 0.0;
         vec3 glassReflectionColor = sampleTranslucentScreenReflection(
             vViewPosition, glassViewNormal, glassReflectionConfidence
-        );
-        vec3 glassReflectionDirection = normalize(
-            reflect(normalize(vViewPosition), glassViewNormal)
         );
         vec3 glassEnvironmentLinear = glassReflectionConfidence < 0.999
             ? sampleEnvironmentReflection(glassReflectionDirection)
             : vec3(0.0);
         vec3 glassScreenReflectionLinear = pow(max(glassReflectionColor, vec3(0.0)), vec3(2.2));
-        vec3 glassReflectionLinear = mix(
+        glassReflectionLinear = mix(
             glassEnvironmentLinear, glassScreenReflectionLinear, glassReflectionConfidence
         );
+        #else
+        // Ultra-Light keeps a cheap sky/horizon Fresnel reflection without SSR depth/color samples.
+        glassReflectionLinear = sampleEnvironmentReflection(glassReflectionDirection);
+        #endif
         float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : ((isClearGlass || isStainedGlass) ? 0.50 : 0.32));
         float glassReflectionWeight = clamp(
             glassFresnel * materialReflectionScale * (GLASS_REFLECTION_STRENGTH * 0.01),
             0.0, 0.85
         );
         litLinear = mix(litLinear, glassReflectionLinear, glassReflectionWeight);
-        #endif
     }
 
     if (isWater) {
