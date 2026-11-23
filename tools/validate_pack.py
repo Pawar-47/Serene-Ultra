@@ -757,7 +757,14 @@ if "uniform int isEyeInWater;" not in water:
     errors.append("Water pass must declare Iris isEyeInWater as int")
 
 if "return 0.03125 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);" not in water:
-    errors.append("Water noise coordinates must tile the 256-block stable-world period exactly")
+    errors.append("Water noise coordinates must tile the 2560-block stable-world period exactly")
+# The optional 0.05 octave must also land on an integer number of repeats at
+# the camera-position wrap. This prevents a visible phase jump at the seam.
+water_period = 2560.0 * 0.03125
+for octave in (1.0, 4.0, 0.25, 0.05):
+    repeats = water_period * octave
+    if abs(repeats - round(repeats)) > 1e-6:
+        errors.append(f"Water normal octave {octave} does not tile the stable-world period")
 for token in ("uniform sampler2D noisetex", "calculateWaterBaseColor", "textureLod(noisetex, noiseUV, 0.0)",
               "vec3 baseColor = 0.375 * biomeTint", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH", "WATER_FOAM_STRENGTH", "WATER_UNDERWATER_STRENGTH", "WATER_ABSORPTION_STRENGTH", "GLASS_REFLECTION_STRENGTH", "PORTAL_EMISSION_STRENGTH", "PORTAL_DISTORTION_STRENGTH"):
     if token not in water:
@@ -775,13 +782,15 @@ for token in ("uniform sampler2D normals;", "calculateTranslucentNormalMap", "no
         errors.append(f"Water resource-pack normal-map path is missing component: {token}")
 for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt;",
               "uniform vec3 cameraPositionFract;", "uniform float frameTimeCounter",
-              "getStableWaterWorldPosition", "cameraPositionInt % ivec3(256)",
+              "getStableWaterWorldPosition", "cameraPositionInt % ivec3(2560)",
+              "mod(vec3(cameraModulo), vec3(2560.0))",
               "cameraPositionFract + playerPosition", "calculateWaterWaveNormal",
               "uniform sampler2D waterNormalTex;",
               "waterNormalTex, waterCoord + wind, waterCoordDx, waterCoordDy",
               "waterCoord * 4.0 - wind * 2.0", "waterCoord * 0.25 - wind * 0.5",
               "float waveCycles = frameTimeCounter / 3600.0",
               "WATER_WAVE_SCALE <= 0",
+              "#if WATER_WAVE_DETAIL > 0", "waterCoord * 0.05 - wind * 0.5",
               "geometricNormal + vec3(-slope.x * strength * faceSign",
               "waterNormalCoordDx = dFdx(vPlayerPosition.xz * waterNormalScale)",
               "viewNormal = normalize(mat3(gbufferModelView) * normal)"):
@@ -793,6 +802,18 @@ if not water_normal_path.is_file() or not water_normal_meta.is_file():
     errors.append("Water normal custom texture and blur/wrap metadata must both exist")
 if "customTexture.waterNormalTex = lib/textures/water-normal.png" not in props:
     errors.append("Iris customTexture binding for the water normal map is missing")
+if "WATER_WAVE_DETAIL" not in props or "WATER_WAVE_DETAIL" not in props.split("sliders =", 1)[-1]:
+    errors.append("Very-large water wave detail must be exposed as a Quality slider")
+for profile in ("Ultra-Light", "Smooth"):
+    profile_line = next((line for line in props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if "WATER_WAVE_DETAIL:0" not in profile_line:
+        errors.append(f"{profile} must disable the extra very-large water-normal sample")
+for profile in ("Ultra", "HDR", "Ultra-HDR"):
+    profile_line = next((line for line in props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if "WATER_WAVE_DETAIL:1" not in profile_line:
+        errors.append(f"{profile} must enable the optional very-large Unbound water-normal octave")
+if "option.WATER_WAVE_DETAIL.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("Very-large water wave detail requires a user-facing tooltip")
 if "cross(geometricNormal, tangent)" in water:
     errors.append("Water tangent basis must follow Iris at_tangent handedness: cross(tangent, normal)")
 if "uniform vec3 cameraPosition;" in water:

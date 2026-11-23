@@ -803,3 +803,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1070 (45111042199) passed after entity generated normals/coating were placed behind ENTITY_GN_AND_CT, off by default. Entity POM remains independently opt-in in Ultra/HDR.
 - Next CI update also compiles the combined entity POM + ENTITY_GN_AND_CT path for both oldPBR and LabPBR, so the optional entity material branches remain tested rather than only the default-off branch.
 - Runtime testing of mobs, armor, item frames, resource-pack height maps and Intel HD 5500 cost remains pending.
+
+
+## Unbound water-normal wrap validator correction — 2026-11-23
+- Run #1072 compiled all shader stages, Iris render-stage branches, LabPBR branches, opt-in entity POM branches, and linked all programs. It failed only because a structural assertion still expected the former 256-block camera wrap.
+- The water-normal implementation now uses a 2560-block stable-world period. This is required for the optional 0.05 very-large normal octave to repeat at the wrap boundary: at the 0.03125 world scale, the four octave frequencies (1.0, 4.0, 0.25, 0.05) produce integer repeat counts (80, 320, 20, 4).
+- Updated structural validation to assert the 2560-block integer-camera wrap, the fractional-camera offset, and integer repeat counts for every selected octave. Also added checks that WATER_WAVE_DETAIL is exposed with a tooltip and remains disabled on Ultra-Light/Smooth while enabled only on Ultra/HDR profiles.
+- This is a validator correction, not a shader behavior change. Await the new CI result before marking the expanded water-normal branch validated.
