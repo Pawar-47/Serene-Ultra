@@ -316,7 +316,7 @@ for token in ("in vec2 mc_Entity", "flat out int vMaterialId", "vMaterialId = in
         errors.append(f"Terrain vertex stage is missing Iris mc_Entity material classification: {token}")
 # POM uses Iris per-quad sprite bounds and tangent attributes. Keep the implementation
 # bounded, opt-out for Ultra-Light, and atlas-safe for terrain.
-pom_source = (SHADERS / "lib" / "materials" / "parallax.glsl").read_text(encoding="utf-8")
+pom_source = sources.get("gbuffers_terrain.fsh", "")
 for token in ("textureGrad(normals, sampleUv, uvDx, uvDy)", "textureSize(normals, 0)",
               "for (int stepIndex = 0; stepIndex < POM_QUALITY; ++stepIndex)",
               "POM_DISTANCE", "POM_STRENGTH", "currentSurfaceDepth",
