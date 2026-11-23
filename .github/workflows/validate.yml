@@ -20,8 +20,8 @@ on:
 # Keep only the newest validation run for a branch. Rapid source commits
 # should not leave dozens of obsolete full-pack checks running concurrently.
 concurrency:
-  group: shader-validation-v2-${{ github.ref }}
-  cancel-in-progress: false
+  group: shader-validation-v3-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -29,6 +29,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out source
         uses: actions/checkout@v4

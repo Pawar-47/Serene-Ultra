@@ -26,8 +26,8 @@ in vec2 mc_Entity;
 in vec2 mc_midTexCoord;
 in vec4 at_tangent;
 
-#define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated water surface and normal strength
-#define WATER_WAVE_SPEED 60 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
+#define WATER_WAVE_STRENGTH 50 // [0 25 40 50 55 65 70 75 100 125 150 175 200] Animated water surface and normal strength
+#define WATER_WAVE_SPEED 50 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
 
 void main() {
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;

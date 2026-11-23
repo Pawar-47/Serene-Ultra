@@ -38,6 +38,7 @@ void main() {
     #ifdef MC_RENDER_STAGE_MOON
         isMoon = (renderStage == MC_RENDER_STAGE_MOON);
     #endif
+    if (hasSkylight && isSun) discard;
 
     if (hasSkylight && isSun) {
         float sunVisibility = smoothstep(0.0, 0.35, sunElevation);

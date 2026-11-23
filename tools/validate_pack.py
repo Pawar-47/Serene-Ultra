@@ -241,11 +241,58 @@ if props_path.is_file():
     for screen in ("screen = <profile>", "screen.QUALITY =", "screen.COLOR ="):
         if screen not in props:
             errors.append(f"Missing menu configuration: {screen}")
+    for screen in ("screen.WATER =", "screen.SUN =", "screen.SKY =", "screen.CLOUDS ="):
+        if screen not in props:
+            errors.append(f"Missing dedicated subsystem menu: {screen}")
+    menu_lines = {
+        name: next((line for line in props.splitlines() if line.startswith(f"screen.{name} =")), "")
+        for name in ("WATER", "SUN", "SKY", "CLOUDS")
+    }
+    for name, options in {
+        "WATER": ("WATER_FOG_MULT", "WATER_ABSORPTION_STRENGTH", "WATER_WAVE_STRENGTH", "WATER_REFLECTION_STRENGTH"),
+        "SUN": ("SUN_SIZE", "SUN_INTENSITY", "SUN_GLOW_STRENGTH"),
+        "SKY": ("SKY_ATMOSPHERE_STRENGTH", "SKY_TWILIGHT_STRENGTH"),
+        "CLOUDS": ("CLOUD_SHAPE", "CLOUD_SIZE", "CLOUD_COVERAGE", "CLOUD_DENSITY"),
+    }.items():
+        for option in options:
+            if option not in menu_lines[name]:
+                errors.append(f"{name} screen is missing {option}")
+    sky_source = sources.get("gbuffers_skybasic.fsh", "")
+    for token in ("uniform vec3 sunPosition;", "float cloudHash(", "float cloudFbm(",
+                  "float sunDisk = smoothstep(", "CLOUD_SHAPE == 1", "CLOUD_SHAPE == 2"):
+        if token not in sky_source:
+            errors.append(f"Sky renderer is missing procedural sun/cloud component: {token}")
+    if "if (hasSkylight && isSun) discard;" not in sources.get("gbuffers_skytextured.fsh", ""):
+        errors.append("Vanilla square sun sprite must be discarded when the procedural sun is active")
+    if "clouds=off" not in props:
+        errors.append("Native cloud geometry must be disabled while Serene volumetric clouds are active")
+    for screen in ("screen.WATER_COLOR =", "screen.UNDERWATER_COLOR =", "screen.SUN_COLOR =",
+                   "screen.SKY_COLOR =", "screen.CLOUD_COLOR ="):
+        if screen not in props:
+            errors.append(f"Missing dedicated colour control page: {screen}")
+    for option in ("WATER_TINT_R", "WATER_TINT_G", "WATER_TINT_B",
+                   "UNDERWATER_TINT_R", "UNDERWATER_TINT_G", "UNDERWATER_TINT_B"):
+        if option not in props.split("screen.WATER_COLOR =", 1)[-1].splitlines()[0] and option not in props.split("screen.UNDERWATER_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Water colour control is missing {option}")
+    for option in ("SUN_COLOR_R", "SUN_COLOR_G", "SUN_COLOR_B"):
+        if option not in props.split("screen.SUN_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Sun colour control is missing {option}")
+    for option in ("SKY_COLOR_R", "SKY_COLOR_G", "SKY_COLOR_B"):
+        if option not in props.split("screen.SKY_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Sky colour control is missing {option}")
+    for option in ("CLOUD_COLOR_R", "CLOUD_COLOR_G", "CLOUD_COLOR_B"):
+        if option not in props.split("screen.CLOUD_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Cloud colour control is missing {option}")
+    for token in ("vec3(float(WATER_TINT_R)", "float(UNDERWATER_TINT_R)",
+                  "float(SUN_COLOR_R)", "float(SKY_COLOR_R)", "float(CLOUD_COLOR_R)"):
+        combined = sources.get("gbuffers_water.fsh", "") + sources.get("gbuffers_skybasic.fsh", "")
+        if token not in combined:
+            errors.append(f"Colour control is not wired into rendering: {token}")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
                    "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
         if option not in props:
-            errors.append(f"{option} is not exposed in the Quality menu")
+            errors.append(f"{option} is not exposed in the shader settings menu")
     slider_options_line = next((line for line in props.splitlines() if line.startswith("sliders = ")), "")
     for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH"):
         if option not in slider_options_line:
@@ -278,8 +325,8 @@ if props_path.is_file():
     if "alphaTest.gbuffers_water=GREATER 0.0001" not in props:
         errors.append("Translucent water must use the reference-matched low alphaTestRef")
     if "WATER_FOG_MULT" not in props:
-        errors.append("Water depth-opacity control must be exposed in the Quality menu")
-water_fog_option = "#define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity"
+        errors.append("Water depth-opacity control must be exposed in the Water menu")
+water_fog_option = "#define WATER_FOG_MULT 125 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 125 130 140 150 160 165 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity"
 if water_fog_option not in sources.get("gbuffers_water.fsh", ""):
     errors.append("WATER_FOG_MULT must use the documented Iris numerical-option value-list syntax")
 if "#define WAVING_RAIN // Animate rain and snow geometry" not in sources.get("gbuffers_weather.vsh", ""):
@@ -1286,12 +1333,12 @@ for program_name in cloud_shadow_programs:
         if declaration not in source:
             errors.append(f"{program_name} is missing cloud-shadow input/option: {declaration}")
 
-if "CLOUD_SHADOW_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
-    errors.append("CLOUD_SHADOW_STRENGTH must be exposed in the Iris Quality screen")
+if "CLOUD_SHADOW_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
+    errors.append("CLOUD_SHADOW_STRENGTH must be exposed in the Iris Clouds screen")
 if "CLOUD_SHADOW_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_SHADOW_STRENGTH must be included in the Iris slider list")
-if "CLOUD_DETAIL_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
-    errors.append("CLOUD_DETAIL_STRENGTH must be exposed in the Iris Quality screen")
+if "CLOUD_DETAIL_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
+    errors.append("CLOUD_DETAIL_STRENGTH must be exposed in the Iris Clouds screen")
 if "CLOUD_DETAIL_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_DETAIL_STRENGTH must be included in the Iris slider list")
 cloud_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
@@ -1309,8 +1356,8 @@ for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcol
         errors.append(f"Forward translucent colored-shadow path is missing component: {token}")
 for token in ("WATER_ABSORPTION_STRENGTH", "if (!cameraUnderwater)", "waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)",
               "float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01)",
-              "exp(-waterFogThickness * 0.16)",
-              "vec3 absorptionCoefficient = vec3(0.24, 0.10, 0.035)",
+              "exp(-waterFogThickness * 0.22)",
+              "vec3 absorptionCoefficient = vec3(0.34, 0.15, 0.055)",
               "vec3 transmission = exp(-absorptionCoefficient * waterThickness)",
               "waterAbsorptionTintLinear * (1.0 - transmission)"):
     if token not in water:
@@ -1485,13 +1532,13 @@ for token in ("WATER_WAVE_STRENGTH:25", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_S
               "AO_STRENGTH:0.40", "MATERIAL_SSS_STRENGTH:25"):
     if token not in ultra_light_profile:
         errors.append(f"Ultra-Light profile is missing low-cost setting: {token}")
-for token in ("WATER_WAVE_STRENGTH:75", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:60",
-              "WATER_FOAM_STRENGTH:60", "PBR_REFLECTION_STRENGTH:50",
-              "PBR_REFLECTION_QUALITY:6", "WATER_REFLECTION_QUALITY:6", "AO_STRENGTH:0.55"):
+for token in ("WATER_WAVE_STRENGTH:40", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:60",
+              "WATER_FOAM_STRENGTH:45", "PBR_REFLECTION_STRENGTH:50",
+              "PBR_REFLECTION_QUALITY:6", "WATER_REFLECTION_QUALITY:4", "AO_STRENGTH:0.55"):
     if token not in smooth_profile:
         errors.append(f"Smooth profile is missing balanced setting: {token}")
 for token in ("WATER_WAVE_DETAIL:1", "POM_ENTITY_STRENGTH:20",
-              "PBR_REFLECTION_QUALITY:8", "WATER_REFLECTION_QUALITY:8"):
+              "PBR_REFLECTION_QUALITY:8", "WATER_REFLECTION_QUALITY:6"):
     if token not in ultra_profile:
         errors.append(f"Ultra profile is missing high-quality setting: {token}")
 if "option.WATER_WAVE_DETAIL.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
@@ -1509,9 +1556,10 @@ if "out vec3 vViewNormal" not in water_vertex or "vViewNormal = viewNormal" not 
 water_options = ("WATER_REFLECTION_QUALITY", "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
                  "WATER_NORMAL_MAP_STRENGTH", "GLASS_NORMAL_MAP_STRENGTH", "WATER_WAVE_STRENGTH", "WATER_WAVE_SPEED", "WATER_WAVE_SCALE", "WATER_CAUSTICS_STRENGTH", "WATER_CAUSTICS_SCALE", "WATER_COLOR_STRENGTH", "WATER_NOISE_COLOR_STRENGTH")
 lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
+water_screen = next((line for line in props.splitlines() if line.startswith("screen.WATER =")), "")
 for option in water_options:
-    if option not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
-        errors.append(f"{option} must be exposed in the Iris Quality menu")
+    if option not in water_screen:
+        errors.append(f"{option} must be exposed in the Iris Water menu")
     if option not in props.split("sliders =", 1)[-1].splitlines()[0]:
         errors.append(f"{option} must be adjustable as an Iris slider")
     if f"option.{option} =" not in lang:
@@ -2053,9 +2101,9 @@ for token in ("uniform int isEyeInWater;", "applyUnderwaterDistortion(",
               "sceneUv = applyUnderwaterDistortion(vTexCoord)"):
     if token not in final_shader:
         errors.append(f"Underwater distortion is missing implementation component: {token}")
-underwater_quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
+underwater_quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.WATER =")), "")
 if "UNDERWATER_DISTORTION" not in underwater_quality_screen:
-    errors.append("UNDERWATER_DISTORTION must appear in the Quality screen")
+    errors.append("UNDERWATER_DISTORTION must appear in the Water screen")
 underwater_slider_line = next((line for line in held_props.splitlines() if line.startswith("sliders =")), "")
 if "UNDERWATER_DISTORTION" not in underwater_slider_line:
     errors.append("UNDERWATER_DISTORTION must be exposed as a slider")
@@ -2076,10 +2124,12 @@ for option in ("BLOOM_STRENGTH", "BLOOM_THRESHOLD", "FXAA_ENABLED"):
         errors.append(f"{option} must be exposed as a slider")
 
 # Sky and cloud scattering controls must be exposed consistently in UI and profiles.
-quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
-for option in ("SKY_ATMOSPHERE_STRENGTH", "CLOUD_SCATTERING_STRENGTH"):
-    if option not in quality_screen or option not in slider_line:
-        errors.append(f"{option} must be exposed in the Quality screen and slider list")
+sky_screen = next((line for line in held_props.splitlines() if line.startswith("screen.SKY =")), "")
+cloud_screen = next((line for line in held_props.splitlines() if line.startswith("screen.CLOUDS =")), "")
+for option, screen_line in (("SKY_ATMOSPHERE_STRENGTH", sky_screen),
+                            ("CLOUD_SCATTERING_STRENGTH", cloud_screen)):
+    if option not in screen_line or option not in slider_line:
+        errors.append(f"{option} must be exposed in its dedicated subsystem screen and slider list")
     if f"option.{option} =" not in held_lang or f"option.{option}.comment =" not in held_lang:
         errors.append(f"{option} requires a user-facing label and tooltip")
 for profile, sky_value, cloud_value in (
@@ -2206,10 +2256,10 @@ for token in ("#define LIGHT_SHAFT_STRENGTH", "#define LIGHT_SHAFT_QUALITY",
               "resultLinear += lightShafts"):
     if token not in composite_shader:
         errors.append(f"Screen-space light shafts are missing implementation component: {token}")
-quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
+sun_screen = next((line for line in held_props.splitlines() if line.startswith("screen.SUN =")), "")
 for option in ("LIGHT_SHAFT_STRENGTH", "LIGHT_SHAFT_QUALITY"):
-    if option not in quality_screen or option not in slider_line:
-        errors.append(f"{option} must be exposed in the Quality screen and slider list")
+    if option not in sun_screen or option not in slider_line:
+        errors.append(f"{option} must be exposed in the Sun screen and slider list")
     if f"option.{option}.comment =" not in held_lang:
         errors.append(f"{option} requires a user-facing tooltip")
 for profile, strength, quality in (("Ultra-Light", "0", "0"), ("Smooth", "20", "4"),
@@ -2230,6 +2280,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fs
         errors.append(f"{name} POM traversal must not wrap across sprite edges")
 
 # Screen-space GI must be depth-aware, profile-scaled and explicitly described as an approximation.
+quality_screen = next((line for line in held_props.splitlines() if line.startswith("screen.QUALITY =")), "")
 for token in ("#define SCREEN_GI_STRENGTH", "#define SCREEN_GI_QUALITY",
               "const vec2 offsets[12] = vec2[12](",
               "i < SCREEN_GI_QUALITY", "vec3 sampleScreenSpaceColorBleed(",
@@ -2270,8 +2321,8 @@ for name in ("composite.fsh", "gbuffers_water.fsh",
     source = sources.get(name, "")
     if "CLOUD_REFLECTION_STRENGTH" not in source or "uniform sampler2D noisetex" not in source:
         errors.append(f"{name} must provide cloud-reflection controls and noise input")
-if "CLOUD_REFLECTION_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
-    errors.append("Cloud reflection strength must be exposed in the Quality screen")
+if "CLOUD_REFLECTION_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
+    errors.append("Cloud reflection strength must be exposed in the Clouds screen")
 for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:15"),
                           ("Smooth", "CLOUD_REFLECTION_STRENGTH:30"),
                           ("Ultra", "CLOUD_REFLECTION_STRENGTH:60"),

@@ -10,6 +10,7 @@ uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 shadowLightPosition;
+uniform vec3 sunPosition;
 uniform sampler2D noisetex;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
@@ -49,13 +50,28 @@ vec3 reconstructPlayerDirection() {
 #define CLOUD_ALTITUDE 192 // [128 160 192 224 256] Cloud layer centre height in blocks
 #define CLOUD_THICKNESS 64 // [32 48 64 80 96] Cloud layer vertical thickness
 #define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
-#define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Volumetric cloud optical density
+#define CLOUD_DENSITY 65 // [25 40 45 55 65 70 85 100] Volumetric cloud optical density
 #define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud lighting and silver-lining response
 #define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
-#define AURORA_STRENGTH 45 // [0 10 25 40 55 70 85 100] Procedural night aurora
+#define AURORA_STRENGTH 45 // [0 10 25 40 45 55 70 85 100] Procedural night aurora
 #define NEBULA_STRENGTH 35 // [0 10 20 35 50 65 80 100] Procedural night-sky nebulae
-#define RAINBOW_STRENGTH 45 // [0 10 25 40 55 70 85 100] Atmospheric rainbow arc
+#define RAINBOW_STRENGTH 45 // [0 10 25 40 45 55 70 85 100] Atmospheric rainbow arc
+#define SUN_SIZE 100 // [50 75 100 125 150 175 200] Procedural sun angular size
+#define SUN_INTENSITY 100 // [0 25 50 75 100 110 115 125 150 200] Procedural sun disc brightness
+#define SUN_GLOW_STRENGTH 45 // [0 25 30 40 45 50 55 60 75 100 125 150] Soft solar halo intensity
+#define SKY_TWILIGHT_STRENGTH 60 // [0 25 50 55 60 65 70 75 100 125 150] Twilight colour intensity
+#define CLOUD_SHAPE 0 // [0 1 2] Cumulus, stratus or wispy cloud morphology
+#define CLOUD_SIZE 100 // [50 75 100 125 150 200] Cloud feature size
+#define SUN_COLOR_R 100 // [0 25 50 75 100 125 150 175 200] Sun disc red multiplier
+#define SUN_COLOR_G 100 // [0 25 50 75 100 125 150 175 200] Sun disc green multiplier
+#define SUN_COLOR_B 100 // [0 25 50 75 100 125 150 175 200] Sun disc blue multiplier
+#define SKY_COLOR_R 100 // [0 25 50 75 100 125 150 175 200] Sky red multiplier
+#define SKY_COLOR_G 100 // [0 25 50 75 100 125 150 175 200] Sky green multiplier
+#define SKY_COLOR_B 100 // [0 25 50 75 100 125 150 175 200] Sky blue multiplier
+#define CLOUD_COLOR_R 100 // [0 25 50 75 100 125 150 175 200] Cloud red multiplier
+#define CLOUD_COLOR_G 100 // [0 25 50 75 100 125 150 175 200] Cloud green multiplier
+#define CLOUD_COLOR_B 100 // [0 25 50 75 100 125 150 175 200] Cloud blue multiplier
 
 vec3 calculateAtmosphericScattering(
     vec3 viewDirection,
@@ -108,12 +124,13 @@ vec3 calculateAtmosphericScattering(
     // A warm horizon band is strongest while the sun crosses the horizon,
     // but fades under heavy rain so the vanilla biome fog remains authoritative.
     vec3 twilightColor = mix(
-        vec3(0.24, 0.16, 0.28),
-        vec3(1.0, 0.25, 0.08),
+        vec3(0.15, 0.11, 0.17),
+        vec3(1.0, 0.38, 0.18),
         dayFactor
     );
     float twilightEnergy = twilight * horizonPath
-        * (0.08 + 0.08 * (1.0 - abs(viewLightCosine)));
+        * (0.035 + 0.045 * (1.0 - abs(viewLightCosine)))
+        * (float(SKY_TWILIGHT_STRENGTH) * 0.01);
 
     vec3 scattering = rayleighColor * rayleighPhase * rayleighEnergy;
     scattering += mieColor * mieEnergy;
@@ -129,6 +146,34 @@ vec3 calculateAtmosphericScattering(
 
 
 
+float cloudHash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += vec2(dot(p, p + 34.345));
+    return fract(p.x * p.y);
+}
+
+float cloudValueNoise(vec2 p) {
+    vec2 cell = floor(p);
+    vec2 local = fract(p);
+    local = local * local * (3.0 - 2.0 * local);
+    float a = cloudHash(cell);
+    float b = cloudHash(cell + vec2(1.0, 0.0));
+    float c = cloudHash(cell + vec2(0.0, 1.0));
+    float d = cloudHash(cell + vec2(1.0, 1.0));
+    return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
+}
+
+float cloudFbm(vec2 p) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    for (int octave = 0; octave < 3; ++octave) {
+        value += cloudValueNoise(p) * amplitude;
+        p = p * 2.03 + vec2(17.1, 9.2);
+        amplitude *= 0.5;
+    }
+    return value * 1.14285714;
+}
+
 float sampleCloudDensity(
     vec3 worldPosition,
     float cloudBase,
@@ -141,22 +186,53 @@ float sampleCloudDensity(
     float heightFraction = clamp(
         (worldPosition.y - cloudBase) / max(cloudThickness, 1.0), 0.0, 1.0
     );
+
+#if CLOUD_SHAPE == 1
+    // Layered stratus: broad, shallow cloud sheets with a soft vertical profile.
+    float verticalProfile = smoothstep(0.01, 0.10, heightFraction)
+        * (1.0 - smoothstep(0.88, 0.99, heightFraction));
+    vec2 shapeScale = vec2(0.62, 1.0);
+#elif CLOUD_SHAPE == 2
+    // Wispy cloud bands: thin vertical profile and strongly elongated noise.
+    float verticalProfile = smoothstep(0.01, 0.07, heightFraction)
+        * (1.0 - smoothstep(0.42, 0.72, heightFraction));
+    vec2 shapeScale = vec2(0.28, 1.0);
+#else
+    // Cumulus: rounded tops, fuller centres and a softer underside.
     float verticalProfile = smoothstep(0.02, 0.18, heightFraction)
         * (1.0 - smoothstep(0.72, 1.0, heightFraction));
+    vec2 shapeScale = vec2(1.0);
+#endif
     if (verticalProfile <= 0.001) return 0.0;
 
-    vec2 noiseUv = worldPosition.xz * 0.0016 + wind
-        + vec2(0.0, heightFraction * 0.22);
-    float broadNoise = textureLod(noisetex, noiseUv, 0.0).r;
-    float detailNoise = textureLod(
-        noisetex, noiseUv * 2.73 + vec2(0.37, 0.19), 0.0
-    ).g;
-    float cloudNoise = mix(
-        broadNoise, broadNoise * 0.72 + detailNoise * 0.28, detailStrength
-    );
+    float cloudScale = 0.00135 * (100.0 / max(float(CLOUD_SIZE), 1.0));
+    vec2 noiseUv = worldPosition.xz * cloudScale * shapeScale
+        + wind + vec2(heightFraction * 0.13, -heightFraction * 0.19);
+
+    // Low-frequency domain warping creates rounded cloud lobes instead of
+    // the streaky, high-frequency blue-noise pattern from sampling noisetex.
+    float warpX = cloudValueNoise(noiseUv * 0.42 + vec2(5.7, 11.3));
+    float warpY = cloudValueNoise(noiseUv * 0.42 + vec2(19.1, 3.7));
+    vec2 warpedUv = noiseUv + (vec2(warpX, warpY) - 0.5) * 0.42;
+
+    float broadNoise = cloudFbm(warpedUv);
+    float detailNoise = cloudFbm(warpedUv * 3.1 + vec2(13.7, 7.1));
+    float fineErosion = cloudValueNoise(warpedUv * 7.0 + vec2(2.3, 29.7));
+    float detailMix = clamp(detailStrength, 0.0, 1.0);
+    float cloudNoise = mix(broadNoise, broadNoise * 0.78 + detailNoise * 0.22, detailMix);
+
+    // Higher coverage means more cloud. Rain increases coverage rather than
+    // accidentally thinning the cloud field.
+    float coverageThreshold = 0.72 - clamp(coverage, 0.0, 1.0) * 0.42;
+    float edgeWidth = mix(0.14, 0.075, detailMix);
     float cloudShape = smoothstep(
-        coverage, min(coverage + 0.22, 0.999), cloudNoise
+        coverageThreshold - edgeWidth,
+        coverageThreshold + edgeWidth,
+        cloudNoise
     );
+    float erosion = smoothstep(0.10, 0.82, fineErosion);
+    cloudShape *= mix(0.92, 0.72 + 0.28 * erosion, detailMix);
+
     return cloudShape * verticalProfile * (1.0 + rain * 0.25);
 }
 
@@ -198,9 +274,10 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
     );
 
     float detailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
+    float baseCoverage = float(CLOUD_COVERAGE) * 0.01;
     float coverage = mix(
-        float(CLOUD_COVERAGE) * 0.01,
-        float(CLOUD_COVERAGE) * 0.01 - 0.08,
+        baseCoverage,
+        min(baseCoverage + 0.12, 0.95),
         clamp(rain, 0.0, 1.0)
     );
     float densityStrength = float(CLOUD_DENSITY) * 0.01;
@@ -235,10 +312,6 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
             (samplePosition.y - cloudBase) / max(float(CLOUD_THICKNESS), 1.0),
             0.0, 1.0
         );
-        float verticalProfile = smoothstep(0.02, 0.18, heightFraction)
-            * (1.0 - smoothstep(0.72, 1.0, heightFraction));
-        if (verticalProfile <= 0.001) continue;
-
         float density = sampleCloudDensity(
             samplePosition, cloudBase, float(CLOUD_THICKNESS),
             wind, coverage, detailStrength, rain
@@ -287,6 +360,7 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
 
         float cloudFog = smoothstep(600.0, 1400.0, sampleDistance);
         sampleColor = mix(sampleColor, vFogLinear, cloudFog * 0.75);
+        sampleColor *= vec3(float(CLOUD_COLOR_R), float(CLOUD_COLOR_G), float(CLOUD_COLOR_B)) * 0.01;
 
         cloudRadiance += cloudRadiance * 0.0 + transmittance * sampleAlpha * sampleColor;
         transmittance *= 1.0 - sampleAlpha;
@@ -436,7 +510,7 @@ void main() {
             vec3 dawnColor = vec3(1.0, 0.195, 0.055);
             vec3 duskColor = vec3(0.64, 0.083, 0.144);
             vec3 twilightColor = mix(duskColor, dawnColor, dawnSide);
-            colorLinear = mix(colorLinear, twilightColor, horizonBand * twilight * 0.18);
+            colorLinear = mix(colorLinear, twilightColor, horizonBand * twilight * 0.10 * (float(SKY_TWILIGHT_STRENGTH) * 0.01));
         }
         colorLinear = mix(colorLinear, vFogLinear, 0.35 * rainStrength);
         colorLinear += calculateNightSkyEffects(
@@ -445,6 +519,7 @@ void main() {
         colorLinear += calculateRainbow(
             viewDirection, solarElevation, rainStrength
         );
+        colorLinear *= vec3(float(SKY_COLOR_R), float(SKY_COLOR_G), float(SKY_COLOR_B)) * 0.01;
 
         // Volumetric clouds are integrated into the sky pass so they use the
         // exact same sky ray, fog, celestial direction and depth ordering.
@@ -480,6 +555,39 @@ void main() {
             vec3 glareColor = mix(nightGlareColor, dayGlareColor, dayFactor);
             colorLinear += glareColor * celestialGlare;
         }
+        // Draw the sun as a circular analytic disc rather than relying on
+        // the square vanilla sun sprite. sunPosition and viewDirection are view-space.
+        if (isSky && hasSkylight && SUN_INTENSITY > 0) {
+            vec3 sunDirection = normalize(sunPosition);
+            float sunAlignment = dot(viewDirection, sunDirection);
+            float sunElevation = dot(
+                sunDirection,
+                normalize(gbufferModelView[1].xyz)
+            );
+            float sunRadius = radians(0.45) * (float(SUN_SIZE) * 0.01);
+            float sunEdge = max(fwidth(sunAlignment) * 1.5, 0.000005);
+            float sunDisk = smoothstep(
+                cos(sunRadius) - sunEdge,
+                cos(sunRadius) + sunEdge,
+                sunAlignment
+            );
+            vec3 sunDiskColor = mix(
+                vec3(1.0, 0.34, 0.14),
+                vec3(1.0, 0.94, 0.80),
+                smoothstep(-0.08, 0.35, sunElevation)
+            );
+            sunDiskColor *= vec3(float(SUN_COLOR_R), float(SUN_COLOR_G), float(SUN_COLOR_B)) * 0.01;
+            float sunEnergy = float(SUN_INTENSITY) * 0.01;
+            colorLinear = mix(
+                colorLinear,
+                sunDiskColor * (1.6 * sunEnergy),
+                sunDisk
+            );
+            float solarHalo = pow(max(sunAlignment, 0.0), 140.0);
+            colorLinear += sunDiskColor * solarHalo
+                * (float(SUN_GLOW_STRENGTH) * 0.0018);
+        }
+
         alpha = 1.0;
     }
 

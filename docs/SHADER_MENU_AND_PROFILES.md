@@ -17,11 +17,11 @@ These profiles are defined in `shaders/shaders.properties` and exposed through I
 Important: profiles must never silently disable a reference Ultra feature. Lower profiles may tune sampling, resolution, shadow distance, filtering and reconstruction quality. Any feature-specific quality change must be explicit and documented. As new renderers land, each profile must configure their quality budgets consistently.
 
 ## Current menu screens
-- Main screen: profile selector, Quality, Color.
+- Main screen: profile selector, Quality, Water, Sun, Sky, Clouds, Anti-Aliasing and Color.
 - Quality: shadow-map resolution and shadow distance.
 - Color: independent RGB channel gains, gamma, exposure, contrast, saturation and HDR tone-mapping mode.
 
-The menu uses Iris-native `screen`, `sliders`, `profile.*` and `.lang` mechanisms. Labels and hover tooltips are localized in `shaders/lang/en_us.lang`.
+The menu uses Iris-native `screen`, `sliders`, `profile.*` and `.lang` mechanisms. Water, Sun, Sky and Clouds each have dedicated sub-screens; labels and hover tooltips are localized in `shaders/lang/en_us.lang`.
 
 ## Color controls implemented
 - Red, green and blue gain sliders.
@@ -119,3 +119,28 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added `composite12` TAA resolve with previous-camera reprojection, depth-based disocclusion rejection, 3×3 neighborhood history clamping and RGBA16F persistent history (`colortex14`).
 - Added TAA enable, history weight and resolve sharpening controls in a dedicated Anti-Aliasing menu. Ultra-Light disables TAA; Smooth and higher profiles enable it with increasing history weight.
 - The current history reprojection covers camera/static-world motion; moving-object velocity is not available, so fast moving entities may need history rejection tuning after runtime tests.
+
+
+## Dedicated subsystem screens — 2026-11-24
+- Added separate Water, Sun, Sky and Clouds pages to the Iris shader settings menu; the corresponding options are no longer buried in the general Quality list.
+- Water groups depth absorption/fog, colour, waves, foam, refraction and reflections.
+- Sun uses a procedural antialiased circular disc in the sky pass, with independent disc size, intensity and halo controls; the vanilla square sun texture is discarded.
+- Sky separates twilight tint from the general Rayleigh/Mie atmospheric scattering and night effects.
+- Clouds use coherent hash-based value-noise fBm with domain warping, selectable cumulus/stratus/wispy morphology, size, coverage, density, height and wind controls. The prior blue-noise texture sampling is no longer used to define cloud silhouettes.
+
+
+## Water tuning — 2026-11-24
+- Reduced the default animated normal slope and wave speed to avoid the exaggerated, streaky surface motion seen in the user's Iris screenshot.
+- Reduced default screen-space reflection and refraction strength so the water surface does not smear the sky/shoreline as aggressively.
+- Increased depth fog and Beer-Lambert absorption; deep water now attenuates red and green much faster and should hide the seabed sooner.
+- Reduced animated colour-noise and shoreline foam defaults, and shifted the base tint slightly toward cool blue rather than warm/purple.
+- Water-related controls and profiles are grouped under the dedicated Water page.
+
+## Better Clouds compatibility note
+The user's uploaded log identifies Better Clouds 1.15.0 running its independent Blaze3D cloud renderer. Iris logs a missing override for `betterclouds:blaze_3d_renderer` followed by `GL_INVALID_OPERATION`. Serene's own volumetric cloud pass is independent of that mod renderer. For a clean shader-only comparison, use Better Clouds settings with **Cloud Override off** and **Iris Support off**, or temporarily disable the Better Clouds mod. The pack sets `clouds=off` to prevent vanilla cloud geometry from competing with its own volumetric sky.
+
+
+## Direct colour controls — 2026-11-24
+- Added nested RGB pages for surface water, underwater tint, sun disc, sky and volumetric cloud lighting.
+- Each channel is independently adjustable in Iris and all five performance profiles begin at neutral 100% multipliers.
+- Cloud shape modes now own their complete vertical density profiles; the old cumulus-only prefilter no longer suppresses stratus and wispy presets.
