@@ -943,6 +943,18 @@ void main() {
             0.0, 0.95
         );
         litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
+
+        // A bounded microfacet-style solar glint keeps the sun reflection
+        // coherent instead of relying only on a noisy low-resolution SSR hit.
+        // The tight lobe follows the animated water normal and is attenuated
+        // by the same shadow/cloud visibility as direct sunlight.
+        if (!cameraUnderwater && hasSkylight && nDotL > 0.001 && celestialGate > 0.001) {
+            vec3 viewHalfVector = normalize(viewLightDirection + normalize(-vViewPosition));
+            float sunGlint = pow(max(dot(normalize(viewNormal), viewHalfVector), 0.0), 180.0);
+            sunGlint *= nDotL * shadow.r * cloudShadow;
+            sunGlint *= (1.0 - rainStrength * 0.75) * (1.0 - waterFoam);
+            litLinear += celestialColor * sunGlint * 0.42;
+        }
     }
 
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
