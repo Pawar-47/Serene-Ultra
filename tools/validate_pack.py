@@ -100,8 +100,8 @@ for fragment_path in SHADERS.rglob("*.fsh"):
     vertex_source = vertex_path.read_text(encoding="utf-8")
     fragment_source = fragment_path.read_text(encoding="utf-8")
     declaration = re.compile(
-        r"^\\s*(?:(flat|smooth|noperspective)\\s+)?"
-        r"(in|out)\\s+(\\w+)\\s+(\\w+)(?:\\s*\\[[^]]*\\])?\\s*;",
+        r"^\s*(?:(flat|smooth|noperspective)\s+)?"
+        r"(in|out)\s+(\w+)\s+(\w+)(?:\s*\[[^]]*\])?\s*;",
         re.MULTILINE,
     )
     vertex_outputs = {
