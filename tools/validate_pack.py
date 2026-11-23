@@ -1334,8 +1334,8 @@ for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcol
         errors.append(f"Forward translucent colored-shadow path is missing component: {token}")
 for token in ("WATER_ABSORPTION_STRENGTH", "if (!cameraUnderwater)", "waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)",
               "float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01)",
-              "exp(-waterFogThickness * 0.16)",
-              "vec3 absorptionCoefficient = vec3(0.24, 0.10, 0.035)",
+              "exp(-waterFogThickness * 0.22)",
+              "vec3 absorptionCoefficient = vec3(0.34, 0.15, 0.055)",
               "vec3 transmission = exp(-absorptionCoefficient * waterThickness)",
               "waterAbsorptionTintLinear * (1.0 - transmission)"):
     if token not in water:
@@ -1510,13 +1510,13 @@ for token in ("WATER_WAVE_STRENGTH:25", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_S
               "AO_STRENGTH:0.40", "MATERIAL_SSS_STRENGTH:25"):
     if token not in ultra_light_profile:
         errors.append(f"Ultra-Light profile is missing low-cost setting: {token}")
-for token in ("WATER_WAVE_STRENGTH:75", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:60",
-              "WATER_FOAM_STRENGTH:60", "PBR_REFLECTION_STRENGTH:50",
-              "PBR_REFLECTION_QUALITY:6", "WATER_REFLECTION_QUALITY:6", "AO_STRENGTH:0.55"):
+for token in ("WATER_WAVE_STRENGTH:40", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:60",
+              "WATER_FOAM_STRENGTH:45", "PBR_REFLECTION_STRENGTH:50",
+              "PBR_REFLECTION_QUALITY:6", "WATER_REFLECTION_QUALITY:4", "AO_STRENGTH:0.55"):
     if token not in smooth_profile:
         errors.append(f"Smooth profile is missing balanced setting: {token}")
 for token in ("WATER_WAVE_DETAIL:1", "POM_ENTITY_STRENGTH:20",
-              "PBR_REFLECTION_QUALITY:8", "WATER_REFLECTION_QUALITY:8"):
+              "PBR_REFLECTION_QUALITY:8", "WATER_REFLECTION_QUALITY:6"):
     if token not in ultra_profile:
         errors.append(f"Ultra profile is missing high-quality setting: {token}")
 if "option.WATER_WAVE_DETAIL.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
