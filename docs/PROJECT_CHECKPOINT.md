@@ -845,3 +845,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Follow-up audit separated fallback smoothness/reflectance from fallback emission. Smoothness and reflectance remain fallback-only when no specular map exists; ender-chest, conduit and enchanting-book emission cues now remain available when a specular map exists but does not encode emission.
 - The conduit lightmap-coordinate boost is now applied independently of specular-map emission, matching the reference's material lighting behavior.
 - Added regression assertions for the separated material-map and emission fallback branches. CI must pass before validation is complete.
+
+
+## Block-entity material-dispatch refinement — 2026-11-23
+- Run #1077 (45111905855) passed the initial dispatch. A detailed comparison then found the conduit lightmap was written to the G-buffer before its boost, conduit fallback emission was capped below the reference values, and bell gold smoothness used an extra square.
+- Moved outLightmapData after the conduit adjustment; restored conduit blue/wind emission to albedo.r * 16 and red-eye emission to 20; corrected bell gold smoothness to color.g squared.
+- Added per-material coating factors from Complementary's blockEntityIPBR reference: chest/ender chest 0.66, shulker/head/bed 0.2, bell gold 0.33, bell stone 0.77, copper 0.5, banner 0.2. Explicit specular maps retain priority and do not receive fallback coating.
+- The corrected commit needs a fresh CI run. Chest seam, conduit lighting, bell material and copper appearance still need in-game visual validation.

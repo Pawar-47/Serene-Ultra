@@ -885,7 +885,7 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "alphaTestRef",
 block_shader = sources.get("gbuffers_block.fsh", "")
 for token in ("/* RENDERTARGETS: 0,1,2,3 */", "uniform int blockEntityId",
               "blockEntityId == 5004", "blockEntityId == 5025",
-              "blockEntityId == 5008", "blockEntityId == 5012", "blockEntityId == 5020",
+              "blockEntityId == 5008", "blockEntityId == 5012", "blockEntityId == 5016", "blockEntityId == 5020",
               "blockEntityId == 5028", "blockEntityId == 5032", "blockEntityId == 5036",
               "blockEntityId == 10548", "hasMaterialSpecularMap", "skipGeneratedNormals",
               "materialSmoothness = enderChestFactor * 2.0",
@@ -893,12 +893,22 @@ for token in ("/* RENDERTARGETS: 0,1,2,3 */", "uniform int blockEntityId",
               "if (blockEntityId == 5020)",
               "if (blockEntityId == 10548)",
               "vanillaLight = texture(lightmap, vec2(0.9, vLightmapCoord.y)).rgb",
-              "emissionStrength = max(emissionStrength, 5.0)",
+              "emissionStrength = max(emissionStrength, albedo.r * 16.0)", "emissionStrength = max(emissionStrength, 20.0)",
               "albedo.rgb *= vec3(1.0, 0.25, 0.1)",
               "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5 + 0.5 * materialSmoothness)",
               "calculateBlockFog", "outEmissionData"):
     if token not in block_shader:
         errors.append(f"Block-entity shader is missing Iris blockEntityId component: {token}")
+if block_shader.index("outLightmapData = vec4(vanillaLight, skyLight)") < block_shader.index("if (blockEntityId == 5020)"):
+    errors.append("Block-entity lightmap output must be written after conduit lightmap boost")
+if "float goldGreenSquared = albedo.g * albedo.g;" not in block_shader:
+    errors.append("Bell gold smoothness must use the block-entity color.g squared reference mapping")
+for token in ("materialCoatingFactor = 0.66", "materialCoatingFactor = 0.2",
+              "materialCoatingFactor = 0.33", "materialCoatingFactor = 0.77",
+              "materialCoatingFactor = 0.5", "!hasMaterialSpecularMap"):
+    if token not in block_shader:
+        errors.append(f"Block-entity material-specific coating is missing: {token}")
+
 line_overlay = sources.get("gbuffers_line.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLINE", "MC_RENDER_STAGE_DEBUG",
               "fogColor", "fogDensity", "outDeferredValidity = vec4(0.0)"):

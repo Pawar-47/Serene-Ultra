@@ -303,3 +303,8 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Ultra/HDR retain higher-quality water and material settings and enable the optional fourth very-large water-normal scale. WATER_WAVE_DETAIL is a checkbox with an explicit one-extra-texture-sample tooltip.
 - Water caustics are implemented in the shadow pass through WATER_CAUSTICS_STRENGTH/SCALE and translucent shadow-colour output; these profile values tune that existing path.
 - This is preset-level performance intent, not measured FPS. Target-device profiling on Intel HD 5500 remains required.
+
+
+## Block-entity material-dispatch refinements — 2026-11-23
+- Reference factors are now applied per block entity rather than uniformly: chest/ender chest 0.66, shulker/head/bed 0.2, bell gold 0.33, bell stone 0.77, copper 0.5, banner 0.2. Explicit PBR specular maps keep priority.
+- Conduit output order matters: update vanillaLight first, then write outLightmapData. Preserve reference emission response at albedo.r * 16 for blue/wind pixels and 20.0 for red-eye pixels. Bell gold smoothness uses color.g squared; stone uses color.g to the fourth power times two.
