@@ -1692,7 +1692,7 @@ for line_number, raw_line in enumerate(props.splitlines(), 1):
             )
             continue
 
-    flip_source = sources.get(f"{flip_program}.fsh", "")
+    flip_source = sources.get(f"{program_base}.fsh", "")
     flip_targets = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", flip_source)
     if not flip_targets:
         continue
