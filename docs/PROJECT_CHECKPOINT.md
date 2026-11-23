@@ -1385,3 +1385,26 @@ Iris 26.1 implementation references:
 - `common/src/main/java/net/irisshaders/iris/shaderpack/properties/PackRenderTargetDirectives.java`
 
 The cleanup is source/configuration-verified; the latest validator workflow must pass before it is marked CI-verified. Runtime rendering remains unverified.
+
+
+
+## Continuation update — 2026-11-23 (26.3 clouds, fog, shadows and routing)
+
+### Implemented source changes
+- Inspected the supplied Minecraft 26.3 stock cloud shaders and the Iris `ShaderKey.CLOUDS` definition. Dedicated `gbuffers_clouds` now consumes the actual `POSITION_COLOR` interface; it no longer samples nonexistent cloud UVs. Cloud scattering has a zero-strength neutral path and remains neutral without skylight.
+- Corrected the stock cylindrical fog metric in all 12 fragment programs that use `fogShape`. The validator now scans every fragment stage using `fogShape` and requires `max(length(position.xz), abs(position.y))`.
+- Added a shared `lib/lighting/soft_shadow.glsl` rotated-Poisson PCF/colored-transmission helper and wired it into deferred, water, translucent entity, translucent block-entity and translucent particle lighting. Water shadow bias retains its geometric normal before wave perturbation.
+- Updated validator expectations to the shared shadow helper. CI had first exposed stale inline-function assumptions; those checks were migrated to verify the helper implementation and every caller rather than bypassed.
+
+### Iris 26.3 routing and transparency research
+- Vanilla 26.3 stock contains native OIT accumulation/depth-bounds/composite shader files. The audited Iris shaderpack route maps translucent terrain to `gbuffers_water`, translucent particles to `gbuffers_particles_translucent`, and water-mask handling to `gbuffers_basic`; no shaderpack OIT phases are exposed in the inspected Iris source. Do not transplant vanilla OIT attachments/macros into Serene without an Iris-supported contract.
+- Iris parses `separateEntityDraws` and maps translucent entity/block-entity/item shader keys, but the current official ordering docs warn that this feature may be broken in newer Iris versions. Keep it best-effort and require runtime confirmation; do not treat source mappings as proof of draw routing.
+- Correct Iris flip semantics are documented in the authoritative section above: only declared composite-style draw outputs ping-pong; read-only flip overrides are no-ops, and `shadowcolor0` is a separate shadow attachment, not a colortex target.
+
+### Validation
+- Latest verified shader/code CI before this documentation update: run `45215046668`, success, on commit `f0de944e79b7ceed15c021586ae1eed09a80aec5`.
+- This run included the shared soft-shadow validator update. No Minecraft 26.3/Iris runtime or visual test has been performed.
+- Alpha publishing remains disabled.
+
+### Next priority
+Run the exact Minecraft 26.3 + Iris + Sodium runtime matrix for clouds, fog, colored shadows, translucent entity routing and native OIT interaction. Continue feature-parity implementation only after the active render routes are confirmed.

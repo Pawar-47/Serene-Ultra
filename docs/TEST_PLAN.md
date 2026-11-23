@@ -72,3 +72,19 @@ Additional runtime checks:
 6. Save the Iris log and screenshots. Mark this test complete only after the same scene passes after a shader reload and a full game restart.
 
 Do not add vanilla `OIT_*` macros or native OIT attachment declarations to the shaderpack unless Iris documents and exposes those phases.
+
+
+
+## Cloud vertex-format and vertical-fog regression
+
+1. In Minecraft 26.3, load the pack in an overworld with native clouds enabled. Confirm clouds retain their engine-provided color/face shading, are not sampled from an atlas, fade with Iris fog and do not inherit the terrain deferred normal.
+2. Check dawn, noon, dusk, night, rain, and a dimension without skylight. Set `CLOUD_SCATTERING_STRENGTH=0` and confirm the cloud shader returns to the unmodified vertex-color path.
+3. With cylindrical fog selected, compare horizontal, steep-upward and steep-downward views for deferred terrain, clouds, basic/textured overlays, block entities, translucent entities, particles, lightning and spider eyes. The fog distance should include the absolute vertical component.
+4. Capture screenshots at the same coordinates with Serene, the working Complementary reference and shaders disabled.
+
+## Translucent entity routing regression
+
+1. Keep `separateEntityDraws=true` and `particles.ordering=mixed`; record the exact Iris/Sodium builds.
+2. Test translucent entity textures, glass armor/armor trims, translucent held items, item frames, block entities with translucent materials, water/glass overlap and particles both in front of and behind entities.
+3. Confirm whether geometry actually reaches `gbuffers_entities_translucent` and `gbuffers_block_translucent` after deferred. Use shader debug output/logging if available; the presence of the files and parser support is not proof of routing because Iris documents this feature as potentially broken in newer versions.
+4. Compare sorting, depth writes and blending against shaders disabled and the working reference. If routing fails, record it as an Iris runtime limitation rather than changing the shader stages blindly.

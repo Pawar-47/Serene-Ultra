@@ -297,3 +297,12 @@ The opaque terrain, entity and block-entity G-buffers now decode the LabPBR norm
 The Vanilla-stock archive contains 89 GLSL source files: 72 declare GLSL 330 and 17 are include fragments without a version declaration. Sixteen archive paths contain OIT-related files. The stock `core/terrain.fsh` and OIT includes implement a native multi-phase OIT path.
 
 The inspected Iris source maps translucent terrain to the shaderpack's `gbuffers_water` program, water-mask rendering to `gbuffers_basic`, and translucent particles to `gbuffers_particles_translucent`. It does not expose the stock OIT phase macros as shaderpack stages in the inspected source snapshot. Serene therefore targets Iris' conventional alpha-blended gbuffers path; native Minecraft OIT is an engine reference, not a shaderpack subsystem to copy. This remains subject to the 26.3 runtime regression test described in `docs/TEST_PLAN.md`.
+
+
+
+## Minecraft 26.3 native clouds and soft/coloured shadows
+
+- **Native clouds:** dedicated `gbuffers_clouds` is aligned with Iris' `POSITION_COLOR` cloud vertex format and the stock 26.3 cloud shader. It preserves CloudColor/face shading, applies Iris fog and optional bounded scattering. Custom volumetric clouds remain unimplemented.
+- **Cylindrical fog:** all 12 fragment programs that use `fogShape` now use `max(length(position.xz), abs(position.y))`; the validator enforces the invariant globally.
+- **Soft/coloured shadows:** one rotated-Poisson helper is shared by deferred lighting and forward water/entity/block-entity/particle paths. It uses `shadowtex0`, `shadowtex1` and `shadowcolor0` according to Iris' documented alpha-transmission contract. Runtime softness, color accumulation and performance still need visual testing.
+- **Entity routing:** the pack contains the required translucent entity/block-entity/particle programs and requests `separateEntityDraws=true`, but current Iris docs warn that the routing may be broken in newer versions. Treat it as best-effort until runtime draw routing is confirmed.
