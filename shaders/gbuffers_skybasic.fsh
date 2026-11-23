@@ -50,16 +50,16 @@ vec3 reconstructPlayerDirection() {
 #define CLOUD_ALTITUDE 192 // [128 160 192 224 256] Cloud layer centre height in blocks
 #define CLOUD_THICKNESS 64 // [32 48 64 80 96] Cloud layer vertical thickness
 #define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
-#define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Volumetric cloud optical density
+#define CLOUD_DENSITY 65 // [25 40 45 55 65 70 85 100] Volumetric cloud optical density
 #define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud lighting and silver-lining response
 #define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
-#define AURORA_STRENGTH 45 // [0 10 25 40 55 70 85 100] Procedural night aurora
+#define AURORA_STRENGTH 45 // [0 10 25 40 45 55 70 85 100] Procedural night aurora
 #define NEBULA_STRENGTH 35 // [0 10 20 35 50 65 80 100] Procedural night-sky nebulae
-#define RAINBOW_STRENGTH 45 // [0 10 25 40 55 70 85 100] Atmospheric rainbow arc
+#define RAINBOW_STRENGTH 45 // [0 10 25 40 45 55 70 85 100] Atmospheric rainbow arc
 #define SUN_SIZE 100 // [50 75 100 125 150 175 200] Procedural sun angular size
 #define SUN_INTENSITY 100 // [0 25 50 75 100 110 115 125 150 200] Procedural sun disc brightness
-#define SUN_GLOW_STRENGTH 45 // [0 25 30 40 50 55 60 75 100 125 150] Soft solar halo intensity
+#define SUN_GLOW_STRENGTH 45 // [0 25 30 40 45 50 55 60 75 100 125 150] Soft solar halo intensity
 #define SKY_TWILIGHT_STRENGTH 60 // [0 25 50 55 60 65 70 75 100 125 150] Twilight colour intensity
 #define CLOUD_SHAPE 0 // [0 1 2] Cumulus, stratus or wispy cloud morphology
 #define CLOUD_SIZE 100 // [50 75 100 125 150 200] Cloud feature size
