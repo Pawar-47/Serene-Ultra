@@ -597,7 +597,7 @@ void main() {
             materialSmoothness = max(
                 materialSmoothness, clamp(pow(albedo.g, 4.0) * 2.0, 0.0, 1.0)
             );
-            materialCoatingFactor = max(materialCoatingFactor, 0.77);
+            materialCoatingFactor = 0.77;
         } else if (vMaterialId == 32161) { // Deepslate family
             materialSmoothness = max(
                 materialSmoothness, clamp(pow(albedo.g, 1.5) * 0.55, 0.0, 1.0)
