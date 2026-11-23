@@ -419,8 +419,7 @@ bool skipGeneratedNormals = signText || blockEntityId == 5036;
 #if COATED_TEXTURE_STRENGTH > 0
     if (!signText && blockEntityId != 5025 && !hasMaterialSpecularMap &&
         albedo.a >= 0.999 && materialCoatingFactor > 0.0 &&
-        pbrEmission < 0.01 && emissionStrength < 0.01 &&
-        materialReflectance < 0.8 && materialSmoothness < 0.85) {
+        pbrEmission < 0.01 && materialReflectance < 0.8) {
         albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM,
             vPlayerPosition, materialCoatingFactor);
     }

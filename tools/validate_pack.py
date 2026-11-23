@@ -908,6 +908,14 @@ for token in ("materialCoatingFactor = 0.66", "materialCoatingFactor = 0.2",
               "materialCoatingFactor = 0.5", "!hasMaterialSpecularMap"):
     if token not in block_shader:
         errors.append(f"Block-entity material-specific coating is missing: {token}")
+coating_call = block_shader.find("albedo.rgb = applyCoatedTexture")
+coating_guard_start = block_shader.rfind("if (", 0, coating_call)
+coating_guard = block_shader[coating_guard_start:coating_call] if coating_call >= 0 else ""
+if "emissionStrength < 0.01" in coating_guard or "materialSmoothness < 0.85" in coating_guard:
+    errors.append("Block-entity fallback coating must remain active for reference emissive ender chests and smooth mapped materials")
+if "pbrEmission < 0.01" not in coating_guard:
+    errors.append("Explicit PBR-map emission must retain priority over block-entity fallback coating")
+
 
 line_overlay = sources.get("gbuffers_line.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_OUTLINE", "MC_RENDER_STAGE_DEBUG",

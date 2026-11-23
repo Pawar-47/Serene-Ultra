@@ -852,3 +852,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Moved outLightmapData after the conduit adjustment; restored conduit blue/wind emission to albedo.r * 16 and red-eye emission to 20; corrected bell gold smoothness to color.g squared.
 - Added per-material coating factors from Complementary's blockEntityIPBR reference: chest/ender chest 0.66, shulker/head/bed 0.2, bell gold 0.33, bell stone 0.77, copper 0.5, banner 0.2. Explicit specular maps retain priority and do not receive fallback coating.
 - The corrected commit needs a fresh CI run. Chest seam, conduit lighting, bell material and copper appearance still need in-game visual validation.
+
+
+## Block-entity coating priority follow-up — 2026-11-23
+- Run #1079 (45112309599) passed all stages for the corrected conduit lightmap/emission, bell gold and material-specific coating dispatch.
+- Final review removed fallback-emission and smoothness gates from the block-entity coating call. Complementary applies coating to ender chests even when their fallback glow is active, and the per-material factors are already deliberately conservative. Explicit PBR-map emission and explicit specular maps still retain priority.
+- CI now guards that fallback coating is not accidentally suppressed by emissionStrength or smoothness thresholds while explicit PBR emission remains protected.
