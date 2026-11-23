@@ -17,6 +17,9 @@ option.EXPOSURE = Exposure
 option.CONTRAST = Contrast
 option.SATURATION = Saturation
 option.HDR_LOOK = HDR Tone Mapping
+option.CHROMATIC_ABERRATION = Chromatic Aberration
+option.VIGNETTE_STRENGTH = Lens Vignette
+option.FILM_GRAIN_STRENGTH = Film Grain
 
 option.DOF_STRENGTH.comment = Adds a bounded depth-aware photographic blur outside the selected focus range. Higher values increase the blur radius; Ultra-Light disables it.
 option.DOF_FOCUS_DISTANCE.comment = Sets the in-focus distance from the camera in blocks.
@@ -32,6 +35,9 @@ option.EXPOSURE.comment = Brightness adjustment in photographic stops.
 option.CONTRAST.comment = Adjust contrast around middle gray.
 option.SATURATION.comment = Adjust color intensity. 1.00 is neutral; 0.00 is monochrome.
 option.HDR_LOOK.comment = HDR-style tone mapping for SDR output. This does not enable operating-system or monitor HDR output.
+option.CHROMATIC_ABERRATION.comment = Adds subtle radial red/blue separation near the image edges to reproduce lens dispersion. Zero disables the extra samples.
+option.VIGNETTE_STRENGTH.comment = Darkens the outer image corners with a smooth photographic lens falloff.
+option.FILM_GRAIN_STRENGTH.comment = Adds subtle animated monochrome grain using Iris noise texture. Keep low to avoid distracting flicker.
 
 value.HDR_LOOK.0 = Neutral
 value.HDR_LOOK.1 = HDR
