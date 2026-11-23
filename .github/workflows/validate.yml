@@ -145,6 +145,29 @@ jobs:
                /^#define WATER_WAVE_DETAIL 0/ { print "#define WATER_WAVE_DETAIL 1"; next }
                { print }' shaders/gbuffers_water.fsh > "$tmpdir/water-detail-labpbr.frag"
           glslangValidator -l "$tmpdir/water.vert" "$tmpdir/water-detail-labpbr.frag"
+      - name: Inspect water normal alpha-height channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -c "from PIL import Image" >/dev/null 2>&1 || python -m pip install --quiet --disable-pip-version-check Pillow
+          python - <<'PY'
+          from PIL import Image
+
+          path = "shaders/lib/textures/water-normal.png"
+          image = Image.open(path)
+          print(f"Water normal asset: {image.size[0]}x{image.size[1]}, mode={image.mode}, bands={image.getbands()}")
+          if "A" in image.getbands() or "transparency" in image.info:
+              alpha = image.convert("RGBA").getchannel("A")
+              extrema = alpha.getextrema()
+              unique_values = len(set(alpha.getdata()))
+              print(f"Water normal alpha: min={extrema[0]}, max={extrema[1]}, unique_values={unique_values}")
+              if extrema[0] == extrema[1]:
+                  print("Alpha is constant; it does not provide a varying height field. Keep water POM disabled.")
+              else:
+                  print("Alpha varies; verify that it encodes height rather than transparency before enabling water POM.")
+          else:
+              print("Water normal has no alpha channel; water POM remains unsupported by this asset.")
+          PY
       - name: Link vertex and fragment shader programs
         shell: bash
         run: |

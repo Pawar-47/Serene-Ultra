@@ -870,3 +870,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Added Complementary's narrow chest depth-bias correction for blockEntityId 5008 when the fractional world Y coordinate is in the 0.56–0.57 seam band.
 - Uses vPlayerPosition.y + cameraPositionFract.y rather than a large absolute cameraPosition float, preserving the fractional coordinate with Iris' split integer/fractional camera uniforms.
 - The bias is a 0.0001 clip-space Z adjustment and applies only to chest/trapped-chest block entities. CI validation is pending; visual confirmation of the chest seam in-game remains required.
+
+
+## Water-normal alpha inspection — 2026-11-23
+- Run #1082 (45112646920) passed all nine stages after the chest seam correction.
+- Added a lightweight CI asset inspection for water-normal.png. It reports image dimensions, channel layout and alpha min/max/unique-value count. A varying alpha channel is not automatically treated as height; its semantics must still be verified before implementing water parallax.
+- The inspection is diagnostic only and does not change shader behavior. Water POM remains disabled until the asset is confirmed to contain a valid height field.

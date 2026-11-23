@@ -1167,6 +1167,9 @@ if "ENTITY_GN_AND_CT" not in workflow_text:
     errors.append("CI must compile the opt-in entity generated-normal/coating branch")
 if "Compile opt-in Unbound water wave detail" not in workflow_text or "WATER_WAVE_DETAIL 1" not in workflow_text:
     errors.append("CI must compile the optional fourth Unbound water-normal octave")
+if "Inspect water normal alpha-height channel" not in workflow_text or "alpha.getextrema()" not in workflow_text:
+    errors.append("CI must inspect water-normal alpha data before water POM is considered")
+
 
 for option in ("GENERATED_NORMAL_STRENGTH", "COATED_TEXTURE_STRENGTH"):
     definitions = []
