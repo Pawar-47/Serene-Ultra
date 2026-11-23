@@ -1014,7 +1014,7 @@ for token in ('#include "/lib/animation/water_waves.glsl"', "#define WATER_WAVE_
     if token not in water_shadow_shader:
         errors.append(f"Water shadow wave path is missing matching displacement: {token}")
 for token in ("cameraPositionInt % ivec3(4096)", "mod(frameTimeCounter, 3600.0)",
-              "WATER_WAVE_SPEED / 3600.0", "return (firstWave + secondWave) * 0.0125 * strength * 0.01"):
+              "TWO_PI * waveSpeed / 3600.0", "return (firstWave + secondWave) * 0.0125 * strength * 0.01"):
     if token not in water_wave_helper:
         errors.append(f"Shared periodic water-wave helper is missing component: {token}")
 if "block.32000=minecraft:water flowing_water" not in (SHADERS / "block.properties").read_text(encoding="utf-8"):
