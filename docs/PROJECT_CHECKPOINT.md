@@ -1665,3 +1665,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Added the major-UV-derivative anisotropic filter to `gbuffers_water.fsh`, using Iris `mc_midTexCoord`/half-size sprite bounds and the existing `ANISOTROPIC_FILTER_QUALITY` 1/2/4-tap control.
 - The filter samples translucent terrain albedo and LabPBR/oldPBR normal atlases, including POM-shifted water UVs, without crossing sprite boundaries. It covers water, glass, stained/tinted glass, ice and portal branches; translucent entity/block-entity atlases remain a separate gap.
 - Updated the feature matrix, UNBOUND audit and structural validator. A new full compile/link/structure run is required after this commit; visual shimmer and Intel HD 5500 cost still require runtime testing.
+
+
+### Translucent atlas filtering expansion — 2026-11-23
+- Added a shared sprite-bounded anisotropic sampler and enabled it for water/glass/ice/portal albedo and PBR normal atlases, then extended the same 1/2/4-tap derivative-aware filter to translucent entities and block entities.
+- Translucent vertex stages now pass Iris `mc_midTexCoord` sprite bounds so taps cannot bleed across adjacent atlas sprites. The shared `ANISOTROPIC_FILTER_QUALITY` profile control drives all added paths.
+- Commits: shared helper `4d3b6c8b7e2f`; water `a91f7c1d`; translucent vertex/fragment and validator commits are in the recent main history; feature matrix `24cb0a0497cf34f9e8efb35a7bd8757718613a8d`.
+- CI is being rerun after these filtering changes. Weather and particle paths remain on their current sampling path; hardware texture anisotropy and runtime shimmer/performance calibration remain outstanding.
