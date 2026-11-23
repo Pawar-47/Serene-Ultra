@@ -2119,6 +2119,18 @@ for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:15"),
     if expected not in props:
         errors.append(f"{profile} profile is missing cloud reflection budget: {expected}")
 
+
+# Water/glass/ice/portal use sprite-bounded anisotropic filtering for translucent material atlases.
+water_filter_shader = sources.get("gbuffers_water.fsh", "")
+for token in ("#define ANISOTROPIC_FILTER_QUALITY", "vec4 sampleAnisotropicAtlas(",
+              "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, spriteBounds)",
+              "sampleAnisotropicAtlas(", "materialSpriteBounds",
+              "gtexture, vTexCoord, materialUvDx, materialUvDy, materialSpriteBounds"):
+    if token not in water_filter_shader:
+        errors.append(f"Translucent water material filtering is missing component: {token}")
+if "ANISOTROPIC_FILTER_QUALITY" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("Translucent anisotropic filtering must use the existing Quality control")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:

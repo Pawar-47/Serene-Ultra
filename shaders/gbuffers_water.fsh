@@ -10,6 +10,7 @@
 #define CLOUD_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 100] Procedural sky-cloud reflections on glossy materials
 
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
+#define ANISOTROPIC_FILTER_QUALITY 4 // [1 2 4] Sprite-bounded translucent material filtering taps
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
@@ -105,13 +106,44 @@ vec3 getStableWaterWorldPosition(vec3 playerPosition) {
     return mod(cameraOffset + cameraPositionFract + playerPosition, vec3(2560.0));
 }
 
+
+vec4 sampleAnisotropicAtlas(
+    sampler2D sourceTexture,
+    vec2 uv,
+    vec2 uvDx,
+    vec2 uvDy,
+    vec4 spriteBounds
+) {
+#if ANISOTROPIC_FILTER_QUALITY > 1
+    vec2 majorGradient = dot(uvDx, uvDx) >= dot(uvDy, uvDy) ? uvDx : uvDy;
+    float majorLength = length(majorGradient);
+    float minorLength = max(min(length(uvDx), length(uvDy)), 0.000001);
+    int sampleCount = int(clamp(ceil(majorLength / minorLength), 1.0, float(ANISOTROPIC_FILTER_QUALITY)));
+    if (sampleCount <= 1) return textureGrad(sourceTexture, uv, uvDx, uvDy);
+    vec2 atlasTexel = 1.0 / vec2(textureSize(sourceTexture, 0));
+    vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
+    vec2 lowerBound = spriteBounds.xy + 0.5 * atlasTexel;
+    vec2 upperBound = spriteBounds.xy + tileSize - 0.5 * atlasTexel;
+    vec4 accumulated = vec4(0.0);
+    for (int tap = 0; tap < ANISOTROPIC_FILTER_QUALITY; ++tap) {
+        if (tap >= sampleCount) break;
+        float tapOffset = (float(tap) + 0.5) / float(sampleCount) - 0.5;
+        vec2 sampleUv = clamp(uv + majorGradient * tapOffset, lowerBound, upperBound);
+        accumulated += textureGrad(sourceTexture, sampleUv, uvDx, uvDy);
+    }
+    return accumulated / float(sampleCount);
+#else
+    return textureGrad(sourceTexture, uv, uvDx, uvDy);
+#endif
+}
+
 // Multi-scale wave bands use a tileable custom tangent-normal texture; the
 // optional very-large octave follows Unbound while remaining disabled on low profiles.
 vec3 calculateTranslucentNormalMap(
     vec3 geometricNormal, float normalMapStrength,
-    vec2 materialUv, vec2 uvDx, vec2 uvDy
+    vec2 materialUv, vec2 uvDx, vec2 uvDy, vec4 spriteBounds
 ) {
-    vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy);
+    vec4 normalTexel = sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, spriteBounds);
     vec3 tangentNormal;
     #ifdef MC_TEXTURE_FORMAT_LAB_PBR
         // LabPBR stores XY in RG, AO in B, and height in A. Reconstruct Z.
@@ -465,7 +497,10 @@ float calculateTranslucentFog(float distanceToCamera) {
 void main() {
     vec2 materialUvDx = dFdx(vTexCoord);
     vec2 materialUvDy = dFdy(vTexCoord);
-    vec4 translucentAlbedo = textureGrad(gtexture, vTexCoord, materialUvDx, materialUvDy) * vVertexColor;
+    vec4 materialSpriteBounds = vec4(vMidTexCoord - vTexHalfSize, vTexHalfSize * 2.0);
+    vec4 translucentAlbedo = sampleAnisotropicAtlas(
+        gtexture, vTexCoord, materialUvDx, materialUvDy, materialSpriteBounds
+    ) * vVertexColor;
     float portalEmissionSignal = 0.0;
     if (translucentAlbedo.a < alphaTestRef) discard;
 
@@ -520,15 +555,14 @@ void main() {
                 dot(viewBitangent, vViewPosition),
                 dot(viewNormal, vViewPosition)
             );
-            vec4 spriteBounds = vec4(vMidTexCoord - vTexHalfSize, vTexHalfSize * 2.0);
             float appliedWaterParallax = 0.0;
             waterMaterialUv = calculateWaterParallaxUv(
-                vTexCoord, materialUvDx, materialUvDy, spriteBounds,
+                vTexCoord, materialUvDx, materialUvDy, materialSpriteBounds,
                 tangentView, length(vViewPosition), appliedWaterParallax
             );
             if (appliedWaterParallax > 0.0001) {
-                translucentAlbedo = textureGrad(
-                    gtexture, waterMaterialUv, materialUvDx, materialUvDy
+                translucentAlbedo = sampleAnisotropicAtlas(
+                    gtexture, waterMaterialUv, materialUvDx, materialUvDy, materialSpriteBounds
                 ) * vVertexColor;
                 if (translucentAlbedo.a < alphaTestRef) discard;
             }
@@ -537,7 +571,7 @@ void main() {
             if (abs(normal.y) > 0.72) {
                 normal = calculateTranslucentNormalMap(
                     normal, WATER_NORMAL_MAP_STRENGTH,
-                    waterMaterialUv, materialUvDx, materialUvDy
+                    waterMaterialUv, materialUvDx, materialUvDy, materialSpriteBounds
                 );
             }
         #endif
@@ -548,7 +582,8 @@ void main() {
     } else if (isClearGlass || isStainedGlass || isTintedGlass || isIce) {
         #if GLASS_NORMAL_MAP_STRENGTH > 0
             normal = calculateTranslucentNormalMap(
-                normal, GLASS_NORMAL_MAP_STRENGTH, vTexCoord, materialUvDx, materialUvDy
+                normal, GLASS_NORMAL_MAP_STRENGTH, vTexCoord, materialUvDx, materialUvDy,
+                materialSpriteBounds
             );
             viewNormal = normalize(mat3(gbufferModelView) * normal);
         #endif

@@ -1659,3 +1659,9 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - GitHub Actions run `45232285056` passed on `815b1d9d534158ea9a64a0024511547e9cffb9e1`: all shader stages, Iris macro branches, LabPBR branches, opt-in entity POM, water wave detail, Ultra-Light reflection branches, water-normal alpha inspection, program linking and structural validation.
 - Updated `docs/UNBOUND_REFERENCE_AUDIT.md` to reflect current water tint/absorption/foam/caustics/underwater distortion, resource-pack water POM, procedural cloud reflections and the remaining true-WSR/temporal/runtime gaps. Audit update commit: `337beb0ad13a76074db1e018745b8f7e108e2e16`.
 - No Minecraft/Iris runtime test has been performed; visual and target-GPU calibration remain pending.
+
+
+### Sprite-bounded anisotropic filtering for translucent terrain — 2026-11-23
+- Added the major-UV-derivative anisotropic filter to `gbuffers_water.fsh`, using Iris `mc_midTexCoord`/half-size sprite bounds and the existing `ANISOTROPIC_FILTER_QUALITY` 1/2/4-tap control.
+- The filter samples translucent terrain albedo and LabPBR/oldPBR normal atlases, including POM-shifted water UVs, without crossing sprite boundaries. It covers water, glass, stained/tinted glass, ice and portal branches; translucent entity/block-entity atlases remain a separate gap.
+- Updated the feature matrix, UNBOUND audit and structural validator. A new full compile/link/structure run is required after this commit; visual shimmer and Intel HD 5500 cost still require runtime testing.

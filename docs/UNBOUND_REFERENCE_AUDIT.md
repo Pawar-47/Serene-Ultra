@@ -386,3 +386,9 @@ A follow-up review against Unbound's GGX implementation found its direct highlig
 - The previous `destinationPixel * 2` box filter omitted the final source row/column in those cases and its fixed 2x2 footprint was not aligned to the normalized destination texel footprint.
 - `deferred1` now integrates each destination pixel's exact source-space footprint with a bounded 3x3 overlap filter. Even dimensions retain four nonzero taps; odd dimensions include edge texels. Opaque-depth validity is weighted by covered area, and color is averaged in linear space.
 - The validator checks the footprint calculation and bounded tap loops. CI cannot establish visual edge quality or performance; test odd window sizes as well as common even sizes in Iris.
+
+
+### Translucent atlas filtering update — 2026-11-23
+- The dedicated `gbuffers_water` path now uses the same major-derivative, sprite-bounded 1/2/4-tap anisotropic sampling model as terrain, block entities and opaque entity models. Iris `mc_midTexCoord` bounds each albedo and LabPBR/oldPBR normal sample to its sprite, including POM-shifted water UVs.
+- This applies to water, clear/stained/tinted glass, ice and portal material branches routed through the translucent-terrain pass. It does not yet extend to translucent entity/block-entity programs. The custom water-normal texture remains a separate world-space wave map and is not filtered as an atlas sprite.
+- The Quality control and profile budgets are shared with the existing anisotropic filter setting. GLSL compilation and structural validation must be rerun after this update; runtime shimmer and Intel HD 5500 cost remain pending.
