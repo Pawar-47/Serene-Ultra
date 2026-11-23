@@ -1,6 +1,7 @@
 #version 330 compatibility
 
 #include "/lib/taa_jitter.glsl"
+#include "/lib/animation/lava_waves.glsl"
 
 uniform mat4 gbufferModelViewInverse;
 uniform ivec3 cameraPositionInt;
@@ -57,14 +58,13 @@ void main() {
     // Apply a low-amplitude, world-stable fluid-surface wave to lava and lava
     // cauldron geometry. The same displacement is mirrored in shadow.vsh.
     if (vMaterialId == 32118 || vMaterialId == 32132) {
-        vec3 stableWorld = vec3(cameraPositionInt) + cameraPositionFract + vPlayerPosition;
+        vec3 stableWorld = sereneStableLavaWorldPosition(
+            cameraPositionInt, cameraPositionFract, vPlayerPosition
+        );
         if (fract(stableWorld.y + 0.005) > 0.06) {
-            vec2 lavaPosition = mod(stableWorld.xz, vec2(4096.0));
-            float lavaTime = mod(frameTimeCounter, 3600.0) * 0.10471975512;
-            float waveA = sin(lavaTime * 0.7 - dot(lavaPosition, vec2(0.9790, 1.9602)));
-            float waveB = sin(lavaTime * 0.5 - dot(lavaPosition, vec2(1.4008, -0.6995)));
-            float lavaDisplacement = (waveA + waveB)
-                * 0.0125 * float(LAVA_WAVE_STRENGTH) * 0.01;
+            float lavaDisplacement = sereneLavaSurfaceDisplacement(
+                stableWorld, frameTimeCounter, float(LAVA_WAVE_STRENGTH)
+            );
             vec4 displacedViewPosition = viewPosition;
             displacedViewPosition.xyz += mat3(gl_ModelViewMatrix)
                 * vec3(0.0, lavaDisplacement, 0.0);
