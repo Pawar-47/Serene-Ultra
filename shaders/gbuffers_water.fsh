@@ -239,7 +239,7 @@ vec3 calculateWaterWaveNormal(
 #endif
 
     vec2 slope = normalMedium * 0.8 + normalSmall * 0.55 + normalLarge * 0.45;
-    float strength = float(WATER_WAVE_STRENGTH) * 0.01 * 4.0;
+    float strength = float(WATER_WAVE_STRENGTH) * 0.01 * 1.8;
     float faceSign = geometricNormal.y < 0.0 ? -1.0 : 1.0;
     // Add the wave slope to the existing PBR normal rather than replacing it.
     vec3 waveNormal = normalize(
@@ -636,7 +636,7 @@ void main() {
         if (!cameraUnderwater) {
             waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth);
             float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01);
-            waterFog = clamp(1.0 - exp(-waterFogThickness * 0.075), 0.0, 1.0);
+            waterFog = clamp(1.0 - exp(-waterFogThickness * 0.16), 0.0, 1.0);
         }
 
         // Unbound-inspired shallow-water foam. Reconstructed view-space
@@ -707,7 +707,7 @@ void main() {
                     );
                     // Beer-Lambert absorption: red light attenuates fastest,
                     // followed by green and blue, so deeper water becomes blue.
-                    vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)
+                    vec3 absorptionCoefficient = vec3(0.24, 0.10, 0.035)
                         * (WATER_ABSORPTION_STRENGTH * 0.01);
                     vec3 transmission = exp(-absorptionCoefficient * waterThickness);
                     refractedSceneLinear = refractedSceneLinear * transmission
@@ -943,6 +943,18 @@ void main() {
             0.0, 0.95
         );
         litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
+
+        // A bounded microfacet-style solar glint keeps the sun reflection
+        // coherent instead of relying only on a noisy low-resolution SSR hit.
+        // The tight lobe follows the animated water normal and is attenuated
+        // by the same shadow/cloud visibility as direct sunlight.
+        if (!cameraUnderwater && hasSkylight && nDotL > 0.001 && celestialGate > 0.001) {
+            vec3 viewHalfVector = normalize(viewLightDirection + normalize(-vViewPosition));
+            float sunGlint = pow(max(dot(normalize(viewNormal), viewHalfVector), 0.0), 180.0);
+            sunGlint *= nDotL * shadow.r * cloudShadow;
+            sunGlint *= (1.0 - rainStrength * 0.75) * (1.0 - waterFoam);
+            litLinear += celestialColor * sunGlint * 0.42;
+        }
     }
 
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));

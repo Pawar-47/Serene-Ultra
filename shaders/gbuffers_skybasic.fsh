@@ -470,13 +470,13 @@ void main() {
             float celestialGlare = glareVisibility
                 / max(1.0 - (1.0 - glareVisibility) * glarePower, 0.075)
                 - glareVisibility;
-            celestialGlare *= 0.7 * (1.0 - 0.8 * rainStrength);
+            celestialGlare *= 0.28 * (1.0 - 0.8 * rainStrength);
 
             float dayFactor = smoothstep(-0.05, 0.25, solarElevation);
             float noonFactor = smoothstep(0.35, 0.9, solarElevation);
             vec3 nightGlareColor = vec3(0.38, 0.40, 0.50) * 0.3;
-            vec3 dayGlareColor = vec3(1.5, 0.7, 0.3)
-                + vec3(0.0, 0.5, 0.5) * noonFactor;
+            vec3 dayGlareColor = vec3(1.0, 0.82, 0.68)
+                + vec3(0.0, 0.12, 0.16) * noonFactor;
             vec3 glareColor = mix(nightGlareColor, dayGlareColor, dayFactor);
             colorLinear += glareColor * celestialGlare;
         }

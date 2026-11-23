@@ -1309,8 +1309,8 @@ for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcol
         errors.append(f"Forward translucent colored-shadow path is missing component: {token}")
 for token in ("WATER_ABSORPTION_STRENGTH", "if (!cameraUnderwater)", "waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)",
               "float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01)",
-              "exp(-waterFogThickness * 0.075)",
-              "vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)",
+              "exp(-waterFogThickness * 0.16)",
+              "vec3 absorptionCoefficient = vec3(0.24, 0.10, 0.035)",
               "vec3 transmission = exp(-absorptionCoefficient * waterThickness)",
               "waterAbsorptionTintLinear * (1.0 - transmission)"):
     if token not in water:
@@ -1637,7 +1637,7 @@ for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAG
               "float lightLength = length(shadowLightPosition)",
               "hasSkylight && lightLength > 0.0001",
               "shadowLightPosition / lightLength", "SKY_ATMOSPHERE_STRENGTH",
-              "celestialGlare *= 0.7 * (1.0 - 0.8 * rainStrength)",
+              "celestialGlare *= 0.28 * (1.0 - 0.8 * rainStrength)",
               "colorLinear += glareColor * celestialGlare"):
     if token not in sky_basic and token not in sky_basic_vertex:
         errors.append(f"Sky-basic program is missing Iris sky-stage component: {token}")
