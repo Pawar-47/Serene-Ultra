@@ -554,6 +554,9 @@ void main() {
             pbrEmission = clamp(hotCore * 0.65, 0.0, 0.75);
         } else if (entityId == 50152) { // End crystal
             pbrEmission = clamp(max(albedo.r, max(albedo.g, albedo.b)) * 0.72, 0.0, 0.9);
+        } else if (entityId == 50156) { // Experience orb
+            float orbGreen = max(albedo.g - albedo.r * 0.35 - albedo.b * 0.20, 0.0);
+            pbrEmission = clamp(orbGreen * 1.35, 0.0, 0.85);
         } else if (currentRenderedItemId == 44090) {
             if (!hasMaterialSpecularMap) materialSmoothness = 1.0;
             pbrEmission = max(albedo.g - albedo.b * 0.25, 0.0);
