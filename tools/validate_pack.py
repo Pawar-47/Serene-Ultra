@@ -1662,7 +1662,7 @@ composite_programs = {"begin", "shadowcomp", "prepare", "deferred", "composite"}
 for line_number, raw_line in enumerate(props.splitlines(), 1):
     directive = raw_line.split("#", 1)[0].strip()
     flip_match = re.fullmatch(
-        r"flip\.([^.=\s]+)\.([^.=\s]+)\s*=\s*(true|false)",
+        r"flip\.(.+)\.([^.=\\s]+)\s*=\s*(true|false)",
         directive,
     )
     if not flip_match:
@@ -1670,7 +1670,8 @@ for line_number, raw_line in enumerate(props.splitlines(), 1):
             errors.append(f"shaders.properties line {line_number}: malformed Iris flip directive")
         continue
     flip_program, buffer_name, flip_value = flip_match.groups()
-    if flip_program not in composite_programs:
+    program_base = flip_program.rsplit("/", 1)[-1]
+    if program_base not in composite_programs:
         errors.append(
             f"shaders.properties line {line_number}: flip directives are only valid for composite-style passes, not {flip_program}"
         )
