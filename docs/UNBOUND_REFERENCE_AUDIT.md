@@ -345,3 +345,9 @@ A follow-up review against Unbound's GGX implementation found its direct highlig
 - Complementary's translucent material dispatch includes a narrow guard for clear glass panes: discard only fragments with alpha below 0.001 whose surface normal is nearly horizontal (|N·up| > 0.95), preventing CTM/Opti connected-pane edge artifacts.
 - Serene now mirrors that exact material-specific condition using its existing player-space geometric normal. This is deliberately limited to clear glass panes (ID 32012); stained-glass panes have a separate reference path and are not affected. The existing general Iris alpha test remains in place.
 - No voxel-neighbor/connected-glass behavior is claimed or added; the reference's optional connected-glass volume processing remains out of scope until Serene has a supported voxel-volume data source.
+
+
+### Stained/tinted glass material response — 2026-11-23
+- The supplied Unbound translucent IPBR dispatch assigns stained glass smoothness 0.5, direct-highlight multiplier 1.5, and reflection multiplier 1.0. Tinted glass uses reflection multiplier 1.0. Clear glass retains its distinct 0.5 reflection multiplier; ice uses 0.7.
+- Serene now adds a low-cost medium-sharp direct highlight to stained glass using existing view/geometric normals, celestial direction, shadow and N·L. Reflection weights are adjusted to the reference material multipliers: stained/tinted 1.0, clear 0.5, ice 0.7.
+- This is an arithmetic-only approximation of Unbound's GGX response, not a claim of identical BRDF. No additional texture samples, loops or render targets. Visual tuning and performance profiling remain pending.

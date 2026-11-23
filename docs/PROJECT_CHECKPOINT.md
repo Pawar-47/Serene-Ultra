@@ -1119,3 +1119,7 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - The supplied Complementary reference's translucent IPBR dispatch derives ice smoothness from the cube of the texture green channel, scales the highlight with the squared green-channel response, and uses a 0.7 reflection multiplier.
 - Serene previously gave ice only the shared Fresnel reflection path; it had no direct specular highlight. Added a bounded Blinn-Phong highlight using the existing geometric/PBR normal, view vector, celestial light and translucent shadow result. Smoothness controls an 8–128 exponent; the reference-inspired green-channel highlight multiplier and 0.7 scale are retained.
 - The implementation is ice-only and adds arithmetic but no texture samples, loops, render targets or new varyings. It remains subject to in-game appearance/performance calibration.
+
+
+### Stained and tinted glass response — 2026-11-23
+Stained glass now receives a low-cost direct specular highlight and reference-aligned reflection multiplier (1.0); tinted glass reflection multiplier is raised to 1.0. Clear glass remains 0.5 and ice 0.7. The stained-glass highlight approximates Unbound's medium-smoothness/1.5 highlight settings with existing lighting vectors and no extra samples. Runtime visual calibration remains pending.

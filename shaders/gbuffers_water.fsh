@@ -687,6 +687,19 @@ void main() {
     // Complementary Unbound derives ice smoothness and highlight strength
     // from the green texture channel. Recreate that compact response with
     // the existing normal/light/view vectors; no additional texture reads.
+    if (isStainedGlass && nDotL > 0.001 && celestialGate > 0.001) {
+        // Unbound assigns stained glass a medium-smooth surface and a 1.5
+        // direct-highlight multiplier. Keep this as a cheap arithmetic-only
+        // Blinn term; no new texture reads or material-buffer dependencies.
+        vec3 stainedLightDirection = normalize(mat3(gbufferModelView) * worldLightDirection);
+        vec3 stainedViewDirection = normalize(-vViewPosition);
+        vec3 stainedHalfVector = normalize(stainedLightDirection + stainedViewDirection);
+        float stainedSpecular = pow(
+            max(dot(normalize(viewNormal), stainedHalfVector), 0.0),
+            32.0
+        ) * 1.5 * nDotL;
+        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * stainedSpecular;
+    }
     if (isIce && nDotL > 0.001 && celestialGate > 0.001) {
         float iceSmoothness = translucentAlbedo.g * translucentAlbedo.g * translucentAlbedo.g;
         float iceHighlight = pow(
@@ -741,7 +754,7 @@ void main() {
         // Ultra-Light keeps a cheap sky/horizon Fresnel reflection without SSR depth/color samples.
         glassReflectionLinear = sampleEnvironmentReflection(glassReflectionDirection);
         #endif
-        float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : ((isClearGlass || isStainedGlass) ? 0.50 : 0.32));
+        float materialReflectionScale = isIce ? 0.7 : ((isTintedGlass || isStainedGlass) ? 1.0 : (isClearGlass ? 0.50 : 0.32));
         float glassCameraDistance = length(vViewPosition);
         float closeReflectionFade = smoothstep(0.3, 1.8, glassCameraDistance);
         float glassReflectionWeight = clamp(
