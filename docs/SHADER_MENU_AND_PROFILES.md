@@ -49,3 +49,9 @@ Do not add decorative or non-functional controls. Every visible setting must aff
 
 ## Quality menu update — 2026-11-23
 The Quality screen currently includes shadow-map resolution, shadow distance, shadow alpha cutoff, contact AO strength and contact AO radius. `AO_STRENGTH` now includes the 0.65 profile default in its Iris option value list so the profile value is a valid selectable option.
+
+## Specular anti-aliasing — 2026-11-23
+- Added derivative-based Toksvig-style roughness filtering to the deferred GGX direct-specular path.
+- Pixel-scale normal variation increases effective roughness, reducing unstable sub-pixel highlights on detailed normal maps and distant geometry.
+- `SPECULAR_AA_STRENGTH` is exposed in the Quality screen and configured in all five profiles; zero disables the derivative work.
+- This is spatial specular filtering, not temporal anti-aliasing. TAA remains a separate pending feature.
