@@ -245,3 +245,9 @@ option.PBR_REFLECTION_BLUR_STRENGTH.comment = Blurs opaque screen-space reflecti
 
 option.AO_TEMPORAL_STRENGTH = Temporal Contact AO
 option.AO_TEMPORAL_STRENGTH.comment = Stabilizes contact occlusion by reprojecting previous AO with camera motion and rejecting mismatched depth. Zero disables history accumulation.
+
+option.ANISOTROPIC_FILTER_QUALITY = Material Anisotropic Filtering
+option.ANISOTROPIC_FILTER_QUALITY.comment = Adds sprite-bounded taps along the major UV derivative for terrain, block entities and opaque entity models to reduce grazing-angle texture shimmer. Higher tap counts cost more texture reads.
+value.ANISOTROPIC_FILTER_QUALITY.1 = Single Sample
+value.ANISOTROPIC_FILTER_QUALITY.2 = 2 Taps
+value.ANISOTROPIC_FILTER_QUALITY.4 = 4 Taps
