@@ -1,0 +1,53 @@
+name: Publish validated alpha shaderpack
+
+on:
+  workflow_run:
+    workflows: ["Shaderpack structural and GLSL validation"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish-alpha:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the exact validated commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Recheck pack structure
+        run: python tools/validate_pack.py
+
+      - name: Package shaderpack and checksum
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          short_sha="${GITHUB_SHA::7}"
+          archive="Serene-Ultra-alpha-${short_sha}.zip"
+          zip -X -r "${archive}" shaders pack.json
+          sha256sum "${archive}" > "${archive}.sha256"
+          echo "archive=${archive}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub alpha pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: alpha-${{ steps.package.outputs.short_sha }}
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: Serene Ultra Alpha ${{ steps.package.outputs.short_sha }}
+          prerelease: true
+          draft: false
+          generate_release_notes: true
+          body: |
+            Experimental test build from the exact commit that passed shader validation.
+
+            **This is an alpha, not a stable release.** CI verifies shader compilation and pack structure only. In-game visual correctness, Minecraft/Iris compatibility and performance still require testing.
+          files: |
+            ${{ steps.package.outputs.archive }}
+            ${{ steps.package.outputs.archive }}.sha256

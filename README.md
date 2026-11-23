@@ -6,6 +6,12 @@ An independently implemented, full-featured Minecraft Java shaderpack targeting 
 
 Rendering foundation now includes terrain/entity/hand/particle G-buffers, emissive spider-eyes handling, dedicated forward water/weather/hand-water paths, alpha-tested shadow casters, dimension-aware deferred celestial lighting, Iris fog, contact AO, Iris settings/profiles, and CI GLSL compilation plus vertex/fragment linking. This is not yet Ultra parity or a runtime-validated release. Current priority is advanced water effects, wet-surface response, remaining special geometry, material systems and reference parity. See [the project checkpoint](docs/PROJECT_CHECKPOINT.md), [Iris pipeline audit](docs/IRIS_PIPELINE_AUDIT.md), [reference feature matrix](docs/REFERENCE_FEATURE_MATRIX.md) and [Complementary Unbound water/material audit](docs/UNBOUND_REFERENCE_AUDIT.md). Feature preservation is mandatory: performance work must optimize implementation cost rather than silently remove visual capabilities.
 
+## Alpha testing builds
+
+Experimental shaderpack ZIPs are published automatically as GitHub pre-releases after the full shader-validation workflow succeeds on `main`. Download the latest available build from the [GitHub Releases page](https://github.com/Pawar-47/Serene-Ultra/releases). Each archive contains the shaderpack at its ZIP root and a SHA-256 checksum.
+
+Alpha builds are for in-game testing, not a stable release. GLSL compilation and structural CI do not establish visual correctness, Minecraft/Iris runtime compatibility, or performance. Please report the Minecraft version, Iris version, GPU, selected profile and reproduction steps with any issue.
+
 ## Target hardware
 
 - Intel Core i3-5005U

@@ -1151,3 +1151,10 @@ Tinted glass now follows Unbound's default alpha^(1-Fresnel) opacity curve, incr
 
 ### Water scene-copy odd-dimension fix — 2026-11-23
 The half-resolution `colortex4` scene snapshot now integrates the exact full-resolution footprint of each destination texel. This fixes edge texel omission and depth/color alignment at odd framebuffer dimensions while preserving the four-tap path for even dimensions. The bounded 3x3 fallback only performs nonzero-overlap fetches. Runtime testing and low-end GPU profiling remain pending.
+
+
+## Alpha release pipeline — 2026-11-23
+- Added a GitHub Actions release workflow that waits for the existing shader validation workflow to succeed on a push to `main`.
+- The workflow packages the `shaders/` directory and pack metadata at the exact validated commit, generates a SHA-256 checksum, and publishes a GitHub pre-release tagged `alpha-<short-sha>`.
+- Alpha packages are explicitly experimental. CI checks compilation and structure only; in-game visual, compatibility and performance validation remain required.
+- Release page: https://github.com/Pawar-47/Serene-Ultra/releases
