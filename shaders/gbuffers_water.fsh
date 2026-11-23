@@ -3,6 +3,9 @@
 #define CLOUD_SHADOW_STRENGTH 65 // [0 20 40 60 80 100] Procedural cloud-shadow strength
 #define CLOUD_ALTITUDE 192 // [128 160 192 224 256] Cloud layer centre height in blocks
 #define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
+#define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
+#define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
+#define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Volumetric cloud optical density
 
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
 

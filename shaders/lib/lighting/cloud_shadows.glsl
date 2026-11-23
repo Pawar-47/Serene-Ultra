@@ -27,14 +27,25 @@ float sampleSereneCloudShadow(
     vec2 cloudUv = cloudWorldXZ * CLOUD_SHADOW_UV_SCALE + wind;
     float broadNoise = texture(noisetex, cloudUv).r;
     float detailNoise = texture(noisetex, cloudUv * CLOUD_SHADOW_DETAIL_SCALE + vec2(0.37, 0.19)).g;
-    float cloudNoise = broadNoise * 0.72 + detailNoise * 0.28;
+    float detailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
+    float cloudNoise = mix(
+        broadNoise,
+        broadNoise * 0.72 + detailNoise * 0.28,
+        detailStrength
+    );
 
-    float coverage = mix(0.58, 0.46, clamp(rainStrength, 0.0, 1.0));
-    float cloudDensity = smoothstep(coverage - 0.16, coverage + 0.16, cloudNoise);
-    float cloudOpacity = mix(0.32, 0.62, clamp(rainStrength, 0.0, 1.0));
+    float coverage = mix(
+        float(CLOUD_COVERAGE) * 0.01,
+        float(CLOUD_COVERAGE) * 0.01 - 0.08,
+        clamp(rainStrength, 0.0, 1.0)
+    );
+    float cloudDensity = smoothstep(
+        coverage, min(coverage + 0.22, 0.999), cloudNoise
+    ) * (1.0 + rainStrength * 0.25);
+    float cloudOpacity = cloudDensity * float(CLOUD_DENSITY) * 0.01 * 0.55;
     float strength = float(CLOUD_SHADOW_STRENGTH) * 0.01;
     return clamp(
-        1.0 - cloudDensity * cloudOpacity * strength * clamp(dayFactor, 0.0, 1.0),
+        1.0 - cloudOpacity * strength * clamp(dayFactor, 0.0, 1.0),
         0.35, 1.0
     );
 #else

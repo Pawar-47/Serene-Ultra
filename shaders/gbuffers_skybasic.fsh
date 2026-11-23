@@ -209,10 +209,10 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
             detailStrength
         );
         float cloudShape = smoothstep(
-            coverage - 0.16, coverage + 0.16, cloudNoise
+            coverage, min(coverage + 0.22, 0.999), cloudNoise
         );
         float density = cloudShape * verticalProfile * (1.0 + rain * 0.25);
-        float opticalDepth = density * stepLength * 0.0035 * densityStrength;
+        float opticalDepth = density * stepLength * 0.08 * densityStrength;
         float sampleAlpha = 1.0 - exp(-opticalDepth);
         if (sampleAlpha <= 0.001) continue;
 
