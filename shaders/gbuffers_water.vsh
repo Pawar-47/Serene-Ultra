@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#include "/lib/taa_jitter.glsl"
+
 uniform mat4 gbufferModelViewInverse;
 
 out vec2 vTexCoord;
@@ -43,4 +45,5 @@ void main() {
     vec3 viewTangent = normalize(gl_NormalMatrix * normalize(at_tangent.xyz));
     vPlayerTangent = normalize(mat3(gbufferModelViewInverse) * viewTangent);
     vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0;
+    applySereneTaaJitter(gl_Position);
 }
