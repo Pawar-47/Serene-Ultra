@@ -65,10 +65,10 @@ flat in float vFluidRenderType;
 
 /* RENDERTARGETS: 0 */
 
-#define WATER_REFRACTION_STRENGTH 1.00 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 2.00] Screen-space water refraction strength
-#define WATER_REFLECTION_STRENGTH 0.75 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
-#define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
-#define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
+#define WATER_REFRACTION_STRENGTH 0.50 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 2.00] Screen-space water refraction strength
+#define WATER_REFLECTION_STRENGTH 0.45 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
+#define WATER_FOG_MULT 125 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 125 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
+#define WATER_REFLECTION_QUALITY 4 // [0 4 6 8] Screen-space water reflection samples
 #define WATER_REFLECTION_DISTANCE 24 // [16 24 32 40 48] Maximum water/glass SSR trace distance in blocks
 #define WATER_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack water normal-map detail
 #define POM_STRENGTH 25 // [0 10 20 35 50 75 100] LabPBR/oldPBR height-map parallax strength
@@ -76,16 +76,16 @@ flat in float vFluidRenderType;
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade water POM to zero at this view distance
 #define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level translucent atlas filtering taps
 #define GLASS_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack glass/ice normal-map detail
-#define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
-#define WATER_WAVE_SPEED 60 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
+#define WATER_WAVE_STRENGTH 50 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
+#define WATER_WAVE_SPEED 50 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
 #define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
 #define WATER_WAVE_DETAIL 0 // [0 1] Optional very-large Unbound-style normal scale; adds one texture sample
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Held-item lighting strength
-#define WATER_COLOR_STRENGTH 100 // [0 25 50 75 100] Unbound-style water base tint blend
-#define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
-#define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
+#define WATER_COLOR_STRENGTH 85 // [0 25 50 75 100] Unbound-style water base tint blend
+#define WATER_NOISE_COLOR_STRENGTH 10 // [0 10 20 35 50 75 100] Animated water colour variation
+#define WATER_FOAM_STRENGTH 60 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
 #define WATER_UNDERWATER_STRENGTH 100 // [0 25 50 75 100 125 150] Underwater tint and surface response
-#define WATER_ABSORPTION_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Depth-dependent water light absorption
+#define WATER_ABSORPTION_STRENGTH 125 // [0 25 50 75 100 125 150 175 200] Depth-dependent water light absorption
 #define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Glass and stained-glass screen-space reflection
 #define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
 #define PORTAL_DISTORTION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Atlas-safe animated portal distortion
@@ -239,7 +239,7 @@ vec3 calculateWaterWaveNormal(
 #endif
 
     vec2 slope = normalMedium * 0.8 + normalSmall * 0.55 + normalLarge * 0.45;
-    float strength = float(WATER_WAVE_STRENGTH) * 0.01 * 1.8;
+    float strength = float(WATER_WAVE_STRENGTH) * 0.01 * 1.1;
     float faceSign = geometricNormal.y < 0.0 ? -1.0 : 1.0;
     // Add the wave slope to the existing PBR normal rather than replacing it.
     vec3 waveNormal = normalize(
@@ -268,7 +268,7 @@ vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
     // Unbound style 3 uses the biome/vertex tint directly after its
     // square-root colour preparation; the fixed blue fallback belongs to
     // the older Reimagined-style water treatment.
-    vec3 biomeTint = sqrt(max(vertexColor, vec3(0.0))) * vec3(1.0, 0.85, 0.8);
+    vec3 biomeTint = sqrt(max(vertexColor, vec3(0.0))) * vec3(0.88, 0.95, 1.0);
     vec3 baseColor = 0.375 * biomeTint;
 
     if (WATER_NOISE_COLOR_STRENGTH > 0) {
@@ -636,7 +636,7 @@ void main() {
         if (!cameraUnderwater) {
             waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth);
             float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01);
-            waterFog = clamp(1.0 - exp(-waterFogThickness * 0.16), 0.0, 1.0);
+            waterFog = clamp(1.0 - exp(-waterFogThickness * 0.22), 0.0, 1.0);
         }
 
         // Unbound-inspired shallow-water foam. Reconstructed view-space
@@ -707,7 +707,7 @@ void main() {
                     );
                     // Beer-Lambert absorption: red light attenuates fastest,
                     // followed by green and blue, so deeper water becomes blue.
-                    vec3 absorptionCoefficient = vec3(0.24, 0.10, 0.035)
+                    vec3 absorptionCoefficient = vec3(0.34, 0.15, 0.055)
                         * (WATER_ABSORPTION_STRENGTH * 0.01);
                     vec3 transmission = exp(-absorptionCoefficient * waterThickness);
                     refractedSceneLinear = refractedSceneLinear * transmission
