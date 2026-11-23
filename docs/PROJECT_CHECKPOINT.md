@@ -1195,3 +1195,17 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Traced Iris 26.1 `ShaderProperties` parser: for `blend.<program>.<buffer>`, the buffer name must resolve to a legacy render target or a numeric `colortexN`. `shadowcolor0` resolves to index -1 and is rejected. The offending directive was `blend.shadow.shadowcolor0=off`.
 - Removed the invalid buffer-blend override. Retained `shadowTranslucent=true` and the separate `flip.shadow.shadowcolor0=false` setting; no color-buffer blend directive is needed for the shadow-color target.
 - Added a structural regression guard to reject any future `blend.shadow.shadowcolor0` directive. This is a pack-loading fix; test the new alpha in Iris to confirm startup proceeds past the reported parser error.
+
+
+## Shader interface, Iris fallback and release-gate continuation — 2026-11-23
+
+- Current source HEAD before this checkpoint update: `d859ed8ea1df974aa9c0fa3d01ade567c1d65fc4`.
+- CI run `45147173862` (run #1165) passed on that exact commit: standalone GLSL compilation, optional macro branches, water-normal inspection, program linking and structural validation.
+- Audited all current paired vertex/fragment programs. Fragment inputs match vertex outputs by varying name, GLSL type and interpolation qualifier. Added automated regression validation; run #1159 passed this check.
+- Added render-target output-location validation: each modern fragment program's sequential output locations must match the ordered `RENDERTARGETS` slots.
+- Expanded the missing-program warning inventory from Iris 26.1 `ProgramId.java`, including item, glowing entities and all standard shadow subprogram fallbacks. These are explicit Iris fallbacks, not proof of dedicated material behavior.
+- Removed the unused `iris.features.optional=ENTITY_TRANSLUCENT` directive. It only requests a shader feature macro and does not activate translucent entity routing; the validator now reports `separateEntityDraws=true` as best-effort and requires runtime confirmation.
+- Added manual runtime regression checks for dropped items, glowing entities, shadow subprograms, terrain cutout/solid routing, translucent entity sorting, blend-parser startup errors and shaderpack cache/restart behavior.
+- **Release safety correction:** the alpha workflow previously published a prerelease after every successful push. Its job now requires the repository Actions variable `ENABLE_ALPHA_PUBLISH=true`; with the variable unset, publishing is skipped. The latest validation run #1165 passed and the corresponding publish workflow run #29 was skipped.
+- An older public prerelease `alpha-25b0ee0` was already published before this gate was added. It is experimental and has not been runtime-verified; do not treat it as a validated working build. No newer prerelease was created for `d859ed8`.
+- Current HEAD `d859ed8` remains source/CI validated only. Actual Iris/Minecraft runtime testing, visual parity, and Intel HD 5500 performance measurements remain outstanding.
