@@ -4,7 +4,10 @@
 
 #define WAVING_RAIN // Animate rain and snow geometry
 
+in vec2 mc_midTexCoord;
 out vec2 vTexCoord;
+flat out vec2 vMidTexCoord;
+flat out vec2 vTexHalfSize;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
 out vec3 vViewPosition;
@@ -29,6 +32,8 @@ void main() {
     vec4 viewPosition = gbufferModelView * playerPosition;
     gl_Position = gl_ProjectionMatrix * viewPosition;
     vTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+    vMidTexCoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord, 0.0, 1.0)).xy;
+    vTexHalfSize = abs(vTexCoord - vMidTexCoord);
     vLightmapCoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
     vVertexColor = gl_Color;
     vViewPosition = viewPosition.xyz;
