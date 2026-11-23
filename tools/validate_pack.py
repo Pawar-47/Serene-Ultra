@@ -529,13 +529,12 @@ for option, names in (
 ):
     definitions = []
     for name in names:
-        definitions.extend(
-            re.match(rf"#define {option} (\\S+)", line).group(1)
-            for line in sources.get(name, "").splitlines()
-            if re.match(rf"#define {option} (\\S+)", line)
-        )
+        for line in sources.get(name, "").splitlines():
+            match = re.match(rf"^#define\\s+{option}\\s+([0-9]+)", line)
+            if match:
+                definitions.append(match.group(1))
     if len(set(definitions)) != 1:
-        errors.append(f"{option} must be defined identically across its terrain/block/entity/water consumers")
+        errors.append(f"{option} numeric value must match across its terrain/block/entity/water consumers")
 
 water_pom_source = sources.get("gbuffers_water.fsh", "")
 for token in ("vec2 calculateWaterParallaxUv(", "textureGrad(normals, baseUv, uvDx, uvDy)",
@@ -979,7 +978,7 @@ water_vertex = (SHADERS / "gbuffers_water.vsh").read_text(encoding="utf-8")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "shadowModelView", "shadowProjection", "sampleSereneSoftShadow",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
-              "texture(gtexture", "texture(lightmap", "depthtex2", "calculateWaterThickness",
+              "textureGrad(", "gtexture", "texture(lightmap", "depthtex2", "calculateWaterThickness",
               "uniform sampler2D depthtex2", "uniform sampler2D colortex4", "texture(colortex4", "WATER_REFRACTION_STRENGTH",
               "WATER_REFLECTION_STRENGTH", "WATER_REFLECTION_QUALITY", "sampleTranslucentScreenReflection(",
               "WATER_FOG_MULT", "uniform float alphaTestRef",
