@@ -79,3 +79,9 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Rejects history when the reprojected depth does not match; clamps history to the current spatial estimate to limit stale-light trails.
 - Exposed `SCREEN_GI_TEMPORAL_STRENGTH` across all profiles. Ultra-Light disables history; higher profiles progressively increase accumulation.
 - This stabilizes the GI contribution only; it is not full temporal anti-aliasing and does not handle moving-object velocity.
+
+
+## Roughness-aware opaque reflections — 2026-11-23
+- Added depth-rejected four-neighbor filtering at the SSR hit location.
+- Blur radius scales with squared material roughness, while depth rejection avoids mixing foreground/background surfaces.
+- Exposed `PBR_REFLECTION_BLUR_STRENGTH` in Quality and across all profiles; Ultra-Light disables the extra samples.
