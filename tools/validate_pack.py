@@ -1324,19 +1324,27 @@ for token in ("uniform int currentRenderedItemId", "bool hasMaterialSpecularMap"
     if token not in entity_shader:
         errors.append(f"Entity item-material fallback is missing component: {token}")
 
-held_shader = sources.get("deferred.fsh", "")
-for token in ("#define HELD_LIGHTING_STRENGTH 50",
-              "uniform int heldBlockLightValue;", "uniform int heldBlockLightValue2;",
+held_shader = sources.get("held_item_lighting.glsl", "")
+for token in ("uniform int heldBlockLightValue;", "uniform int heldBlockLightValue2;",
               "uniform int heldItemId;", "uniform int heldItemId2;",
               "uniform vec3 relativeEyePosition;", "float getHeldItemLightEnergy(",
               "vec3 getHeldItemLightColor(", "vec3 calculateHeldItemLighting(",
               "getHeldItemLightEnergy(heldItemId, heldBlockLightValue)",
               "getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2)",
               "if (itemId == 44013)", "energy = 1.0;",
-              "ambient = sqrt(ambient * ambient + heldLighting)",
               "return mainLight * mainLight + offLight * offLight"):
     if token not in held_shader:
-        errors.append(f"Deferred held-item world lighting is missing component: {token}")
+        errors.append(f"Shared held-item lighting include is missing component: {token}")
+for name, position in (("deferred.fsh", "playerPosition"), ("gbuffers_water.fsh", "vPlayerPosition")):
+    source = sources.get(name, "")
+    if "#define HELD_LIGHTING_STRENGTH 50" not in source:
+        errors.append(f"{name} must expose the held-light quality option")
+    if '#include "/lib/lighting/held_item_lighting.glsl"' not in source:
+        errors.append(f"{name} must use the shared held-item lighting include")
+    if f"calculateHeldItemLighting({position})" not in source:
+        errors.append(f"{name} must apply held-item lighting in its ambient pass")
+    if "ambient = sqrt(ambient * ambient + heldLighting)" not in source:
+        errors.append(f"{name} must combine held light quadratically with ambient")
 held_props = (SHADERS / "shaders.properties").read_text(encoding="utf-8")
 held_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
 if "oldHandLight = false" not in held_props:

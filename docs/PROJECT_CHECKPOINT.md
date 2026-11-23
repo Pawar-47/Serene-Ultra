@@ -966,7 +966,7 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - oldHandLight=false exposes independent main/offhand values. Item IDs select warm, cool, soul-blue, redstone, froglight, copper and emissive-item colors. The lava bucket alone receives the reference's explicit full-light override; all other items use Iris' actual held block-light value.
 - Light energy is attenuated by player-space distance from the player-head origin. Main/offhand contributions are combined quadratically with existing ambient; no extra texture fetches are introduced.
 - HELD_LIGHTING_STRENGTH is a Quality slider: Ultra-Light=0 (compiled out), Smooth=50, Ultra/HDR/Ultra-HDR=100.
-- This is a screen-space ambient approximation. It does not cast shadows, respect occluders, or illuminate the forward translucent-water pass yet. Runtime range/color calibration and target-GPU cost remain pending.
+- This is a screen-space ambient approximation. It does not cast shadows or respect occluders. Runtime range/color calibration and target-GPU cost remain pending.
 
 
 ## GLSL include-aware CI correction — 2026-11-23
@@ -1029,3 +1029,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - These are treated as glossy dielectrics rather than metals: only smoothness is inferred from the existing albedo sample, while neutral dielectric F0 remains unchanged.
 - Per-material coating factors follow the reference families (0.5 for diamond/emerald/lapis/quartz, 0.77 for redstone, disabled for amethyst). Explicit resource-pack specular maps remain authoritative for smoothness and reflectance.
 - No extra texture reads or render targets are added. CI must validate the new IDs and both PBR branches; runtime appearance remains pending.
+
+
+## Shared held-item lighting in translucent surfaces — 2026-11-23
+- Moved the main/offhand energy, item-color and distance functions into a shared Iris include so the deferred opaque pass and forward translucent water/glass pass use identical logic.
+- The include exits early when both Iris held light values are zero, avoiding distance and color work for ordinary items. The Ultra-Light quality setting compiles the path out entirely.
+- Water uses its existing player-space position varying, so third-person camera offsets are handled by the same Iris relativeEyePosition calculation.
+- CI now checks both call sites and the shared include. The effect still has no cast shadows or screen-space occlusion; runtime appearance and GPU cost remain pending.

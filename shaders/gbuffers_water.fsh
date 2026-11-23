@@ -61,7 +61,8 @@ flat in float vFluidRenderType;
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
 #define WATER_WAVE_SCALE 100 // [50 75 100 125 150 200] Water wave spatial frequency
-#define WATER_WAVE_DETAIL 0 // [0 1] Optional very-large Unbound-style normal scale; adds one texture sample
+#define WATER_WAVE_DETAIL 0
+#define HELD_LIGHTING_STRENGTH 50 // [0 1] Optional very-large Unbound-style normal scale; adds one texture sample
 #define WATER_COLOR_STRENGTH 100 // [0 25 50 75 100] Unbound-style water base tint blend
 #define WATER_NOISE_COLOR_STRENGTH 35 // [0 10 20 35 50 75 100] Animated water colour variation
 #define WATER_FOAM_STRENGTH 100 // [0 25 50 75 100 125 150] Shoreline and shallow-surface foam strength
@@ -388,6 +389,7 @@ vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out f
 
 
 #include "/lib/lighting/environment_reflection.glsl"
+#include "/lib/lighting/held_item_lighting.glsl"
 
 vec3 sampleEnvironmentReflection(vec3 viewReflectionDirection) {
     return calculateEnvironmentReflection(
@@ -485,6 +487,10 @@ void main() {
     }
 
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
+#if HELD_LIGHTING_STRENGTH > 0
+    vec3 heldLighting = calculateHeldItemLighting(vPlayerPosition);
+    ambient = sqrt(ambient * ambient + heldLighting);
+#endif
     vec3 celestialColor = endFlashActive
         ? vec3(1.0)
         : (hasSkylight
