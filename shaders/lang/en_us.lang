@@ -233,3 +233,6 @@ value.BLOOM_QUALITY.2 = Ultra Wide
 
 option.POM_SELF_SHADOW_STRENGTH = POM Self-Shadowing
 option.POM_SELF_SHADOW_STRENGTH.comment = Uses four tangent-space height-map samples toward the active celestial light to attenuate direct light on parallax-mapped terrain and block entities.
+
+option.POM_SLOPE_NORMAL_STRENGTH = POM Height Slope Normals
+option.POM_SLOPE_NORMAL_STRENGTH.comment = Derives additional tangent-space surface slope from LabPBR/oldPBR height gradients for terrain, block entities and opt-in entity models.
