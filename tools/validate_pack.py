@@ -1053,9 +1053,15 @@ sky_basic = sources.get("gbuffers_skybasic.fsh", "")
 sky_basic_vertex = sources.get("gbuffers_skybasic.vsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SKY", "MC_RENDER_STAGE_SUNSET",
               "MC_RENDER_STAGE_STARS", "MC_RENDER_STAGE_VOID", "skyColor", "fogColor",
-              "gbufferProjectionInverse", "outDeferredValidity = vec4(0.0)"):
+              "gbufferProjectionInverse", "outDeferredValidity = vec4(0.0)",
+              "uniform mat4 gbufferModelView;", "uniform vec3 shadowLightPosition;",
+              "dot(viewDirection, normalize(shadowLightPosition))",
+              "celestialGlare *= 0.7 * (1.0 - 0.8 * rainStrength)",
+              "colorLinear += glareColor * celestialGlare"):
     if token not in sky_basic and token not in sky_basic_vertex:
         errors.append(f"Sky-basic program is missing Iris sky-stage component: {token}")
+if "texture(" in sky_basic:
+    errors.append("Low-cost sky scattering/glare must not add texture fetches")
 sky_textured = sources.get("gbuffers_skytextured.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "MC_RENDER_STAGE_SUN", "MC_RENDER_STAGE_MOON",
               "alphaTestRef", "sunPosition", "moonPosition", "isEyeInWater", "outDeferredValidity = vec4(0.0)"):

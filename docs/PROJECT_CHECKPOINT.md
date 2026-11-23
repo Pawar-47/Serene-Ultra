@@ -1055,3 +1055,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Added explicit glslang compile/link coverage for the Ultra-Light quality-zero reflection branches in composite and water.
 - The water quality-zero branch is compiled in both oldPBR and LabPBR; it must retain environment reflection while compiling out SSR sampling.
 - Profile regression checks now enforce Ultra-Light=0 steps, Smooth=6 and Ultra=8 for both opaque and water SSR.
+
+
+## Low-cost sky celestial glare — 2026-11-23
+- Added a reference-guided active-celestial glare lobe to the sky-basic path, using Iris shadowLightPosition (sun by day, moon by night) and the player-to-view transform.
+- The glare color shifts from cool lunar to warm solar and midday tones using the cyclic sunAngle elevation, and is attenuated by rain. It is applied only to sky/sunset render stages.
+- This ports the low-quality glare concept from Complementary's sky path without its additional noise sampling. The implementation adds no texture reads or render targets.
+- Iris documentation confirms shadowLightPosition is the view-space position of the highest celestial body (sun by day, moon by night), length 100, and gbufferModelView maps player space to view space.
+- Full Rayleigh/Mie atmospheric scattering, volumetric light transport and visual calibration remain pending.
