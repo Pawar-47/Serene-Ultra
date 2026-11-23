@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#include "/lib/taa_jitter.glsl"
+
 uniform mat4 gbufferModelViewInverse;
 
 out vec2 vTexCoord;
@@ -17,4 +19,5 @@ void main() {
     // submitted face normal, converted into player-aligned space for deferred.
     vec3 viewNormal = normalize(gl_NormalMatrix * normalize(gl_Normal));
     vPlayerNormal = normalize(mat3(gbufferModelViewInverse) * viewNormal);
+    applySereneTaaJitter(gl_Position);
 }
