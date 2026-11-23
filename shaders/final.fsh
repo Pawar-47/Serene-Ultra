@@ -28,6 +28,9 @@ layout(location = 0) out vec4 outColor;
 #define EXPOSURE 0.00 // [-2.00 -1.50 -1.00 -0.50 0.00 0.50 1.00 1.50 2.00] Exposure in stops
 #define CONTRAST 1.00 // [0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.40] Contrast
 #define SATURATION 1.00 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00] Color saturation
+#define VIBRANCE 100 // [0 25 50 75 100 125 150 175 200] Reference-style vibrance control
+#define TM_WHITE_PATH 100 // [10 25 40 55 70 85 100 115 130 145 160 175 190] Highlight-to-white shoulder
+#define TM_DARK_DESATURATION 25 // [0 10 20 25 35 50 65 80 100] Shadow desaturation
 #define HDR_LOOK 0 // [0 1 2] 0=Neutral, 1=HDR, 2=Ultra HDR tone mapping
 #define BLOOM_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100] Linear-light emissive bloom strength
 #define BLOOM_QUALITY 2 // [0 1 2] Additional wide bloom pyramid levels
@@ -228,24 +231,84 @@ vec3 applyVanillaStatusEffects(vec3 color) {
     return color * visibility;
 }
 
-vec3 applyHdrLook(vec3 color) {
-#if HDR_LOOK == 1
-    // Filmic shoulder: retain highlight detail while keeping output display-safe.
-    const float a = 2.51;
-    const float b = 0.03;
-    const float c = 2.43;
-    const float d = 0.59;
-    const float e = 0.14;
-    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
-#elif HDR_LOOK == 2
-    // Stronger highlight compression and a slightly lifted midtone response.
-    vec3 x = max(color, vec3(0.0));
-    vec3 mapped = x / (1.0 + x);
-    mapped = pow(mapped, vec3(0.92));
-    return clamp(mapped, 0.0, 1.0);
+vec3 linearToDisplayRgb(vec3 color) {
+    vec3 linearColor = max(color, vec3(0.0));
+    vec3 lowSegment = linearColor * 12.92;
+    vec3 highSegment = 1.055 * pow(linearColor, vec3(1.0 / 2.4)) - 0.055;
+    return mix(highSegment, lowSegment, lessThanEqual(linearColor, vec3(0.0031308)));
+}
+
+// Complementary-guided Lottes 2016 display transform. HDR_LOOK selects the
+// highlight ceiling while exposure and contrast remain independent controls.
+vec3 applyReferenceToneMap(vec3 color) {
+    color = max(color, vec3(0.0));
+    float initialLuminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
+#if HDR_LOOK == 0
+    const float hdrMaximum = 8.0;
+#elif HDR_LOOK == 1
+    const float hdrMaximum = 12.0;
 #else
-    return color;
+    const float hdrMaximum = 16.0;
 #endif
+    vec3 a = vec3(CONTRAST);
+    vec3 d = vec3(1.0);
+    vec3 hdrMax = vec3(hdrMaximum);
+    vec3 midIn = vec3(0.25);
+    vec3 midOut = vec3(0.25);
+
+    vec3 aD = a * d;
+    vec3 hdrMaxA = pow(hdrMax, a);
+    vec3 hdrMaxAD = pow(hdrMax, aD);
+    vec3 midInA = pow(midIn, a);
+    vec3 midInAD = pow(midIn, aD);
+    vec3 hm1 = hdrMaxA * midOut;
+    vec3 hm2 = hdrMaxAD - midInAD;
+    vec3 b = (-midInA + hm1) / (hm2 * midOut);
+    vec3 c = (hdrMaxAD * midInA - hm1 * midInAD) / (hm2 * midOut);
+    vec3 colorOut = pow(color, a) / (pow(color, aD) * b + c);
+    colorOut = linearToDisplayRgb(colorOut);
+
+    float darkLift = 1.0 - smoothstep(0.0, 0.1, initialLuminance);
+    float contrastLift = clamp((0.55 - abs(1.05 - CONTRAST)) / 0.55, 0.0, 1.0);
+    vec3 readableDarkColor = pow(color, vec3(1.0 / 2.2));
+    colorOut = mix(colorOut, readableDarkColor, darkLift * 0.75 * contrastLift);
+
+    float whitePathExponent = 2.0 - float(TM_WHITE_PATH) * 0.01;
+    float modifiedLuminance = pow(max(initialLuminance / 16.0, 0.0), whitePathExponent) * 16.0;
+    float whitePath = smoothstep(0.0, 16.0, modifiedLuminance);
+    colorOut = mix(colorOut, vec3(1.0), whitePath);
+
+    float darkDesaturation = 1.0 - smoothstep(0.0, 0.1, initialLuminance);
+    float outputLuminance = dot(colorOut, vec3(0.2126, 0.7152, 0.0722));
+    colorOut = mix(
+        colorOut, vec3(outputLuminance),
+        darkDesaturation * float(TM_DARK_DESATURATION) * 0.01
+    );
+    return clamp(colorOut, 0.0, 1.0);
+}
+
+// Complementary/BSL-style saturation and vibrance, applied after display mapping.
+vec3 applyReferenceSaturation(vec3 color) {
+    float saturationFactor = SATURATION + 0.07;
+    float vibranceFactor = float(VIBRANCE) * 0.01;
+    float grayVibrance = (color.r + color.g + color.b) / 3.0;
+    float graySaturation = grayVibrance;
+    if (saturationFactor < 1.0) {
+        graySaturation = dot(color, vec3(0.299, 0.587, 0.114));
+    }
+    float minimumChannel = min(color.r, min(color.g, color.b));
+    float maximumChannel = max(color.r, max(color.g, color.b));
+    float saturationMask = (1.0 - (maximumChannel - minimumChannel))
+        * (1.0 - maximumChannel) * grayVibrance * 5.0;
+    vec3 lightness = vec3((minimumChannel + maximumChannel) * 0.5);
+    color = mix(color, mix(color, lightness, 1.0 - vibranceFactor), saturationMask);
+    color = mix(
+        color, lightness,
+        (1.0 - lightness) * (2.0 - vibranceFactor) * 0.5
+            * abs(vibranceFactor - 1.0)
+    );
+    color = color * saturationFactor - graySaturation * (saturationFactor - 1.0);
+    return clamp(color, 0.0, 1.0);
 }
 
 void main() {
@@ -277,22 +340,13 @@ void main() {
 
     color = applyChromaticAberration(color, vTexCoord, texelSize);
 
-    // Exposure is expressed in photographic stops.
+    // Exposure is expressed in photographic stops; RGB gains provide white balance.
     color *= exp2(EXPOSURE);
-
-    // Independent channel gains provide white-balance and creative RGB tuning.
     color *= vec3(RED_GAIN, GREEN_GAIN, BLUE_GAIN);
 
-    // Contrast is applied around a perceptual mid-gray pivot.
-    color = (color - vec3(0.18)) * CONTRAST + vec3(0.18);
-
-    // Luminance-preserving saturation adjustment.
-    float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    color = mix(vec3(luminance), color, SATURATION);
-    color = max(color, vec3(0.0));
-
     color = applyVanillaStatusEffects(color);
-    color = applyHdrLook(color);
+    color = applyReferenceToneMap(color);
+    color = applyReferenceSaturation(color);
     color = applyVignette(color, vTexCoord);
     color = applyFilmGrain(color, vTexCoord);
 
