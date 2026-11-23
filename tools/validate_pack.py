@@ -1630,6 +1630,10 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fs
 # Screen-space GI must be depth-aware, profile-scaled and explicitly described as an approximation.
 for token in ("#define SCREEN_GI_STRENGTH", "vec3 sampleScreenSpaceColorBleed(",
               "normalValidity < 0.49", "sampleDistance >= 1.5",
+              "float sampleDepthAll = texture(depthtex0, sampleUv).r",
+              "abs(sampleDepthAll - sampleDepth) > 0.000001",
+              "vec4 sampleNormalData = texture(colortex2, sampleUv)",
+              "sampleNormalData.a < 0.5",
               "bouncedLight / totalWeight", "lightShafts + screenGi"):
     if token not in composite_shader:
         errors.append(f"Screen-space indirect lighting is missing component: {token}")
