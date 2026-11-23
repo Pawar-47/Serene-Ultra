@@ -479,7 +479,9 @@ void main() {
         vMaterialId == 32111 || vMaterialId == 32113 || vMaterialId == 32114 ||
         vMaterialId == 32115 || vMaterialId == 32116 || vMaterialId == 32117 ||
         vMaterialId == 32118 || vMaterialId == 32120 || vMaterialId == 32121 ||
-        vMaterialId == 32122 || vMaterialId == 32123;
+        vMaterialId == 32122 || vMaterialId == 32123 ||
+        vMaterialId == 32124 || vMaterialId == 32125 || vMaterialId == 32126 ||
+        vMaterialId == 32127 || vMaterialId == 32128 || vMaterialId == 32129;
     bool fallbackMetalMaterial =
         vMaterialId == 10248 || vMaterialId == 10264 || vMaterialId == 10268 ||
         vMaterialId == 10280 || vMaterialId == 10292 || vMaterialId == 10296 ||
@@ -676,9 +678,18 @@ void main() {
                vMaterialId == 32111 || vMaterialId == 32120 ||
                vMaterialId == 32121 || vMaterialId == 32122) {
         emissionStrength = 0.55;
-    } else if (vMaterialId == 32116) {
+    } else if (vMaterialId == 32116 || vMaterialId == 32128 || vMaterialId == 32129) {
         emissionStrength = 0.25;
-    }
+    } else if (vMaterialId == 32124) {
+        // Sea pickles only emit when waterlogged; the vanilla block-light
+        // coordinate distinguishes their lit state from dry pickles.
+        emissionStrength = vLightmapCoord.x > 0.05 ? 0.45 : 0.0;
+    } else if (vMaterialId == 32125) {
+        emissionStrength = 0.45; // Coloured lit candles and candle cakes.
+    } else if (vMaterialId == 32126) {
+        emissionStrength = 0.90; // Charged respawn anchors.
+    } else if (vMaterialId == 32127) {
+        emissionStrength = 0.90; // Lit copper bulbs.
 
     emissionStrength = max(emissionStrength, pbrEmission * 5.0);
     outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData);
