@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 out vec4 vVertexColor;
 out vec3 vViewPosition;
