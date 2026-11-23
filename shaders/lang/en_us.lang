@@ -230,3 +230,6 @@ option.BLOOM_QUALITY.comment = Adds very-wide and ultra-wide low-resolution bloo
 value.BLOOM_QUALITY.0 = Compact
 value.BLOOM_QUALITY.1 = Wide
 value.BLOOM_QUALITY.2 = Ultra Wide
+
+option.POM_SELF_SHADOW_STRENGTH = POM Self-Shadowing
+option.POM_SELF_SHADOW_STRENGTH.comment = Uses four tangent-space height-map samples toward the active celestial light to attenuate direct light on parallax-mapped terrain and block entities.
