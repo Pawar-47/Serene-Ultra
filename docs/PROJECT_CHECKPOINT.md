@@ -1610,3 +1610,9 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Updated the bloom-threshold tooltip to specify linear-light units, the bloom-strength tooltip to describe all four scales, the feature matrix and structural checks. This avoids mixing gamma-encoded scene values with linear bloom energy and prevents double display encoding after the Lottes transform.
 - Commits: bright-pass 5cd8cb4e283978ab2e882f815dedc65d80a20dbc; final linear pipeline efcac03a4694c5d26b94998e8d127b91b649ff4d; chromatic sampling 26b7e07e64584ea46732bd8ede9835c48671d5f0; language/validator 0fe1277b4b3101eb351127d3e630f6dc39820c1a, 06bfcc0f88d27c9f01a42ec1952aeca087b2ff38, 1192ba314f7fb50f16df9d7f5c551ed4b1e0a5a9, 745a54c7c17395440568f66ad57eb323c37fdc30, 91dcb1c8aae22805b9f41d5245224111f3712375, 244313bc6ae735cca17c70fcee3bec2aac072124, 60a0346017221bdcd0ce4f45c932793bcfbdbd4c.
 - CI for this color-pipeline milestone is queued/running; no compile or runtime result is claimed yet.
+
+
+### Linear-light color pipeline validation — 2026-11-23 17:38 UTC
+- CI run 45229840172 on commit 2e53605a76aec0589c1e4e73fed8f06b091920b3 passed: all standalone shader compilation, Iris macro branches, LabPBR, entity POM, Unbound water detail, Ultra-Light reflection, water-normal inspection, program linking and structural validation stages completed successfully.
+- A review of the Lottes display transform confirmed that it already performs linear-to-display conversion. The final gamma control was therefore corrected to apply only its optional user adjustment, avoiding a second 2.2 display encoding pass.
+- This validates source compilation and the structural contract; it is not a Minecraft/Iris visual runtime result.
