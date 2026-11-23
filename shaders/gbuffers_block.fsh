@@ -286,11 +286,6 @@ void main() {
         }
     }
 #endif
-#if COATED_TEXTURE_STRENGTH > 0
-    if (!signText && blockEntityId != 5025 && albedo.a >= 0.999) {
-        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
-    }
-#endif
 
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
@@ -315,7 +310,6 @@ void main() {
     }
 
     outLightmapData = vec4(vanillaLight, skyLight);
-    outColor = albedo;
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     float materialAO = 1.0;
@@ -349,7 +343,15 @@ void main() {
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0);
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
+#if COATED_TEXTURE_STRENGTH > 0
+    if (!signText && blockEntityId != 5025 && albedo.a >= 0.999 &&
+        pbrEmission < 0.01 && emissionStrength < 0.01 &&
+        materialReflectance < 0.8 && materialSmoothness < 0.85) {
+        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
+    }
+#endif
     emissionStrength = max(emissionStrength, pbrEmission * 5.0);
+    outColor = albedo;
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5 + 0.5 * materialSmoothness);
     outEmissionData = vec4(emissionStrength / 5.0, materialReflectance, materialAO, materialSurfaceData);
 }

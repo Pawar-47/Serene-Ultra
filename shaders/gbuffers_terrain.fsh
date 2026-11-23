@@ -271,11 +271,6 @@ void main() {
         }
     }
 #endif
-#if COATED_TEXTURE_STRENGTH > 0
-    if (albedo.a >= 0.999) {
-        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
-    }
-#endif
 
     // Preserve the vanilla lightmap's RGB tint (including warm block light
     // and skylight color) plus a separate sky-light factor for direct sun.
@@ -321,6 +316,23 @@ void main() {
 #else
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0); // oldPBR metalness
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);        // oldPBR emissiveness
+#endif
+
+    // Do not perturb metal F0, glossy surfaces or material-map emission.
+    // Built-in emissive blocks are excluded even when no specular map exists.
+    bool fallbackEmissiveMaterial =
+        vMaterialId == 32100 || vMaterialId == 32101 || vMaterialId == 32102 ||
+        vMaterialId == 32103 || vMaterialId == 32104 || vMaterialId == 32105 ||
+        vMaterialId == 32108 || vMaterialId == 32109 || vMaterialId == 32110 ||
+        vMaterialId == 32111 || vMaterialId == 32113 || vMaterialId == 32114 ||
+        vMaterialId == 32115 || vMaterialId == 32116 || vMaterialId == 32117 ||
+        vMaterialId == 32118 || vMaterialId == 32120 || vMaterialId == 32121 ||
+        vMaterialId == 32122 || vMaterialId == 32123;
+#if COATED_TEXTURE_STRENGTH > 0
+    if (albedo.a >= 0.999 && pbrEmission < 0.01 && !fallbackEmissiveMaterial &&
+        materialReflectance < 0.8 && materialSmoothness < 0.85) {
+        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
+    }
 #endif
 
     // Pack material smoothness into the normal attachment alpha without

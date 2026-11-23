@@ -363,6 +363,14 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
                   "cameraPositionInt", "cameraPositionFract"):
         if token not in source:
             errors.append(f"{name} is missing coated-texture component: {token}")
+    for token in ("pbrEmission < 0.01", "materialReflectance < 0.8",
+                  "materialSmoothness < 0.85"):
+        if token not in source:
+            errors.append(f"{name} must exclude emissive/glossy PBR surfaces from coating: {token}")
+if "fallbackEmissiveMaterial" not in sources.get("gbuffers_terrain.fsh", ""):
+    errors.append("Terrain coating must skip built-in emissive material IDs")
+if "emissionStrength < 0.01" not in sources.get("gbuffers_block.fsh", ""):
+    errors.append("Block-entity coating must skip fallback emissive surfaces")
 if "out vec3 vPlayerPosition;" not in sources.get("gbuffers_block.vsh", "") or "vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;" not in sources.get("gbuffers_block.vsh", ""):
     errors.append("Block-entity vertex stage must provide stable player-relative position for coated texture noise")
 if "in vec3 vPlayerPosition;" not in sources.get("gbuffers_block.fsh", ""):

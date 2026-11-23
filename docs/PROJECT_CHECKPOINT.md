@@ -750,3 +750,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1058 (45109244596) passed all nine stages for generated normals. Run #1060 (45109448675) passed all nine stages for coated textures and the corrected uniform declarations.
 - Source-level validation only: visual material response, atlas seams, oldPBR/LabPBR pack compatibility and Intel HD 5500 GPU cost still require Minecraft 26.3 + Iris runtime testing.
 - Remaining reference gaps include generic entity/held-item POM, POM self-shadowing, slope-normal reconstruction and runtime calibration.
+
+
+## Coated-texture material filtering — 2026-11-23
+- Moved coating modulation after oldPBR/LabPBR material decoding so the shader can avoid tinting material-map emissives, high-F0 metals and highly smooth surfaces.
+- Terrain additionally excludes all built-in emissive material IDs, including glowstone, sea lantern, torches, froglights, beacon, lava and jack-o-lantern. Block entities skip sign text, portals and their fallback emissive state.
+- The effect remains a single Iris noisetex lookup on eligible opaque fragments, with atlas/world-cell-stable coordinates and derivative-based mip fade. This refinement reduces unintended changes to emissive/metallic PBR response.
+- Iris noisetex documentation confirms the sampler is a generated RGB8 white-noise buffer (256x256 by default) and can be replaced via texture.noise. The cameraPositionInt/cameraPositionFract uniforms used for stable world-space variation are Iris-supported.
+- Corrected coating filter requires a fresh CI run; runtime material appearance and GPU cost remain unverified.
