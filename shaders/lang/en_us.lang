@@ -164,3 +164,6 @@ option.SCREEN_GI_STRENGTH = Screen-Space Indirect Light
 option.SCREEN_GI_STRENGTH.comment = Adds subtle depth-aware colour bounce from nearby visible surfaces. This is a low-cost screen-space approximation, not full world-space global illumination.
 option.SCREEN_GI_QUALITY = Indirect Light Quality
 option.SCREEN_GI_QUALITY.comment = Selects 0, 4, 8 or 12 depth-aware neighbour samples. Higher settings improve local coverage but increase GPU texture sampling.
+
+option.SKY_ATMOSPHERE_STRENGTH = Atmospheric Scattering
+option.SKY_ATMOSPHERE_STRENGTH.comment = Controls the strength of Rayleigh sky tint, aerosol forward scattering and warm twilight haze. Set to zero for the vanilla sky gradient.
