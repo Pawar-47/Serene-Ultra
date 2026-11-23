@@ -1627,21 +1627,42 @@ for name, tokens in (
     if "BLOOM_STRENGTH" not in stage:
         errors.append(f"{name} must honour BLOOM_STRENGTH so low profiles skip the chain")
 
-# Flip contract: the buffer a stage writes must flip so the following stage reads
-# the new contents (as deferred1 does for colortex4), while a buffer it only reads
-# must not flip. None of these stages may flip the scene colour they sample.
-for stage_name, buffer in (("composite1", "colortex5"), ("composite2", "colortex6"),
-                           ("composite3", "colortex5"), ("composite4", "colortex7")):
-    if f"flip.{stage_name}.{buffer}=true" not in props:
-        errors.append(f"{stage_name} must flip {buffer} so the next bloom stage reads what it wrote")
-for stage_name in ("composite1", "composite2", "composite3", "composite4"):
-    if f"flip.{stage_name}.colortex0=false" not in props:
-        errors.append(f"{stage_name} must not flip colortex0, which it only samples")
-read_only_flips = (("composite2", "colortex5"), ("composite3", "colortex6"),
+# Iris' CompositeRenderer flips every draw buffer by default, then applies any
+# explicit flip.<pass>.<buffer>=true as an ADDITIONAL flip on top. Declaring true
+# for a buffer the pass already writes therefore flips it twice, cancelling the
+# default and leaving the next stage reading stale contents. Bloom stages must
+# declare no flip for the buffer they write and must not flip buffers they read.
+bloom_written = {"composite1": "colortex5", "composite2": "colortex6",
+                 "composite3": "colortex5", "composite4": "colortex7"}
+bloom_read_only = (("composite1", "colortex0"), ("composite2", "colortex0"),
+                   ("composite2", "colortex5"), ("composite3", "colortex0"),
+                   ("composite3", "colortex6"), ("composite4", "colortex0"),
                    ("composite4", "colortex5"))
-for stage_name, buffer in read_only_flips:
-    if f"flip.{stage_name}.{buffer}=false" not in props:
+for stage_name, buffer in bloom_written.items():
+    if f"flip.{stage_name}.{buffer}=true" in props:
+        errors.append(
+            f"{stage_name} must not set flip.{buffer}=true: Iris already flips draw buffers "
+            "and an explicit true applies a second flip that cancels it"
+        )
+for stage_name, buffer in bloom_read_only:
+    if f"flip.{stage_name}.{buffer}=true" in props:
         errors.append(f"{stage_name} only reads {buffer} and must not flip it")
+
+# Generalise the same rule to every composite pass: derive its draw buffers from
+# RENDERTARGETS and reject an explicit true on one of them. CompositeRenderer flips
+# draw buffers once by default and again for an explicit true, so such a directive
+# cancels the default flip and the following pass reads the unwritten texture.
+for pass_name in ("composite", "composite1", "composite2", "composite3", "composite4"):
+    pass_source = sources.get(f"{pass_name}.fsh", "")
+    targets = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", pass_source)
+    if not targets:
+        continue
+    for index in {int(value) for value in re.findall(r"\d+", targets.group(1))}:
+        if f"flip.{pass_name}.colortex{index}=true" in props:
+            errors.append(
+                f"flip.{pass_name}.colortex{index}=true double-flips a buffer {pass_name} writes, "
+                "cancelling Iris' default flip so the next pass reads stale contents"
+            )
 if "uniform sampler2D colortex5" not in final_shader or "uniform sampler2D colortex7" not in final_shader:
     errors.append("Final pass must combine both bloom levels")
 
