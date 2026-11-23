@@ -242,3 +242,6 @@ option.SCREEN_GI_TEMPORAL_STRENGTH.comment = Reprojects previous screen-space co
 
 option.PBR_REFLECTION_BLUR_STRENGTH = Reflection Roughness Filtering
 option.PBR_REFLECTION_BLUR_STRENGTH.comment = Blurs opaque screen-space reflections according to material roughness while rejecting neighboring samples at depth discontinuities.
+
+option.AO_TEMPORAL_STRENGTH = Temporal Contact AO
+option.AO_TEMPORAL_STRENGTH.comment = Stabilizes contact occlusion by reprojecting previous AO with camera motion and rejecting mismatched depth. Zero disables history accumulation.
