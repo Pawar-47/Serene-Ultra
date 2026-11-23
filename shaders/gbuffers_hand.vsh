@@ -24,12 +24,10 @@ void main() {
         tangentCandidate = cross(helperAxis, viewNormal);
     }
     vec3 viewTangent = normalize(tangentCandidate);
+    // Iris defines at_tangent.w as the handedness of the tangent frame.
+    // Build the bitangent after transforming/orthogonalising the tangent.
     float tangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0;
-    vec3 bitangentCandidate = gl_NormalMatrix * cross(at_tangent.xyz, gl_Normal.xyz) * tangentHandedness;
-    bitangentCandidate -= viewNormal * dot(bitangentCandidate, viewNormal);
-    if (dot(bitangentCandidate, bitangentCandidate) < 0.000001) {
-        bitangentCandidate = cross(viewTangent, viewNormal) * tangentHandedness;
-    }
+    vec3 bitangentCandidate = cross(viewTangent, viewNormal) * tangentHandedness;
 
     vViewPosition = (gl_ModelViewMatrix * gl_Vertex).xyz;
     vViewNormal = viewNormal;

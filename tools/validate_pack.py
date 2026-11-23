@@ -1234,6 +1234,24 @@ for token in ("item.45012=iron_shovel", "item.45016=golden_shovel", "item.45020=
               "item.45024=netherite_shovel", "item.44094=glowstone_dust", "item.44096=nether_star"):
     if token not in item_properties:
         errors.append(f"Missing Iris held-item ID mapping: {token}")
+
+# Iris item IDs are unsigned 16-bit values; each exact item/trim identifier
+# must map to one numeric ID only.
+mapped_items = {}
+for line_number, raw_line in enumerate(item_properties.splitlines(), 1):
+    mapping = re.match(r"^\s*item\.(\d+)\s*=\s*(.*?)\s*$", raw_line.split("#", 1)[0])
+    if not mapping:
+        continue
+    numeric_id = int(mapping.group(1))
+    if not 0 <= numeric_id <= 65535:
+        errors.append(f"item.properties line {line_number} uses out-of-range Iris ID {numeric_id}")
+    for identifier in mapping.group(2).split():
+        normalized = identifier if identifier.startswith("minecraft:") else "minecraft:" + identifier
+        previous = mapped_items.get(normalized)
+        if previous is not None and previous[0] != numeric_id:
+            errors.append(f"Item identifier {normalized} is assigned to IDs {previous[0]} and {numeric_id}")
+        else:
+            mapped_items[normalized] = (numeric_id, line_number)
 hand_shader = sources.get("gbuffers_hand.fsh", "")
 for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemId",
               "uniform sampler2D normals", "uniform sampler2D specular", "uniform vec3 shadowLightPosition",
@@ -1242,6 +1260,11 @@ for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemI
               "outColor = albedo"):
     if token not in hand_shader:
         errors.append(f"Hand PBR path is missing component: {token}")
+hand_vertex = sources.get("gbuffers_hand.vsh", "")
+for token in ("in vec4 at_tangent;", "cross(viewTangent, viewNormal) * tangentHandedness",
+              "vViewBitangent = normalize(bitangentCandidate)"):
+    if token not in hand_vertex:
+        errors.append(f"Hand PBR tangent basis is missing Iris component: {token}")
 hand_props = (SHADERS / "shaders.properties").read_text(encoding="utf-8")
 hand_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
 if "HAND_PBR_STRENGTH" not in hand_props.split("sliders =", 1)[-1]:

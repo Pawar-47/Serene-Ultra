@@ -904,3 +904,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Run #1087 compiled and linked every shader program, including gbuffers_hand in both oldPBR and LabPBR branches.
 - Structural validation failed because the shared hand/terrain/entity/block atlas check accepted only texture(gtexture...), while the new hand PBR stage correctly uses textureGrad(gtexture, ...) so atlas derivatives remain available for normal/specular sampling.
 - Updated the structural assertion to accept both ordinary texture() and derivative-aware textureGrad() atlas reads. This does not alter shader behavior; a fresh CI result is required.
+
+
+## Held-item tangent-frame correction — 2026-11-23
+- Run #1088 passed the hand PBR default and LabPBR compile/link variants after the earlier atlas-validator adjustment.
+- Iris documents at_tangent.xyz as the model-space tangent approximation and at_tangent.w as tangent-frame handedness. The held-item vertex shader previously transformed a model-space cross product through the normal matrix, which can skew the bitangent under non-uniform transforms.
+- Rebuilt the bitangent in view space from the already transformed and orthogonalized tangent and normal: cross(viewTangent, viewNormal) multiplied by Iris handedness. This now matches the Iris tangent-frame construction used by the terrain, entity and block-entity paths.
+- Added CI checks for the view-space hand bitangent and item.properties unsigned 16-bit ID range/duplicate assignments. Runtime hand lighting and item appearance remain unverified.
