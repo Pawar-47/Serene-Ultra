@@ -911,3 +911,15 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Iris documents at_tangent.xyz as the model-space tangent approximation and at_tangent.w as tangent-frame handedness. The held-item vertex shader previously transformed a model-space cross product through the normal matrix, which can skew the bitangent under non-uniform transforms.
 - Rebuilt the bitangent in view space from the already transformed and orthogonalized tangent and normal: cross(viewTangent, viewNormal) multiplied by Iris handedness. This now matches the Iris tangent-frame construction used by the terrain, entity and block-entity paths.
 - Added CI checks for the view-space hand bitangent and item.properties unsigned 16-bit ID range/duplicate assignments. Runtime hand lighting and item appearance remain unverified.
+
+
+## Hand tangent-frame refinement and CI result — 2026-11-23
+- The follow-up audit corrected the hand bitangent construction to derive it from the already transformed view-space tangent and normal, matching Iris' documented tangent-space basis convention.
+- Run #1089 passed all nine CI stages after the correction, including the LabPBR hand compile/link and full structural validation.
+- Hand PBR remains runtime-unverified; check both first-person hand projection and held-item normal-map orientation in Minecraft 26.3 with Iris.
+
+## Third-party reference/license review before public release
+- The supplied working shader archive contains Complementary License Agreement 1.8. Its modified-pack grant lists visible credit, retention of the unmodified license, a noticeably different result, significant original additions, and no conflicting additional license terms.
+- Serene's current root LICENSE declares MIT for original project files and states the reference shader is not included/copied/redistributed. Because material algorithms and item-ID mappings have been ported or adapted from the supplied Complementary reference, this needs deliberate compatibility review before public release.
+- No license file or project license was changed. Keep this as a release gate: confirm applicable permissions/attribution with the rights holder or legal counsel, or replace directly derived material tables/code with independently authored equivalents before publishing releases.
+- Official Complementary documentation states Unbound and Reimagined share the same engine and differ in default settings; Unbound remains the primary style reference for water/material tuning.
