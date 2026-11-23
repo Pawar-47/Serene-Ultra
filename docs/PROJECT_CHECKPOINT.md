@@ -1772,3 +1772,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Reused existing Complementary-guided IDs for stone, deepslate, cobblestone, dirt and obsidian, and added IDs for vanilla wood/planks and sand/gravel/clay/mud groups. Porosity now drives both rain darkening/reflectance loss and the existing terrain puddle suppression mask.
 - Updated the wetness tooltip, structural validation and feature matrix. Entity and block-entity oldPBR wetness fallbacks remain a separate gap; their LabPBR paths are unchanged.
 - CI confirmation pending for this material fallback.
+
+
+### Anisotropic water POM height sampling — 2026-11-23
+- Water POM now samples the resource-pack `normals.a` height channel through the shared principal-axis anisotropic atlas helper for both the initial height test and every bounded ray-march step.
+- Each tap remains clamped to the current Iris sprite rectangle, preserving atlas isolation while reducing grazing-angle height aliasing. The same UV derivatives are retained for stable mip selection.
+- Updated structural validation and the POM feature matrix.
+- Commits: water shader `33c347cd444e068474f8b55fb8a26daea384202e`; validator `fbd80176c83151d53948d7588eba6746a82c8595`; matrix `4a6a9499f7c833d41e06674706a43f9620200628`.
+- This only changes the water resource-pack POM height samples; the generated custom wave-normal texture still has constant alpha and therefore does not invent a height field.
