@@ -1568,14 +1568,14 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
 
 # Final-pass bloom is a real shader effect, not a menu-only placeholder.
 final_shader = sources.get("final.fsh", "")
-for token in ("#define BLOOM_STRENGTH", "#define BLOOM_THRESHOLD",
-              "vec3 extractBloomHighlights(", "vec3 sampleSingleScaleBloom(",
+for token in ("#define BLOOM_STRENGTH", "#define BLOOM_THRESHOLD", "#define FXAA_ENABLED",
+              "vec3 sampleFxaa(", "float lumaMin", "vec3 extractBloomHighlights(", "vec3 sampleSingleScaleBloom(",
               "textureSize(colortex0, 0)", "color += bloom *"):
     if token not in final_shader:
         errors.append(f"Final-pass bloom is missing implementation component: {token}")
 color_screen = next((line for line in held_props.splitlines() if line.startswith("screen.COLOR =")), "")
 slider_line = next((line for line in held_props.splitlines() if line.startswith("sliders =")), "")
-for option in ("BLOOM_STRENGTH", "BLOOM_THRESHOLD"):
+for option in ("BLOOM_STRENGTH", "BLOOM_THRESHOLD", "FXAA_ENABLED"):
     if option not in color_screen:
         errors.append(f"{option} must appear in the Color screen")
     if option not in slider_line:
@@ -1584,11 +1584,18 @@ if "option.BLOOM_STRENGTH.comment =" not in held_lang:
     errors.append("Bloom strength requires a user-facing tooltip")
 if "option.BLOOM_THRESHOLD.comment =" not in held_lang:
     errors.append("Bloom threshold requires a user-facing tooltip")
+if "option.FXAA_ENABLED.comment =" not in held_lang:
+    errors.append("FXAA requires a user-facing tooltip")
 for profile, value in (("Ultra-Light", "0"), ("Smooth", "25"),
                        ("Ultra", "50"), ("HDR", "65"), ("Ultra-HDR", "75")):
     line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
     if f"BLOOM_STRENGTH:{value}" not in line:
         errors.append(f"{profile} has incorrect bloom strength")
+for profile, value in (("Ultra-Light", "0"), ("Smooth", "1"),
+                       ("Ultra", "1"), ("HDR", "1"), ("Ultra-HDR", "1")):
+    line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"FXAA_ENABLED:{value}" not in line:
+        errors.append(f"{profile} has incorrect FXAA setting")
 
 if errors:
     print("Serene Ultra structural validation FAILED:")
