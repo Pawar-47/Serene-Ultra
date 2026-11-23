@@ -34,3 +34,18 @@ python3 tools/collect_iris_diagnostics.py --game-dir "$HOME/Games/Minecraft"
 The script detects the standard Minecraft directory by default. It creates `Serene-Ultra-Iris-Diagnostics-YYYYMMDD-HHMMSS.txt` inside that game's `shaderpacks` folder. The report contains filtered Iris/GLSL/OpenGL context and the complete original `latest.log`.
 
 Review the report before sharing: Minecraft logs can contain usernames, local paths, server addresses, and chat messages. The script does not upload or transmit anything.
+
+## Blend-directive audit
+
+The current `main` configuration was checked against Iris 26.1's `ShaderProperties` parser and the current Iris rendering-properties reference.
+
+- Program-wide directives such as `blend.gbuffers_textured_lit=off` are valid.
+- Per-buffer directives must use a recognized attachment name after the program, for example `.colortex2=off`.
+- The current per-buffer directives use `colortexN` names; no unknown buffer suffix was found in the current `shaders.properties`.
+- Iris throws `Failed to parse buffer blend! index = -1` when a dotted blend directive contains an unrecognized buffer suffix. The current source configuration therefore does not reproduce that parser failure by inspection.
+
+This does not prove that an older ZIP, a stale shaderpack copy, or a different Iris build cannot produce the popup. Confirm the exact ZIP selected in-game and capture `latest.log` after reproducing it. Do not infer that a successful static check proves runtime compatibility.
+
+References:
+- Iris 26.1 `ShaderProperties.java`: https://github.com/IrisShaders/Iris/blob/26.1/common/src/main/java/net/irisshaders/iris/shaderpack/properties/ShaderProperties.java
+- Iris rendering properties: https://shaders.properties/current/reference/shadersproperties/rendering/
