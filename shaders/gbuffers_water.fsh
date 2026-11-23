@@ -75,6 +75,7 @@ flat in float vFluidRenderType;
 #define POM_STRENGTH 25 // [0 10 20 35 50 75 100] LabPBR/oldPBR height-map parallax strength
 #define POM_QUALITY 4 // [4 6 8] Bounded water POM samples
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade water POM to zero at this view distance
+#define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level translucent atlas filtering taps
 #define GLASS_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack glass/ice normal-map detail
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
 #define WATER_WAVE_SPEED 60 // [15 30 45 60 75 90 120] Water wave cycles per real-time hour
@@ -92,6 +93,8 @@ flat in float vFluidRenderType;
 layout(location = 0) out vec4 outColor;
 
 #include "/lib/lighting/cloud_shadows.glsl"
+
+#include "/lib/materials/anisotropic_sampling.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
 
