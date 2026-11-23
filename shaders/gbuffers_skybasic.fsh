@@ -28,6 +28,78 @@ vec3 reconstructPlayerDirection() {
     return normalize(mat3(gbufferModelViewInverse) * viewPosition.xyz);
 }
 
+#define SKY_ATMOSPHERE_STRENGTH 100 // [0 25 50 75 100 125 150] Atmospheric scattering intensity
+
+vec3 calculateAtmosphericScattering(
+    vec3 viewDirection,
+    float upDot,
+    float solarElevation,
+    float rain
+) {
+    float lightLength = length(shadowLightPosition);
+    if (lightLength < 0.0001 || !hasSkylight) return vec3(0.0);
+
+    vec3 lightDirection = shadowLightPosition / lightLength;
+    float viewLightCosine = clamp(dot(viewDirection, lightDirection), -1.0, 1.0);
+    float cosineSquared = viewLightCosine * viewLightCosine;
+
+    // Rayleigh scattering is broad and blue-weighted; the Henyey-Greenstein
+    // lobe approximates the narrow forward scattering of atmospheric aerosols.
+    float rayleighPhase = 0.75 * (1.0 + cosineSquared);
+    const float mieAnisotropy = 0.76;
+    float mieDenominator = max(
+        1.0 + mieAnisotropy * mieAnisotropy
+            - 2.0 * mieAnisotropy * viewLightCosine,
+        0.08
+    );
+    float miePhase = (1.0 - mieAnisotropy * mieAnisotropy)
+        / (12.5663706144 * pow(mieDenominator, 1.5));
+
+    float dayFactor = smoothstep(-0.08, 0.20, solarElevation);
+    float nightFactor = 1.0 - dayFactor;
+    float twilight = exp(-abs(solarElevation) * 10.0) * (1.0 - rain);
+    float horizonPath = pow(
+        1.0 - smoothstep(0.02, 0.98, abs(upDot)),
+        2.0
+    );
+
+    vec3 rayleighColor = mix(
+        vec3(0.018, 0.028, 0.065),
+        vec3(0.095, 0.22, 0.48),
+        dayFactor
+    );
+    float rayleighEnergy = (0.025 + 0.055 * dayFactor)
+        * (0.45 + 0.55 * horizonPath);
+    vec3 mieColor = mix(
+        vec3(0.10, 0.13, 0.20),
+        vec3(1.0, 0.52, 0.25),
+        dayFactor
+    );
+    float mieEnergy = miePhase * (0.004 + 0.012 * dayFactor)
+        * (0.35 + 0.65 * horizonPath);
+
+    // A warm horizon band is strongest while the sun crosses the horizon,
+    // but fades under heavy rain so the vanilla biome fog remains authoritative.
+    vec3 twilightColor = mix(
+        vec3(0.24, 0.16, 0.28),
+        vec3(1.0, 0.25, 0.08),
+        dayFactor
+    );
+    float twilightEnergy = twilight * horizonPath
+        * (0.08 + 0.08 * (1.0 - abs(viewLightCosine)));
+
+    vec3 scattering = rayleighColor * rayleighPhase * rayleighEnergy;
+    scattering += mieColor * mieEnergy;
+    scattering += twilightColor * twilightEnergy;
+    scattering *= 1.0 - rain * 0.72;
+    scattering *= float(SKY_ATMOSPHERE_STRENGTH) * 0.01;
+
+    // Preserve a restrained blue night atmosphere without making the End or
+    // dimensions without skylight inherit an overworld sky.
+    scattering *= mix(1.0, 0.45, nightFactor);
+    return scattering;
+}
+
 void main() {
     vec3 colorLinear = vVertexColorLinear;
     float alpha = vVertexAlpha;
@@ -73,6 +145,9 @@ void main() {
         colorLinear *= nightFactor * (1.0 - 0.9 * rainStrength);
     } else if (isSky || isSunset) {
         colorLinear = mix(vFogLinear, vSkyLinear, horizonBlend);
+        colorLinear += calculateAtmosphericScattering(
+            viewDirection, upDot, solarElevation, rainStrength
+        );
         if (isSunset) {
             float horizonBand = exp(-abs(upDot) * 10.0);
             float dawnSide = step(0.0, cos(sunAngle * 6.28318530718));
@@ -109,6 +184,13 @@ void main() {
         alpha = 1.0;
     }
 
+    // Subtle screen-space dither prevents visible banding in smooth sky gradients.
+    if (isSky || isSunset) {
+        float dither = fract(
+            sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453
+        );
+        colorLinear += vec3((dither - 0.5) / 255.0);
+    }
     vec3 outputColor = pow(max(colorLinear, vec3(0.0)), vec3(1.0 / 2.2));
     outColor = vec4(outputColor, alpha);
     // Sky, stars and void have no deferred surface normal. Explicitly keep
