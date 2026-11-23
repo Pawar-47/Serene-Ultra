@@ -1855,6 +1855,24 @@ for token in ("#define BLOOM_STRENGTH", "#define FXAA_ENABLED",
               "blueChannel = pow(max(blueEncoded, 0.0), 2.2)"):
     if token not in final_shader:
         errors.append(f"Final-pass bloom is missing implementation component: {token}")
+# Underwater camera distortion must be a real, configurable final-pass effect.
+for token in ("uniform int isEyeInWater;", "applyUnderwaterDistortion(",
+              "if (isEyeInWater == 1)", "texture(noisetex, noiseUv)",
+              "sceneUv = applyUnderwaterDistortion(vTexCoord)"):
+    if token not in final_shader:
+        errors.append(f"Underwater distortion is missing implementation component: {token}")
+if "UNDERWATER_DISTORTION" not in quality_screen:
+    errors.append("UNDERWATER_DISTORTION must appear in the Quality screen")
+if "UNDERWATER_DISTORTION" not in slider_line:
+    errors.append("UNDERWATER_DISTORTION must be exposed as a slider")
+if "option.UNDERWATER_DISTORTION =" not in held_lang or "option.UNDERWATER_DISTORTION.comment =" not in held_lang:
+    errors.append("UNDERWATER_DISTORTION requires a user-facing label and tooltip")
+for profile, value in (("Ultra-Light", "20"), ("Smooth", "40"), ("Ultra", "60"),
+                       ("HDR", "70"), ("Ultra-HDR", "80")):
+    profile_line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"UNDERWATER_DISTORTION:{value}" not in profile_line:
+        errors.append(f"{profile} profile must set underwater distortion to {value}")
+
 color_screen = next((line for line in held_props.splitlines() if line.startswith("screen.COLOR =")), "")
 slider_line = next((line for line in held_props.splitlines() if line.startswith("sliders =")), "")
 for option in ("BLOOM_STRENGTH", "BLOOM_THRESHOLD", "FXAA_ENABLED"):
