@@ -1426,3 +1426,14 @@ Resume implementation from current `main` HEAD. Prioritize the largest remaining
 
 ### Validation boundary
 CI success means only that the checks in that workflow passed. It is not a substitute for feature completeness, Iris runtime behavior, visual comparison, or Intel HD 5500 performance testing. Keep these as separate evidence categories.
+
+
+## Feature implementation cycle — depth of field — 2026-11-23
+
+User priority remains feature completion before Iris runtime debugging. This cycle added a real final-pass depth-of-field path rather than more validation-only work:
+- `shaders/final.fsh`: samples `depthtex0`, reconstructs positive view-space depth with Iris' `gbufferProjectionInverse`, calculates defocus from user focus distance/range, and performs an eight-direction bounded gather blur with bilateral depth weighting to reduce silhouette bleeding. Maximum blur radius is capped at six pixels.
+- `shaders/shaders.properties`: exposes DOF strength, focus distance and focus range on the Quality screen and slider list. Profiles budget the effect: Ultra-Light 0, Smooth 15, Ultra 35, HDR 40, Ultra-HDR 45.
+- `shaders/lang/en_us.lang`: adds labels and practical tooltips.
+- `docs/REFERENCE_FEATURE_MATRIX.md`: moves DOF from pending to source-implemented/runtime-unverified.
+
+This is a source implementation, not a claim of runtime correctness. It has not been tested in Minecraft/Iris. The next work remains feature implementation (temporal AA/motion handling, post/lens effects, expanded lighting/material parity and remaining reference systems); runtime debugging is deferred until the feature set is substantially complete. The uploaded archive contents were not available for fresh inspection during this cycle, so this DOF implementation is not claimed as a direct formula match to Complementary.
