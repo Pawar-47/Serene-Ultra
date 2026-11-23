@@ -31,6 +31,8 @@ uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
+uniform float thunderStrength;
+uniform vec4 lightningBoltPosition;
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -51,6 +53,8 @@ layout(location = 0) out vec4 outColor;
 #include "/lib/lighting/cloud_shadows.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
+
+#include "/lib/lighting/lightning_flash.glsl"
 
 float calculateForwardFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -108,7 +112,8 @@ vec3 calculateForwardLighting(vec3 albedoLinear) {
     vec3 direct = celestialColor * celestialIntensity * nDotL * shadow * celestialGate;
     float cloudShadow = sampleSereneCloudShadow(vPlayerPosition, worldLightDirection, dayFactor);
     direct *= cloudShadow;
-    return albedoLinear * (ambient + direct);
+    vec3 lightningFlash = sampleSereneLightningFlash(vPlayerPosition, normal);
+    return albedoLinear * (ambient + direct + lightningFlash);
 }
 
 void main() {
