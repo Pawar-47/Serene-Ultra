@@ -2087,11 +2087,11 @@ for name in ("composite.fsh", "gbuffers_water.fsh"):
         errors.append(f"{name} must provide cloud-reflection controls and noise input")
 if "CLOUD_REFLECTION_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
     errors.append("Cloud reflection strength must be exposed in the Quality screen")
-for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:0"),
-                          ("Smooth", "CLOUD_REFLECTION_STRENGTH:25"),
-                          ("Ultra", "CLOUD_REFLECTION_STRENGTH:55"),
-                          ("HDR", "CLOUD_REFLECTION_STRENGTH:65"),
-                          ("Ultra-HDR", "CLOUD_REFLECTION_STRENGTH:75")):
+for profile, expected in (("Ultra-Light", "CLOUD_REFLECTION_STRENGTH:15"),
+                          ("Smooth", "CLOUD_REFLECTION_STRENGTH:30"),
+                          ("Ultra", "CLOUD_REFLECTION_STRENGTH:60"),
+                          ("HDR", "CLOUD_REFLECTION_STRENGTH:75"),
+                          ("Ultra-HDR", "CLOUD_REFLECTION_STRENGTH:100")):
     if expected not in props:
         errors.append(f"{profile} profile is missing cloud reflection budget: {expected}")
 

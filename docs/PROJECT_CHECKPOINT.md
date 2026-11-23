@@ -1630,7 +1630,7 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 
 ### Procedural cloud reflections — 2026-11-23
 - Extended the shared environment-reflection helper used by opaque PBR and water/glass to add an animated spherical sky-cloud reflection approximation. It uses the sky/cloud coverage, density, detail and wind controls, blends day/night cloud color, and fades near the horizon and zenith.
-- Added `CLOUD_REFLECTION_STRENGTH` to Quality settings, with profile budgets Ultra-Light 0, Smooth 25, Ultra 55, HDR 65, Ultra-HDR 75, and a tooltip identifying this as a procedural sky approximation rather than a world-space reflection volume.
+- Added `CLOUD_REFLECTION_STRENGTH` to Quality settings, with profile budgets Ultra-Light 15, Smooth 30, Ultra 60, HDR 75, Ultra-HDR 100, and a tooltip identifying this as a procedural sky approximation rather than a world-space reflection volume.
 - Updated the water-reflection feature matrix and structural validator. This improves the environment fallback when SSR misses or is disabled; it does not replace screen-space reflections or claim temporal/world-space cloud reflection.
 - Prepared against main `5c269721c07b1d6d0f74f19c7511321027485fbd`; validation must run on the resulting commit. Minecraft/Iris runtime appearance and Intel HD 5500 cost remain unverified.
 
