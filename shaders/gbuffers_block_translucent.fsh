@@ -11,6 +11,7 @@
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
 
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
+#define GLASS_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 90 100 125 150] Fresnel environment reflections for translucent surfaces
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
@@ -23,11 +24,15 @@ uniform sampler2D noisetex;
 uniform sampler2DShadow shadowtex1;
 uniform sampler2D shadowcolor0;
 
+uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 
 uniform vec3 shadowLightPosition;
+uniform vec3 skyColor;
+uniform float sunAngle;
+uniform bool hasSkylight;
 uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
@@ -55,6 +60,8 @@ layout(location = 0) out vec4 outColor;
 #include "/lib/lighting/soft_shadow.glsl"
 
 #include "/lib/lighting/lightning_flash.glsl"
+
+#include "/lib/lighting/environment_reflection.glsl"
 
 float calculateForwardFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -122,6 +129,28 @@ void main() {
 
     vec3 albedoLinear = pow(max(albedo.rgb, vec3(0.0)), vec3(2.2));
     vec3 litLinear = calculateForwardLighting(albedoLinear);
+#if GLASS_REFLECTION_STRENGTH > 0
+    // Translucent block/entity materials use a low-cost environment fallback
+    // with Schlick Fresnel. Water has its own depth-aware SSR path.
+    if (albedo.a < 0.999) {
+        vec3 surfaceNormal = normalize(vPlayerNormal);
+        if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
+        vec3 viewNormal = normalize(mat3(gbufferModelView) * surfaceNormal);
+        vec3 incidentDirection = normalize(vViewPosition);
+        vec3 reflectionDirection = normalize(reflect(incidentDirection, viewNormal));
+        vec3 environmentReflection = calculateEnvironmentReflection(
+            reflectionDirection, shadowLightPosition, sunAngle, hasSkylight
+        );
+        float nDotV = max(dot(viewNormal, normalize(-vViewPosition)), 0.0);
+        float fresnel = 0.04 + 0.96 * pow(1.0 - nDotV, 5.0);
+        float translucency = clamp(1.0 - albedo.a * 0.65, 0.2, 1.0);
+        float reflectionWeight = clamp(
+            fresnel * translucency * float(GLASS_REFLECTION_STRENGTH) * 0.01,
+            0.0, 0.85
+        );
+        litLinear = mix(litLinear, environmentReflection, reflectionWeight);
+    }
+#endif
     float fogDistance = (fogShape == 1) ? max(length(vViewPosition.xz), abs(vViewPosition.y)) : length(vViewPosition);
     float fogFactor = calculateForwardFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
