@@ -1634,6 +1634,9 @@ for token in ("#define SCREEN_GI_STRENGTH", "vec3 sampleScreenSpaceColorBleed(",
               "abs(sampleDepthAll - sampleDepth) > 0.000001",
               "vec4 sampleNormalData = texture(colortex2, sampleUv)",
               "sampleNormalData.a < 0.5",
+              "bool opaqueReceiver = centerDepth < 0.999999",
+              "abs(currentDepthAll - centerDepth) <= 0.000001",
+              "vec3 screenGi = opaqueReceiver",
               "bouncedLight / totalWeight", "lightShafts + screenGi"):
     if token not in composite_shader:
         errors.append(f"Screen-space indirect lighting is missing component: {token}")
