@@ -24,8 +24,8 @@ in vec2 mc_Entity;
 
 #define WAVING_FOLIAGE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Wind-driven foliage motion
 #define LAVA_WAVE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Animated lava surface vertex motion
-#define WATER_WAVE_STRENGTH 50 // [0 25 50 75 100 125 150 175 200] Animated water surface and normal strength
-#define WATER_WAVE_SPEED 50 // [20 30 40 50 60 70 80 90 100 120] Water wave cycles per real-time hour
+#define WATER_WAVE_STRENGTH 50 // [0 25 40 50 55 65 70 75 100 125 150 175 200] Animated water surface and normal strength
+#define WATER_WAVE_SPEED 50 // [20 30 40 50 55 60 70 80 90 100 120] Water wave cycles per real-time hour
 
 void main() {
     // Preserve the original block/entity texture coordinates so cutout
