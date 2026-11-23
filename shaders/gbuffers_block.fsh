@@ -230,9 +230,9 @@ void main() {
     vec2 uvDx = dFdx(vTexCoord);
     vec2 uvDy = dFdy(vTexCoord);
     vec2 uvFootprint = max(fwidth(vTexCoord), 1.0 / vec2(textureSize(gtexture, 0)));
-    float albedoDetail = length(fwidth(albedo.rgb));
     vec2 materialUv = vTexCoord;
     vec4 albedo = texture(gtexture, materialUv) * vVertexColor;
+    float albedoDetail = length(fwidth(albedo.rgb));
     if (albedo.a < alphaTestRef) discard;
 
     float parallaxOffset = 0.0;
