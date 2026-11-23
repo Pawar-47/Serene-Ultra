@@ -898,3 +898,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - The hand path preserves vanilla colored-lightmap diffuse, then adds tangent-space oldPBR/LabPBR normal mapping, specular decoding and a low-cost GGX-style direct highlight. Item-ID fallbacks cover tool/armor material groups, ender pearls, clocks/compasses, amethyst and selected emissive items.
 - HAND_PBR_STRENGTH is an explicit Quality slider: Ultra-Light=0 (skips the two additional material texture reads), Smooth=50, Ultra/HDR=100. No G-buffer targets are written by gbuffers_hand; it remains a forward pass.
 - CI now links the hand program in the LabPBR branch in addition to compiling the default oldPBR branch. Runtime lighting, held-item tint, and target-GPU performance remain unverified.
+
+
+## Hand PBR derivative-sampling validator correction — 2026-11-23
+- Run #1087 compiled and linked every shader program, including gbuffers_hand in both oldPBR and LabPBR branches.
+- Structural validation failed because the shared hand/terrain/entity/block atlas check accepted only texture(gtexture...), while the new hand PBR stage correctly uses textureGrad(gtexture, ...) so atlas derivatives remain available for normal/specular sampling.
+- Updated the structural assertion to accept both ordinary texture() and derivative-aware textureGrad() atlas reads. This does not alter shader behavior; a fresh CI result is required.
