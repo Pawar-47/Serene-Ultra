@@ -1271,7 +1271,7 @@ if "/* RENDERTARGETS: 0,2 */" not in spidereyes or "outDeferredValidity = vec4(0
 if "fogColor" not in spidereyes or "calculateEyeFog" not in spidereyes:
     errors.append("Spider-eye pass must preserve Iris fog while bypassing deferred lighting")
 clouds = sources.get("gbuffers_clouds.fsh", "")
-for token in ("uniform float alphaTestRef", "texture(gtexture", "vec4(vec3(1.0), vVertexColor.a)",
+for token in ("uniform float alphaTestRef", "vec4 cloudColor = vVertexColor;",
               "cloudColor.a < alphaTestRef", "outDeferredValidity = vec4(0.0)",
               "uniform vec3 shadowLightPosition", "uniform float sunAngle",
               "solarElevation", "silverLining", "cloudLinear *= mix("):
