@@ -42,6 +42,7 @@ const int colortex12Format = RGBA16F;
 
 #define PBR_REFLECTION_STRENGTH 75 // [0 25 50 75 100 125 150] Opaque material reflection strength
 #define PBR_REFLECTION_QUALITY 4 // [0 4 6 8] Opaque screen-space reflection steps
+#define PBR_REFLECTION_DISTANCE 32 // [16 24 32 40 48 56 64] Maximum opaque SSR trace distance in blocks
 #define PBR_REFLECTION_BLUR_STRENGTH 65 // [0 25 50 65 80 100] Roughness-aware reflection filtering
 #define LIGHT_SHAFT_STRENGTH 45 // [0 10 20 30 40 50 60 70 80 90 100] Screen-space sunlight scattering strength
 #define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
@@ -234,7 +235,7 @@ vec3 sampleRoughOpaqueReflection(vec2 hitUv, float hitDepth, float roughness) {
 
 #if PBR_REFLECTION_QUALITY > 0
 vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, float roughness, out float hitConfidence) {
-    const float maxDistance = 32.0;
+    const float maxDistance = float(PBR_REFLECTION_DISTANCE);
     float stepLength = maxDistance / float(PBR_REFLECTION_QUALITY);
     vec3 incidentDirection = normalize(viewPosition);
     vec3 reflectionDirection = normalize(reflect(incidentDirection, viewNormal));
