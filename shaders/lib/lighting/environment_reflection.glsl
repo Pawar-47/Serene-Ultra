@@ -9,9 +9,12 @@ vec4 sampleSereneCloudReflection(vec3 playerDirection, float sunAngleValue) {
     float longitude = atan(playerDirection.z, playerDirection.x) * 0.15915494309 + 0.5;
     float latitude = asin(clamp(playerDirection.y, -1.0, 1.0)) * 0.31830988618 + 0.5;
     vec2 sphericalUv = vec2(longitude, latitude);
-    float windSpeed = float(CLOUD_SPEED) * 0.01;
-    vec2 wind = vec2(frameTimeCounter * 0.000018 * windSpeed,
-                     -frameTimeCounter * 0.000009 * windSpeed);
+    // Integer texture-tile travel per Iris' one-hour timer cycle avoids a wrap pop.
+    float windCycles = max(1.0, floor(float(CLOUD_SPEED) * 0.08 + 0.5));
+    vec2 wind = vec2(
+        frameTimeCounter * (windCycles / 3600.0),
+        -frameTimeCounter * (windCycles / 1800.0)
+    );
     float broadNoise = texture(noisetex, sphericalUv * vec2(4.0, 3.0) + wind).r;
     float fineNoise = texture(
         noisetex,
