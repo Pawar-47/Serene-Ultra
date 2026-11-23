@@ -21,7 +21,7 @@ The supplied archive is a Complementary Reimagined shaderpack and is used as a t
 | Direct lighting | Directional lighting and block light response | Iris sunAngle cyclic solar-elevation curve (dawn/noon/sunset/night) for celestial diffuse, combined with sampled vanilla lightmap ambient | Partial; source correction committed, runtime/parity pending |
 | Colored lighting | Colored block/emissive light response | Preserve vanilla lightmap RGB; custom colored-light propagation and emissive response remain | Partial |
 | Indirect lighting / GI | Bounced/indirect illumination appearance | Screen-space/temporal approximation; preserve visual contribution | Pending |
-| Volumetric lighting | Light shafts and volumetric scattering | Depth-aware low-resolution integration and reconstruction | Pending |
+| Volumetric lighting | Light shafts and volumetric scattering | Screen-space radial sunlight scattering from bright visible sky, depth-gated to opaque receivers, with 0/4/8/12-sample quality tiers | Partial; no volumetric density integration, cloud shadows, temporal accumulation or visual parity test |
 | Atmospheric scattering | Sky color, horizon and atmospheric depth | Iris sky/fog gradient, twilight band and low-cost active sun/moon glare lobe; no texture reads | Partial; full Rayleigh/Mie and volumetric scattering remain pending |
 | Fog | Distance, height and dimension-aware fog | Iris fog modes/shape in deferred and forward water/weather/particle/hand-water paths | Partial; source paths implemented, runtime tuning pending |
 | Clouds | Procedural/cloud-layer appearance and lighting | Procedural cloud system with adaptive sampling | Pending |
