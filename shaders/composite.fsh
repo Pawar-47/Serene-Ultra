@@ -14,6 +14,9 @@ uniform mat4 gbufferModelViewInverse;
 
 uniform vec3 skyColor;
 uniform vec3 fogColor;
+uniform vec3 shadowLightPosition;
+uniform float sunAngle;
+uniform bool hasSkylight;
 
 in vec2 vTexCoord;
 
@@ -90,13 +93,12 @@ vec3 sampleOpaqueScreenReflection(vec3 viewPosition, vec3 viewNormal, out float 
 }
 #endif
 
+#include "/lib/lighting/environment_reflection.glsl"
+
 vec3 sampleOpaqueEnvironmentReflection(vec3 viewReflectionDirection) {
-    vec3 playerReflectionDirection = normalize(
-        mat3(gbufferModelViewInverse) * viewReflectionDirection
+    return calculateEnvironmentReflection(
+        viewReflectionDirection, shadowLightPosition, sunAngle, hasSkylight
     );
-    float skyBlend = smoothstep(-0.12, 0.28, playerReflectionDirection.y);
-    vec3 environmentSrgb = mix(fogColor, skyColor, skyBlend);
-    return pow(max(environmentSrgb, vec3(0.0)), vec3(2.2));
 }
 
 void main() {
@@ -142,8 +144,8 @@ void main() {
     float nDotV = clamp(dot(viewNormal, viewDirection), 0.0, 1.0);
 
     vec3 reflectionDirection = normalize(reflect(normalize(viewPosition), viewNormal));
-    vec3 environmentReflectionLinear = sampleOpaqueEnvironmentReflection(reflectionDirection);
-    vec3 reflectionLinear = environmentReflectionLinear;
+    vec3 environmentReflectionLinear = vec3(0.0);
+    vec3 reflectionLinear = vec3(0.0);
 
 #if PBR_REFLECTION_QUALITY > 0
     float hitConfidence = 0.0;
@@ -151,11 +153,13 @@ void main() {
         viewPosition, viewNormal, hitConfidence
     );
     vec3 screenReflectionLinear = pow(max(screenReflection, vec3(0.0)), vec3(2.2));
-    reflectionLinear = mix(
-        environmentReflectionLinear,
-        screenReflectionLinear,
-        hitConfidence
-    );
+    if (hitConfidence < 0.999) {
+        environmentReflectionLinear = sampleOpaqueEnvironmentReflection(reflectionDirection);
+    }
+    reflectionLinear = mix(environmentReflectionLinear, screenReflectionLinear, hitConfidence);
+#else
+    environmentReflectionLinear = sampleOpaqueEnvironmentReflection(reflectionDirection);
+    reflectionLinear = environmentReflectionLinear;
 #endif
 
     float fresnelFactor = 1.0 - nDotV;

@@ -34,14 +34,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
           while IFS= read -r -d '' shader; do
             case "$shader" in
-              *.vsh) stage=vert ;;
-              *.fsh) stage=frag ;;
+              *.vsh) stage=vert; ext=vert ;;
+              *.fsh) stage=frag; ext=frag ;;
               *) continue ;;
             esac
-            echo "Compiling $shader"
-            glslangValidator -S "$stage" "$shader"
+            expanded="$tmpdir/$(printf '%s' "$shader" | sed 's#[^A-Za-z0-9_]#_#g').$ext"
+            echo "Expanding includes and compiling $shader"
+            python tools/expand_glsl_includes.py "$shader" "$expanded"
+            glslangValidator -S "$stage" "$expanded"
           done < <(find shaders -type f \( -name '*.vsh' -o -name '*.fsh' \) -print0)
       - name: Compile Iris render-stage macro branches
         shell: bash
@@ -76,9 +80,10 @@ jobs:
             tail -n +2 shaders/gbuffers_line.fsh
           } > "$tmpdir/line.frag"
 
-          glslangValidator -S frag "$tmpdir/skybasic.frag"
-          glslangValidator -S frag "$tmpdir/skytextured.frag"
-          glslangValidator -S frag "$tmpdir/line.frag"
+          for name in skybasic skytextured line; do
+            python tools/expand_glsl_includes.py "$tmpdir/$name.frag" "$tmpdir/$name.expanded.frag"
+            glslangValidator -S frag "$tmpdir/$name.expanded.frag"
+          done
       - name: Compile LabPBR material branches
         shell: bash
         run: |
@@ -98,8 +103,12 @@ jobs:
             awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } { print }' "$vertex" > "$vertex_out"
             awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next } { print }' "$fragment" > "$fragment_out"
 
+            local vertex_expanded="$tmpdir/$name.labpbr.expanded.vert"
+            local fragment_expanded="$tmpdir/$name.labpbr.expanded.frag"
+            python tools/expand_glsl_includes.py "$vertex_out" "$vertex_expanded"
+            python tools/expand_glsl_includes.py "$fragment_out" "$fragment_expanded"
             echo "Linking $name LabPBR variant"
-            glslangValidator -l "$vertex_out" "$fragment_out"
+            glslangValidator -l "$vertex_expanded" "$fragment_expanded"
           }
 
           compile_labpbr_pair terrain shaders/gbuffers_terrain.vsh shaders/gbuffers_terrain.fsh
@@ -120,14 +129,18 @@ jobs:
           sed -e 's/^#define POM_ENTITY_STRENGTH 0.*/#define POM_ENTITY_STRENGTH 20/' \
             -e 's@^//#define ENTITY_GN_AND_CT.*@#define ENTITY_GN_AND_CT@' \
             shaders/gbuffers_entities.fsh > "$tmpdir/entities-pom-oldpbr.frag"
-          glslangValidator -l "$tmpdir/entities.vert" "$tmpdir/entities-pom-oldpbr.frag"
+          python tools/expand_glsl_includes.py "$tmpdir/entities.vert" "$tmpdir/entities-pom-oldpbr.expanded.vert"
+          python tools/expand_glsl_includes.py "$tmpdir/entities-pom-oldpbr.frag" "$tmpdir/entities-pom-oldpbr.expanded.frag"
+          glslangValidator -l "$tmpdir/entities-pom-oldpbr.expanded.vert" "$tmpdir/entities-pom-oldpbr.expanded.frag"
 
           # Also compile the LabPBR branch with the opt-in POM path enabled.
           awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next }
                /^#define POM_ENTITY_STRENGTH 0/ { print "#define POM_ENTITY_STRENGTH 20"; next }
                /^\/\/#define ENTITY_GN_AND_CT/ { print "#define ENTITY_GN_AND_CT"; next }
                { print }' shaders/gbuffers_entities.fsh > "$tmpdir/entities-pom-labpbr.frag"
-          glslangValidator -l "$tmpdir/entities.vert" "$tmpdir/entities-pom-labpbr.frag"
+          python tools/expand_glsl_includes.py "$tmpdir/entities.vert" "$tmpdir/entities-pom-labpbr.expanded.vert"
+          python tools/expand_glsl_includes.py "$tmpdir/entities-pom-labpbr.frag" "$tmpdir/entities-pom-labpbr.expanded.frag"
+          glslangValidator -l "$tmpdir/entities-pom-labpbr.expanded.vert" "$tmpdir/entities-pom-labpbr.expanded.frag"
       - name: Compile opt-in Unbound water wave detail
         shell: bash
         run: |
@@ -139,13 +152,17 @@ jobs:
           # Compile the fourth very-large normal octave in the oldPBR branch.
           sed 's/^#define WATER_WAVE_DETAIL 0.*/#define WATER_WAVE_DETAIL 1/' \
             shaders/gbuffers_water.fsh > "$tmpdir/water-detail-oldpbr.frag"
-          glslangValidator -l "$tmpdir/water.vert" "$tmpdir/water-detail-oldpbr.frag"
+          python tools/expand_glsl_includes.py "$tmpdir/water.vert" "$tmpdir/water-detail-oldpbr.expanded.vert"
+          python tools/expand_glsl_includes.py "$tmpdir/water-detail-oldpbr.frag" "$tmpdir/water-detail-oldpbr.expanded.frag"
+          glslangValidator -l "$tmpdir/water-detail-oldpbr.expanded.vert" "$tmpdir/water-detail-oldpbr.expanded.frag"
 
           # Compile the same opt-in octave with LabPBR normal-map handling.
           awk 'NR == 1 { print; print "#define MC_TEXTURE_FORMAT_LAB_PBR 1"; next }
                /^#define WATER_WAVE_DETAIL 0/ { print "#define WATER_WAVE_DETAIL 1"; next }
                { print }' shaders/gbuffers_water.fsh > "$tmpdir/water-detail-labpbr.frag"
-          glslangValidator -l "$tmpdir/water.vert" "$tmpdir/water-detail-labpbr.frag"
+          python tools/expand_glsl_includes.py "$tmpdir/water.vert" "$tmpdir/water-detail-labpbr.expanded.vert"
+          python tools/expand_glsl_includes.py "$tmpdir/water-detail-labpbr.frag" "$tmpdir/water-detail-labpbr.expanded.frag"
+          glslangValidator -l "$tmpdir/water-detail-labpbr.expanded.vert" "$tmpdir/water-detail-labpbr.expanded.frag"
       - name: Inspect water normal alpha-height channel
         shell: bash
         run: |
@@ -182,10 +199,10 @@ jobs:
               exit 1
             fi
             key="$(printf '%s' "$vertex" | sed 's#[^A-Za-z0-9_]#_#g')"
-            cp "$vertex" "$tmpdir/$key.vert"
-            cp "$fragment" "$tmpdir/$key.frag"
+            python tools/expand_glsl_includes.py "$vertex" "$tmpdir/$key.expanded.vert"
+            python tools/expand_glsl_includes.py "$fragment" "$tmpdir/$key.expanded.frag"
             echo "Linking $vertex + $fragment"
-            glslangValidator -l "$tmpdir/$key.vert" "$tmpdir/$key.frag"
+            glslangValidator -l "$tmpdir/$key.expanded.vert" "$tmpdir/$key.expanded.frag"
           done < <(find shaders -type f -name '*.vsh' -print0)
       - name: Validate shaderpack structure
         run: python tools/validate_pack.py

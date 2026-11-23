@@ -387,15 +387,12 @@ vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out f
 #endif
 
 
-// Iris-provided sky and horizon colours provide a low-cost environment
-// fallback when the screen-space reflection ray leaves the visible scene.
+#include "/lib/lighting/environment_reflection.glsl"
+
 vec3 sampleEnvironmentReflection(vec3 viewReflectionDirection) {
-    vec3 playerReflectionDirection = normalize(
-        mat3(gbufferModelViewInverse) * viewReflectionDirection
+    return calculateEnvironmentReflection(
+        viewReflectionDirection, shadowLightPosition, sunAngle, hasSkylight
     );
-    float skyBlend = smoothstep(-0.12, 0.28, playerReflectionDirection.y);
-    vec3 environmentSrgb = mix(fogColor, skyColor, skyBlend);
-    return pow(max(environmentSrgb, vec3(0.0)), vec3(2.2));
 }
 
 float calculateTranslucentFog(float distanceToCamera) {
@@ -703,7 +700,9 @@ void main() {
         vec3 glassReflectionDirection = normalize(
             reflect(normalize(vViewPosition), glassViewNormal)
         );
-        vec3 glassEnvironmentLinear = sampleEnvironmentReflection(glassReflectionDirection);
+        vec3 glassEnvironmentLinear = glassReflectionConfidence < 0.999
+            ? sampleEnvironmentReflection(glassReflectionDirection)
+            : vec3(0.0);
         vec3 glassScreenReflectionLinear = pow(max(glassReflectionColor, vec3(0.0)), vec3(2.2));
         vec3 glassReflectionLinear = mix(
             glassEnvironmentLinear, glassScreenReflectionLinear, glassReflectionConfidence
@@ -742,7 +741,9 @@ void main() {
         vec3 reflectionDirection = normalize(
             reflect(normalize(vViewPosition), reflectionViewNormal)
         );
-        vec3 environmentReflectionLinear = sampleEnvironmentReflection(reflectionDirection);
+        vec3 environmentReflectionLinear = reflectionConfidence < 0.999
+            ? sampleEnvironmentReflection(reflectionDirection)
+            : vec3(0.0);
         vec3 screenReflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
         // Blend valid SSR hits over the sky/horizon fallback. Missing or
         // off-screen rays retain a plausible environment reflection.

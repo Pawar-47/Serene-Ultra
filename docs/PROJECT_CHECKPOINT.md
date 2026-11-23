@@ -952,3 +952,26 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Resource-pack specular maps retain priority for smoothness, reflectance and emission. When no specular map exists, item IDs provide material fallbacks for armor trims, wood/stone/iron/gold/diamond/netherite/copper tools and armor, buckets, amethyst, shields, turtle shells, ender pearls, clocks/compasses, totems and tridents.
 - Item emission fallbacks are applied only when the resource-pack specular map does not encode emission. LabPBR metals use the metal F0 code path; oldPBR items use deferred metalness. The entity pass reuses its existing specular sample and adds no texture fetches.
 - CI must validate both oldPBR and LabPBR branches. Runtime dropped-item/armor appearance remains unverified.
+
+
+## Low-cost celestial environment reflection — 2026-11-23
+- Added one shared environment-reflection include for opaque and translucent materials. It retains the Iris sky/horizon gradient and adds a narrow sun/moon disk lobe from view-space shadowLightPosition and sunAngle.
+- The lobe is procedural (dot product plus repeated multiplications), adds no texture fetches, and is evaluated only when SSR confidence is below 0.999. Full-confidence SSR hits skip the fallback work.
+- The implementation follows Iris' documented view-space shadowLightPosition and normalized sunAngle; hasSkylight gates the celestial disk in dimensions without a sky.
+- This is a low-cost approximation of Unbound's richer atmospheric/cloud reflection background, not full sky rendering or voxelized world-space reflection. Runtime appearance and HD 5500 cost remain unverified.
+
+
+## Dynamic held-item world lighting — 2026-11-23
+- Added a low-cost deferred ambient contribution driven by Iris heldBlockLightValue, heldBlockLightValue2, heldItemId and heldItemId2. Iris' oldHandLight directive is explicitly false so main/offhand values remain independent.
+- Light intensity is attenuated by player-space distance from an approximate hand/head origin using relativeEyePosition; item IDs select warm, cool, soul-blue, redstone, froglight, copper and other light colors. Lava buckets and selected emissive held items receive reference-guided light-value floors.
+- The contribution is combined quadratically with the existing ambient term and uses no additional texture fetches. HELD_LIGHTING_STRENGTH is a Quality slider; Ultra-Light compiles the path out, Smooth=50, Ultra/HDR=100.
+- This is a low-cost screen-space approximation, not voxel/flood-fill dynamic lighting. It does not create accurate cast shadows or light through occluders; runtime range/color calibration and target-GPU cost remain unverified.
+- Iris documentation: heldBlockLightValue/2 are 0–15, heldItemId/2 read item.properties, and oldHandLight defaults to true; relativeEyePosition is the world-space offset from player head to camera.
+
+
+## GLSL include-aware CI correction — 2026-11-23
+- Run #1095 failed at the first standalone GLSL compile because glslangValidator does not expand Iris shaderpack #include directives unless the Google include extension is enabled.
+- Iris handles shaderpack includes before the driver compiler; adding GL_GOOGLE_include_directive as a required runtime extension would unnecessarily narrow driver compatibility.
+- Added a small recursive include expander for CI only. It resolves absolute Iris include paths from the shaders root, resolves relative paths from the including file, rejects path traversal and cycles, and expands nested includes into temporary compile sources.
+- Updated every default, Iris-macro, LabPBR, entity-POM, water-detail and program-link compile stage to use the expander before glslangValidator. Runtime shader sources retain standard Iris #include syntax with no extra extension requirement.
+- The shared celestial environment include remains unvalidated until the fresh CI run completes.

@@ -818,6 +818,24 @@ for token in ("block.30008=minecraft:tinted_glass", "block.30020=minecraft:nethe
         errors.append(f"Missing Iris translucent material ID mapping: {token}")
 if "uniform int isEyeInWater;" not in water:
     errors.append("Water pass must declare Iris isEyeInWater as int")
+if not (ROOT / "tools" / "expand_glsl_includes.py").is_file():
+    errors.append("GLSL include expander helper is missing")
+environment_reflection = SHADERS / "lib" / "lighting" / "environment_reflection.glsl"
+if not environment_reflection.is_file():
+    errors.append("Shared low-cost environment reflection include is missing")
+else:
+    environment_source = environment_reflection.read_text(encoding="utf-8")
+    for token in ("calculateEnvironmentReflection(", "celestialAlignment",
+                  "celestialDisk *= celestialDisk", "shadowLightDirection",
+                  "sunAngleValue", "skylightAvailable"):
+        if token not in environment_source:
+            errors.append(f"Environment reflection fallback is missing component: {token}")
+for name in ("gbuffers_water.fsh", "composite.fsh"):
+    if '#include "/lib/lighting/environment_reflection.glsl"' not in sources.get(name, ""):
+        errors.append(f"{name} must use the shared environment reflection include")
+for token in ("uniform vec3 shadowLightPosition;", "uniform float sunAngle;", "uniform bool hasSkylight;"):
+    if token not in sources.get("composite.fsh", ""):
+        errors.append(f"Opaque reflection pass is missing Iris celestial uniform: {token}")
 
 if "return 0.03125 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);" not in water:
     errors.append("Water noise coordinates must tile the 2560-block stable-world period exactly")
@@ -1262,6 +1280,27 @@ for token in ("uniform int currentRenderedItemId", "bool hasMaterialSpecularMap"
               "currentRenderedItemId == 44040", "if (pbrEmission < 0.01)"):
     if token not in entity_shader:
         errors.append(f"Entity item-material fallback is missing component: {token}")
+
+deferred_shader = sources.get("deferred.fsh", "")
+for token in ("#define HELD_LIGHTING_STRENGTH 50", "uniform int heldBlockLightValue;",
+              "uniform int heldBlockLightValue2;", "uniform int heldItemId;", "uniform int heldItemId2;",
+              "uniform vec3 relativeEyePosition;", "vec3 calculateHeldItemLighting(",
+              "getHeldItemLightEnergy(heldItemId", "getHeldItemLightEnergy(heldItemId2",
+              "ambient = sqrt(ambient * ambient + heldLighting"):
+    if token not in deferred_shader:
+        errors.append(f"Dynamic held-item lighting is missing Iris component: {token}")
+held_props = (SHADERS / "shaders.properties").read_text(encoding="utf-8")
+held_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
+if "oldHandLight = false" not in held_props:
+    errors.append("Iris independent main/offhand light requires oldHandLight = false")
+if "HELD_LIGHTING_STRENGTH" not in held_props.split("sliders =", 1)[-1]:
+    errors.append("Held-item world-light strength must be exposed as a slider")
+if "option.HELD_LIGHTING_STRENGTH.comment =" not in held_lang:
+    errors.append("Held-item world-light strength requires a user-facing tooltip")
+for profile, value in (("Ultra-Light", "0"), ("Smooth", "50"), ("Ultra", "100")):
+    line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"HELD_LIGHTING_STRENGTH:{value}" not in line:
+        errors.append(f"{profile} has incorrect held-item world-light strength")
 hand_shader = sources.get("gbuffers_hand.fsh", "")
 for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemId",
               "uniform sampler2D normals", "uniform sampler2D specular", "uniform vec3 shadowLightPosition",
