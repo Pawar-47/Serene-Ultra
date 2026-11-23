@@ -33,6 +33,8 @@ uniform int fogMode;
 uniform int fogShape;
 
 in vec2 vTexCoord;
+flat in vec2 vMidTexCoord;
+flat in vec2 vTexHalfSize;
 in vec2 vLightmapCoord;
 in vec4 vVertexColor;
 in vec3 vViewPosition;
@@ -42,6 +44,9 @@ in vec3 vPlayerPosition;
 
 #define WEATHER_TEX_OPACITY 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Weather particle opacity
 layout(location = 0) out vec4 outColor;
+
+#define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level atlas filtering taps
+#include "/lib/materials/anisotropic_sampling.glsl"
 
 #include "/lib/lighting/cloud_shadows.glsl"
 #include "/lib/lighting/lightning_flash.glsl"
@@ -61,7 +66,12 @@ float calculateWeatherFog(float distanceToCamera) {
 }
 
 void main() {
-    vec4 weatherColor = texture(gtexture, vTexCoord) * vVertexColor;
+    vec2 materialUvDx = dFdx(vTexCoord);
+    vec2 materialUvDy = dFdy(vTexCoord);
+    vec4 spriteBounds = vec4(vMidTexCoord - vTexHalfSize, vTexHalfSize * 2.0);
+    vec4 weatherColor = sampleAnisotropicAtlas(
+        gtexture, vTexCoord, materialUvDx, materialUvDy, spriteBounds
+    ) * vVertexColor;
     if (weatherColor.a < max(0.1, alphaTestRef) || isEyeInWater == 3) discard;
     float rainTexOpacity = 0.25;
     float snowTexOpacity = 0.5;
