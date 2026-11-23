@@ -27,7 +27,7 @@ out vec4 outColor1;
 
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud lighting and silver-lining response
 #define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
-#define VOLUMETRIC_CLOUDS 1 // [0 1] Use procedural clouds in the sky pass
+#define VOLUMETRIC_CLOUDS 1 // [0 1] Use procedural clouds in the sky pass instead of native flat clouds
 #define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
 
 #include "/lib/lighting/stable_world_position.glsl"

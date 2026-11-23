@@ -198,7 +198,7 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
             * (1.0 - smoothstep(0.72, 1.0, heightFraction));
         if (verticalProfile <= 0.001) continue;
 
-        vec2 noiseUv = samplePosition.xz * 0.0016 + wind;
+        vec2 noiseUv = samplePosition.xz * 0.0016 + wind + vec2(0.0, heightFraction * 0.22);
         float broadNoise = textureLod(noisetex, noiseUv, 0.0).r;
         float detailNoise = textureLod(
             noisetex, noiseUv * 2.73 + vec2(0.37, 0.19), 0.0

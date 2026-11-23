@@ -24,7 +24,7 @@ float sampleSereneCloudShadow(
     float cloudSpeed = float(CLOUD_SPEED) * 0.01;
     vec2 wind = vec2(frameTimeCounter * 0.00004 * cloudSpeed, -frameTimeCounter * 0.000025 * cloudSpeed);
     vec2 cloudWorldXZ = mod(stableWorldXZ + cloudOffset, vec2(CLOUD_SHADOW_WORLD_PERIOD));
-    vec2 cloudUv = cloudWorldXZ * CLOUD_SHADOW_UV_SCALE + wind;
+    vec2 cloudUv = cloudWorldXZ * CLOUD_SHADOW_UV_SCALE + wind + vec2(0.0, 0.11);
     float broadNoise = texture(noisetex, cloudUv).r;
     float detailNoise = texture(noisetex, cloudUv * CLOUD_SHADOW_DETAIL_SCALE + vec2(0.37, 0.19)).g;
     float detailStrength = float(CLOUD_DETAIL_STRENGTH) * 0.01;
