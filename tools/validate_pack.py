@@ -800,7 +800,7 @@ for token in ("uniform sampler2D depthtex2", "uniform mat4 gbufferProjection",
         errors.append(f"Water screen-space reflection path is missing component: {token}")
 environment_source = sources.get("environment_reflection.glsl", "")
 for token in ("uniform vec3 skyColor;", "vec3 sampleEnvironmentReflection(vec3 viewReflectionDirection)",
-              "float materialReflectionScale = isIce ? 0.55 : (isTintedGlass ? 0.65 : ((isClearGlass || isStainedGlass) ? 0.50 : 0.32))",
+              "float materialReflectionScale = isIce ? 0.7 : ((isTintedGlass || isStainedGlass) ? 1.0 : (isClearGlass ? 0.50 : 0.32))",
               "glassReflectionLinear = mix(",
               "glassEnvironmentLinear, glassScreenReflectionLinear, glassReflectionConfidence",
               "glassReflectionLinear = sampleEnvironmentReflection(glassReflectionDirection)",
