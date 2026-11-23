@@ -108,3 +108,5 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added a dedicated Nether ember-storm control and End nebula/distant-star control to the Atmosphere screen, with explicit profile budgets.
 
 - Added a depth-aware celestial lens-flare effect with spectral ghost elements and a soft ring; it is exposed in the Atmosphere menu and disabled in Ultra-Light.
+
+- Added edge-aware unsharp masking after FXAA/DOF and before bloom, with a Color-menu control and conservative profile scaling.
