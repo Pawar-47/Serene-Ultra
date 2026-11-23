@@ -56,6 +56,7 @@ in vec2 vTexCoord;
 #define AO_STRENGTH 0.65 // [0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.65 0.70 0.80 0.90 1.00] Contact occlusion strength
 #define AO_RADIUS 1.25 // [0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00] Contact occlusion radius in blocks
 #define MATERIAL_SPECULAR_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Deferred specular response for smooth materials
+#define SPECULAR_AA_STRENGTH 75 // [0 25 50 75 100] Derivative-based roughness filtering for stable PBR highlights
 #define MATERIAL_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material AO lighting strength
 #define MATERIAL_SSS_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] LabPBR subsurface scattering strength
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
@@ -243,6 +244,19 @@ void main() {
             float nDotH = max(dot(normal, halfDirection), 0.0);
             float vDotH = max(dot(viewDirectionPlayer, halfDirection), 0.0);
             float roughness = max(1.0 - materialSmoothness, 0.08);
+#if SPECULAR_AA_STRENGTH > 0
+            // Toksvig-style specular anti-aliasing: normal variation across a
+            // pixel widens the microfacet lobe instead of producing unstable
+            // sub-pixel highlights on detailed normal maps and distant blocks.
+            vec3 normalDx = dFdx(normal);
+            vec3 normalDy = dFdy(normal);
+            float normalVariance = max(
+                dot(normalDx, normalDx) + dot(normalDy, normalDy), 0.0
+            );
+            float filteredRoughnessSquared = roughness * roughness
+                + normalVariance * (float(SPECULAR_AA_STRENGTH) * 0.01) * 0.5;
+            roughness = clamp(sqrt(filteredRoughnessSquared), 0.08, 1.0);
+#endif
             float alpha = roughness * roughness;
             float alphaSquared = alpha * alpha;
             float distributionDenominator = nDotH * nDotH * (alphaSquared - 1.0) + 1.0;
