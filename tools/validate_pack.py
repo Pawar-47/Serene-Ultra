@@ -955,7 +955,7 @@ weather_vertex = sources.get("gbuffers_weather.vsh", "")
 if "#define WAVING_RAIN" not in weather_vertex or "eyeBrightnessSmooth" not in weather_vertex or "rainStrength" not in weather_vertex:
     errors.append("Weather vertex path must implement the Iris-aware waving rain/snow option")
 weather = sources.get("gbuffers_weather.fsh", "")
-for token in ("/* RENDERTARGETS: 0 */", "textureGrad(gtexture", "texture(lightmap",
+for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "fogColor", "fogStart", "fogEnd", "fogDensity", "fogMode", "fogShape",
               "uniform int isEyeInWater", "uniform float alphaTestRef",
               "WEATHER_TEX_OPACITY", "rainTexOpacity", "snowTexOpacity",
