@@ -1780,3 +1780,9 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Updated structural validation and the POM feature matrix.
 - Commits: water shader `33c347cd444e068474f8b55fb8a26daea384202e`; validator `fbd80176c83151d53948d7588eba6746a82c8595`; matrix `4a6a9499f7c833d41e06674706a43f9620200628`.
 - This only changes the water resource-pack POM height samples; the generated custom wave-normal texture still has constant alpha and therefore does not invent a height field.
+
+
+### Dimension-specific terrain material fallbacks — 2026-11-23
+- Added reference-guided material IDs and albedo-derived smoothness/coating response for blackstone, netherrack, end stone, snow/powder snow and coral blocks. Snow is excluded from puddle accumulation.
+- Extended the terrain porosity fallback table for these IDs so any applicable wetness response remains coherent across mapped vanilla material families; Nether/End/snow/coral weather gating still comes from Iris biome precipitation and water state.
+- Structural checks now cover the additional fallback IDs and porosity values. Runtime appearance and dimension-specific calibration remain pending.
