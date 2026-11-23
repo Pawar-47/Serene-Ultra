@@ -135,7 +135,7 @@ option.RAIN_PUDDLE_STRENGTH = Rain Puddle Strength
 option.RAIN_PUDDLE_STRENGTH.comment = Controls lightweight rain puddles on sky-exposed upward-facing terrain. LabPBR porosity reduces pooling, while leaves and farmland are excluded. Uses no 3D voxel map or extra render target.
 
 option.MATERIAL_WETNESS_STRENGTH = Material Wetness Strength
-option.MATERIAL_WETNESS_STRENGTH.comment = Controls porosity-driven darkening and reflectance loss on LabPBR materials when rain leaves surfaces wet.
+option.MATERIAL_WETNESS_STRENGTH.comment = Controls porosity-driven darkening and reflectance loss using LabPBR porosity or conservative vanilla/oldPBR material-ID fallbacks when rain leaves surfaces wet.
 
 option.POM_STRENGTH = Parallax / POM Strength
 option.POM_STRENGTH.comment = Uses the resource pack's LabPBR or oldPBR normal-map alpha height channel for bounded terrain depth. Set to 0 to disable.
