@@ -352,8 +352,9 @@ void main() {
     color = applyVignette(color, vTexCoord);
     color = applyFilmGrain(color, vTexCoord);
 
-    // Encode linear scene values for display. GAMMA=1.0 is the standard 2.2 transfer.
-    color = pow(max(color, vec3(0.0)), vec3(1.0 / (2.2 * GAMMA)));
+    // The reference tone mapper already converts linear light to display RGB.
+    // GAMMA is a separate creative display adjustment; 1.0 leaves it unchanged.
+    color = pow(max(color, vec3(0.0)), vec3(1.0 / GAMMA));
 
     outColor = vec4(color, scene.a);
 }
