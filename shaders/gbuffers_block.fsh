@@ -230,6 +230,7 @@ void main() {
     vec2 uvDx = dFdx(vTexCoord);
     vec2 uvDy = dFdy(vTexCoord);
     vec2 uvFootprint = max(fwidth(vTexCoord), 1.0 / vec2(textureSize(gtexture, 0)));
+    float albedoDetail = length(fwidth(albedo.rgb));
     vec2 materialUv = vTexCoord;
     vec4 albedo = texture(gtexture, materialUv) * vVertexColor;
     if (albedo.a < alphaTestRef) discard;
@@ -282,7 +283,7 @@ void main() {
     bool hasExplicitNormal = false;
     if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal);
 #if GENERATED_NORMAL_STRENGTH > 0
-    if (!signText && gl_FrontFacing && !hasExplicitNormal && albedo.a >= 0.999) {
+    if (!signText && gl_FrontFacing && !hasExplicitNormal && albedo.a >= 0.999 && albedoDetail > 0.002) {
         surfaceNormal = calculateGeneratedAlbedoNormal(surfaceNormal, materialUv, uvDx, uvDy, uvFootprint, vTexCoordAM);
     }
 #endif

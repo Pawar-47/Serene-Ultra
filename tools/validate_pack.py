@@ -350,6 +350,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
                   "textureGrad(gtexture, upUv, uvDx, uvDy)",
                   "textureGrad(gtexture, downUv, uvDx, uvDy)",
                   "GENERATED_NORMAL_STRENGTH) * 0.025",
+                  "albedoDetail > 0.002",
                   "min(min(rightSample.a, leftSample.a), min(upSample.a, downSample.a))"):
         if token not in source:
             errors.append(f"{name} is missing atlas-safe generated-normal component: {token}")

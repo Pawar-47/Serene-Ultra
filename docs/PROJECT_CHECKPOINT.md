@@ -733,3 +733,5 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Uses precomputed screen derivatives, a one-texel minimum footprint, per-quad mc_midTexCoord atlas bounds, and a half-texel inset for all four textureGrad samples. Any neighbour with partial/cutout alpha rejects the generated normal to avoid lighting across leaf/plant holes.
 - Generated tangent-space gradients are thresholded and clamped before conversion through the existing at_tangent/handedness basis. GENERATED_NORMAL_STRENGTH is independently configurable; Ultra-Light disables it.
 - This is a low-sample adaptation of Complementary's generatedNormals.glsl, not a claim of visual parity. Entity models, runtime comparison, texture-pack coverage and Intel HD 5500 performance remain pending.
+
+- Performance refinement: generated-normal sampling is now gated by the screen-space albedo contrast before issuing its four neighbour taps; flat-colour regions avoid the extra reads. This is a heuristic optimisation and still requires GPU profiling.
