@@ -104,6 +104,7 @@ vec2 calculateParallaxUv(
 }
 
 
+#define POM_SLOPE_NORMAL_STRENGTH 50 // [0 25 50 75 100] Height-map slope normal detail
 #define POM_SELF_SHADOW_STRENGTH 65 // [0 25 50 75 100] Height-map self-shadowing strength
 
 float calculatePomSelfShadow(
@@ -205,6 +206,31 @@ vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, 
 #else
     materialAO = 1.0;
     tangentNormal = normalTexel.rgb * 2.0 - 1.0;
+#endif
+#if POM_STRENGTH > 0 && POM_SLOPE_NORMAL_STRENGTH > 0
+    if (normalTexel.a < 0.9995) {
+        vec2 heightTexel = 1.0 / vec2(textureSize(normals, 0));
+        vec2 tileSize = max(vTexCoordAM.zw, vec2(1e-7));
+        vec2 lowerBound = vTexCoordAM.xy + 0.5 * heightTexel;
+        vec2 upperBound = vTexCoordAM.xy + tileSize - 0.5 * heightTexel;
+        float heightLeft = textureGrad(normals,
+            clamp(materialUv - vec2(heightTexel.x, 0.0), lowerBound, upperBound),
+            uvDx, uvDy).a;
+        float heightRight = textureGrad(normals,
+            clamp(materialUv + vec2(heightTexel.x, 0.0), lowerBound, upperBound),
+            uvDx, uvDy).a;
+        float heightDown = textureGrad(normals,
+            clamp(materialUv - vec2(0.0, heightTexel.y), lowerBound, upperBound),
+            uvDx, uvDy).a;
+        float heightUp = textureGrad(normals,
+            clamp(materialUv + vec2(0.0, heightTexel.y), lowerBound, upperBound),
+            uvDx, uvDy).a;
+        vec2 heightSlope = vec2(heightLeft - heightRight, heightDown - heightUp);
+        tangentNormal.xy += clamp(
+            heightSlope * (float(POM_SLOPE_NORMAL_STRENGTH) * 0.015),
+            vec2(-0.5), vec2(0.5)
+        );
+    }
 #endif
 #if OPAQUE_NORMAL_MAP_STRENGTH > 0
     tangentNormal.xy *= OPAQUE_NORMAL_MAP_STRENGTH * 0.01;
