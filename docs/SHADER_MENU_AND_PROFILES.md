@@ -104,3 +104,5 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added procedural multi-scale nebulae and animated aurora curtains to clear night skies, with rain suppression.
 - Added a spectral anti-solar rainbow arc when rain and direct sunlight overlap.
 - Added a dedicated Atmosphere menu and explicit profile budgets; Ultra-Light disables the effects to preserve integrated-GPU headroom.
+
+- Added a dedicated Nether ember-storm control and End nebula/distant-star control to the Atmosphere screen, with explicit profile budgets.
