@@ -1234,3 +1234,9 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Rechecked current Iris docs and the Iris source snapshot for `separateEntityDraws`. The directive is parsed/stored and the pipeline maps translucent entity/item render pipelines to the translucent shader keys, but current docs warn that separate entity drawing may be broken in newer Iris versions. The pack's setting and shader files are not proof of runtime routing.
 - Added a dedicated release-blocking runtime test for actual translucent entity and block-entity program routing. Kept `particles.ordering=mixed`, which Iris documents as the intended split for opaque vs translucent particles.
 - No runtime pass or alpha publication is claimed.
+
+## Final-pass bloom implementation — 2026-11-23
+- Added a real five-tap, thresholded single-scale bloom contribution to `final.fsh`, reusing the existing scene buffer and adding no render target.
+- Exposed bloom strength and highlight threshold in the Color screen, slider list, user-facing tooltips and all five profiles. Ultra-Light compiles bloom out; Smooth/Ultra/HDR/Ultra-HDR progressively increase strength.
+- Added structural regression checks for shader implementation, menu exposure, tooltips and profile values.
+- This is a low-bandwidth baseline, not the reference's multi-scale bloom system. Multi-scale blur and visual calibration remain outstanding; no claim of reference parity is made.
