@@ -1461,3 +1461,8 @@ Added a camera-motion blur path to `shaders/final.fsh` using Iris-documented `gb
 ## Profile option-value consistency correction — 2026-11-23
 
 After adding the DOF and lens/motion controls, the profile values were reconciled against each option's declared Iris value list. DOF now uses only supported values (Ultra-Light 0, Smooth 20, Ultra/HDR 40, Ultra-HDR 50); chromatic aberration, vignette and film grain presets likewise use values present in their declared lists. This is a settings-integrity correction within the feature implementation batch, not a new validation cycle.
+
+
+## Camera-motion blur pipeline refinement — 2026-11-23
+
+The initial camera-motion blur prototype was moved out of `final.fsh` into a dedicated `composite5` pass so blur is applied to the scene before final FXAA, depth of field, bloom composition and color grading. Added `shaders/composite5.vsh` and `shaders/composite5.fsh`; the pass reads the completed composite scene and depth, reprojects through Iris previous-camera matrices, applies depth-aware 4/6/8-tap camera blur, and writes the resolved scene to colortex0 using the standard composite output flip. The final pass no longer owns motion-blur uniforms or code. This improves effect ordering and keeps the post stack modular. Still source-only and untested in Minecraft/Iris.
