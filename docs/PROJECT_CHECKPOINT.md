@@ -1076,3 +1076,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - The light is combined only into ambient illumination; vanilla particle lightmap, direct shadowed celestial light, material emission, fog, and fractional alpha/blending remain unchanged.
 - Uses the existing `HELD_LIGHTING_STRENGTH` quality option and shared helper; no new texture samples or render targets are added. CI checks the include, quality gate and quadratic ambient combination.
 - This is shader/CI validation only. Particle sorting, weather effects and translucent visual response still require Iris runtime testing.
+
+
+## Translucent block held-item lighting — 2026-11-23
+- Added shared dynamic held-item lighting to the forward translucent-block program (glass and other translucent block surfaces), using the existing player-space position varying.
+- Preserves vanilla lightmap RGB, shadowed celestial direct light, fog, alpha and the color-only post-deferred output. No extra texture samples are introduced beyond the shared helper's Iris held-item uniforms; the helper exits early when both hand-light values are zero.
+- Added the program to CI's shared-helper/quality-gate/quadratic-ambient regression checks. Iris runtime sorting and glass brightness still require visual testing.

@@ -425,3 +425,7 @@ The translucent entity fragment stage uses the shared `held_item_lighting.glsl` 
 
 ## Translucent particle held-light path
 The `gbuffers_particles_translucent` forward-only program can use the shared held-item light helper with its existing player-relative position varying. It retains the documented mixed particle ordering and color-only output; it does not sample deferred colortex attachments. Held light is added to ambient only, leaving the vanilla lightmap sample, shadowed direct celestial term, particle alpha and fog path intact.
+
+
+## Translucent block held-light integration
+The forward translucent block pass uses the same shared Iris held-item light helper as translucent entities and particles. It adds the contribution to ambient only, retaining the existing `lightmap` sample, shadowed celestial term, fog and alpha blend output. It does not read deferred color attachments and remains a color-only translucent pass.

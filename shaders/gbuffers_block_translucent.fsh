@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
+
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2DShadow shadowtex0;
@@ -66,9 +68,15 @@ float calculateForwardFog(float distanceToCamera) {
     return 0.0;
 }
 
+#include "/lib/lighting/held_item_lighting.glsl"
+
 vec3 calculateForwardLighting(vec3 albedoLinear) {
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
+#if HELD_LIGHTING_STRENGTH > 0
+    vec3 heldLighting = calculateHeldItemLighting(vPlayerPosition);
+    ambient = sqrt(ambient * ambient + heldLighting);
+#endif
 
     vec3 normal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) normal = -normal;

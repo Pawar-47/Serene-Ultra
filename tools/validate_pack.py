@@ -1349,7 +1349,7 @@ for token in ("uniform int heldBlockLightValue;", "uniform int heldBlockLightVal
               "return mainLight * mainLight + offLight * offLight"):
     if token not in held_shader:
         errors.append(f"Shared held-item lighting include is missing component: {token}")
-for name, position in (("deferred.fsh", "playerPosition"), ("gbuffers_water.fsh", "vPlayerPosition"), ("gbuffers_entities_translucent.fsh", "vPlayerPosition"), ("gbuffers_particles_translucent.fsh", "vPlayerPosition")):
+for name, position in (("deferred.fsh", "playerPosition"), ("gbuffers_water.fsh", "vPlayerPosition"), ("gbuffers_entities_translucent.fsh", "vPlayerPosition"), ("gbuffers_particles_translucent.fsh", "vPlayerPosition"), ("gbuffers_block_translucent.fsh", "vPlayerPosition")):
     source = sources.get(name, "")
     if "#define HELD_LIGHTING_STRENGTH 50" not in source:
         errors.append(f"{name} must expose the held-light quality option")
