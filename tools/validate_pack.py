@@ -1037,6 +1037,31 @@ for profile, value in (("Ultra-Light", "20"), ("Smooth", "35"), ("Ultra", "50"),
     if f"LAVA_WAVE_STRENGTH:{value}" not in profile_line:
         errors.append(f"{profile} profile must set lava wave strength to {value}")
 
+# Foliage wind must share a seam-free spatial/temporal field between visible and shadow geometry.
+foliage_terrain_vertex = sources.get("gbuffers_terrain.vsh", "")
+foliage_shadow_vertex = sources.get("shadow.vsh", "")
+foliage_helper = (SHADERS / "lib" / "animation" / "foliage_wind.glsl").read_text(encoding="utf-8")
+for source_name, source, position_name in (
+    ("terrain", foliage_terrain_vertex, "vPlayerPosition.xz += wind"),
+    ("shadow", foliage_shadow_vertex, "vShadowPlayerPosition.xz += wind"),
+):
+    for token in ('#include "/lib/animation/foliage_wind.glsl"',
+                  "#define WAVING_FOLIAGE_STRENGTH",
+                  "sereneStableFoliageWorldPosition(",
+                  "sereneFoliageWind(", position_name):
+        if token not in source:
+            errors.append(f"{source_name} foliage wind path is missing shared component: {token}")
+for token in ("cameraPositionInt % ivec3(4096)", "TWO_PI / 4096.0",
+              "vec2(46.0, 35.0)", "vec2(-74.0, 63.0)",
+              "TWO_PI * 487.0 / 3600.0", "TWO_PI * 728.0 / 3600.0"):
+    if token not in foliage_helper:
+        errors.append(f"Shared foliage wind helper is missing seam-free phase component: {token}")
+for profile, value in (("Ultra-Light", "20"), ("Smooth", "40"), ("Ultra", "65"),
+                       ("HDR", "75"), ("Ultra-HDR", "85")):
+    profile_line = next((line for line in props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"WAVING_FOLIAGE_STRENGTH:{value}" not in profile_line:
+        errors.append(f"{profile} profile must set foliage wind strength to {value}")
+
 weather = sources.get("gbuffers_weather.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampleAnisotropicAtlas(",
               "gtexture, vTexCoord, materialUvDx, materialUvDy", "texture(lightmap",
