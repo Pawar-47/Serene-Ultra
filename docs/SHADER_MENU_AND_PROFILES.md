@@ -119,3 +119,11 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added `composite12` TAA resolve with previous-camera reprojection, depth-based disocclusion rejection, 3×3 neighborhood history clamping and RGBA16F persistent history (`colortex14`).
 - Added TAA enable, history weight and resolve sharpening controls in a dedicated Anti-Aliasing menu. Ultra-Light disables TAA; Smooth and higher profiles enable it with increasing history weight.
 - The current history reprojection covers camera/static-world motion; moving-object velocity is not available, so fast moving entities may need history rejection tuning after runtime tests.
+
+
+## Dedicated subsystem screens — 2026-11-24
+- Added separate Water, Sun, Sky and Clouds pages to the Iris shader settings menu; the corresponding options are no longer buried in the general Quality list.
+- Water groups depth absorption/fog, colour, waves, foam, refraction and reflections.
+- Sun uses a procedural antialiased circular disc in the sky pass, with independent disc size, intensity and halo controls; the vanilla square sun texture is discarded.
+- Sky separates twilight tint from the general Rayleigh/Mie atmospheric scattering and night effects.
+- Clouds use coherent hash-based value-noise fBm with domain warping, selectable cumulus/stratus/wispy morphology, size, coverage, density, height and wind controls. The prior blue-noise texture sampling is no longer used to define cloud silhouettes.
