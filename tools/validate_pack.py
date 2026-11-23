@@ -1425,6 +1425,8 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
                   "applyPorosityWetness("):
         if token not in source:
             errors.append(f"{name} is missing LabPBR porosity wetness handling: {token}")
+    if source.find("MATERIAL_WETNESS_STRENGTH 100") > source.find('#include "/lib/materials/porosity_wetness.glsl"'):
+        errors.append(f"{name} must define wetness strength before including the helper")
 
 if errors:
     print("Serene Ultra structural validation FAILED:")

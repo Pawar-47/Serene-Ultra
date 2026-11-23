@@ -1089,3 +1089,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Entity/block wetness uses Iris wetness, rainfall and biome_precipitation uniforms, with the same coefficients as the terrain path. Emissive and non-porous surfaces are unchanged.
 - Explicit PBR maps remain authoritative. OldPBR has no porosity channel. The puddle accumulation effect remains terrain-only.
 - No extra texture samples or render targets are added. CI and in-game wet-weather visual calibration are required.
+
+
+## Porosity helper include ordering correction — 2026-11-23
+- Run #1117 found the new helper was included before the MATERIAL_WETNESS_STRENGTH macro in the entity shader, so standalone GLSL compilation correctly rejected the undefined macro.
+- Moved the helper include below the option macro in both entity and block passes and added a structural ordering assertion.
+- No shader behavior changed; CI must revalidate both material paths.

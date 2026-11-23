@@ -25,9 +25,9 @@ uniform int fogShape;
 #define GENERATED_NORMAL_STRENGTH 25 // [0 10 20 35 50 75 100] Albedo-derived normal detail when no normal map is present
 #define COATED_TEXTURE_STRENGTH 20 // [0 10 20 35 50 75 100] Stable subtle noise coating on opaque material colour
 #define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
+#include "/lib/materials/porosity_wetness.glsl"
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
-#include "/lib/materials/porosity_wetness.glsl"
 
 vec2 calculateParallaxUv(
     vec2 baseUv,
