@@ -8,6 +8,7 @@ out vec2 vTexCoord;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
 out vec3 vViewPosition;
+out vec3 vPlayerPosition;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -31,5 +32,6 @@ void main() {
     vLightmapCoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
     vVertexColor = gl_Color;
     vViewPosition = viewPosition.xyz;
+    vPlayerPosition = playerPosition.xyz;
     applySereneTaaJitter(gl_Position);
 }
