@@ -937,3 +937,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Added the reference's mid-smoothness fallback for armor trims, and included the mapped froglight/campfire/copper-lantern item group in the low-cost emissive fallback.
 - Normalized hand skylight using the same 30/32 lightmap range used by the terrain and block-entity paths, avoiding a small but systematic direct-highlight mismatch.
 - These are fallback-only material heuristics; explicit PBR maps remain authoritative. CI compile/structure validation is required, and runtime held-item appearance is still pending.
+
+
+## Water-normal audit status correction — 2026-11-23
+- Updated the older reference-audit status text: texture-driven multi-scale water normals are implemented with a generated 64x64 tangent-normal asset, not merely analytic sine waves.
+- The baseline uses three texture samples per water fragment; the optional fourth very-large octave remains disabled in Ultra-Light/Smooth and enabled in Ultra/HDR.
+- Corrected the water-colour coordinate comment to document the actual 2560-block wrap (80 repeats at 1/32 scale), and made CI assert that the comment cannot drift from the stable-world period.
+- The custom normal's alpha is constant 255, so it is not a verified height map. Water POM remains deferred; richer cloud/world-space reflections and runtime calibration remain outstanding.
+- CI #1092 passed after held-item material fallback coverage was expanded. This does not substitute for Minecraft/Iris runtime testing.

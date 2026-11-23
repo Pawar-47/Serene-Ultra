@@ -135,11 +135,11 @@ Key constraints applied to Serene:
 
 ### Still missing or incomplete relative to Unbound
 
-- Texture-driven multi-scale normal maps, configurable wave scale/bumpiness and the upstream reference's normal-map parallax refinement. Serene currently uses a lower-bandwidth analytic three-wave approximation, not the same texture-based method.
+- Water parallax refinement remains unavailable: the generated 64x64 custom texture is tangent-normal-only and has constant alpha, so it does not provide a verified height field. Visual calibration of the new multi-scale normal field remains pending.
 - More advanced water noise-colour variation and per-biome colour calibration. Serene currently uses a single-sample low-amplitude tint variation.
 - More complete foam shaping/calibration. Serene now has a first depth-intersection foam approximation, but does not yet match the reference's complete surface/foam logic.
 - Full Unbound water colour and underwater-specific response. Serene now has a first-pass base tint/noise treatment and a distinct underwater branch, but needs colour/lighting calibration and the full absorption model.
-- Sky/environment reflection fallback when SSR misses, plus optional world-space reflections.
+- Richer sky/cloud/world-space reflection fallback. Serene now blends valid SSR hits with Iris skyColor/fogColor horizon fallback, but does not yet reproduce Unbound's full cloud/world-space reflection path.
 - More robust SSR refinement, edge handling, temporal stability and quality scaling.
 - Full material dispatch for glass, stained glass, portal and other translucent surfaces.
 - Broad IntegratedPBR+/resource-pack PBR material handling, including normal/roughness/smoothness maps, material masks and material-specific specular response.
@@ -151,14 +151,14 @@ These are parity gaps, not approved omissions. Low-end optimisation must preserv
 ## 7. Implementation sequence
 
 1. Complete the Iris water contract review and keep CI green before adding further effects.
-2. Implement animated multi-scale water normals using Iris-supported texture/resource bindings and a bounded low-end sampling budget.
-3. Add water noise colour, foam, above-/underwater response and Unbound-style water colour treatment.
+2. Completed: implement animated multi-scale water normals with an original tileable 64x64 tangent-normal texture, three baseline samples and one optional very-large octave. Water POM is intentionally deferred because alpha is constant and not a verified height channel.
+3. Completed at source level: water noise colour, foam, above-/underwater response, Beer-Lambert absorption and Unbound-style base colour are implemented; calibration against in-game scenes remains.
 4. Add sky/environment reflection fallback and improve SSR search/refinement with an adaptive quality strategy; investigate WSR only after its Iris prerequisites and hardware cost are understood.
 5. Build a general translucent-material classifier and independently implement glass, stained glass, portal and beacon responses.
 6. Expand terrain/entity PBR classification, emission, roughness/smoothness, normal maps, generated normals, coated textures and POM.
 7. Validate each change against Iris documentation first, then compile, run structural checks, load in Iris/Minecraft 26.3, compare scenes against Unbound and measure on the target Intel HD 5500 system.
 
-**Validation status:** Current water source and structural validator compile/link successfully in CI at the recorded checkpoint, but this is not Iris runtime proof, visual parity, or measured performance. Do not claim those until tested in-game.
+**Validation status:** CI #1092 passed all shader compile/link stages, the water-normal PNG decode/alpha inspection, and structural validation. This is source/asset validation only, not Iris runtime proof, visual parity, or measured performance. Do not claim those until tested in-game.
 
 
 ## Analytic water-wave milestone — 2026-11-23
@@ -313,3 +313,7 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 ## Chest seam reference parity — 2026-11-23
 - Complementary's gbuffers_block vertex path applies a 0.0001 clip-space depth bias to chest block entities when fract(worldY) is between 0.56 and 0.57. Serene now mirrors this correction for blockEntityId 5008.
 - The world-Y fraction is reconstructed from player-relative position plus Iris cameraPositionFract, avoiding loss of precision from a large absolute camera-position float.
+
+
+## Texture-driven Unbound-style water normals — 2026-11-23
+The analytic wave substitute has been superseded by an original tileable 64x64 tangent-normal texture bound as Iris customTexture.waterNormalTex. The fragment path samples medium, small and large scales; an optional fourth very-large octave is enabled only in Ultra/HDR profiles. Stable player/world coordinates use a 2560-block wrap period so every octave tiles without a phase jump. The texture's alpha is constant 255, so it is not a height map; water POM remains disabled. CI #1084 successfully decoded the replacement PNG and confirmed its constant alpha, and #1092 passed the full compile/link/structure matrix after the held-item material fallback update. Runtime water appearance and Intel HD 5500 cost still require in-game testing.

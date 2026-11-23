@@ -165,7 +165,7 @@ vec2 calculateWaterNoiseDrift() {
 
 vec2 calculateWaterNoisePosition(vec3 stableWorldPosition) {
     // Match Unbound's world-height-aware coordinates while keeping the
-    // 256-block stable-world period exactly tileable: 256 * 0.03125 = 8 repeats.
+    // 2560-block stable-world period exactly tileable: 2560 * 0.03125 = 80 repeats.
     // This is a wrap-safe 1/32 approximation of Unbound's 0.032 scale.
     return 0.03125 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);
 }

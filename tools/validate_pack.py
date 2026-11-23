@@ -821,6 +821,8 @@ if "uniform int isEyeInWater;" not in water:
 
 if "return 0.03125 * (stableWorldPosition.xz + stableWorldPosition.y * 2.0);" not in water:
     errors.append("Water noise coordinates must tile the 2560-block stable-world period exactly")
+if "2560-block stable-world period exactly tileable: 2560 * 0.03125 = 80 repeats" not in water:
+    errors.append("Water noise period comment must match the 2560-block stable-world wrap")
 # The optional 0.05 octave must also land on an integer number of repeats at
 # the camera-position wrap. This prevents a visible phase jump at the seam.
 water_period = 2560.0 * 0.03125
