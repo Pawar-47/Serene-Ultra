@@ -49,27 +49,17 @@ Primary references:
 
 ## Current Serene implementation coverage
 
-Current files include:
-- `gbuffers_terrain.vsh/.fsh`
-- `gbuffers_entities.vsh/.fsh`
-- `gbuffers_hand.vsh/.fsh`
-- `shadow.vsh/.fsh`
-- `deferred.vsh/.fsh`
-- `composite.vsh/.fsh`
-- `final.vsh/.fsh`
+**This inventory is updated against repository `main` at commit `c6dfc29327b9e15bd0bb195962ed2bc9cbee6ed5` (2026-11-23).** The older missing-file list below was accurate at an earlier checkpoint and is superseded by the current inventory.
 
-No dedicated files currently exist for:
-- `gbuffers_water`
-- `gbuffers_weather`
-- `gbuffers_hand_water`
-- `gbuffers_block`
-- `gbuffers_entities_translucent`
-- `gbuffers_block_translucent`
-- `gbuffers_particles` / `gbuffers_particles_translucent`
-- `gbuffers_terrain_solid` / `gbuffers_terrain_cutout`
-- sky, clouds, textured, basic, beacon, glint, spider-eyes and lightning programs.
+Dedicated source pairs now exist for:
+- Opaque/material G-buffer: `gbuffers_terrain`, `gbuffers_entities`, `gbuffers_block`, `gbuffers_basic`, `gbuffers_damagedblock`.
+- Forward translucent/post-deferred: `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, `gbuffers_entities_translucent`, `gbuffers_block_translucent`, `gbuffers_particles_translucent`.
+- Other dedicated geometry: `gbuffers_hand`, `gbuffers_particles`, `gbuffers_textured`, `gbuffers_textured_lit`, `gbuffers_skybasic`, `gbuffers_skytextured`, `gbuffers_line`, `gbuffers_beaconbeam`, `gbuffers_armor_glint`, `gbuffers_spidereyes`, `gbuffers_lightning`, `gbuffers_clouds`.
+- Shadow and fullscreen: `shadow`, `deferred`, `deferred1`, `composite`, `final`.
 
-Missing files do not mean geometry is necessarily omitted: Iris applies documented fallback programs. However, fallback behavior is not equivalent to a deliberately designed material path, especially for geometry rendered after deferred.
+Iris fallback entries remain for standard subprograms without dedicated source pairs (for example shadow variants, item and glowing-entity variants, terrain solid/cutout). The validator's fallback inventory is an explicit record of those mappings, not a claim that every material family has a feature-specific implementation.
+
+Source presence is not proof of correct runtime routing, visual behavior, or performance. In particular, the forward water/weather/hand-water and translucent entity/block/particle paths still require in-game verification.
 
 ## High-priority attachment/order hazard to resolve
 
@@ -89,17 +79,20 @@ Historical investigation checklist (the attachment-flow correction is now commit
 
 ## Required next implementation sequence
 
-1. Implement dedicated forward water/weather/hand-water shading and test their post-deferred behavior.
-2. Add explicit block/entity/particle/terrain program coverage based on the reference program inventory and Iris fallback table.
-3. Establish sky/cloud and vanilla UI/text/particle compatibility paths.
-4. Only then extend material classification and the higher-cost Ultra systems (POM, reflections, colored-light propagation, volumetrics, temporal AA and dimension-specific rendering).
+1. **Validate the existing post-deferred paths in Iris:** water/refraction/SSR, rain and snow, hand-water, translucent entities, translucent block entities and particles. Check blend order, depth behavior, fog and attachment preservation.
+2. **Finish stock/reference source reconciliation:** inspect the supplied Minecraft 26.3 Vanilla-stock and Complementary Reimagined archives file-by-file for matching terrain, entity, block, water, weather, hand, shadow, deferred/composite and final stages. Record exact source paths and compare interfaces before changing algorithms. The archive inventory alone is not a completed comparison.
+3. **Close remaining material and pipeline gaps:** validate sky/cloud/text/UI overlays, block-entity variants, shadow subprograms and resource-pack compatibility; then improve colored-light propagation, volumetrics, temporal stability and dimension-specific rendering.
+4. **Measure the target hardware:** profile Intel HD 5500 at controlled settings and tune quality tiers without silently removing Ultra features.
+
+Do not treat a successful standalone GLSL/structural CI run as an Iris runtime pass.
 
 ## Validation state
 
-- GitHub structural + standalone GLSL CI: passed on commit `826fe3ee513e5b3d35afa42473f2717864fbef9a`, workflow run `45060295410`.
-- Iris shaderpack runtime: not yet tested.
-- Water/weather/hand-water ordering hazard: source-level risk identified; runtime confirmation pending.
-- Complementary and Vanilla-stock file-by-file cross-check for this specific issue: pending; do not claim it has been completed.
+- Latest recorded structural + standalone GLSL CI: run `45147325818` (run #1166) passed on commit `c6dfc29327b9e15bd0bb195962ed2bc9cbee6ed5`.
+- CI includes standalone stage compilation, optional macro branches, water-normal inspection, program linking, varying-interface checks, output-location checks and structural validation.
+- Iris shaderpack runtime: not yet verified. No claim is made that the current water, weather, hand-water, translucent entity/block or particle paths render correctly in-game.
+- The earlier main/alternate attachment overwrite hazard was corrected at source level; runtime confirmation remains pending.
+- Supplied Complementary and Vanilla-stock archive file-by-file reconciliation: still pending for the current implementation. Do not mark complete based on archive file counts or historical notes.
 - Visual parity and Intel HD 5500 frame-time measurements: not yet performed.
 
 
