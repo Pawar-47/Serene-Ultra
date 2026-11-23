@@ -852,7 +852,7 @@ for token in ("flat in vec2 vMidTexCoord", "flat in vec2 vTexHalfSize",
 for token in ("float iceSmoothness = translucentAlbedo.g * translucentAlbedo.g * translucentAlbedo.g",
                "float iceHighlight = pow(",
                "float iceSpecularExponent = mix(8.0, 128.0, iceSmoothness)",
-               "iceSpecular * 0.7",
+               "* iceHighlight * 0.7",
                "viewLightDirectionForIce",
                "if (isIce && nDotL > 0.001 && celestialGate > 0.001)"):
     if token not in water:
