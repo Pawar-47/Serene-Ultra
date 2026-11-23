@@ -303,7 +303,9 @@ if "/* RENDERTARGETS: 0 */" not in deferred_options or "outOpaqueReflectionScene
 deferred1 = sources.get("deferred1.fsh", "")
 for token in ("/* RENDERTARGETS: 4 */", "uniform sampler2D colortex0",
               "uniform sampler2D depthtex0", "uniform sampler2D depthtex2",
-              "validCount", "step(0.5, validCount)", "outOpaqueSceneCopy = vec4("):
+              "sourceStart", "sourceEnd", "for (int y = 0; y < 3; ++y)",
+              "for (int x = 0; x < 3; ++x)", "sampleWeight", "validCoverage",
+              "step(0.5, validCoverage)", "outOpaqueSceneCopy = vec4("):
     if token not in deferred1:
         errors.append(f"Half-resolution deferred1 scene copy is missing component: {token}")
 if "size.buffer.colortex4=0.5 0.5" not in props:

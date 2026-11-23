@@ -10,42 +10,57 @@ in vec2 vTexCoord;
 layout(location = 0) out vec4 outOpaqueSceneCopy;
 
 void main() {
-    // Iris executes deferred1 after deferred and before translucent gbuffers.
-    // colortex4 is half resolution, so explicitly box-filter the four source
-    // pixels covered by this destination pixel. Downsample RGB in linear
-    // space, then re-encode to match the scene-color buffer contract.
+    // Iris truncates relative buffer dimensions (0.5 * source size). A 5-pixel
+    // source therefore becomes 2 pixels, not 2.5. Integrate each destination
+    // pixel's actual source-space footprint so odd viewport edges are retained.
+    // The footprint spans at most three source texels per axis at half scale.
     ivec2 destinationPixel = ivec2(gl_FragCoord.xy);
-    ivec2 sourceBase = destinationPixel * 2;
-    ivec2 sourceMax = textureSize(colortex0, 0) - ivec2(1);
+    ivec2 destinationSize = textureSize(colortex4, 0);
+    ivec2 sourceSize = textureSize(colortex0, 0);
+    vec2 sourceStart = vec2(destinationPixel) * vec2(sourceSize) / vec2(destinationSize);
+    vec2 sourceEnd = vec2(destinationPixel + ivec2(1)) * vec2(sourceSize) / vec2(destinationSize);
+    ivec2 sourceBase = ivec2(floor(sourceStart));
 
-    ivec2 pixel00 = min(sourceBase, sourceMax);
-    ivec2 pixel10 = min(sourceBase + ivec2(1, 0), sourceMax);
-    ivec2 pixel01 = min(sourceBase + ivec2(0, 1), sourceMax);
-    ivec2 pixel11 = min(sourceBase + ivec2(1, 1), sourceMax);
+    vec3 linearAccumulation = vec3(0.0);
+    float validWeight = 0.0;
+    float totalWeight = 0.0;
 
-    vec4 color00 = texelFetch(colortex0, pixel00, 0);
-    vec4 color10 = texelFetch(colortex0, pixel10, 0);
-    vec4 color01 = texelFetch(colortex0, pixel01, 0);
-    vec4 color11 = texelFetch(colortex0, pixel11, 0);
+    // Fixed 3x3 bounds; zero-overlap taps are skipped. Even dimensions retain
+    // the original four-fetch path, while odd dimensions cover their edge texels.
+    for (int y = 0; y < 3; ++y) {
+        for (int x = 0; x < 3; ++x) {
+            ivec2 sourcePixel = sourceBase + ivec2(x, y);
+            if (sourcePixel.x >= sourceSize.x || sourcePixel.y >= sourceSize.y) continue;
 
-    // depthtex0 includes hand/translucent depth; depthtex2 excludes both.
-    // Average only valid opaque/sky samples so hand pixels do not contaminate
-    // the low-resolution scene copy used by forward water.
-    float valid00 = abs(texelFetch(depthtex0, pixel00, 0).r - texelFetch(depthtex2, pixel00, 0).r) <= 0.000001 ? 1.0 : 0.0;
-    float valid10 = abs(texelFetch(depthtex0, pixel10, 0).r - texelFetch(depthtex2, pixel10, 0).r) <= 0.000001 ? 1.0 : 0.0;
-    float valid01 = abs(texelFetch(depthtex0, pixel01, 0).r - texelFetch(depthtex2, pixel01, 0).r) <= 0.000001 ? 1.0 : 0.0;
-    float valid11 = abs(texelFetch(depthtex0, pixel11, 0).r - texelFetch(depthtex2, pixel11, 0).r) <= 0.000001 ? 1.0 : 0.0;
+            vec2 pixelMinimum = vec2(sourcePixel);
+            vec2 pixelMaximum = pixelMinimum + 1.0;
+            vec2 overlap = max(
+                min(sourceEnd, pixelMaximum) - max(sourceStart, pixelMinimum),
+                vec2(0.0)
+            );
+            float sampleWeight = overlap.x * overlap.y;
+            if (sampleWeight <= 0.0) continue;
 
-    float validCount = valid00 + valid10 + valid01 + valid11;
-    vec3 linearAverage = (
-        pow(max(color00.rgb, vec3(0.0)), vec3(2.2)) * valid00 +
-        pow(max(color10.rgb, vec3(0.0)), vec3(2.2)) * valid10 +
-        pow(max(color01.rgb, vec3(0.0)), vec3(2.2)) * valid01 +
-        pow(max(color11.rgb, vec3(0.0)), vec3(2.2)) * valid11
-    ) / max(validCount, 1.0);
+            totalWeight += sampleWeight;
+            float opaqueValidity = abs(
+                texelFetch(depthtex0, sourcePixel, 0).r -
+                texelFetch(depthtex2, sourcePixel, 0).r
+            ) <= 0.000001 ? 1.0 : 0.0;
+            if (opaqueValidity > 0.5) {
+                vec3 sourceLinear = pow(
+                    max(texelFetch(colortex0, sourcePixel, 0).rgb, vec3(0.0)),
+                    vec3(2.2)
+                );
+                linearAccumulation += sourceLinear * sampleWeight;
+                validWeight += sampleWeight;
+            }
+        }
+    }
 
+    vec3 linearAverage = linearAccumulation / max(validWeight, 0.000001);
+    float validCoverage = validWeight / max(totalWeight, 0.000001);
     outOpaqueSceneCopy = vec4(
         pow(max(linearAverage, vec3(0.0)), vec3(1.0 / 2.2)),
-        step(0.5, validCount)
+        step(0.5, validCoverage)
     );
 }

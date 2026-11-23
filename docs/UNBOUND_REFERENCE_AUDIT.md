@@ -379,3 +379,10 @@ A follow-up review against Unbound's GGX implementation found its direct highlig
 
 
 - Follow-up validator guard: the water shader must not regress to `depthtex1`, and the refraction lookup assertion now explicitly requires `depthtex2`.
+
+
+### Odd-resolution half-scale scene-copy coverage — 2026-11-23
+- Iris computes relative `size.buffer` dimensions by truncating the source dimension multiplied by the scale. At odd viewport sizes, a 0.5-scale attachment therefore has a non-integer source footprint (for example, 5 source pixels map to 2 destination pixels).
+- The previous `destinationPixel * 2` box filter omitted the final source row/column in those cases and its fixed 2x2 footprint was not aligned to the normalized destination texel footprint.
+- `deferred1` now integrates each destination pixel's exact source-space footprint with a bounded 3x3 overlap filter. Even dimensions retain four nonzero taps; odd dimensions include edge texels. Opaque-depth validity is weighted by covered area, and color is averaged in linear space.
+- The validator checks the footprint calculation and bounded tap loops. CI cannot establish visual edge quality or performance; test odd window sizes as well as common even sizes in Iris.
