@@ -988,7 +988,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "if (!cameraUnderwater && WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999)", "refractedScene.a >= 0.5", "texelFetch(depthtex2, refractedPixel, 0)",
               "if (isWater && dot(normalize(vViewPosition), viewNormal) > 0.0)",
               "translucentAlbedo.a = 0.98",
-              "if (!cameraUnderwater) {\n            translucentAlbedo.a = 0.98;",
+              "if (!cameraUnderwater)",
               "float waterAlpha = cameraUnderwater", "? translucentAlbedo.a", ": translucentAlbedo.a * (0.25 + 0.75 * waterFog)",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
