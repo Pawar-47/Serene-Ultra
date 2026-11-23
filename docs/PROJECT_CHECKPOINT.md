@@ -961,12 +961,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - This is a low-cost approximation of Unbound's richer atmospheric/cloud reflection background, not full sky rendering or voxelized world-space reflection. Runtime appearance and HD 5500 cost remain unverified.
 
 
-## Dynamic held-item world lighting — 2026-11-23
-- Added a low-cost deferred ambient contribution driven by Iris heldBlockLightValue, heldBlockLightValue2, heldItemId and heldItemId2. Iris' oldHandLight directive is explicitly false so main/offhand values remain independent.
-- Light intensity is attenuated by player-space distance from an approximate hand/head origin using relativeEyePosition; item IDs select warm, cool, soul-blue, redstone, froglight, copper and other light colors. Lava buckets and selected emissive held items receive reference-guided light-value floors.
-- The contribution is combined quadratically with the existing ambient term and uses no additional texture fetches. HELD_LIGHTING_STRENGTH is a Quality slider; Ultra-Light compiles the path out, Smooth=50, Ultra/HDR=100.
-- This is a low-cost screen-space approximation, not voxel/flood-fill dynamic lighting. It does not create accurate cast shadows or light through occluders; runtime range/color calibration and target-GPU cost remain unverified.
-- Iris documentation: heldBlockLightValue/2 are 0–15, heldItemId/2 read item.properties, and oldHandLight defaults to true; relativeEyePosition is the world-space offset from player head to camera.
+## Held-item world lighting — pending
+- Iris exposes separate main-hand/offhand item IDs and block-light values, plus the player-head-to-camera offset. These uniforms have been researched but are not currently used for a dynamic world-light contribution in the shader source.
+- A future implementation must explicitly set Iris `oldHandLight = false`, keep the effect quality-gated for low-end GPUs, and validate first-/third-person behavior before being marked implemented.
 
 
 ## GLSL include-aware CI correction — 2026-11-23
