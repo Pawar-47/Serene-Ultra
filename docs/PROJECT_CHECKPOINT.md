@@ -961,9 +961,12 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - This is a low-cost approximation of Unbound's richer atmospheric/cloud reflection background, not full sky rendering or voxelized world-space reflection. Runtime appearance and HD 5500 cost remain unverified.
 
 
-## Held-item world lighting — pending
-- Iris exposes separate main-hand/offhand item IDs and block-light values, plus the player-head-to-camera offset. These uniforms have been researched but are not currently used for a dynamic world-light contribution in the shader source.
-- A future implementation must explicitly set Iris `oldHandLight = false`, keep the effect quality-gated for low-end GPUs, and validate first-/third-person behavior before being marked implemented.
+## Held-item world lighting — implemented, runtime calibration pending
+- Deferred ambient now consumes Iris heldBlockLightValue/heldBlockLightValue2, heldItemId/heldItemId2 and relativeEyePosition.
+- oldHandLight=false exposes independent main/offhand values. Item IDs select warm, cool, soul-blue, redstone, froglight, copper and emissive-item colors; lava buckets and selected emissive items receive conservative light-value floors.
+- Light energy is attenuated by player-space distance from the player-head origin. Main/offhand contributions are combined quadratically with existing ambient; no extra texture fetches are introduced.
+- HELD_LIGHTING_STRENGTH is a Quality slider: Ultra-Light=0 (compiled out), Smooth=50, Ultra/HDR/Ultra-HDR=100.
+- This is a screen-space ambient approximation. It does not cast shadows, respect occluders, or illuminate the forward translucent-water pass yet. Runtime range/color calibration and target-GPU cost remain pending.
 
 
 ## GLSL include-aware CI correction — 2026-11-23
@@ -999,3 +1002,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Explicit resource-pack PBR maps remain authoritative. The coating modulation was moved after fallback classification and now skips these vanilla metal groups, preventing noise from perturbing their metal response.
 - No additional texture fetches or render targets are introduced. The material branches use the existing specular/albedo samples and Iris mc_Entity material IDs.
 - CI must validate the new mappings and both PBR branches. Runtime appearance and low-end GPU cost remain unverified.
+
+
+## Dynamic held-item world lighting implementation — 2026-11-23
+- Implemented the deferred main/offhand light contribution using Iris held-item IDs, block-light values and relativeEyePosition.
+- The Ultra-Light profile compiles the path out; Smooth and Ultra/HDR profiles use progressively stronger settings.
+- CI structural assertions now verify Iris uniforms, color/energy dispatch, quality gating and the quadratic ambient combine. In-game range, color and third-person placement remain unverified.

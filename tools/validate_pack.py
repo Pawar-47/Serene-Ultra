@@ -1315,7 +1315,35 @@ for token in ("uniform int currentRenderedItemId", "bool hasMaterialSpecularMap"
     if token not in entity_shader:
         errors.append(f"Entity item-material fallback is missing component: {token}")
 
-# Held-item world lighting is a planned follow-up, not present in the current shader source.
+held_shader = sources.get("deferred.fsh", "")
+for token in ("#define HELD_LIGHTING_STRENGTH 50",
+              "uniform int heldBlockLightValue;", "uniform int heldBlockLightValue2;",
+              "uniform int heldItemId;", "uniform int heldItemId2;",
+              "uniform vec3 relativeEyePosition;", "float getHeldItemLightEnergy(",
+              "vec3 getHeldItemLightColor(", "vec3 calculateHeldItemLighting(",
+              "getHeldItemLightEnergy(heldItemId, heldBlockLightValue)",
+              "getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2)",
+              "ambient = sqrt(ambient * ambient + heldLighting)",
+              "return mainLight * mainLight + offLight * offLight"):
+    if token not in held_shader:
+        errors.append(f"Deferred held-item world lighting is missing component: {token}")
+held_props = (SHADERS / "shaders.properties").read_text(encoding="utf-8")
+held_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
+if "oldHandLight = false" not in held_props:
+    errors.append("Iris oldHandLight must be disabled to expose separate main/offhand values")
+if "HELD_LIGHTING_STRENGTH" not in held_props.split("sliders =", 1)[-1]:
+    errors.append("Held-item world-light strength must be exposed as a Quality slider")
+if "HELD_LIGHTING_STRENGTH" not in held_props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("Held-item world-light strength must appear in the Quality screen")
+if "option.HELD_LIGHTING_STRENGTH.comment =" not in held_lang:
+    errors.append("Held-item world-light strength requires a user-facing tooltip")
+for profile, value in (("Ultra-Light", "0"), ("Smooth", "50"),
+                       ("Ultra", "100"), ("HDR", "100"), ("Ultra-HDR", "100")):
+    line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"HELD_LIGHTING_STRENGTH:{value}" not in line:
+        errors.append(f"{profile} has incorrect held-item world-light strength")
+
+
 
 hand_shader = sources.get("gbuffers_hand.fsh", "")
 for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemId",

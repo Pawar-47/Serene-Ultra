@@ -27,6 +27,11 @@ uniform float sunAngle;
 uniform bool hasSkylight;
 uniform float endFlashIntensity;
 uniform vec3 fogColor;
+uniform int heldBlockLightValue;
+uniform int heldBlockLightValue2;
+uniform int heldItemId;
+uniform int heldItemId2;
+uniform vec3 relativeEyePosition;
 uniform float fogStart;
 uniform float fogEnd;
 uniform float fogDensity;
@@ -46,6 +51,7 @@ in vec2 vTexCoord;
 #define MATERIAL_SPECULAR_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Deferred specular response for smooth materials
 #define MATERIAL_AO_STRENGTH 100 // [0 25 50 75 100] LabPBR material AO lighting strength
 #define MATERIAL_SSS_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] LabPBR subsurface scattering strength
+#define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
 
 // Deferred is a composite-style pass: it reads the main colortex0 image and
 // writes the alternate image. Iris flips the pair after this pass, so the
@@ -163,6 +169,88 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
     return clamp(1.0 - normalizedOcclusion * AO_STRENGTH * 1.8, 0.55, 1.0);
 }
 
+#if HELD_LIGHTING_STRENGTH > 0
+float getHeldItemLightEnergy(int itemId, int lightValue) {
+    float energy = clamp(float(lightValue) / 15.0, 0.0, 1.0);
+
+    // Iris' vanilla light value is authoritative. These small floors cover
+    // emissive held items whose inventory form reports little/no block light.
+    if (itemId == 44013) {
+        energy = max(energy, 0.85); // Lava bucket
+    } else if (itemId == 44007 || itemId == 44008 ||
+               itemId == 44009 || itemId == 44084) {
+        energy = max(energy, 0.80); // Froglights and copper lantern/torch group
+    } else if (itemId == 44053) {
+        energy = max(energy, 0.60); // End crystal
+    } else if (itemId == 44040 || itemId == 44085 || itemId == 44086) {
+        energy = max(energy, 0.22); // Spectral arrow group, trident, XP bottle
+    } else if (itemId == 44034 || itemId == 44036 || itemId == 44081 ||
+               itemId == 44083 || itemId == 44090 || itemId == 44092 ||
+               itemId == 44093 || itemId == 44094 || itemId == 44095 ||
+               itemId == 44096 || itemId == 44097 || itemId == 45096 ||
+               itemId == 45112) {
+        energy = max(energy, 0.14); // Low-level emissive item families
+    }
+
+    return energy;
+}
+
+vec3 getHeldItemLightColor(int itemId) {
+    if (itemId == 44028 || itemId == 44029 || itemId == 44030) {
+        return vec3(0.30, 0.62, 1.0); // Soul fire family
+    } else if (itemId == 44035) {
+        return vec3(1.0, 0.18, 0.10); // Redstone torch
+    } else if (itemId == 44007) {
+        return vec3(1.0, 0.58, 0.25); // Ochre froglight
+    } else if (itemId == 44008) {
+        return vec3(0.45, 1.0, 0.52); // Verdant froglight
+    } else if (itemId == 44009) {
+        return vec3(0.92, 0.56, 1.0); // Pearlescent froglight
+    } else if (itemId == 44003 || itemId == 44004 ||
+               itemId == 44018 || itemId == 44096 || itemId == 44097) {
+        return vec3(0.72, 0.86, 1.0); // Cool white / ice
+    } else if (itemId == 44013 || itemId == 44010 || itemId == 44011 ||
+               itemId == 44012 || itemId == 44015 || itemId == 44019 ||
+               itemId == 44084 || itemId == 44093 || itemId == 44094) {
+        return vec3(1.0, 0.66, 0.36); // Fire, lava, lantern and copper family
+    } else if (itemId == 44040 || itemId == 44085) {
+        return vec3(0.42, 0.72, 1.0); // Spectral / trident
+    } else if (itemId == 44053) {
+        return vec3(0.72, 0.32, 1.0); // End crystal
+    } else if (itemId == 44086 || itemId == 44090 || itemId == 45096) {
+        return vec3(0.38, 1.0, 0.48); // XP bottle, eye and glow berries
+    } else if (itemId == 44092 || itemId == 44095) {
+        return vec3(0.25, 0.82, 1.0); // Glow ink and prismarine crystals
+    } else if (itemId == 45112) {
+        return vec3(1.0, 0.74, 0.32); // Trial keys
+    }
+
+    return vec3(1.0, 0.80, 0.62);
+}
+
+vec3 calculateHeldItemLighting(vec3 playerPosition) {
+    // playerPosition is camera-relative player space. Iris' relativeEyePosition
+    // moves the light origin back to the player model in third person.
+    vec3 playerHeadRelativePosition = playerPosition + relativeEyePosition;
+    playerHeadRelativePosition.y += 0.7;
+    float lightDistance = length(playerHeadRelativePosition) * 1.33;
+    float distanceAttenuation = max(1.0 - lightDistance * 0.0887, 0.0);
+    float qualityStrength = float(HELD_LIGHTING_STRENGTH) * 0.01;
+
+    float mainEnergy = getHeldItemLightEnergy(heldItemId, heldBlockLightValue);
+    float offEnergy = getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2);
+    float mainIntensity = mainEnergy * distanceAttenuation * qualityStrength * 0.60;
+    float offIntensity = offEnergy * distanceAttenuation * qualityStrength * 0.60;
+
+    vec3 mainLight = getHeldItemLightColor(heldItemId) * mainIntensity;
+    vec3 offLight = getHeldItemLightColor(heldItemId2) * offIntensity;
+
+    // Return squared radiance so the caller combines independent sources
+    // quadratically with the existing ambient term using one sqrt.
+    return mainLight * mainLight + offLight * offLight;
+}
+#endif
+
 void main() {
     vec4 scene = texture(colortex0, vTexCoord);
     float sceneDepth = texture(depthtex0, vTexCoord).r;
@@ -223,6 +311,11 @@ void main() {
     float contactAO = sampleContactAO(viewPosition, viewNormal);
     ambient *= contactAO;
     ambient *= materialAOFactor;
+
+#if HELD_LIGHTING_STRENGTH > 0
+    vec3 heldLighting = calculateHeldItemLighting(playerPosition);
+    ambient = sqrt(ambient * ambient + heldLighting);
+#endif
 
     vec3 celestialColor = endFlashActive
         ? vec3(1.0)

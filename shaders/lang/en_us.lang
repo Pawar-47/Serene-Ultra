@@ -143,3 +143,6 @@ option.WATER_WAVE_DETAIL.comment = Adds Unbound-style very-large-scale normal de
 
 option.HAND_PBR_STRENGTH = Held Item PBR Strength
 option.HAND_PBR_STRENGTH.comment = Enables tangent-space normal maps, material reflectance and item-specific highlights on first-person held items. Set to 0 to skip the two extra PBR texture reads; Ultra-Light disables this path.
+
+option.HELD_LIGHTING_STRENGTH = Held Item World Lighting
+option.HELD_LIGHTING_STRENGTH.comment = Adds low-cost colored light from luminous main/offhand items to nearby opaque surfaces. Ultra-Light compiles it out; it adds no texture samples and does not cast shadows.
