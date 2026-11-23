@@ -112,3 +112,10 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added edge-aware unsharp masking after FXAA/DOF and before bloom, with a Color-menu control and conservative profile scaling.
 
 - Added separate configurable maximum trace distances for opaque SSR (16–64 blocks) and water/glass SSR (16–48 blocks), scaled by profile. This is a longer-range screen-space substitute for expensive voxelized world-space reflections, not a claim of full off-screen/world-space coverage.
+
+
+## Jittered temporal anti-aliasing — 2026-11-23
+- Added shared 8-phase Halton (2,3) sub-pixel jitter to 21 world G-buffer vertex programs; first-person hand passes remain unjittered to avoid HUD/hand instability.
+- Added `composite12` TAA resolve with previous-camera reprojection, depth-based disocclusion rejection, 3×3 neighborhood history clamping and RGBA16F persistent history (`colortex14`).
+- Added TAA enable, history weight and resolve sharpening controls in a dedicated Anti-Aliasing menu. Ultra-Light disables TAA; Smooth and higher profiles enable it with increasing history weight.
+- The current history reprojection covers camera/static-world motion; moving-object velocity is not available, so fast moving entities may need history rejection tuning after runtime tests.
