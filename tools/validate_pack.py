@@ -837,6 +837,12 @@ for token in ("WATER_ABSORPTION_STRENGTH", "if (!cameraUnderwater)", "waterThick
               "waterAbsorptionTintLinear * (1.0 - transmission)"):
     if token not in water:
         errors.append(f"Unbound-guided depth absorption path is missing component: {token}")
+for token in ("waterFresnel = pow(1.0 - nDotV, 4.0);",
+              "waterAlpha = mix(waterAlpha, 1.0, waterFresnel);"):
+    if token not in water:
+        errors.append(f"Unbound water grazing-opacity response is missing component: {token}")
+if "waterAlpha = mix(waterAlpha, 1.0, waterFresnel * 0.25)" in water:
+    errors.append("Water grazing opacity must use the full Unbound fresnel-fourth-power blend")
 for token in ("uniform int isEyeInWater", "bool cameraUnderwater = (isEyeInWater == 1)",
               "if ((isWater && cameraUnderwater) || isPortal) direct = vec3(0.0)",
               "(cameraUnderwater ? 0.5 : 1.0)", "WATER_UNDERWATER_STRENGTH"):

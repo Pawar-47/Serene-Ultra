@@ -519,7 +519,8 @@ void main() {
 
     if (isWater) {
         float nDotV = clamp(dot(viewNormal, normalize(-vViewPosition)), 0.0, 1.0);
-        waterFresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
+        // Unbound's final water-alpha blend uses (1 - NdotV)^4, distinct from Schlick reflection Fresnel.
+        waterFresnel = pow(1.0 - nDotV, 4.0);
 
         // Apply the Unbound-inspired water tint before sampling/refraction so
         // the same material colour also becomes the Beer-Lambert absorption tint.
@@ -578,8 +579,8 @@ void main() {
         float waterAlpha = cameraUnderwater
             ? translucentAlbedo.a
             : translucentAlbedo.a * (0.25 + 0.75 * waterFog);
-        // Keep the Unbound grazing-angle opacity response.
-        waterAlpha = mix(waterAlpha, 1.0, waterFresnel * 0.25);
+        // Match Unbound's final alpha mix: fully opaque at grazing angles via fresnel^4.
+        waterAlpha = mix(waterAlpha, 1.0, waterFresnel);
         translucentAlbedo.a = clamp(waterAlpha, 0.0, 1.0);
 
         // deferred1 snapshots the opaque scene into half-resolution colortex4.

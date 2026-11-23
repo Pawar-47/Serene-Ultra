@@ -1175,3 +1175,10 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Corrected `gbuffers_weather.fsh` to use `max(length(vViewPosition.xz), abs(vViewPosition.y))` when Iris reports cylindrical fog.
 - World water, first-person hand-water and weather now share the stock Minecraft cylinder distance; spherical mode remains unchanged.
 - Added a weather-specific structural regression guard.
+
+
+### Unbound water grazing-opacity parity — 2026-11-23
+- Compared Serene's water-alpha path with Complementary's Unbound-style branch in `water.glsl`. Unbound applies a final `mix(alpha, 1.0, fresnel^4)` where its water-facing Fresnel term is `1 - NdotV`.
+- Serene previously used a Schlick reflection-style Fresnel term and multiplied its opacity blend by 0.25, leaving water noticeably more transparent at grazing angles than the reference response.
+- Separated the opacity curve from the Schlick reflection curve: the water opacity now uses `(1 - NdotV)^4` at full strength, while the independent reflection Fresnel remains unchanged.
+- Added structural regression checks. Validate the waterline, shallow shorelines, and oblique camera angles in Iris at runtime; compiler CI cannot confirm visual calibration.
