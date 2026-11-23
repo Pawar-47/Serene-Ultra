@@ -550,6 +550,12 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh"):
             errors.append(f"{name} must exclude emissive/glossy PBR surfaces from coating: {token}")
 if "fallbackEmissiveMaterial" not in sources.get("gbuffers_terrain.fsh", ""):
     errors.append("Terrain coating must skip built-in emissive material IDs")
+terrain_emissive = sources.get("gbuffers_terrain.fsh", "")
+for token in ("vMaterialId >= 32131 && vMaterialId <= 32152", "vMaterialId == 32131",
+              "vMaterialId == 32132", "vMaterialId == 32149", "vMaterialId == 32150",
+              "vMaterialId == 32151", "vMaterialId == 32152"):
+    if token not in terrain_emissive:
+        errors.append(f"Terrain vanilla emissive fallback coverage is missing: {token}")
 block_coat_source = sources.get("gbuffers_block.fsh", "")
 for token in ("pbrEmission < 0.01", "materialReflectance < 0.8",
               "materialCoatingFactor > 0.0", "if (!signText && blockEntityId != 5025 && albedo.a >= 0.999"):
@@ -656,6 +662,17 @@ for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_
               "block.5016=minecraft:shulker_box", "block.5020=minecraft:conduit",
               "block.5028=minecraft:bell", "block.5032=minecraft:copper_chest",
               "block.5036=minecraft:white_banner", "block.10548=minecraft:enchanting_table",
+              "block.32131=minecraft:furnace:lit=true", "block.32132=minecraft:lava_cauldron",
+              "block.32133=minecraft:crying_obsidian", "block.32134=minecraft:magma_block",
+              "block.32135=minecraft:dragon_egg", "block.32136=minecraft:chorus_flower",
+              "block.32137=minecraft:brewing_stand", "block.32138=minecraft:redstone_block",
+              "block.32139=minecraft:lapis_block", "block.32140=minecraft:iron_ore",
+              "block.32141=minecraft:gold_ore", "block.32142=minecraft:copper_ore",
+              "block.32143=minecraft:lapis_ore", "block.32144=minecraft:emerald_ore",
+              "block.32145=minecraft:diamond_ore", "block.32146=minecraft:nether_quartz_ore",
+              "block.32147=minecraft:gilded_blackstone", "block.32148=minecraft:ancient_debris",
+              "block.32149=minecraft:end_portal_frame:eye=true", "block.32150=minecraft:cave_vines:berries=true",
+              "block.32151=minecraft:redstone_wire:power=1", "block.32152=minecraft:spawner",
               "block.10009=leaves:waterlogged=false", "block.10011=leaves:waterlogged=true",
               "block.10129=farmland:moisture=0", "block.10137=farmland:moisture=7"):
     if token not in block_properties:
