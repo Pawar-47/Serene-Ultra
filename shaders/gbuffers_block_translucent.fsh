@@ -7,6 +7,7 @@
 #define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
 #define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
 #define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Volumetric cloud optical density
+#define CLOUD_REFLECTION_STRENGTH 60 // [0 15 30 45 60 75 100] Procedural sky-cloud reflections on translucent materials
 
 #define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
 
