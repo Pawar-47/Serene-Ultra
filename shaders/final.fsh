@@ -10,6 +10,8 @@ uniform sampler2D depthtex0;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2D noisetex;
 uniform int frameCounter;
+uniform float viewWidth;
+uniform float viewHeight;
 uniform int isEyeInWater;
 uniform float frameTimeCounter;
 uniform float nightVision;
@@ -19,6 +21,9 @@ uniform float darknessLightFactor;
 
 in vec2 vTexCoord;
 layout(location = 0) out vec4 outColor;
+
+#define SERENE_TAA_EXTERNAL_UNIFORMS
+#include "/lib/taa_jitter.glsl"
 
 // User-facing color controls. These are defined only in this program so Iris
 // discovers one authoritative definition for each option. BLOOM_STRENGTH is the
@@ -38,6 +43,7 @@ layout(location = 0) out vec4 outColor;
 #define BLOOM_QUALITY 2 // [0 1 2] Additional wide bloom pyramid levels
 #define FXAA_ENABLED 1 // [0 1] Edge-adaptive fast approximate anti-aliasing
 #define IMAGE_SHARPENING 20 // [0 10 20 30 40 50 60 70 80 90 100] Edge-aware post-AA sharpening
+#define TAA_SHARPEN_STRENGTH 20 // [0 5 10 15 20 25 30 40 50] Additional sharpening after temporal resolve
 #define DOF_STRENGTH 0 // [0 10 20 30 40 50 60 70 80 90 100] Depth-of-field blur strength
 #define DOF_FOCUS_DISTANCE 8.0 // [2.0 4.0 6.0 8.0 10.0 12.0 16.0 24.0 32.0 48.0 64.0] Focus distance in blocks
 #define DOF_FOCUS_RANGE 8.0 // [2.0 4.0 6.0 8.0 12.0 16.0 24.0 32.0] In-focus depth range in blocks
@@ -97,7 +103,9 @@ vec3 applyImageSharpening(vec3 source, vec2 uv, vec2 texelSize) {
     vec3 localAverage = (north + south + east + west) * 0.25;
     vec3 detail = source - localAverage;
     float edgeStrength = clamp(length(detail) * 3.0, 0.0, 1.0);
-    float sharpenAmount = float(IMAGE_SHARPENING) * 0.01
+    float temporalSharpen = (TAA_ENABLED > 0)
+        ? float(TAA_SHARPEN_STRENGTH) * 0.005 : 0.0;
+    float sharpenAmount = (float(IMAGE_SHARPENING) * 0.01 + temporalSharpen)
         * mix(0.45, 1.0, edgeStrength);
     return max(source + detail * sharpenAmount * 1.35, vec3(0.0));
 #else
