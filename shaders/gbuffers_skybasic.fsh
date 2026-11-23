@@ -247,9 +247,16 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
         // This gives cloud interiors a darker base and preserves a bright
         // silver lining at exposed edges without a second full raymarch.
         float cloudLightTransmittance = 1.0;
+#if VOLUMETRIC_CLOUD_QUALITY >= 16
+        const int CLOUD_LIGHT_STEPS = 3;
+#elif VOLUMETRIC_CLOUD_QUALITY >= 12
+        const int CLOUD_LIGHT_STEPS = 2;
+#else
+        const int CLOUD_LIGHT_STEPS = 1;
+#endif
         if (lightDirection.y > 0.02) {
-            for (int lightStep = 0; lightStep < 2; ++lightStep) {
-                float lightDistance = 28.0 + float(lightStep) * 42.0;
+            for (int lightStep = 0; lightStep < CLOUD_LIGHT_STEPS; ++lightStep) {
+                float lightDistance = 22.0 + float(lightStep) * 34.0;
                 vec3 lightSamplePosition = samplePosition
                     + lightDirection * lightDistance;
                 float lightDensity = sampleCloudDensity(
