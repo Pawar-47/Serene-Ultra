@@ -236,3 +236,6 @@ option.POM_SELF_SHADOW_STRENGTH.comment = Uses four tangent-space height-map sam
 
 option.POM_SLOPE_NORMAL_STRENGTH = POM Height Slope Normals
 option.POM_SLOPE_NORMAL_STRENGTH.comment = Derives additional tangent-space surface slope from LabPBR/oldPBR height gradients for terrain, block entities and opt-in entity models.
+
+option.SCREEN_GI_TEMPORAL_STRENGTH = Temporal GI Stability
+option.SCREEN_GI_TEMPORAL_STRENGTH.comment = Reprojects previous screen-space colour-bounce samples with camera motion and rejects history when previous depth does not match. Zero disables temporal GI history.
