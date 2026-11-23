@@ -50,6 +50,8 @@ uniform bool hasSkylight;
 uniform bool hasCeiling;
 uniform float ambientLight;
 uniform float endFlashIntensity;
+uniform float thunderStrength;
+uniform vec4 lightningBoltPosition;
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -84,6 +86,8 @@ layout(location = 1) out vec4 outAoHistory;
 #include "/lib/lighting/cloud_shadows.glsl"
 
 #include "/lib/lighting/soft_shadow.glsl"
+
+#include "/lib/lighting/lightning_flash.glsl"
 
 vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
     vec4 homogeneous = projectionMatrix * vec4(position, 1.0);
@@ -317,6 +321,7 @@ void main() {
     vec3 specularColor = mix(vec3(0.04), albedoLinear, materialReflectance);
 #endif
     vec3 litLinear = albedoLinear * (ambient + direct);
+    litLinear += albedoLinear * sampleSereneLightningFlash(playerPosition, normal);
 
     // Low-cost GGX direct specular. The branch is skipped for non-glossy
     // surfaces and when no direct celestial light reaches the pixel.
