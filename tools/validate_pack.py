@@ -61,7 +61,7 @@ for path in SHADERS.rglob("*"):
     # Iris routes gbuffers_line through its dedicated core-profile transform
     # when the source version is below 150. Keep this pair on GLSL 130 so Iris
     # upgrades it internally instead of requesting a driver compatibility profile.
-    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh", "gbuffers_clouds.vsh", "gbuffers_clouds.fsh", "shadow.vsh", "shadow.fsh"} else r"^\s*#version\s+330\b"
+    expected_version = r"^\s*#version\s+130\b" if path.name in {"gbuffers_line.vsh", "gbuffers_line.fsh", "gbuffers_clouds.vsh", "gbuffers_clouds.fsh", "gbuffers_lightning.vsh", "gbuffers_lightning.fsh", "shadow.vsh", "shadow.fsh"} else r"^\s*#version\s+330\b"
     if path.suffix != ".glsl" and not re.search(expected_version, source, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: unexpected GLSL source version")
     if source.count("{") != source.count("}"):
@@ -965,6 +965,15 @@ for fog_path in SHADERS.rglob("*.fsh"):
         )
 
 # Minecraft 26.3 Iris CLOUDS is POSITION_COLOR, not a textured terrain vertex format.
+lightning_vertex = sources.get("gbuffers_lightning.vsh", "")
+lightning_fragment = sources.get("gbuffers_lightning.fsh", "")
+if not lightning_vertex.startswith("#version 130") or not lightning_fragment.startswith("#version 130"):
+    errors.append("gbuffers_lightning must use GLSL 130 on Iris' 26.3 POSITION_COLOR route")
+if "gl_MultiTexCoord0" in lightning_vertex or "vTexCoord" in lightning_vertex:
+    errors.append("gbuffers_lightning vertex stage must not read texture coordinates on the 26.3 POSITION_COLOR path")
+if "out vec4 outColor0;" not in lightning_fragment or "out vec4 outColor1;" not in lightning_fragment:
+    errors.append("GLSL 130 gbuffers_lightning must expose sequential outColorN outputs for RENDERTARGETS 0,2")
+
 cloud_vertex = sources.get("gbuffers_clouds.vsh", "")
 cloud_fragment = sources.get("gbuffers_clouds.fsh", "")
 if not cloud_vertex.startswith("#version 130") or not cloud_fragment.startswith("#version 130"):
@@ -1365,12 +1374,19 @@ for token in ("/* RENDERTARGETS: 0,2 */", "isEyeInWater != 0", "fogColor",
               "fogDensity", "fogMode", "fogShape", "outColor1 = vec4(0.0)"):
     if token not in clouds:
         errors.append(f"Cloud overlay is missing Iris forward component: {token}")
-for name in ("gbuffers_lightning.fsh", "gbuffers_beaconbeam.fsh"):
-    overlay = sources.get(name, "")
-    for token in ("/* RENDERTARGETS: 0,2 */", "outDeferredValidity = vec4(0.0)",
-                  "fogColor", "fogDensity", "fogMode", "fogShape"):
-        if token not in overlay:
-            errors.append(f"{name} is missing forward-overlay component: {token}")
+lightning_overlay = sources.get("gbuffers_lightning.fsh", "")
+for token in ("/* RENDERTARGETS: 0,2 */", "outColor0 = beamColor", "outColor1 = vec4(0.0)",
+              "vec4 beamColor = vVertexColor;", "fogColor", "fogDensity", "fogMode", "fogShape"):
+    if token not in lightning_overlay:
+        errors.append(f"gbuffers_lightning is missing Minecraft 26.3 POSITION_COLOR component: {token}")
+if "gtexture" in lightning_overlay or "texture(gtexture" in lightning_overlay:
+    errors.append("gbuffers_lightning must not sample a texture on the 26.3 POSITION_COLOR path")
+
+beacon_overlay = sources.get("gbuffers_beaconbeam.fsh", "")
+for token in ("/* RENDERTARGETS: 0,2 */", "outDeferredValidity = vec4(0.0)",
+              "fogColor", "fogDensity", "fogMode", "fogShape"):
+    if token not in beacon_overlay:
+        errors.append(f"gbuffers_beaconbeam is missing forward-overlay component: {token}")
 armor_glint = sources.get("gbuffers_armor_glint.fsh", "")
 for token in ("/* RENDERTARGETS: 0,2 */", "texture(gtexture", "glintColor.rgb *= vVertexColor.a",
               "outDeferredValidity = vec4(0.0)", "discard"):

@@ -1,6 +1,5 @@
-#version 330 compatibility
+#version 130
 
-uniform sampler2D gtexture;
 uniform vec4 entityColor;
 uniform vec3 fogColor;
 uniform float fogStart;
@@ -9,13 +8,12 @@ uniform float fogDensity;
 uniform int fogMode;
 uniform int fogShape;
 
-in vec2 vTexCoord;
 in vec4 vVertexColor;
 in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0,2 */
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outDeferredValidity;
+out vec4 outColor0;
+out vec4 outColor1;
 
 float calculateLightningFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -32,7 +30,7 @@ float calculateLightningFog(float distanceToCamera) {
 }
 
 void main() {
-    vec4 beamColor = texture(gtexture, vTexCoord) * vVertexColor;
+    vec4 beamColor = vVertexColor;
     if (beamColor.a <= 0.001) discard;
 
     vec3 beamLinear = pow(max(beamColor.rgb, vec3(0.0)), vec3(2.2));
@@ -44,9 +42,9 @@ void main() {
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     beamColor.rgb = pow(max(mix(beamLinear, fogColorLinear, fogFactor), vec3(0.0)), vec3(1.0 / 2.2));
 
-    outColor = beamColor;
+    outColor0 = beamColor;
     // Iris renders lightning/dragon beams before deferred; the separate
     // gbuffers_basic pass supplies beam depth. Do not shade this overlay with
     // the unrelated entity normal underneath it.
-    outDeferredValidity = vec4(0.0);
+    outColor1 = vec4(0.0);
 }
