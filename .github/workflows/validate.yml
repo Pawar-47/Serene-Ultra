@@ -20,7 +20,7 @@ on:
 # Keep only the newest validation run for a branch. Rapid source commits
 # should not leave dozens of obsolete full-pack checks running concurrently.
 concurrency:
-  group: shader-validation-v2-${{ github.ref }}
+  group: shader-validation-v3-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
