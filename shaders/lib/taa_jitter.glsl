@@ -1,10 +1,8 @@
 // Shared Halton 2,3 sub-pixel projection jitter for temporal anti-aliasing.
 #define TAA_ENABLED 1 // [0 1] Enable jittered temporal anti-aliasing
-#ifndef SERENE_TAA_EXTERNAL_UNIFORMS
 uniform int frameCounter;
 uniform float viewWidth;
 uniform float viewHeight;
-#endif
 
 float sereneHalton(int index, int base) {
     float result = 0.0;
