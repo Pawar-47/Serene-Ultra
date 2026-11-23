@@ -1350,7 +1350,7 @@ for name, source in (("gbuffers_skybasic.vsh", sky_basic_vertex),
         errors.append(f"{name} must use the GLSL 130 Iris-compatible sky path")
     if "ftransform()" in source:
         errors.append(f"{name} must use an explicit model-view/projection transform")
-if "gl_Position = gl_ProjectionMatrix * gl_Vertex;" not in sky_basic_vertex:
+if "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;" not in sky_basic_vertex:
     errors.append("Sky-basic vertex stage is missing the explicit position-only transform")
 if "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;" not in sky_textured_vertex:
     errors.append("Sky-textured vertex stage is missing the explicit textured transform")
