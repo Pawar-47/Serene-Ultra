@@ -42,7 +42,7 @@ vec3 reconstructPlayerDirection() {
 }
 
 #define SKY_ATMOSPHERE_STRENGTH 100 // [0 25 50 75 100 125 150] Atmospheric scattering intensity
-#define VOLUMETRIC_CLOUDS 1 // [0 1] Use the procedural cloud raymarch instead of native flat clouds
+#define VOLUMETRIC_CLOUDS 1 // [0 1] Use procedural clouds in the sky pass instead of native flat clouds
 #define VOLUMETRIC_CLOUD_QUALITY 12 // [6 8 12 16 20] Volumetric cloud raymarch samples
 #define CLOUD_ALTITUDE 192 // [128 160 192 224 256] Cloud layer centre height in blocks
 #define CLOUD_THICKNESS 64 // [32 48 64 80 96] Cloud layer vertical thickness
