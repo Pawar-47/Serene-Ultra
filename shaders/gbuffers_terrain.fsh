@@ -291,6 +291,8 @@ void main() {
     // Both formats store smoothness in red; green is metalness (oldPBR) or
     // dielectric F0 / metal code (LabPBR).
     vec4 pbrSpecular = textureGrad(specular, materialUv, uvDx, uvDy);
+    float specularMapMagnitude = max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a));
+    bool hasMaterialSpecularMap = specularMapMagnitude > 0.0001;
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
     float materialReflectance = 0.0;
     float pbrEmission = 0.0;
@@ -299,7 +301,7 @@ void main() {
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
     float labSurfaceCode = floor(pbrSpecular.b * 255.0 + 0.5);
-    float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
+    float pbrMapPresent = hasMaterialSpecularMap ? 1.0 : 0.0;
     if (pbrMapPresent < 0.5) {
         materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
     } else if (labF0Code >= 230.0) {
@@ -318,7 +320,6 @@ void main() {
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);        // oldPBR emissiveness
 #endif
 
-    // Do not perturb metal F0, glossy surfaces or material-map emission.
     // Built-in emissive blocks are excluded even when no specular map exists.
     bool fallbackEmissiveMaterial =
         vMaterialId == 32100 || vMaterialId == 32101 || vMaterialId == 32102 ||
@@ -328,12 +329,69 @@ void main() {
         vMaterialId == 32115 || vMaterialId == 32116 || vMaterialId == 32117 ||
         vMaterialId == 32118 || vMaterialId == 32120 || vMaterialId == 32121 ||
         vMaterialId == 32122 || vMaterialId == 32123;
-#if COATED_TEXTURE_STRENGTH > 0
-    if (albedo.a >= 0.999 && pbrEmission < 0.01 && !fallbackEmissiveMaterial &&
-        materialReflectance < 0.8 && materialSmoothness < 0.85) {
-        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
-    }
+    bool fallbackMetalMaterial =
+        vMaterialId == 10248 || vMaterialId == 10264 || vMaterialId == 10268 ||
+        vMaterialId == 10280 || vMaterialId == 10292 || vMaterialId == 10296 ||
+        vMaterialId == 10312;
+
+    // Vanilla fallback heuristics mirror Complementary's terrain material
+    // dispatch and run only when the resource pack has no specular map.
+    if (!hasMaterialSpecularMap) {
+        if (vMaterialId == 10248) { // Netherite block
+            materialSmoothness = max(materialSmoothness, clamp(pow(albedo.r * 2.0, 2.0), 0.0, 1.0));
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = max(materialReflectance, 0.85);
 #endif
+        } else if (vMaterialId == 10264) { // Iron block
+            materialSmoothness = max(materialSmoothness, pow(albedo.r, 4.0));
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = max(materialReflectance, 0.75);
+#endif
+        } else if (vMaterialId == 10268) { // Raw iron block
+            materialSmoothness = max(materialSmoothness, pow(albedo.r, 4.0) * 0.7);
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = max(materialReflectance, 0.70);
+#endif
+        } else if (vMaterialId == 10280) { // Raw copper block
+            materialSmoothness = max(materialSmoothness, clamp(pow(albedo.r + albedo.g * 0.25, 2.0) * 0.4, 0.0, 1.0));
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = max(materialReflectance, 0.55);
+#endif
+        } else if (vMaterialId == 10292) { // Copper block and oxidation/wax variants
+            float copperSmoothness = pow(albedo.r, 4.0)
+                + pow(max(albedo.g - albedo.r * 0.5, 0.0), 2.0) * 0.3;
+            materialSmoothness = max(materialSmoothness, clamp(copperSmoothness, 0.0, 1.0));
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = max(materialReflectance, 0.65);
+#endif
+        } else if (vMaterialId == 10296) { // Raw gold block
+            materialSmoothness = max(materialSmoothness, pow(albedo.g, 4.0));
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = max(materialReflectance, 0.90);
+#endif
+        } else if (vMaterialId == 10312) { // Gold block
+            float goldGreenFourth = pow(albedo.g, 4.0);
+            materialSmoothness = max(materialSmoothness,
+                clamp(max(albedo.g, 0.8) - goldGreenFourth * 0.5, 0.0, 1.0));
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = max(materialReflectance, 0.90);
+#endif
+        }
+    }
 
     // Pack material smoothness into the normal attachment alpha without
     // allocating another render target. Block IDs provide a fallback when
@@ -343,6 +401,13 @@ void main() {
     } else if (vMaterialId == 30016) {
         materialSmoothness = max(materialSmoothness, 0.48); // Honey block
     }
+#if COATED_TEXTURE_STRENGTH > 0
+    if (albedo.a >= 0.999 && pbrEmission < 0.01 &&
+        !fallbackEmissiveMaterial && !fallbackMetalMaterial &&
+        materialReflectance < 0.8 && materialSmoothness < 0.85) {
+        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
+    }
+#endif
     // LabPBR porosity (blue codes 0-64) makes a wet material darker and
     // less reflective. The map-influence and overall lighting controls remain
     // separate; non-LabPBR and SSS-coded materials stay neutral here.

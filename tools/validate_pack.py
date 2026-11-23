@@ -505,6 +505,14 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
         errors.append(f"{name} must clear reserved LabPBR blue-channel data for metals")
 
 block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
+for token in (
+    "block.10248=minecraft:netherite_block", "block.10264=minecraft:iron_block",
+    "block.10268=minecraft:raw_iron_block", "block.10280=minecraft:raw_copper_block",
+    "block.10292=minecraft:copper_block", "block.10296=minecraft:raw_gold_block",
+    "block.10312=minecraft:gold_block",
+):
+    if token not in block_properties:
+        errors.append(f"Missing Complementary-guided vanilla metal material mapping: {token}")
 for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_block",
               "block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
               "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal",
@@ -587,6 +595,16 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fs
         errors.append(f"{name} must initialize the emissive attachment for non-emissive G-buffer materials")
 if "float emissionStrength = 0.0;" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity emission must default to zero unless an emissive blockEntityId is detected")
+for token in (
+    "bool hasMaterialSpecularMap", "if (!hasMaterialSpecularMap)",
+    "vMaterialId == 10248", "vMaterialId == 10264", "vMaterialId == 10268",
+    "vMaterialId == 10280", "vMaterialId == 10292", "vMaterialId == 10296",
+    "vMaterialId == 10312", "fallbackMetalMaterial",
+    "materialReflectance = 1.0;", "materialReflectance, 0.75",
+    "materialReflectance, 0.65", "materialReflectance, 0.90",
+):
+    if token not in terrain_fragment:
+        errors.append(f"Vanilla terrain metal fallback is missing component: {token}")
 for token in ("vMaterialId == 30012", "vMaterialId == 30016",
               "0.5 + 0.5 * materialSmoothness"):
     if token not in terrain_fragment:

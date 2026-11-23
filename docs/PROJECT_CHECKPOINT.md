@@ -991,3 +991,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Compared `shaders/gbuffers_block.fsh` against the supplied Complementary `blockEntityIPBR.glsl`. Complementary assigns coating/noise factor 0.66 to sign block entities while separately identifying sign text.
 - Serene already excluded sign text from coating, but had no material coating factor for the wooden sign board itself. Added the missing 0.66 factor for blockEntityId 5004; text remains excluded by the existing `!signText` gate.
 - Added a structural regression assertion. Iris block.properties docs confirm block-entity IDs are supplied through `blockEntityId` in gbuffers. Await CI; no runtime appearance claim is made.
+
+
+## Vanilla terrain metal material fallbacks — 2026-11-23
+- Added Iris block.properties IDs matching the supplied Complementary reference for netherite, iron/raw iron, copper/raw copper (including oxidation and wax variants), raw gold and gold blocks.
+- When no resource-pack specular map exists, terrain now derives bounded smoothness from the existing albedo sample and applies format-correct metal response: LabPBR uses metal classification 1.0; oldPBR uses calibrated material metalness values.
+- Explicit resource-pack PBR maps remain authoritative. The coating modulation was moved after fallback classification and now skips these vanilla metal groups, preventing noise from perturbing their metal response.
+- No additional texture fetches or render targets are introduced. The material branches use the existing specular/albedo samples and Iris mc_Entity material IDs.
+- CI must validate the new mappings and both PBR branches. Runtime appearance and low-end GPU cost remain unverified.
