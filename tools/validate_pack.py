@@ -252,8 +252,8 @@ if props_path.is_file():
         errors.append("Deferred packs must explicitly separate opaque and translucent particles with particles.ordering=mixed")
     if ("size.buffer.colortex4=0.5 0.5" not in props
         or "flip.deferred1.colortex0=false" not in props
-        or "flip.deferred1.colortex4=true" not in props):
-        errors.append("Water refraction requires half-resolution colortex4, a deferred1 output flip, and no flip of its read-only colortex0 source")
+        or "flip.deferred1.colortex4=" in props):
+        errors.append("Water refraction requires half-resolution colortex4, no flip of deferred1's read-only colortex0 source, and no explicit flip of the colortex4 it writes")
     if "endFlashShadows=true" not in props:
         errors.append("End flash shadows must follow Iris shadowLightPosition in the End")
     if "rain.depth=false" not in props:
@@ -398,8 +398,10 @@ for token in ("/* RENDERTARGETS: 4 */", "uniform sampler2D colortex0",
         errors.append(f"Half-resolution deferred1 scene copy is missing component: {token}")
 if "size.buffer.colortex4=0.5 0.5" not in props:
     errors.append("Water scene-copy attachment must be half resolution")
-if "flip.deferred.colortex4=false" not in props or "flip.deferred1.colortex4=true" not in props:
-    errors.append("Only deferred1 may flip the half-resolution colortex4 scene copy")
+if "flip.deferred.colortex4=false" not in props:
+    errors.append("Deferred must not flip colortex4, which only deferred1 writes")
+if "flip.deferred1.colortex4=" in props:
+    errors.append("deferred1 writes colortex4, so it must rely on Iris' default flip rather than declare flip.deferred1.colortex4")
 ao_strength_line = next((line for line in deferred_options.splitlines() if line.startswith("#define AO_STRENGTH ")), "")
 if "0.65" not in ao_strength_line:
     errors.append("AO_STRENGTH option values must include the 0.65 profile preset")
@@ -1381,7 +1383,6 @@ if "copies colortex3 back to colortex0" in deferred:
 if "colortex3" not in deferred:
     errors.append("Deferred must sample the emissive G-buffer before fogging the final lit scene")
 for directive in (
-    "flip.deferred.colortex0=true", "flip.composite.colortex0=true",
     "flip.deferred.colortex3=false",
     "blend.gbuffers_terrain.colortex3=off",
     "blend.gbuffers_entities.colortex3=off",
@@ -1409,6 +1410,12 @@ for directive in (
 ):
     if directive not in props:
         errors.append(f"Missing Iris translucent-scene pipeline directive: {directive}")
+
+# Both programs write colortex0 and must rely on Iris' default flip. Declaring a flip
+# for a buffer they write either double-flips (true) or suppresses the swap (false).
+for forbidden in ("flip.deferred.colortex0=", "flip.composite.colortex0="):
+    if forbidden in props:
+        errors.append(f"{forbidden[:-1]} must not be declared: that program writes colortex0 and an explicit flip cancels Iris' default swap")
 
 lang_path = SHADERS / "lang" / "en_us.lang"
 if lang_path.is_file():
