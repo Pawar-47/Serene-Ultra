@@ -439,6 +439,15 @@ for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcol
     if token not in deferred_options:
         errors.append(f"Deferred shadow interface is missing component: {token}")
 
+for name in ("gbuffers_entities_translucent.fsh", "gbuffers_block_translucent.fsh"):
+    source = sources.get(name, "")
+    for token in ("#define GLASS_REFLECTION_STRENGTH", "uniform mat4 gbufferModelView;",
+                  "uniform vec3 skyColor;", "calculateEnvironmentReflection(",
+                  "float fresnel = 0.04 + 0.96 * pow(1.0 - nDotV, 5.0)",
+                  "litLinear = mix(litLinear, environmentReflection, reflectionWeight)"):
+        if token not in source:
+            errors.append(f"{name} is missing translucent Fresnel environment reflection: {token}")
+
 for name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
              "gbuffers_block_translucent.fsh", "gbuffers_particles_translucent.fsh"):
     source = sources.get(name, "")
