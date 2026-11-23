@@ -266,6 +266,28 @@ if props_path.is_file():
         errors.append("Vanilla square sun sprite must be discarded when the procedural sun is active")
     if "clouds=off" not in props:
         errors.append("Native cloud geometry must be disabled while Serene volumetric clouds are active")
+    for screen in ("screen.WATER_COLOR =", "screen.UNDERWATER_COLOR =", "screen.SUN_COLOR =",
+                   "screen.SKY_COLOR =", "screen.CLOUD_COLOR ="):
+        if screen not in props:
+            errors.append(f"Missing dedicated colour control page: {screen}")
+    for option in ("WATER_TINT_R", "WATER_TINT_G", "WATER_TINT_B",
+                   "UNDERWATER_TINT_R", "UNDERWATER_TINT_G", "UNDERWATER_TINT_B"):
+        if option not in props.split("screen.WATER_COLOR =", 1)[-1].splitlines()[0] and option not in props.split("screen.UNDERWATER_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Water colour control is missing {option}")
+    for option in ("SUN_COLOR_R", "SUN_COLOR_G", "SUN_COLOR_B"):
+        if option not in props.split("screen.SUN_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Sun colour control is missing {option}")
+    for option in ("SKY_COLOR_R", "SKY_COLOR_G", "SKY_COLOR_B"):
+        if option not in props.split("screen.SKY_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Sky colour control is missing {option}")
+    for option in ("CLOUD_COLOR_R", "CLOUD_COLOR_G", "CLOUD_COLOR_B"):
+        if option not in props.split("screen.CLOUD_COLOR =", 1)[-1].splitlines()[0]:
+            errors.append(f"Cloud colour control is missing {option}")
+    for token in ("vec3(float(WATER_TINT_R)", "float(UNDERWATER_TINT_R)",
+                  "float(SUN_COLOR_R)", "float(SKY_COLOR_R)", "float(CLOUD_COLOR_R)"):
+        combined = sources.get("gbuffers_water.fsh", "") + sources.get("gbuffers_skybasic.fsh", "")
+        if token not in combined:
+            errors.append(f"Colour control is not wired into rendering: {token}")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
                    "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
