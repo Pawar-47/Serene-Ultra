@@ -1,6 +1,10 @@
 # Serene Ultra — English (US) shader menu labels
 
 screen.QUALITY = Quality & Profiles
+screen.WATER = Water & Reflections
+screen.SUN = Sun & Celestial Light
+screen.SKY = Sky & Atmosphere
+screen.CLOUDS = Clouds & Cloud Shape
 screen.COLOR = Color & HDR Controls
 
 option.SHADOW_ALPHA_CUTOFF = Shadow Alpha Cutoff
@@ -290,3 +294,28 @@ option.CLOUD_REFLECTION_STRENGTH.comment = Adds a low-cost animated procedural c
 
 option.LAVA_WAVE_STRENGTH = Lava Wave Strength
 option.LAVA_WAVE_STRENGTH.comment = Controls subtle world-stable lava surface movement; the shadow pass uses the same displacement to keep silhouettes aligned.
+
+option.SUN_SIZE = Sun Disc Size
+option.SUN_SIZE.comment = Changes the angular diameter of the circular procedural sun. This does not scale the square vanilla sun sprite.
+option.SUN_INTENSITY = Sun Disc Brightness
+option.SUN_INTENSITY.comment = Controls the brightness of the procedural solar disc independently from the sky gradient.
+option.SUN_GLOW_STRENGTH = Solar Halo
+option.SUN_GLOW_STRENGTH.comment = Controls the soft atmospheric halo around the sun. Set to zero for a crisp disc without a glow.
+option.SKY_TWILIGHT_STRENGTH = Twilight Colour
+option.SKY_TWILIGHT_STRENGTH.comment = Controls the warm twilight band near sunrise and sunset, independently from the general atmospheric scattering.
+option.CLOUD_SHAPE = Cloud Shape
+option.CLOUD_SHAPE.comment = Selects the procedural cloud morphology: rounded cumulus, broad layered stratus, or elongated wispy bands.
+option.CLOUD_SIZE = Cloud Size
+option.CLOUD_SIZE.comment = Controls the world-space scale of cloud formations. Larger values create smaller, more frequent cloud features.
+value.CLOUD_SHAPE.0 = Cumulus
+value.CLOUD_SHAPE.1 = Stratus
+value.CLOUD_SHAPE.2 = Wispy
+value.VOLUMETRIC_CLOUDS.0 = Vanilla Clouds
+value.VOLUMETRIC_CLOUDS.1 = Volumetric Clouds
+value.SUN_SIZE.50 = Small
+value.SUN_SIZE.75 = Compact
+value.SUN_SIZE.100 = Natural
+value.SUN_SIZE.125 = Large
+value.SUN_SIZE.150 = Very Large
+value.SUN_SIZE.175 = Oversized
+value.SUN_SIZE.200 = Maximum
