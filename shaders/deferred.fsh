@@ -35,6 +35,7 @@ uniform sampler2DShadow shadowtex1;
 uniform sampler2D shadowcolor0;
 
 uniform mat4 gbufferProjectionInverse;
+uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferPreviousModelView;
 uniform mat4 gbufferPreviousProjection;
