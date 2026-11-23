@@ -66,6 +66,7 @@ flat in float vFluidRenderType;
 #define WATER_REFLECTION_STRENGTH 0.75 // [0.00 0.25 0.50 0.75 1.00 1.25 1.50] Fresnel screen-space reflection strength
 #define WATER_FOG_MULT 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity
 #define WATER_REFLECTION_QUALITY 6 // [0 4 6 8] Screen-space water reflection samples
+#define WATER_REFLECTION_DISTANCE 24 // [16 24 32 40 48] Maximum water/glass SSR trace distance in blocks
 #define WATER_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack water normal-map detail
 #define GLASS_NORMAL_MAP_STRENGTH 100 // [0 25 50 75 100 125 150] Resource-pack glass/ice normal-map detail
 #define WATER_WAVE_STRENGTH 100 // [0 25 50 75 100 125 150 175 200] Animated multi-scale water normal strength
@@ -229,7 +230,7 @@ float calculateWaterThickness(out vec3 opaqueViewPosition, out float opaqueDepth
 // depthtex2 excludes both translucent geometry and first-person hand geometry,
 // so this forward pass never samples colortex0 while writing to it.
 vec3 sampleTranslucentScreenReflection(vec3 viewPosition, vec3 viewNormal, out float hitConfidence) {
-    const float maxDistance = 24.0;
+    const float maxDistance = float(WATER_REFLECTION_DISTANCE);
     float stepLength = maxDistance / float(WATER_REFLECTION_QUALITY);
     vec3 incidentDirection = normalize(viewPosition);
     vec3 reflectionDirection = normalize(reflect(incidentDirection, viewNormal));
