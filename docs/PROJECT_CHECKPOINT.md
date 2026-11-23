@@ -1282,3 +1282,5 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Removed the duplicate declarations and reused the existing `opaqueReceiver` predicate for the translucent-overlay early return. Reflection and GI behaviour are unchanged; every structural validator token from the GI contract is preserved.
 - The compile loop aborts at the first failure, so the stages ordered after `composite.fsh` were not compiled in that run. The next CI run is the first evidence for those stages and must be checked before any status claim.
 - This is a compilation fix only; the runtime checklist from the handover is still untouched.
+
+- Follow-up on the same defect: removing the duplicate declaration also removed the only assignment to `depth`, which the reflection path still used at its view-position reconstruction. That reconstruction was identical to the `centerViewPosition` already computed from `centerDepth`, so the reflection path now reuses it instead of rebuilding the matrix product. Structural validator tokens are still satisfied.

@@ -256,9 +256,9 @@ void main() {
     vec3 f0Color = mix(vec3(0.04), albedoLinear, materialReflectance);
 #endif
 
-    vec3 sceneNdc = vec3(vTexCoord, depth) * 2.0 - 1.0;
-    vec4 viewPosition4 = gbufferProjectionInverse * vec4(sceneNdc, 1.0);
-    vec3 viewPosition = viewPosition4.xyz / max(viewPosition4.w, 0.0001);
+    // Reuses the opaque view-space position already reconstructed above from
+    // centerDepth; a second identical reconstruction would only duplicate it.
+    vec3 viewPosition = centerViewPosition;
     vec3 playerNormal = normalize(normalData.rgb * 2.0 - 1.0);
     vec3 viewNormal = normalize(mat3(gbufferModelView) * playerNormal);
     vec3 viewDirection = normalize(-viewPosition);
