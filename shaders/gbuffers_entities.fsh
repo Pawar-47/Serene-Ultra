@@ -3,6 +3,8 @@
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2D normals;
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 shadowLightPosition;
 uniform sampler2D specular;
 uniform sampler2D noisetex;
 uniform ivec3 cameraPositionInt;
@@ -14,6 +16,66 @@ uniform int biome_precipitation;
 uniform vec4 entityColor;
 uniform int entityId;
 uniform int currentRenderedItemId;
+
+#define POM_SELF_SHADOW_STRENGTH 65 // [0 25 50 75 100] Height-map self-shadowing strength
+
+float calculateEntityPomSelfShadow(
+    vec2 surfaceUv, vec2 uvDx, vec2 uvDy, vec4 spriteBounds,
+    vec3 playerTangent, vec3 playerNormal, float tangentHandedness,
+    float viewDistance
+) {
+#if POM_ENTITY_STRENGTH > 0 && POM_SELF_SHADOW_STRENGTH > 0
+    vec3 playerLightDirection = normalize(
+        mat3(gbufferModelViewInverse) * normalize(shadowLightPosition)
+    );
+    vec3 tangent = normalize(playerTangent);
+    vec3 normal = normalize(playerNormal);
+    vec3 bitangent = normalize(cross(tangent, normal)) * tangentHandedness;
+    vec3 tangentLight = vec3(
+        dot(playerLightDirection, tangent),
+        dot(playerLightDirection, bitangent),
+        dot(playerLightDirection, normal)
+    );
+    if (tangentLight.z <= 0.05) return 1.0;
+
+    float distanceFade = 1.0 - smoothstep(
+        float(POM_DISTANCE) * 0.55, float(POM_DISTANCE), viewDistance
+    );
+    float heightScale = clamp(float(POM_ENTITY_STRENGTH) * 0.003, 0.0, 0.20)
+        * distanceFade;
+    if (heightScale <= 0.0001) return 1.0;
+
+    vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
+    vec2 atlasTexel = 1.0 / vec2(textureSize(normals, 0));
+    vec2 lowerBound = spriteBounds.xy + 0.5 * atlasTexel;
+    vec2 upperBound = spriteBounds.xy + tileSize - 0.5 * atlasTexel;
+    float surfaceDepth = 1.0 - textureGrad(normals, surfaceUv, uvDx, uvDy).a;
+    vec2 lightRayUv = tangentLight.xy / max(tangentLight.z, 0.12)
+        * heightScale * 0.72;
+    float shadow = 1.0;
+    for (int stepIndex = 1; stepIndex <= 4; ++stepIndex) {
+        float rayProgress = float(stepIndex) * 0.25;
+        vec2 sampleUv = clamp(
+            surfaceUv + lightRayUv * rayProgress, lowerBound, upperBound
+        );
+        float sampleDepth = 1.0
+            - textureGrad(normals, sampleUv, uvDx, uvDy).a;
+        float rayDepth = max(surfaceDepth - rayProgress * 0.22, 0.0);
+        float heightOccluder = clamp(
+            (rayDepth - sampleDepth - 0.012) * 8.0, 0.0, 1.0
+        );
+        shadow = min(
+            shadow,
+            1.0 - heightOccluder
+                * (float(POM_SELF_SHADOW_STRENGTH) * 0.01) * 0.78
+        );
+    }
+    return clamp(shadow, 0.22, 1.0);
+#else
+    return 1.0;
+#endif
+}
+
 
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
@@ -254,6 +316,7 @@ void main() {
     float albedoDetail = length(fwidth(albedo.rgb));
     if (albedo.a < alphaTestRef) discard;
     float parallaxOffset = 0.0;
+    float pomSelfShadow = 1.0;
 #if POM_ENTITY_STRENGTH > 0
     if (gl_FrontFacing && entityId != 50128 && entityId != 50132) {
         vec2 parallaxUv = calculateParallaxUv(vTexCoord, uvDx, uvDy, vTexCoordAM,
@@ -276,7 +339,16 @@ void main() {
 
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
-    outLightmapData = vec4(vanillaLight, skyLight);
+#if POM_ENTITY_STRENGTH > 0 && POM_SELF_SHADOW_STRENGTH > 0
+    if (parallaxOffset > 0.00001) {
+        pomSelfShadow = calculateEntityPomSelfShadow(
+            materialUv, uvDx, uvDy, vTexCoordAM,
+            vPlayerTangent, vPlayerNormal, vTangentHandedness,
+            length(vTangentView)
+        );
+    }
+#endif
+    outLightmapData = vec4(vanillaLight, skyLight * pomSelfShadow);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     float materialAO = 1.0;
