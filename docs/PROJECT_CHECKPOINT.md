@@ -1069,3 +1069,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Extended the shared Iris held-item lighting path to translucent entity models (for example, translucent entity layers) using the same player-relative position and relativeEyePosition correction as opaque and water paths.
 - The path is controlled by HELD_LIGHTING_STRENGTH and exits early when both held-light values are zero; ambient contribution is combined quadratically to avoid a linear brightness spike.
 - CI now requires the shared include, quality option and ambient combine in the translucent entity shader. This is source/CI coverage only; verify entity layers in Iris runtime, especially glass-like modded entities and third-person held-light placement.
+
+
+## Translucent particle held-item lighting — 2026-11-23
+- Added the shared dynamic main/offhand held-light contribution to the post-deferred translucent-particle forward pass, using its existing `vPlayerPosition` varying.
+- The light is combined only into ambient illumination; vanilla particle lightmap, direct shadowed celestial light, material emission, fog, and fractional alpha/blending remain unchanged.
+- Uses the existing `HELD_LIGHTING_STRENGTH` quality option and shared helper; no new texture samples or render targets are added. CI checks the include, quality gate and quadratic ambient combination.
+- This is shader/CI validation only. Particle sorting, weather effects and translucent visual response still require Iris runtime testing.

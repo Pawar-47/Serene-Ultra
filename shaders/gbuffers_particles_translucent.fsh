@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
+
 #define PARTICLE_MATERIAL_FEATURES // Detect water, rain, snow, smoke and emissive particle textures
 #define WEATHER_TEX_OPACITY 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Weather particle opacity
 
@@ -63,6 +65,8 @@ float sampleParticleShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection
     }
     return texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
 }
+
+#include "/lib/lighting/held_item_lighting.glsl"
 
 void main() {
     vec4 particleTexture = texture(gtexture, vTexCoord);
@@ -161,6 +165,10 @@ void main() {
     }
 
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
+#if HELD_LIGHTING_STRENGTH > 0
+    vec3 heldLighting = calculateHeldItemLighting(vPlayerPosition);
+    ambient = sqrt(ambient * ambient + heldLighting);
+#endif
     vec3 celestialColor = endFlashActive
         ? vec3(1.0)
         : (hasSkylight

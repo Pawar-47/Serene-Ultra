@@ -421,3 +421,7 @@ A source audit found that the terrain, entity and block-entity fragment programs
 
 ## Translucent entity held-light integration
 The translucent entity fragment stage uses the shared `held_item_lighting.glsl` helper. Its varying `vPlayerPosition` is camera-relative player space, matching the documented Iris `relativeEyePosition` correction used by deferred and water. The shared helper's early return avoids distance/color work when both held-light values are zero. The ambient term is combined quadratically; the forward translucent stage continues to write only colortex0 and does not sample any colortex attachment, preserving post-deferred blend ordering.
+
+
+## Translucent particle held-light path
+The `gbuffers_particles_translucent` forward-only program can use the shared held-item light helper with its existing player-relative position varying. It retains the documented mixed particle ordering and color-only output; it does not sample deferred colortex attachments. Held light is added to ambient only, leaving the vanilla lightmap sample, shadowed direct celestial term, particle alpha and fog path intact.
