@@ -1567,3 +1567,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Block-state IDs were checked for duplicate assignments; no duplicates remain. Validator now requires representative mappings and the fallback ID range.
 - Commits: block IDs `1c7613353cd32617e293c0805f8b99bf3ac7c0e7`, unique-ID reconciliation `2f2b13f11d1635e99974fac4708cd5eedae56e61`; terrain fallback `1d373238c07c254d8175f7f69301ab9c06d7dc01`, ID reuse correction `c08ada1742157e624f8508759032f0189e3ccbde`; validator `70a90826050256e1c6c242a34786aa0489ae0244` and `3de327beac2364714943c504ed04aaa721ce5cd0`; matrix `d2f37bd78f6e69e45dc1b947e48800a37f8fd111`.
 - New block-state names and intensities require Minecraft 26.3 + Iris runtime verification; these remain fallback visual approximations, not world-space light floodfill.
+
+
+### Extended vanilla block-emitter mapping follow-up — 2026-11-23
+- Added Complementary-guided low-level terrain emission fallbacks for lit furnaces/smokers/blast furnaces, lava cauldrons, crying obsidian, magma blocks, dragon eggs, chorus flowers, brewing stands, ore/mineral accents, active End portal frames, glow-berry cave vines, powered redstone components and spawner cores.
+- Redstone block and lapis block were removed from the new material-ID map after the structural validator identified duplicate assignments: both already have Serene material IDs for mineral treatment. Their optional Complementary emissive toggles are not forced on by default.
+- Commits: added mapping `1c7613353cd32617e293c0805f8b99bf3ac7c0e7`; added terrain fallback dispatch `1d373238c07c254d8175f7f69301ab9c06d7dc01`; expanded coverage tests `70a90826050256e1c6c242a34786aa0489ae0244`; duplicate-ID correction commits `e3d3b1105221da9a91007df3bcc2b166f7bc5c61`, `eb2ee0774ed91afe8c249d5538dd974c80f85589`, `0fa9b1f91bb4a79cfe0a119ba81067388e7b33c6`; matrix `4985168a685bac0430cc49199a48fb07c8ab91fe`.
+- GLSL compilation and program linking passed on the preceding extended-emitter commit; the structural failure was only duplicate block-ID assignment for redstone/lapis, now corrected. Latest correction is awaiting CI.
