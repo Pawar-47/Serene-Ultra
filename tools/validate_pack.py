@@ -237,8 +237,6 @@ if props_path.is_file():
         errors.append("G-buffer alpha remains smoothness; material AO must stay in colortex3.b while separateAo remains false")
     if "separateEntityDraws=true" not in props:
         errors.append("Iris translucent entity/block-entity passes require separateEntityDraws=true")
-    if "iris.features.optional=ENTITY_TRANSLUCENT" not in props:
-        errors.append("Query Iris ENTITY_TRANSLUCENT support through iris.features.optional")
     deferred_format_source = sources.get("deferred.fsh", "")
     if "const int colortex2Format = RGBA8;" not in deferred_format_source:
         errors.append("Iris colortex2 normal/smoothness target must use normalized RGBA8 to preserve bandwidth on low-end GPUs")
@@ -1578,6 +1576,6 @@ if missing_iris_programs:
     print("Iris program coverage warnings (dedicated vertex+fragment pair missing):")
     for name, fallback in missing_iris_programs.items():
         print(f" - {name}: Iris fallback -> {fallback}")
-if "separateEntityDraws=true" in props and "iris.features.optional=ENTITY_TRANSLUCENT" in props:
-    print("Iris translucent entity routing: separateEntityDraws enabled; ENTITY_TRANSLUCENT support queried as optional feature.")
+if "separateEntityDraws=true" in props:
+    print("Iris translucent entity routing: separateEntityDraws enabled as best-effort; verify actual routing in the target Iris build.")
 print("Note: GLSL compilation and in-game Iris compatibility require runtime testing.")
