@@ -1,7 +1,25 @@
 #version 330 compatibility
 
+#define CLOUD_SHADOW_STRENGTH 65 // [0 20 40 60 80 100] Procedural cloud-shadow strength
+#define CLOUD_ALTITUDE 192 // [128 160 192 224 256] Cloud layer centre height in blocks
+#define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
+#define VOLUMETRIC_CLOUDS 1 // [0 1] Use procedural clouds in the sky pass instead of native flat clouds
+#define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
+#define CLOUD_COVERAGE 55 // [35 45 55 65 75] Procedural cloud coverage
+#define CLOUD_DENSITY 65 // [25 40 55 70 85 100] Cloud optical density
+
+
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
+uniform float frameTimeCounter;
+uniform vec3 cameraPositionFract;
+uniform ivec3 cameraPositionInt;
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 shadowLightPosition;
+uniform float sunAngle;
+uniform bool hasSkylight;
+uniform float rainStrength;
+uniform sampler2D noisetex;
 uniform float alphaTestRef;
 uniform int isEyeInWater;
 uniform float thunderStrength;
@@ -25,6 +43,7 @@ in vec3 vPlayerPosition;
 #define WEATHER_TEX_OPACITY 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Weather particle opacity
 layout(location = 0) out vec4 outColor;
 
+#include "/lib/lighting/cloud_shadows.glsl"
 #include "/lib/lighting/lightning_flash.glsl"
 
 float calculateWeatherFog(float distanceToCamera) {
@@ -58,6 +77,19 @@ void main() {
     // in a color-only forward pass without reading colortex0-3.
     vec3 lightmapLinear = pow(max(texture(lightmap, vLightmapCoord).rgb, vec3(0.0)), vec3(2.2));
     vec3 weatherLinear = pow(max(weatherColor.rgb, vec3(0.0)), vec3(2.2)) * lightmapLinear;
+
+    // Weather particles retain the native RGB lightmap, but sky-lit rain and
+    // snow also inherit the pack's moving cloud-shadow field and celestial tint.
+    // The sky-light coordinate gates these effects so block light is not fully
+    // darkened by an overhead cloud layer.
+    float weatherSkyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
+    float weatherSolarElevation = hasSkylight ? sin(sunAngle * 6.28318530718) : 0.0;
+    float weatherDayFactor = hasSkylight ? smoothstep(0.0, 0.30, weatherSolarElevation) : 0.0;
+    vec3 weatherSkyTint = mix(vec3(0.72, 0.80, 1.0), vec3(1.0, 0.97, 0.90), weatherDayFactor);
+    weatherLinear *= mix(vec3(1.0), weatherSkyTint, weatherSkyLight * 0.22);
+    vec3 weatherLightDirection = normalize(mat3(gbufferModelViewInverse) * normalize(shadowLightPosition));
+    float weatherCloudShadow = sampleSereneCloudShadow(vPlayerPosition, weatherLightDirection, weatherDayFactor);
+    weatherLinear *= mix(1.0, weatherCloudShadow, weatherSkyLight * 0.45);
     weatherLinear += sampleSereneLightningFlash(vPlayerPosition, normalize(-vPlayerPosition));
 
     float fogDistance = (fogShape == 1)
