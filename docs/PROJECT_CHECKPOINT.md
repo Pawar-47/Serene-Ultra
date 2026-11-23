@@ -1036,3 +1036,9 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - The include exits early when both Iris held light values are zero, avoiding distance and color work for ordinary items. The Ultra-Light quality setting compiles the path out entirely.
 - Water uses its existing player-space position varying, so third-person camera offsets are handled by the same Iris relativeEyePosition calculation.
 - CI now checks both call sites and the shared include. The effect still has no cast shadows or screen-space occlusion; runtime appearance and GPU cost remain pending.
+
+
+## Shared held-light refactor integrity correction — 2026-11-23
+- Corrected a source-splicing error in the first shared-include commit by rebuilding deferred.fsh from its intact parent revision and replacing the entire held-light function block at a verified boundary.
+- Restored the water-wave-detail tooltip to the WATER_WAVE_DETAIL define and gave HELD_LIGHTING_STRENGTH its own correct slider annotation.
+- Added a validator assertion for the early return when both held light values are zero. The shared opaque/translucent path remains pending the fresh CI result.

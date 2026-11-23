@@ -72,6 +72,10 @@ vec3 getHeldItemLightColor(int itemId) {
 }
 
 vec3 calculateHeldItemLighting(vec3 playerPosition) {
+    float mainEnergy = getHeldItemLightEnergy(heldItemId, heldBlockLightValue);
+    float offEnergy = getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2);
+    if (mainEnergy <= 0.0 && offEnergy <= 0.0) return vec3(0.0);
+
     // playerPosition is camera-relative player space. Iris' relativeEyePosition
     // moves the light origin back to the player model in third person.
     vec3 playerHeadRelativePosition = playerPosition + relativeEyePosition;
@@ -80,8 +84,6 @@ vec3 calculateHeldItemLighting(vec3 playerPosition) {
     float distanceAttenuation = max(1.0 - lightDistance * 0.0887, 0.0);
     float qualityStrength = float(HELD_LIGHTING_STRENGTH) * 0.01;
 
-    float mainEnergy = getHeldItemLightEnergy(heldItemId, heldBlockLightValue);
-    float offEnergy = getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2);
     float mainIntensity = mainEnergy * distanceAttenuation * qualityStrength * 0.60;
     float offIntensity = offEnergy * distanceAttenuation * qualityStrength * 0.60;
 

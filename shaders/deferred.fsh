@@ -164,11 +164,12 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
     return clamp(1.0 - normalizedOcclusion * AO_STRENGTH * 1.8, 0.55, 1.0);
 }
 
-#if HELD_LIGHTING_STRENGTH > 0
-float getHeldItemLightEnergy(int itemId, int lightValue) {
-    float energy = clamp(float(lightValue) / 15.0, 0.0, 1.0)#include "/lib/lighting/held_item_lighting.glsl"
+#include "/lib/lighting/held_item_lighting.glsl"
 
-ture(depthtex2, vTexCoord).r;
+void main() {
+    vec4 scene = texture(colortex0, vTexCoord);
+    float sceneDepth = texture(depthtex0, vTexCoord).r;
+    float opaqueWorldDepth = texture(depthtex2, vTexCoord).r;
     vec4 normalData = texture(colortex2, vTexCoord);
 
     // depthtex2 excludes translucent and first-person hand geometry, but

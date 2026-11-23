@@ -1332,6 +1332,7 @@ for token in ("uniform int heldBlockLightValue;", "uniform int heldBlockLightVal
               "getHeldItemLightEnergy(heldItemId, heldBlockLightValue)",
               "getHeldItemLightEnergy(heldItemId2, heldBlockLightValue2)",
               "if (itemId == 44013)", "energy = 1.0;",
+              "if (mainEnergy <= 0.0 && offEnergy <= 0.0) return vec3(0.0)",
               "return mainLight * mainLight + offLight * offLight"):
     if token not in held_shader:
         errors.append(f"Shared held-item lighting include is missing component: {token}")
