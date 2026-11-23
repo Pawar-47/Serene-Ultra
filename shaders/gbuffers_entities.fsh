@@ -17,6 +17,47 @@ uniform vec4 entityColor;
 uniform int entityId;
 uniform int currentRenderedItemId;
 
+
+#define ANISOTROPIC_FILTER_QUALITY 2 // [1 2 4] Shader-level material anisotropic filtering taps
+
+vec4 sampleAnisotropicAtlas(
+    sampler2D sourceTexture,
+    vec2 uv,
+    vec2 uvDx,
+    vec2 uvDy,
+    vec4 spriteBounds
+) {
+#if ANISOTROPIC_FILTER_QUALITY > 1
+    vec2 majorGradient = dot(uvDx, uvDx) >= dot(uvDy, uvDy)
+        ? uvDx : uvDy;
+    float majorLength = length(majorGradient);
+    float minorLength = max(min(length(uvDx), length(uvDy)), 0.000001);
+    int sampleCount = int(clamp(
+        ceil(majorLength / minorLength),
+        1.0, float(ANISOTROPIC_FILTER_QUALITY)
+    ));
+    if (sampleCount <= 1) return textureGrad(sourceTexture, uv, uvDx, uvDy);
+
+    vec2 atlasTexel = 1.0 / vec2(textureSize(sourceTexture, 0));
+    vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
+    vec2 lowerBound = spriteBounds.xy + 0.5 * atlasTexel;
+    vec2 upperBound = spriteBounds.xy + tileSize - 0.5 * atlasTexel;
+    vec4 accumulated = vec4(0.0);
+    for (int tap = 0; tap < ANISOTROPIC_FILTER_QUALITY; ++tap) {
+        if (tap >= sampleCount) break;
+        float tapOffset = (float(tap) + 0.5) / float(sampleCount) - 0.5;
+        vec2 sampleUv = clamp(
+            uv + majorGradient * tapOffset, lowerBound, upperBound
+        );
+        accumulated += textureGrad(sourceTexture, sampleUv, uvDx, uvDy);
+    }
+    return accumulated / float(sampleCount);
+#else
+    return textureGrad(sourceTexture, uv, uvDx, uvDy);
+#endif
+}
+
+
 #define POM_SLOPE_NORMAL_STRENGTH 50 // [0 25 50 75 100] Height-map slope normal detail
 #define POM_SELF_SHADOW_STRENGTH 65 // [0 25 50 75 100] Height-map self-shadowing strength
 
@@ -179,7 +220,7 @@ vec2 calculateParallaxUv(
 
 
 vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, vec2 uvDy, out float materialAO, out bool hasExplicitNormal) {
-    vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy);
+    vec4 normalTexel = sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, vTexCoordAM);
     hasExplicitNormal = any(greaterThan(abs(normalTexel.rg - vec2(0.5)), vec2(0.01)));
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
@@ -338,7 +379,7 @@ void main() {
     vec2 uvDy = dFdy(vTexCoord);
     vec2 uvFootprint = max(fwidth(vTexCoord), 1.0 / vec2(textureSize(gtexture, 0)));
     vec2 materialUv = vTexCoord;
-    vec4 albedo = texture(gtexture, materialUv) * vVertexColor;
+    vec4 albedo = sampleAnisotropicAtlas(gtexture, materialUv, uvDx, uvDy, vTexCoordAM) * vVertexColor;
     float albedoDetail = length(fwidth(albedo.rgb));
     if (albedo.a < alphaTestRef) discard;
     float parallaxOffset = 0.0;
@@ -348,7 +389,7 @@ void main() {
         vec2 parallaxUv = calculateParallaxUv(vTexCoord, uvDx, uvDy, vTexCoordAM,
             vTangentView, length(vTangentView), parallaxOffset);
         if (parallaxOffset > 0.00001) {
-            vec4 parallaxAlbedo = textureGrad(gtexture, parallaxUv, uvDx, uvDy) * vVertexColor;
+            vec4 parallaxAlbedo = sampleAnisotropicAtlas(gtexture, parallaxUv, uvDx, uvDy, vTexCoordAM) * vVertexColor;
             if (parallaxAlbedo.a >= alphaTestRef) {
                 materialUv = parallaxUv;
                 albedo = parallaxAlbedo;
@@ -388,7 +429,7 @@ void main() {
     }
 #endif
 #endif
-    vec4 pbrSpecular = textureGrad(specular, materialUv, uvDx, uvDy);
+    vec4 pbrSpecular = sampleAnisotropicAtlas(specular, materialUv, uvDx, uvDy, vTexCoordAM);
     float specularMapMagnitude = max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a));
     bool hasMaterialSpecularMap = specularMapMagnitude > 0.0001;
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
