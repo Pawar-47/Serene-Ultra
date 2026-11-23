@@ -1,5 +1,7 @@
 #version 130
 
+#include "/lib/taa_jitter.glsl"
+
 out vec3 vVertexColorLinear;
 out float vVertexAlpha;
 flat out vec3 vFogLinear;
@@ -14,4 +16,5 @@ void main() {
     vVertexAlpha = gl_Color.a;
     vFogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     vSkyLinear = pow(max(skyColor, vec3(0.0)), vec3(2.2));
+    applySereneTaaJitter(gl_Position);
 }
