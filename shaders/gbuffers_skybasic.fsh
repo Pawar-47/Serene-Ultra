@@ -123,6 +123,38 @@ vec3 calculateAtmosphericScattering(
 }
 
 
+
+float sampleCloudDensity(
+    vec3 worldPosition,
+    float cloudBase,
+    float cloudThickness,
+    vec2 wind,
+    float coverage,
+    float detailStrength,
+    float rain
+) {
+    float heightFraction = clamp(
+        (worldPosition.y - cloudBase) / max(cloudThickness, 1.0), 0.0, 1.0
+    );
+    float verticalProfile = smoothstep(0.02, 0.18, heightFraction)
+        * (1.0 - smoothstep(0.72, 1.0, heightFraction));
+    if (verticalProfile <= 0.001) return 0.0;
+
+    vec2 noiseUv = worldPosition.xz * 0.0016 + wind
+        + vec2(0.0, heightFraction * 0.22);
+    float broadNoise = textureLod(noisetex, noiseUv, 0.0).r;
+    float detailNoise = textureLod(
+        noisetex, noiseUv * 2.73 + vec2(0.37, 0.19), 0.0
+    ).g;
+    float cloudNoise = mix(
+        broadNoise, broadNoise * 0.72 + detailNoise * 0.28, detailStrength
+    );
+    float cloudShape = smoothstep(
+        coverage, min(coverage + 0.22, 0.999), cloudNoise
+    );
+    return cloudShape * verticalProfile * (1.0 + rain * 0.25);
+}
+
 vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float rain) {
 #if VOLUMETRIC_CLOUDS > 0
     if (!hasSkylight) return vec4(0.0);
@@ -202,30 +234,43 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
             * (1.0 - smoothstep(0.72, 1.0, heightFraction));
         if (verticalProfile <= 0.001) continue;
 
-        vec2 noiseUv = samplePosition.xz * 0.0016 + wind + vec2(0.0, heightFraction * 0.22);
-        float broadNoise = textureLod(noisetex, noiseUv, 0.0).r;
-        float detailNoise = textureLod(
-            noisetex, noiseUv * 2.73 + vec2(0.37, 0.19), 0.0
-        ).g;
-        float cloudNoise = mix(
-            broadNoise,
-            broadNoise * 0.72 + detailNoise * 0.28,
-            detailStrength
+        float density = sampleCloudDensity(
+            samplePosition, cloudBase, float(CLOUD_THICKNESS),
+            wind, coverage, detailStrength, rain
         );
-        float cloudShape = smoothstep(
-            coverage, min(coverage + 0.22, 0.999), cloudNoise
-        );
-        float density = cloudShape * verticalProfile * (1.0 + rain * 0.25);
         float opticalDepth = density * stepLength * 0.08 * densityStrength;
         float sampleAlpha = 1.0 - exp(-opticalDepth);
         if (sampleAlpha <= 0.001) continue;
+
+        // Approximate cloud self-shadowing by sampling optical density toward
+        // the active celestial light at two points inside the cloud slab.
+        // This gives cloud interiors a darker base and preserves a bright
+        // silver lining at exposed edges without a second full raymarch.
+        float cloudLightTransmittance = 1.0;
+        if (lightDirection.y > 0.02) {
+            for (int lightStep = 0; lightStep < 2; ++lightStep) {
+                float lightDistance = 28.0 + float(lightStep) * 42.0;
+                vec3 lightSamplePosition = samplePosition
+                    + lightDirection * lightDistance;
+                float lightDensity = sampleCloudDensity(
+                    lightSamplePosition, cloudBase, float(CLOUD_THICKNESS),
+                    wind, coverage, detailStrength, rain
+                );
+                cloudLightTransmittance *= exp(
+                    -lightDensity * lightDistance * 0.0028 * densityStrength
+                );
+            }
+        }
 
         float heightLighting = mix(0.72, 1.08, heightFraction);
         float silverLining = pow(forwardPhase, 8.0) * 0.18 * scatteringStrength;
         vec3 sampleColor = ambientColor * heightLighting;
         sampleColor += directColor * (
             0.08 + 0.20 * forwardPhase + silverLining
-        ) * scatteringStrength;
+        ) * scatteringStrength * cloudLightTransmittance;
+        // A small isotropic multiple-scattering floor keeps dense cloud cores
+        // from becoming unnaturally black as direct light is attenuated.
+        sampleColor += ambientColor * (1.0 - cloudLightTransmittance) * 0.12;
         sampleColor *= mix(1.0, 0.56, rain * 0.85);
 
         float cloudFog = smoothstep(600.0, 1400.0, sampleDistance);
