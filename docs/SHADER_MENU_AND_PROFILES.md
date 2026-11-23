@@ -69,3 +69,5 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - The self-shadow factor attenuates the direct-light sky factor, preserving ambient light rather than darkening the entire material.
 - `POM_SELF_SHADOW_STRENGTH` is exposed in Quality and scaled across all five profiles.
 - Opaque entity-model POM self-shadowing remains pending.
+
+- Added height-gradient slope normals for terrain, block entities and opt-in opaque entity models; the strength is exposed in Quality and scales across all five profiles.
