@@ -221,3 +221,6 @@ option.CLOUD_SPEED.comment = Controls the world-stable cloud drift and matching 
 
 option.FOG_HEIGHT_STRENGTH = Height Fog Strength
 option.FOG_HEIGHT_STRENGTH.comment = Adds altitude-aware atmospheric haze to all rendered geometry in the final composite. Rain increases density; dimensions without skylight retain their native fog.
+
+option.WAVING_FOLIAGE_STRENGTH = Foliage Wind Strength
+option.WAVING_FOLIAGE_STRENGTH.comment = Controls stable wind-driven movement of leaves, grass, crops, vines and aquatic plants. Terrain and shadow vertices use the same displacement so foliage shadows remain aligned.
