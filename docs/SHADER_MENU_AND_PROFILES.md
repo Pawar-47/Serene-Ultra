@@ -92,3 +92,9 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Reprojects previous AO using Iris previous camera matrices and camera positions, rejects depth mismatches, and clamps history within a narrow range around the current AO estimate.
 - Added `AO_TEMPORAL_STRENGTH` to Quality and all five profiles; Ultra-Light disables history.
 - This is temporal AO stabilization, not full temporal AA; moving-object velocity is not represented.
+
+
+## Shader-level anisotropic material filtering — 2026-11-23
+- Added sprite-bounded major-derivative sampling for albedo, normal and specular atlases in terrain, block entities and opaque entity models.
+- Added 1/2/4-tap quality tiers with per-profile budgets; Ultra-Light remains single-sample, higher tiers enable 2 or 4 taps.
+- Sampling clamps to Iris per-quad sprite bounds to avoid atlas bleed. Hardware anisotropy remains complementary and can still be used through Minecraft/Iris texture settings.
