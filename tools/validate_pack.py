@@ -505,6 +505,44 @@ for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_
               "block.10129=farmland:moisture=0", "block.10137=farmland:moisture=7"):
     if token not in block_properties:
         errors.append(f"Missing emissive/block-entity ID mapping: {token}")
+
+# Iris uses signed 16-bit IDs and each exact block-state identifier can map once.
+mapped_blocks = {}
+for line_number, raw_line in enumerate(block_properties.splitlines(), 1):
+    mapping = re.match(r"^\s*block\.(-?\d+)\s*=\s*(.*?)\s*$", raw_line.split("#", 1)[0])
+    if not mapping:
+        continue
+    numeric_id = int(mapping.group(1))
+    if not -32768 <= numeric_id <= 32767:
+        errors.append(f"block.properties line {line_number} uses out-of-range Iris ID {numeric_id}")
+    for identifier in mapping.group(2).split():
+        normalized = identifier if identifier.startswith("minecraft:") else "minecraft:" + identifier
+        previous = mapped_blocks.get(normalized)
+        if previous is not None and previous[0] != numeric_id:
+            errors.append(f"Block identifier {normalized} is assigned to IDs {previous[0]} and {numeric_id}")
+        else:
+            mapped_blocks[normalized] = (numeric_id, line_number)
+
+for token in (
+    "minecraft:trapped_chest", "minecraft:ender_chest",
+    "minecraft:white_shulker_box", "minecraft:dragon_head", "minecraft:black_bed",
+    "minecraft:conduit", "minecraft:bell", "minecraft:copper_golem_statue",
+    "minecraft:waxed_oxidized_copper_chest", "minecraft:black_wall_banner",
+    "minecraft:enchanting_table",
+):
+    if token not in block_properties:
+        errors.append(f"Complementary block-entity mapping is missing {token}")
+block_entity_source = sources.get("gbuffers_block.fsh", "")
+for token in (
+    "blockEntityId == 5008", "blockEntityId == 5012", "blockEntityId == 5016",
+    "blockEntityId == 5020", "blockEntityId == 5028", "blockEntityId == 5032",
+    "blockEntityId == 5036", "blockEntityId == 10548",
+    "vanillaLight = texture(lightmap, vec2(0.9, vLightmapCoord.y))",
+    "albedo.r * 16.0", "emissionStrength = max(emissionStrength, 20.0)",
+    "skipGeneratedNormals = signText || blockEntityId == 5036",
+):
+    if token not in block_entity_source:
+        errors.append(f"Block-entity material dispatch is missing reference component: {token}")
 if "minecraft:flowing_lava" in block_properties:
     errors.append("Remove legacy flowing_lava block ID; Minecraft 1.13+ uses minecraft:lava block states")
 
