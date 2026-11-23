@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
+
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
 
 #define PARTICLE_MATERIAL_FEATURES // Detect water, rain, snow, smoke and emissive particle textures
@@ -9,6 +11,8 @@ uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2D noisetex;
 uniform sampler2DShadow shadowtex0;
+uniform sampler2DShadow shadowtex1;
+uniform sampler2D shadowcolor0;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 uniform mat4 gbufferModelViewInverse;
@@ -36,6 +40,8 @@ in vec3 vPlayerNormal;
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
 
+#include "/lib/lighting/soft_shadow.glsl"
+
 float calculateParticleFog(float distanceToCamera) {
     if (fogMode == 9729) {
         return clamp((distanceToCamera - fogStart) / max(fogEnd - fogStart, 0.0001), 0.0, 1.0);
@@ -48,22 +54,6 @@ float calculateParticleFog(float distanceToCamera) {
         return clamp(1.0 - exp(-densityDistance * densityDistance), 0.0, 1.0);
     }
     return 0.0;
-}
-
-float sampleParticleShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
-    vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
-    vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
-    float normalLight = max(dot(normal, lightDirection), 0.0);
-    float depthBias = mix(0.0022, 0.00065, normalLight);
-    shadowClipPosition.z -= depthBias;
-    vec3 shadowNdc = shadowClipPosition.xyz / shadowClipPosition.w;
-    vec3 shadowPosition = shadowNdc * 0.5 + 0.5;
-    if (shadowPosition.x <= 0.0 || shadowPosition.x >= 1.0 ||
-        shadowPosition.y <= 0.0 || shadowPosition.y >= 1.0 ||
-        shadowPosition.z <= 0.0 || shadowPosition.z >= 1.0) {
-        return 1.0;
-    }
-    return texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
 }
 
 #include "/lib/lighting/held_item_lighting.glsl"
@@ -159,9 +149,9 @@ void main() {
             ? clamp(endFlashIntensity, 0.0, 1.0)
             : (hasSkylight ? skyLight : 0.0));
 
-    float shadow = 1.0;
+    vec3 shadow = vec3(1.0);
     if (emission <= 0.001 && nDotL > 0.001 && celestialGate > 0.001) {
-        shadow = sampleParticleShadow(vPlayerPosition, normal, playerLightDirection);
+        shadow = sampleSereneSoftShadow(vPlayerPosition, normal, playerLightDirection);
     }
 
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;

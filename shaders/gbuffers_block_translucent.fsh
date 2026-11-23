@@ -1,10 +1,14 @@
 #version 330 compatibility
 
+#define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
+
 #define HELD_LIGHTING_STRENGTH 50 // [0 25 50 75 100] Dynamic main/offhand item light contribution
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2DShadow shadowtex0;
+uniform sampler2DShadow shadowtex1;
+uniform sampler2D shadowcolor0;
 
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 shadowModelView;
@@ -31,28 +35,7 @@ in vec3 vViewPosition;
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
 
-float sampleForwardShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
-    vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
-    vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
-    float normalLight = max(dot(normal, lightDirection), 0.0);
-    shadowClipPosition.z -= mix(0.0022, 0.00065, normalLight);
-
-    vec3 shadowNdc = shadowClipPosition.xyz / shadowClipPosition.w;
-    vec3 shadowPosition = shadowNdc * 0.5 + 0.5;
-    if (shadowPosition.x <= 0.0 || shadowPosition.x >= 1.0 ||
-        shadowPosition.y <= 0.0 || shadowPosition.y >= 1.0 ||
-        shadowPosition.z <= 0.0 || shadowPosition.z >= 1.0) {
-        return 1.0;
-    }
-
-    vec2 texel = 1.0 / vec2(textureSize(shadowtex0, 0));
-    float visibility = 0.0;
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5, -0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5, -0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5,  0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5,  0.5), shadowPosition.z));
-    return visibility * 0.25;
-}
+#include "/lib/lighting/soft_shadow.glsl"
 
 float calculateForwardFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -94,9 +77,9 @@ vec3 calculateForwardLighting(vec3 albedoLinear) {
         ? clamp(endFlashIntensity, 0.0, 1.0)
         : (hasSkylight ? skyLight : 0.0);
 
-    float shadow = 1.0;
+    vec3 shadow = vec3(1.0);
     if (nDotL > 0.001 && celestialGate > 0.001) {
-        shadow = sampleForwardShadow(vPlayerPosition, normal, worldLightDirection);
+        shadow = sampleSereneSoftShadow(vPlayerPosition, normal, worldLightDirection);
     }
 
     vec3 celestialColor = endFlashActive

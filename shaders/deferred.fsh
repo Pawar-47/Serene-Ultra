@@ -35,7 +35,6 @@ uniform int fogShape;
 
 // Iris shader constants belong in GLSL, not shaders.properties.
 const bool shadowHardwareFiltering = true;
-const float shadowIntervalSize = 2.0;
 
 in vec2 vTexCoord;
 
@@ -55,73 +54,11 @@ in vec2 vTexCoord;
 /* RENDERTARGETS: 0 */
 layout(location = 0) out vec4 outColor;
 
+#include "/lib/lighting/soft_shadow.glsl"
+
 vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
     vec4 homogeneous = projectionMatrix * vec4(position, 1.0);
     return homogeneous.xyz / homogeneous.w;
-}
-
-vec3 sampleShadow(vec3 playerPosition, vec3 normal, vec3 worldLightDirection) {
-    vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
-    vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
-
-    float normalLight = max(dot(normal, worldLightDirection), 0.0);
-    float depthBias = mix(0.0022, 0.00065, normalLight);
-    shadowClipPosition.z -= depthBias;
-
-    vec3 shadowNdc = shadowClipPosition.xyz / shadowClipPosition.w;
-    vec3 shadowPosition = shadowNdc * 0.5 + 0.5;
-
-    if (shadowPosition.x <= 0.0 || shadowPosition.x >= 1.0 ||
-        shadowPosition.y <= 0.0 || shadowPosition.y >= 1.0 ||
-        shadowPosition.z <= 0.0 || shadowPosition.z >= 1.0) {
-        return vec3(1.0);
-    }
-
-    // Rotated Poisson PCF broadens penumbrae without temporal history.
-    // Four taps keep the low profile inexpensive; Ultra and HDR use denser kernels.
-    const vec2 poissonDisk[12] = vec2[12](
-        vec2(-0.326, -0.406), vec2( 0.326,  0.406),
-        vec2(-0.840, -0.074), vec2( 0.840,  0.074),
-        vec2(-0.696,  0.457), vec2( 0.696, -0.457),
-        vec2(-0.203,  0.621), vec2( 0.203, -0.621),
-        vec2( 0.962, -0.195), vec2(-0.962,  0.195),
-        vec2( 0.473, -0.480), vec2(-0.473,  0.480)
-    );
-    vec2 texel = 1.0 / vec2(textureSize(shadowtex0, 0));
-    float noise = fract(
-        52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))
-    );
-    float angle = noise * 6.28318530718;
-    float sineAngle = sin(angle);
-    float cosineAngle = cos(angle);
-    mat2 rotation = mat2(cosineAngle, -sineAngle, sineAngle, cosineAngle);
-    float filterRadius = shadowIntervalSize * mix(0.75, 1.75, 1.0 - normalLight);
-    float visibility = 0.0;
-    for (int i = 0; i < SHADOW_FILTER_QUALITY; ++i) {
-        vec2 offset = rotation * poissonDisk[i] * texel * filterRadius;
-        visibility += texture(
-            shadowtex0,
-            vec3(shadowPosition.xy + offset, shadowPosition.z)
-        );
-    }
-    visibility /= float(SHADOW_FILTER_QUALITY);
-
-    // shadowtex1 excludes translucent geometry. If the center sample is
-    // blocked in shadowtex0 but visible in shadowtex1, the blocker is water
-    // (or another translucent caster). shadowcolor0 carries its transmission.
-    float centerShadow0 = texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
-    float centerShadow1 = texture(shadowtex1, vec3(shadowPosition.xy, shadowPosition.z));
-    if (centerShadow1 > centerShadow0 + 0.5) {
-        vec4 casterColor = texture(shadowcolor0, shadowPosition.xy);
-        vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a);
-        vec3 opaqueVisibility = vec3(visibility);
-        vec3 translucentVisibility = translucentTransmission * centerShadow1;
-        return clamp(
-            mix(opaqueVisibility, translucentVisibility, 1.0 - visibility),
-            vec3(0.0), vec3(1.0)
-        );
-    }
-    return vec3(clamp(visibility, 0.0, 1.0));
 }
 
 float calculateFogFactor(float distanceToCamera) {
@@ -230,7 +167,7 @@ void main() {
         : (hasSkylight ? skyLight : 0.0);
     vec3 shadow = vec3(1.0);
     if (nDotL > 0.001 && celestialGate > 0.001) {
-        shadow = sampleShadow(playerPosition, normal, worldLightDirection);
+        shadow = sampleSereneSoftShadow(playerPosition, normal, worldLightDirection);
     }
 
     // Use Minecraft's own sampled lightmap RGB as the ambient/block-light

@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#define SHADOW_FILTER_QUALITY 8 // [4 8 12] Rotated Poisson PCF shadow samples
+
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2D depthtex2;
@@ -71,6 +73,8 @@ flat in float vFluidRenderType;
 #define PORTAL_EMISSION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Nether portal self-emission
 #define PORTAL_DISTORTION_STRENGTH 100 // [0 25 50 75 100 125 150 200] Atlas-safe animated portal distortion
 layout(location = 0) out vec4 outColor;
+
+#include "/lib/lighting/soft_shadow.glsl"
 
 // Reconstruct a stable, periodic world position from Iris' unshifted integer
 // camera position, fractional camera position and player-relative position.
@@ -187,43 +191,6 @@ vec3 calculateWaterBaseColor(vec3 vertexColor, vec3 stableWorldPosition) {
     }
 
     return baseColor;
-}
-
-vec3 sampleTranslucentShadow(vec3 playerPosition, vec3 normal, vec3 lightDirection) {
-    vec4 shadowViewPosition = shadowModelView * vec4(playerPosition, 1.0);
-    vec4 shadowClipPosition = shadowProjection * shadowViewPosition;
-
-    float normalLight = max(dot(normal, lightDirection), 0.0);
-    float depthBias = mix(0.0022, 0.00065, normalLight);
-    shadowClipPosition.z -= depthBias;
-
-    vec3 shadowNdc = shadowClipPosition.xyz / shadowClipPosition.w;
-    vec3 shadowPosition = shadowNdc * 0.5 + 0.5;
-    if (shadowPosition.x <= 0.0 || shadowPosition.x >= 1.0 ||
-        shadowPosition.y <= 0.0 || shadowPosition.y >= 1.0 ||
-        shadowPosition.z <= 0.0 || shadowPosition.z >= 1.0) {
-        return vec3(1.0);
-    }
-
-    vec2 texel = 1.0 / vec2(textureSize(shadowtex0, 0));
-    float visibility = 0.0;
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5, -0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5, -0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2(-0.5,  0.5), shadowPosition.z));
-    visibility += texture(shadowtex0, vec3(shadowPosition.xy + texel * vec2( 0.5,  0.5), shadowPosition.z));
-    visibility *= 0.25;
-
-    float centerShadow0 = texture(shadowtex0, vec3(shadowPosition.xy, shadowPosition.z));
-    float centerShadow1 = texture(shadowtex1, vec3(shadowPosition.xy, shadowPosition.z));
-    if (centerShadow1 > centerShadow0 + 0.5) {
-        vec4 casterColor = texture(shadowcolor0, shadowPosition.xy);
-        vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a);
-        return clamp(
-            mix(vec3(visibility), translucentTransmission, 1.0 - visibility),
-            vec3(0.0), vec3(1.0)
-        );
-    }
-    return vec3(clamp(visibility, 0.0, 1.0));
 }
 
 vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
@@ -488,7 +455,7 @@ void main() {
     bool cameraUnderwater = (isEyeInWater == 1);
     vec3 shadow = vec3(1.0);
     if (nDotL > 0.001 && celestialGate > 0.001 && !(isWater && cameraUnderwater) && !isPortal) {
-        shadow = sampleTranslucentShadow(vPlayerPosition, shadowNormal, worldLightDirection);
+        shadow = sampleSereneSoftShadow(vPlayerPosition, shadowNormal, worldLightDirection);
     }
 
     vec3 ambient = vec3(0.018) + pow(max(vanillaLight, vec3(0.0)), vec3(2.2)) * 0.72;
