@@ -1131,3 +1131,10 @@ Clear glass now receives a sharper exponent-128 direct highlight with the Unboun
 
 ### Tinted-glass grazing opacity — 2026-11-23
 Tinted glass now follows Unbound's default alpha^(1-Fresnel) opacity curve, increasing opacity toward grazing angles while preserving the existing reflection scale. The calculation reuses view-space normals and adds no texture samples. Runtime visual calibration remains pending.
+
+
+### Underwater depth-opacity separation — 2026-11-23
+- Complementary Unbound's `water.glsl` skips surface-depth, water-fog opacity and shoreline-foam work while `isEyeInWater == 1`; underwater it applies the separate 0.75 alpha reduction.
+- Serene previously applied the above-water depth-opacity curve and screen-space refraction underwater. It now skips depth reconstruction, foam and refraction underwater, and retains the 0.75 alpha reduction without the surface-depth opacity multiplier.
+- Above-water thickness, Beer-Lambert absorption, foam, refraction and SSR/environment reflections remain unchanged. The underwater branch also avoids a full-resolution depth fetch.
+- Validator assertions cover the underwater gates and both alpha branches. In-game underwater/waterline appearance and GPU profiling remain outstanding.

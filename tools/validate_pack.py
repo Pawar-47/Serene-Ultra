@@ -780,11 +780,11 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
               "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0)",
               "gl_FragCoord.xy / vec2(textureSize(depthtex1, 0))",
-              "refractedScene.a >= 0.5", "texelFetch(depthtex1, refractedPixel, 0)",
+              "if (!cameraUnderwater && WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999)", "refractedScene.a >= 0.5", "texelFetch(depthtex1, refractedPixel, 0)",
               "if (isWater && dot(normalize(vViewPosition), viewNormal) > 0.0)",
               "translucentAlbedo.a = 0.98",
               "translucentAlbedo.a *= 0.75",
-              "float waterAlpha = translucentAlbedo.a * (0.25 + 0.75 * waterFog)",
+              "float waterAlpha = cameraUnderwater", "? translucentAlbedo.a", ": translucentAlbedo.a * (0.25 + 0.75 * waterFog)",
               "outColor = vec4(litColor, translucentAlbedo.a)"):
     if token not in water:
         errors.append(f"Forward translucent-terrain shader is missing Iris-compatible component: {token}")
@@ -819,7 +819,7 @@ for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcol
               "vec3 shadow = vec3(1.0)"):
     if token not in water:
         errors.append(f"Forward translucent colored-shadow path is missing component: {token}")
-for token in ("WATER_ABSORPTION_STRENGTH", "waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)",
+for token in ("WATER_ABSORPTION_STRENGTH", "if (!cameraUnderwater)", "waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth)",
               "float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01)",
               "exp(-waterFogThickness * 0.075)",
               "vec3 absorptionCoefficient = vec3(0.12, 0.045, 0.018)",
@@ -833,7 +833,7 @@ for token in ("uniform int isEyeInWater", "bool cameraUnderwater = (isEyeInWater
     if token not in water:
         errors.append(f"Unbound-guided underwater water response is missing component: {token}")
 for token in ("bool isFluidWater = (vMaterialId == 32000) && (vFluidRenderType > 0.5)",
-              "if (isFluidWater && WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999",
+              "if (!cameraUnderwater && isFluidWater && WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999",
               "if (isFluidWater && waterFoam > 0.0)",
               "WATER_FOAM_STRENGTH", "textureLod(noisetex, foamNoiseUV, 0.0)",
               "float foamThreshold = mix(0.06, 0.42, foamNoise * foamNoise)",

@@ -539,20 +539,20 @@ void main() {
         }
         waterAbsorptionTintLinear = pow(max(translucentAlbedo.rgb, vec3(0.0)), vec3(2.2));
 
-        vec3 opaqueViewPosition;
-        float opaqueDepth;
-        // Keep geometric thickness independent from the visual fog multiplier:
-        // absorption, refraction and foam use physical depth; only opacity fog
-        // responds to WATER_FOG_MULT, matching Unbound's waterFog treatment.
-        waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth);
-        float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01);
-        waterFog = clamp(1.0 - exp(-waterFogThickness * 0.075), 0.0, 1.0);
+        vec3 opaqueViewPosition = vec3(0.0);
+        float opaqueDepth = 1.0;
+        // Unbound skips surface-depth work while the camera is underwater.
+        if (!cameraUnderwater) {
+            waterThickness = calculateWaterThickness(opaqueViewPosition, opaqueDepth);
+            float waterFogThickness = waterThickness * (WATER_FOG_MULT * 0.01);
+            waterFog = clamp(1.0 - exp(-waterFogThickness * 0.075), 0.0, 1.0);
+        }
 
         // Unbound-inspired shallow-water foam. Reconstructed view-space
         // thickness is the stable signal for a nearby opaque intersection;
         // avoid a world-Y test, which misses sloped shorelines and depends on
         // the sign of the opaque surface's vertical offset.
-        if (isFluidWater && WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999 &&
+        if (!cameraUnderwater && isFluidWater && WATER_FOAM_STRENGTH > 0 && opaqueDepth < 0.999999 &&
             abs(vPlayerNormal.y) > 0.99) {
             vec2 foamNoiseUV = calculateWaterNoisePosition(stableWaterWorldPosition) * 4.0
                 + calculateWaterNoiseDrift() * 0.5;
@@ -576,7 +576,9 @@ void main() {
         } else {
             translucentAlbedo.a = 0.98;
         }
-        float waterAlpha = translucentAlbedo.a * (0.25 + 0.75 * waterFog);
+        float waterAlpha = cameraUnderwater
+            ? translucentAlbedo.a
+            : translucentAlbedo.a * (0.25 + 0.75 * waterFog);
         // Keep the Unbound grazing-angle opacity response.
         waterAlpha = mix(waterAlpha, 1.0, waterFresnel * 0.25);
         translucentAlbedo.a = clamp(waterAlpha, 0.0, 1.0);
@@ -584,7 +586,7 @@ void main() {
         // deferred1 snapshots the opaque scene into half-resolution colortex4.
         // This gbuffers pass writes colortex0 but reads colortex4, so it avoids
         // same-attachment feedback and keeps refraction bandwidth bounded.
-        if (WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999) {
+        if (!cameraUnderwater && WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999) {
             vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
             waterRefractionOffset = viewNormal.xy
                 * min(waterThickness * 0.0025, 0.035)

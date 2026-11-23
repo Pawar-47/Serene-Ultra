@@ -363,3 +363,10 @@ A follow-up review against Unbound's GGX implementation found its direct highlig
 - Complementary Unbound's default tinted-glass path adjusts opacity as alpha^(1-Fresnel), making the pane more opaque toward grazing angles while retaining its Fresnel reflection response.
 - Serene now applies the same alpha curve to tinted glass using the existing view normal and camera vector, with the same camera-facing normal orientation used by its reflection path. The change is arithmetic-only and adds no texture reads.
 - Optional Unbound mirror-tint modes are not copied; the default material behavior is the reference target. Runtime opacity calibration remains pending.
+
+
+### Underwater depth-opacity separation — 2026-11-23
+- Complementary Unbound's `water.glsl` skips surface-depth, water-fog opacity and shoreline-foam work while `isEyeInWater == 1`; underwater it applies the separate 0.75 alpha reduction.
+- Serene previously applied the above-water depth-opacity curve and screen-space refraction underwater. It now skips depth reconstruction, foam and refraction underwater, and retains the 0.75 alpha reduction without the surface-depth opacity multiplier.
+- Above-water thickness, Beer-Lambert absorption, foam, refraction and SSR/environment reflections remain unchanged. The underwater branch also avoids a full-resolution depth fetch.
+- Validator assertions cover the underwater gates and both alpha branches. In-game underwater/waterline appearance and GPU profiling remain outstanding.
