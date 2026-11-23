@@ -55,3 +55,10 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Pixel-scale normal variation increases effective roughness, reducing unstable sub-pixel highlights on detailed normal maps and distant geometry.
 - `SPECULAR_AA_STRENGTH` is exposed in the Quality screen and configured in all five profiles; zero disables the derivative work.
 - This is spatial specular filtering, not temporal anti-aliasing. TAA remains a separate pending feature.
+
+
+## Four-scale bloom update — 2026-11-23
+- Expanded the bloom pyramid from two scales to four: half, quarter, eighth and sixteenth resolution.
+- Added two low-resolution separable Gaussian blur pairs for broader halos.
+- `BLOOM_QUALITY` selects compact, wide or ultra-wide output; Ultra-Light uses compact bloom while Smooth and higher profiles use wider levels.
+- The additional stages operate at low resolutions to limit cost on integrated GPUs.
