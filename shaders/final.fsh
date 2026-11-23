@@ -322,12 +322,15 @@ vec3 applyReferenceSaturation(vec3 color) {
 vec2 applyUnderwaterDistortion(vec2 uv) {
 #if UNDERWATER_DISTORTION > 0
     if (isEyeInWater == 1) {
-        float time = mod(frameTimeCounter, 60.0);
-        float waveX = sin(uv.y * 58.0 + time * 1.7
-            + sin(uv.x * 19.0 - time * 0.55) * 0.8);
-        float waveY = sin(uv.x * 46.0 - time * 1.25
-            + sin(uv.y * 16.0 + time * 0.65) * 0.7);
-        vec2 noiseUv = uv * vec2(2.6, 3.4) + vec2(time * 0.013, -time * 0.009);
+        // Iris wraps frameTimeCounter after one hour. Choose integer-cycle
+        // angular rates so the animated waves meet at the wrap without a jump.
+        float time = frameTimeCounter;
+        float waveX = sin(uv.y * 58.0 + time * 1.74532925
+            + sin(uv.x * 19.0 - time * 0.54977871) * 0.8);
+        float waveY = sin(uv.x * 46.0 - time * 1.24991090
+            + sin(uv.y * 16.0 + time * 0.64926248) * 0.7);
+        vec2 noiseUv = uv * vec2(2.6, 3.4)
+            + vec2(time * 0.013888889, -time * 0.008888889);
         vec2 noise = texture(noisetex, noiseUv).rg * 2.0 - 1.0;
         vec2 displacement = vec2(waveX, waveY) * 0.00062 + noise * 0.00032;
         uv += displacement * (float(UNDERWATER_DISTORTION) * 0.01);
