@@ -1252,3 +1252,10 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 ## FXAA profile validation correction — 2026-11-23
 - The first combined bloom/FXAA CI run compiled and linked every shader successfully but the structural validator correctly caught missing `FXAA_ENABLED:1` entries in HDR and Ultra-HDR presets.
 - Added the missing values to both HDR profiles. The failing run is not treated as a passing validation; the corrected commit has a new CI run pending.
+
+
+## Screen-space sunlight shafts — 2026-11-23
+- Added a depth-gated radial sunlight-scattering approximation to `composite.fsh`. It projects Iris' active view-space shadow-light direction, samples bright visible sky along the ray and adds a warm contribution only to opaque receivers.
+- Added strength and 0/4/8/12-sample quality controls to the Quality screen, sliders, tooltips and all five profiles. Ultra-Light compiles the effect out; Smooth, Ultra and HDR tiers progressively increase the sample budget.
+- Added structural checks for the shader path, UI exposure and per-profile settings.
+- This is not full volumetric fog/cloud-shadow integration or a world-space volumetric system. It is a low-cost screen-space baseline and needs Iris runtime/visual validation before being considered complete.
