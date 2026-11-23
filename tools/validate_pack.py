@@ -129,25 +129,34 @@ for fragment_path in SHADERS.rglob("*.fsh"):
                 f"vertex={expected}, fragment={actual}"
             )
 
-# Verify modern fragment output locations against the ordered RENDERTARGETS
-# list. Location N maps to the Nth target, not to colortexN itself. The line
-# program is intentionally GLSL 130 and uses Iris's outColorN core transform.
+# Verify fragment output slots against the ordered RENDERTARGETS list.
+# Location N maps to the Nth target, not to colortexN itself. GLSL 130 uses
+# Iris's outColorN naming transform; GLSL 330 uses explicit layout locations.
 for path in SHADERS.rglob("*.fsh"):
     source = path.read_text(encoding="utf-8")
     target_match = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", source)
-    if not target_match or re.search(r"^\s*#version\s+130\b", source, re.MULTILINE):
+    if not target_match:
         continue
     targets = [int(value) for value in re.findall(r"\d+", target_match.group(1))]
-    locations = [
-        int(value) for value in re.findall(
-            r"layout\s*\(\s*location\s*=\s*(\d+)\s*\)\s*out\s+\w+\s+\w+",
-            source,
-        )
-    ]
     expected_locations = list(range(len(targets)))
+    if re.search(r"^\s*#version\s+130\b", source, re.MULTILINE):
+        locations = [
+            int(value) for value in re.findall(
+                r"^\s*out\s+\w+\s+outColor(\d+)\s*;",
+                source,
+                re.MULTILINE,
+            )
+        ]
+    else:
+        locations = [
+            int(value) for value in re.findall(
+                r"layout\s*\(\s*location\s*=\s*(\d+)\s*\)\s*out\s+\w+\s+\w+",
+                source,
+            )
+        ]
     if sorted(locations) != expected_locations:
         errors.append(
-            f"{path.relative_to(ROOT)}: fragment output locations {sorted(locations)} "
+            f"{path.relative_to(ROOT)}: fragment output slots {sorted(locations)} "
             f"do not match RENDERTARGETS slot order {expected_locations}"
         )
 
@@ -242,10 +251,16 @@ if props_path.is_file():
     if "separateEntityDraws=true" not in props:
         errors.append("Iris translucent entity/block-entity passes require separateEntityDraws=true")
     deferred_format_source = sources.get("deferred.fsh", "")
-    if "const int colortex2Format = RGBA8;" not in deferred_format_source:
-        errors.append("Iris colortex2 normal/smoothness target must use normalized RGBA8 to preserve bandwidth on low-end GPUs")
-    if "const int colortex3Format = RGBA8;" not in deferred_format_source:
-        errors.append("Iris colortex3 material target must declare RGBA8 for emission, reflectance, AO and SSS channels")
+    for buffer_name, description in (
+        ("colortex2", "normal/smoothness"),
+        ("colortex3", "emission, reflectance, AO and SSS material data"),
+    ):
+        directive = f"const int {buffer_name}Format = RGBA8;"
+        block_comments = re.findall(r"/\*(.*?)\*/", deferred_format_source, re.DOTALL)
+        if not any(re.search(rf"(?m)^\s*{re.escape(directive)}\s*$", block) for block in block_comments):
+            errors.append(
+                f"Iris {buffer_name} {description} target must declare RGBA8 in its own block-comment directive"
+            )
     if "format.colortex2=" in props or "format.colortex3=" in props or "colortex3Format=" in props:
         errors.append("Buffer formats must use Iris GLSL const directives, not shaders.properties key/value syntax")
     if "particles.ordering=mixed" not in props:
@@ -268,22 +283,22 @@ if water_fog_option not in sources.get("gbuffers_water.fsh", ""):
 if "#define WAVING_RAIN // Animate rain and snow geometry" not in sources.get("gbuffers_weather.vsh", ""):
     errors.append("WAVING_RAIN must be declared as an Iris boolean option in the weather vertex shader")
 
-    for program in ("gbuffers_beaconbeam", "gbuffers_clouds", "gbuffers_spidereyes", "gbuffers_skytextured"):
-        if f"alphaTest.{program}=GREATER 0.0001" not in props:
-            errors.append(f"{program} must use the low alpha threshold from the reference shader")
-    for program in ("gbuffers_armor_glint", "gbuffers_beaconbeam", "gbuffers_lightning", "gbuffers_clouds", "gbuffers_spidereyes"):
-        if f"blend.{program}.colortex2=off" not in props:
-            errors.append(f"{program} must disable blending on the deferred-validity mask")
-    if "WEATHER_TEX_OPACITY" not in props:
-        errors.append("Weather particle opacity control must be exposed in the Quality menu")
+for program in ("gbuffers_beaconbeam", "gbuffers_clouds", "gbuffers_spidereyes", "gbuffers_skytextured"):
+    if f"alphaTest.{program}=GREATER 0.0001" not in props:
+        errors.append(f"{program} must use the low alpha threshold from the reference shader")
+for program in ("gbuffers_armor_glint", "gbuffers_beaconbeam", "gbuffers_lightning", "gbuffers_clouds", "gbuffers_spidereyes"):
+    if f"blend.{program}.colortex2=off" not in props:
+        errors.append(f"{program} must disable blending on the deferred-validity mask")
+if "WEATHER_TEX_OPACITY" not in props:
+    errors.append("Weather particle opacity control must be exposed in the Quality menu")
 weather_opacity_define = "#define WEATHER_TEX_OPACITY 100 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 130 140 150 160 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Weather particle opacity"
 for name in ("gbuffers_weather.fsh", "gbuffers_particles_translucent.fsh"):
     if weather_opacity_define not in sources.get(name, ""):
         errors.append(f"{name} must declare the identical Iris WEATHER_TEX_OPACITY option")
-    if "PARTICLE_MATERIAL_FEATURES" not in props:
-        errors.append("Complementary-guided particle material effects must be exposed in the Quality menu")
-    if "option.PARTICLE_MATERIAL_FEATURES =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
-        errors.append("Particle material effects option needs a user-facing label")
+if "PARTICLE_MATERIAL_FEATURES" not in props:
+    errors.append("Complementary-guided particle material effects must be exposed in the Quality menu")
+if "option.PARTICLE_MATERIAL_FEATURES =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("Particle material effects option needs a user-facing label")
 
 # Iris documents separateEntityDraws and ENTITY_TRANSLUCENT as the routing/query
 # contract for the dedicated post-deferred translucent entity/block-entity programs.
