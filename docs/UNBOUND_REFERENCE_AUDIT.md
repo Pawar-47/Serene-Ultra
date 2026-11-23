@@ -376,3 +376,6 @@ A follow-up review against Unbound's GGX implementation found its direct highlig
 - Iris' current DepthTex reference specifies `depthtex1` excludes transparent geometry, while `depthtex2` excludes both transparent geometry and hand geometry. Water thickness and refraction need the opaque scene depth, not the first-person hand depth.
 - The water pass previously sampled `depthtex1`, allowing a hand held in front of the water to become the reconstructed opaque intersection and distort thickness/absorption/refraction. These lookups now use `depthtex2`, which is already the opaque depth source used by the water SSR marcher. Both buffers are full resolution, so pixel mapping is unchanged.
 - The change removes the redundant `depthtex1` declaration and updates structural validation. Verify first-person hand-over-water scenes in Iris at runtime; CI validates shader compilation and source structure only.
+
+
+- Follow-up validator guard: the water shader must not regress to `depthtex1`, and the refraction lookup assertion now explicitly requires `depthtex2`.

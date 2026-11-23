@@ -780,7 +780,7 @@ for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
               "translucentAlbedo.a < alphaTestRef", "vMaterialId == 32000",
               "opaqueDepth) * 2.0 - 1.0", "texelFetch(depthtex2, ivec2(gl_FragCoord.xy), 0)",
               "gl_FragCoord.xy / vec2(textureSize(depthtex2, 0))",
-              "if (!cameraUnderwater && WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999)", "refractedScene.a >= 0.5", "texelFetch(depthtex1, refractedPixel, 0)",
+              "if (!cameraUnderwater && WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999)", "refractedScene.a >= 0.5", "texelFetch(depthtex2, refractedPixel, 0)",
               "if (isWater && dot(normalize(vViewPosition), viewNormal) > 0.0)",
               "translucentAlbedo.a = 0.98",
               "translucentAlbedo.a *= 0.75",
@@ -810,6 +810,8 @@ for token in ("uniform vec3 skyColor;", "vec3 sampleEnvironmentReflection(vec3 v
         errors.append(f"Translucent environment-reflection fallback is missing component: {token}")
 if "mix(fogColor, skyColor, skyBlend)" not in environment_source:
     errors.append("Shared environment reflection must retain the Iris sky/horizon gradient")
+if "depthtex1" in water:
+    errors.append("gbuffers_water water-depth/refraction path must use hand-free depthtex2")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
