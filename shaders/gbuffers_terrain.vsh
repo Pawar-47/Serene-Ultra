@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+#include "/lib/taa_jitter.glsl"
+
 uniform mat4 gbufferModelViewInverse;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
@@ -74,4 +76,5 @@ void main() {
         abs(texMinMidCoord) * 2.0
     );
     vTangentHandedness = at_tangent.w < 0.0 ? -1.0 : 1.0;
+    applySereneTaaJitter(gl_Position);
 }
