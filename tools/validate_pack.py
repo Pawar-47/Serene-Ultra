@@ -530,7 +530,7 @@ for option, names in (
     definitions = []
     for name in names:
         for line in sources.get(name, "").splitlines():
-            match = re.match(rf"^#define\\s+{option}\\s+([0-9]+)", line)
+            match = re.match(rf"^#define\s+{option}\s+([0-9]+)", line)
             if match:
                 definitions.append(match.group(1))
     if len(set(definitions)) != 1:
