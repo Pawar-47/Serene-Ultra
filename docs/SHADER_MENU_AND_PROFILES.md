@@ -106,3 +106,5 @@ The Quality screen currently includes shadow-map resolution, shadow distance, sh
 - Added a dedicated Atmosphere menu and explicit profile budgets; Ultra-Light disables the effects to preserve integrated-GPU headroom.
 
 - Added a dedicated Nether ember-storm control and End nebula/distant-star control to the Atmosphere screen, with explicit profile budgets.
+
+- Added a depth-aware celestial lens-flare effect with spectral ghost elements and a soft ring; it is exposed in the Atmosphere menu and disabled in Ultra-Light.
