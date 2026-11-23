@@ -1711,3 +1711,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - The same displacement formula updates player-relative G-buffer positions and shadow caster positions so the animated surface and its shadow remain aligned. Default strength is 50; profile values are Ultra-Light 20, Smooth 35, Ultra 50, HDR 65 and Ultra-HDR 75.
 - Added the Quality menu control, localized tooltip, feature-matrix row and structural checks for material mapping, both vertex paths and profile budgets.
 - This is source-level parity with the reference's waving-lava behavior. No Minecraft/Iris runtime or shadow-alignment test has been performed; geometry coverage and performance still need visual calibration.
+
+
+### Final texture-filtering and lava-wave validation — 2026-11-23
+- GitHub Actions run `45234573768` passed on commit `b1f53afab5c9e39e176b6fdeb7eb2abca5ca0e0d`: all standalone shader stages, Iris macro branches, LabPBR branches, opt-in entity POM, Unbound water-wave detail, Ultra-Light reflection branches, water-normal alpha inspection, program linking and structural validation succeeded.
+- The shared 1/2/4-tap anisotropic sampler now covers terrain, opaque block/entity materials, water/glass/ice/portal, translucent block/entity materials, weather and translucent particles. It filters along the principal eigenvector of the UV-derivative covariance and clamps taps to flat Iris sprite bounds.
+- Added a shared world-stable lava displacement function in `shaders/lib/animation/lava_waves.glsl`; visible terrain and shadow passes use identical displacement so animated lava silhouettes remain aligned. Commit: `b1f53afab5c9e39e176b6fdeb7eb2abca5ca0e0d`.
+- Hardware texture anisotropy, runtime shimmer/performance, lava geometry compatibility and visual calibration remain runtime checks.
