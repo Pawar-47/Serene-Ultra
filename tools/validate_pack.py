@@ -1334,6 +1334,17 @@ for profile, expected in (("Ultra-Light", "EMISSIVE_BOUNCE_STRENGTH:0"),
     if expected not in props:
         errors.append(f"{profile} profile is missing emissive bounce budget: {expected}")
 
+
+for token in ("#define RAIN_PUDDLE_STRENGTH", "puddlePrecipitation",
+              "blockEntityId != 5025", "blockEntityId != 5036",
+              "puddleNormalFactor", "puddleWorldPosition",
+              "vTangentHandedness", "puddleMask"):
+    if token not in block_shader:
+        errors.append(f"Block-entity puddles are missing required component: {token}")
+terrain_puddle_source = sources.get("gbuffers_terrain.fsh", "")
+if "#define RAIN_PUDDLE_STRENGTH" not in terrain_puddle_source:
+    errors.append("Terrain and block-entity puddles must share the RAIN_PUDDLE_STRENGTH option")
+
 if block_shader.index("outLightmapData = vec4(vanillaLight") < block_shader.index("if (blockEntityId == 5020)"):
     errors.append("Block-entity lightmap output must be written after conduit lightmap boost")
 if "float goldGreenSquared = albedo.g * albedo.g;" not in block_shader:
