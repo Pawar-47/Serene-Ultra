@@ -444,3 +444,8 @@ The existing `gbuffers_terrain_solid` and `gbuffers_terrain_cutout` entries both
 https://github.com/IrisShaders/Iris/blob/26.1/common/src/main/java/net/irisshaders/iris/shaderpack/loading/ProgramId.java
 
 The latest vertex/fragment interface audit also found matching fragment inputs for every paired vertex output across the current shader programs. CI now checks the varying name, GLSL type and interpolation qualifier to prevent interface drift. Passing that check is a source/link validation, not proof of the programs' runtime routing or visual output.
+
+
+## Weather camera-state contract cross-check
+
+The dedicated `gbuffers_weather.fsh` discards weather geometry when `isEyeInWater == 3`. The current Iris status-uniform reference explicitly defines 3 as **powdered snow** (1 is water, 2 is lava, 0 is none/other), so this condition is not an accidental water/lava enum mismatch. Preserve it only if the intended behavior is to suppress exterior weather while the camera is inside powdered snow; include this state in runtime regression testing. Reference: https://shaders.properties/current/reference/uniforms/status/
