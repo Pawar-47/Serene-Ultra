@@ -1240,3 +1240,10 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Exposed bloom strength and highlight threshold in the Color screen, slider list, user-facing tooltips and all five profiles. Ultra-Light compiles bloom out; Smooth/Ultra/HDR/Ultra-HDR progressively increase strength.
 - Added structural regression checks for shader implementation, menu exposure, tooltips and profile values.
 - This is a low-bandwidth baseline, not the reference's multi-scale bloom system. Multi-scale blur and visual calibration remain outstanding; no claim of reference parity is made.
+
+
+## Final-pass spatial anti-aliasing — 2026-11-23
+- Added an edge-adaptive FXAA pass in `final.fsh`, with luminance range detection and direction-limited sampling.
+- FXAA uses the existing scene attachment and no temporal history or extra render target. It is disabled in Ultra-Light and enabled in Smooth and higher profiles.
+- Added the user-facing Color-screen toggle, slider entry, tooltip, profile presets and structural regression checks.
+- FXAA is a spatial AA baseline only; TAA, temporal reprojection and reference edge-quality comparison remain pending.
