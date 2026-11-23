@@ -45,13 +45,13 @@ void main() {
     vec4 cloudColor = vVertexColor;
     if (cloudColor.a < alphaTestRef) discard;
 
-    // Keep vanilla cloud texture/vertex lighting intact. Clouds are an overlay,
-    // not an opaque surface; do not reuse the terrain normal beneath them.
+    // Preserve the native CloudColor and per-face vertex shading. Clouds are an
+    // overlay, not an opaque surface; do not reuse the terrain normal beneath them.
     vec3 cloudLinear = pow(max(cloudColor.rgb, vec3(0.0)), vec3(2.2));
 
-    // Vanilla cloud geometry carries no surface lighting: the sampled colour is the
-    // atlas tinted by the biome sky, so without these terms the layer reads as flat
-    // paint. Both terms are bounded and use only uniforms this pass already has.
+    // The POSITION_COLOR cloud mesh has no per-pixel normal; its vertex color already
+    // carries engine face shading and CloudColor. Add only bounded exposure and
+    // forward-scattering terms using uniforms this pass already has.
     // shadowLightPosition is the view-space direction of the active celestial body
     // (sun by day, moon by night), normalised here with a guard so dimensions
     // without a celestial body cannot produce a NaN.
