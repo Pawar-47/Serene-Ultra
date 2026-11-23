@@ -1209,3 +1209,14 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - **Release safety correction:** the alpha workflow previously published a prerelease after every successful push. Its job now requires the repository Actions variable `ENABLE_ALPHA_PUBLISH=true`; with the variable unset, publishing is skipped. The latest validation run #1165 passed and the corresponding publish workflow run #29 was skipped.
 - An older public prerelease `alpha-25b0ee0` was already published before this gate was added. It is experimental and has not been runtime-verified; do not treat it as a validated working build. No newer prerelease was created for `d859ed8`.
 - Current HEAD `d859ed8` remains source/CI validated only. Actual Iris/Minecraft runtime testing, visual parity, and Intel HD 5500 performance measurements remain outstanding.
+
+
+## Continuation — audit inventory and verification gates (2026-11-23)
+
+- Reconfirmed `main` at `c6dfc29327b9e15bd0bb195962ed2bc9cbee6ed5`; the recorded CI run `45147325818` (#1166) is successful.
+- Inspected the current source pairs for `gbuffers_water`, `gbuffers_weather`, `gbuffers_hand_water`, `gbuffers_block`, `gbuffers_entities_translucent`, and the deferred half-resolution opaque-scene copy. All three post-deferred water/weather/hand-water pairs are present; water samples opaque depth from `depthtex2` and the half-resolution opaque snapshot in `colortex4`, while weather and hand-water use dedicated forward lightmap/fog paths.
+- Confirmed that the previous top-level coverage inventory and next-step list in `IRIS_PIPELINE_AUDIT.md` had become stale and contradicted later implementation notes. Updated them to match the current source inventory and to distinguish source presence from runtime correctness.
+- Current risk boundary: these are source-level implementations only. Water refraction/SSR, translucent alpha/depth behavior, weather rendering, hand-water, entity/block/particle sorting and full scene preservation remain unverified in Iris/Minecraft.
+- The two supplied archives remain mandatory comparison sources. No new file-by-file archive comparison is claimed in this continuation.
+- Alpha publishing remains disabled by default; do not set `ENABLE_ALPHA_PUBLISH=true` until runtime smoke tests and visual checks pass.
+- Next: continue stage-by-stage review of translucent paths and their buffer/blend contracts, then reconcile corresponding Vanilla-stock and Complementary source files before feature changes.
