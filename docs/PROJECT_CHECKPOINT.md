@@ -1670,5 +1670,5 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 ### Translucent atlas filtering expansion — 2026-11-23
 - Added a shared sprite-bounded anisotropic sampler and enabled it for water/glass/ice/portal albedo and PBR normal atlases, then extended the same 1/2/4-tap derivative-aware filter to translucent entities and block entities.
 - Translucent vertex stages now pass Iris `mc_midTexCoord` sprite bounds so taps cannot bleed across adjacent atlas sprites. The shared `ANISOTROPIC_FILTER_QUALITY` profile control drives all added paths.
-- Commits: shared helper `4d3b6c8b7e2f`; water `a91f7c1d`; translucent vertex/fragment and validator commits are in the recent main history; feature matrix `24cb0a0497cf34f9e8efb35a7bd8757718613a8d`.
+- Implementation files: `shaders/lib/materials/anisotropic_sampling.glsl`, `shaders/gbuffers_water.fsh`, `shaders/gbuffers_entities_translucent.vsh/.fsh`, `shaders/gbuffers_block_translucent.vsh/.fsh`, and `tools/validate_pack.py`; feature matrix commit `24cb0a0497cf34f9e8efb35a7bd8757718613a8d`.
 - CI is being rerun after these filtering changes. Weather and particle paths remain on their current sampling path; hardware texture anisotropy and runtime shimmer/performance calibration remain outstanding.
