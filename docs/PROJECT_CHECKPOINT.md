@@ -766,3 +766,5 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Wind shifts by whole texture periods at Iris' 3600-second frameTimeCounter wrap for every quarter-step speed preset. Existing WATER_WAVE_STRENGTH, SCALE and SPEED controls remain authoritative.
 - The custom texture is bound through Iris customTexture.waterNormalTex and uses blur=true/clamp=false metadata. This is Iris-specific by design; the pack's target renderer is Iris.
 - This source change aims for better Unbound-style surface detail while keeping three texture reads per water fragment. Runtime water appearance, texture filtering and Intel HD 5500 cost remain to be checked in Minecraft 26.3 + Iris.
+
+- Water-normal refinement: the multi-scale wave slope is now added to the existing resource-pack PBR normal instead of replacing it. Setting WATER_WAVE_SCALE to 0 disables the custom normal field cleanly. CI's first failure on this feature was only an overly strict validator token split across GLSL lines; shader compilation and linking had already passed.

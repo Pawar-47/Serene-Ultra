@@ -732,9 +732,11 @@ for token in ("uniform mat4 gbufferModelView;", "uniform ivec3 cameraPositionInt
               "getStableWaterWorldPosition", "cameraPositionInt % ivec3(256)",
               "cameraPositionFract + playerPosition", "calculateWaterWaveNormal",
               "uniform sampler2D waterNormalTex;",
-              "textureGrad(waterNormalTex, waterCoord + wind, waterCoordDx, waterCoordDy)",
+              "waterNormalTex, waterCoord + wind, waterCoordDx, waterCoordDy",
               "waterCoord * 4.0 - wind * 2.0", "waterCoord * 0.25 - wind * 0.5",
               "float waveCycles = frameTimeCounter / 3600.0",
+              "WATER_WAVE_SCALE <= 0",
+              "geometricNormal + vec3(-slope.x * strength * faceSign",
               "waterNormalCoordDx = dFdx(vPlayerPosition.xz * waterNormalScale)",
               "viewNormal = normalize(mat3(gbufferModelView) * normal)"):
     if token not in water:

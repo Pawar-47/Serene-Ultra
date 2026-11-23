@@ -113,7 +113,7 @@ vec3 calculateWaterWaveNormal(
     vec2 waterCoordDx,
     vec2 waterCoordDy
 ) {
-    if (abs(geometricNormal.y) < 0.72 || WATER_WAVE_STRENGTH <= 0) {
+    if (abs(geometricNormal.y) < 0.72 || WATER_WAVE_STRENGTH <= 0 || WATER_WAVE_SCALE <= 0) {
         return geometricNormal;
     }
 
@@ -139,11 +139,12 @@ vec3 calculateWaterWaveNormal(
     vec2 slope = normalMedium * 0.8 + normalSmall * 0.55 + normalLarge * 0.45;
     float strength = float(WATER_WAVE_STRENGTH) * 0.01 * 4.0;
     float faceSign = geometricNormal.y < 0.0 ? -1.0 : 1.0;
-    vec3 waveNormal = normalize(vec3(-slope.x * strength, faceSign, -slope.y * strength));
-    return normalize(mix(
-        geometricNormal, waveNormal,
-        clamp(float(WATER_WAVE_STRENGTH) * 0.01, 0.0, 1.0)
-    ));
+    // Add the wave slope to the existing PBR normal rather than replacing it.
+    vec3 waveNormal = normalize(
+        geometricNormal + vec3(-slope.x * strength * faceSign, 0.0,
+                               -slope.y * strength * faceSign)
+    );
+    return waveNormal;
 }
 
 // Unbound-style water base colour: retain biome influence, but move the
