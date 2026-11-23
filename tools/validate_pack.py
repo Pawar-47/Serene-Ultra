@@ -1617,6 +1617,16 @@ for profile, strength, quality in (("Ultra-Light", "0", "0"), ("Smooth", "20", "
     if f"LIGHT_SHAFT_STRENGTH:{strength}" not in line or f"LIGHT_SHAFT_QUALITY:{quality}" not in line:
         errors.append(f"{profile} has incorrect sunlight-shaft settings")
 
+
+# POM traversal must clamp within the current sprite; fract() wraps to the
+# opposite edge and can create discontinuities at atlas-tile boundaries.
+for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
+    source = sources.get(name, "")
+    if "currentLocal = clamp(currentLocal + stepOffset, vec2(0.0), vec2(1.0));" not in source:
+        errors.append(f"{name} POM traversal must clamp within its sprite bounds")
+    if "currentLocal = fract(currentLocal + stepOffset);" in source:
+        errors.append(f"{name} POM traversal must not wrap across sprite edges")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:
