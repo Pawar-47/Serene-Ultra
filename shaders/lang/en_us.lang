@@ -251,3 +251,10 @@ option.ANISOTROPIC_FILTER_QUALITY.comment = Adds sprite-bounded taps along the m
 value.ANISOTROPIC_FILTER_QUALITY.1 = Single Sample
 value.ANISOTROPIC_FILTER_QUALITY.2 = 2 Taps
 value.ANISOTROPIC_FILTER_QUALITY.4 = 4 Taps
+
+option.AURORA_STRENGTH = Aurora Intensity
+option.AURORA_STRENGTH.comment = Procedural animated aurora curtains at night; reduced during rain.
+option.NEBULA_STRENGTH = Night Nebula Intensity
+option.NEBULA_STRENGTH.comment = Adds slow-moving multi-scale nebula clouds to clear night skies.
+option.RAINBOW_STRENGTH = Rainbow Intensity
+option.RAINBOW_STRENGTH.comment = Adds an anti-solar atmospheric rainbow arc when sunlight and rain overlap.
