@@ -816,6 +816,8 @@ if "depthtex1" in water:
     errors.append("gbuffers_water water-depth/refraction path must use hand-free depthtex2")
 if "uniform sampler2D colortex0" in water:
     errors.append("gbuffers_water must not sample colortex0 while writing colortex0")
+if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in water:
+    errors.append("Iris cylindrical fog must use max(horizontal distance, absolute vertical distance)")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
               "vec3 sampleTranslucentShadow(", "float centerShadow0 = texture(shadowtex0",
               "float centerShadow1 = texture(shadowtex1",

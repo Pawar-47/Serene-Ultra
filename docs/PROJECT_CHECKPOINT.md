@@ -1158,3 +1158,9 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - The workflow packages the `shaders/` directory and pack metadata at the exact validated commit, generates a SHA-256 checksum, and publishes a GitHub pre-release tagged `alpha-<short-sha>`.
 - Alpha packages are explicitly experimental. CI checks compilation and structure only; in-game visual, compatibility and performance validation remain required.
 - Release page: https://github.com/Pawar-47/Serene-Ultra/releases
+
+
+### Water cylindrical-fog metric — 2026-11-23
+- Corrected `gbuffers_water.fsh` cylindrical fog distance to `max(length(vViewPosition.xz), abs(vViewPosition.y))`, matching Minecraft's stock `fog_cylindrical_distance` implementation and Iris' documented `fogShape == 1` meaning.
+- Spherical fog remains Euclidean `length(vViewPosition)`.
+- Added a structural regression guard. GLSL/structure CI does not validate visual fog calibration; verify vertical look angles and waterline transitions in-game.

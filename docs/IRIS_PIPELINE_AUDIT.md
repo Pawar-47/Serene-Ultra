@@ -429,3 +429,7 @@ The `gbuffers_particles_translucent` forward-only program can use the shared hel
 
 ## Translucent block held-light integration
 The forward translucent block pass uses the same shared Iris held-item light helper as translucent entities and particles. It adds the contribution to ambient only, retaining the existing `lightmap` sample, shadowed celestial term, fog and alpha blend output. It does not read deferred color attachments and remains a color-only translucent pass.
+
+
+## Water-pass fog shape correction — 2026-11-23
+Iris documents `fogShape == 0` as spherical and `fogShape == 1` as cylindrical. The stock Minecraft fog helper defines cylindrical distance as `max(length(position.xz), abs(position.y))`. The water pass previously used only `length(position.xz)` for cylindrical fog, underestimating fog distance when the view ray has a large vertical component. Updated `gbuffers_water.fsh` to match the stock cylinder metric; spherical fog remains `length(position)`. The validator now guards the cylindrical expression. Sources: Iris rendering-uniform documentation and the supplied Vanilla-stock `include/fog.glsl`. Runtime water/fog calibration remains pending.
