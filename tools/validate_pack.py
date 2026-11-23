@@ -8,7 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SHADERS = ROOT / "shaders"
 REQUIRED = (
-    "shaders.properties", "block.properties",
+    "shaders.properties", "block.properties", "entity.properties",
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
     "gbuffers_block.vsh", "gbuffers_block.fsh",
@@ -340,6 +340,31 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
             errors.append(f"{name} is missing POM integration: {token}")
 if "gl_FrontFacing && !signText && blockEntityId != 5025" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity POM must skip sign text and Nether portal surfaces")
+entity_pom_source = sources.get("gbuffers_entities.fsh", "")
+for token in ("#define POM_ENTITY_STRENGTH 0", "uniform int entityId;",
+              "calculateParallaxUv(", "entityId != 50128 && entityId != 50132",
+              "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
+              "parallaxAlbedo.a >= alphaTestRef",
+              "textureGrad(specular, materialUv, uvDx, uvDy)",
+              "textureGrad(normals, materialUv, uvDx, uvDy)"):
+    if token not in entity_pom_source:
+        errors.append(f"Entity POM is missing bounded atlas-safe component: {token}")
+entity_vertex_source = sources.get("gbuffers_entities.vsh", "")
+for token in ("in vec2 mc_midTexCoord", "out vec3 vTangentView",
+              "flat out vec4 vTexCoordAM", "at_tangent.w"):
+    if token not in entity_vertex_source:
+        errors.append(f"Entity vertex stage is missing POM input: {token}")
+entity_properties = (SHADERS / "entity.properties").read_text(encoding="utf-8")
+for token in ("entity.50128=minecraft:item_frame", "entity.50132=minecraft:glow_item_frame"):
+    if token not in entity_properties:
+        errors.append(f"Entity POM exclusion mapping is missing: {token}")
+if "POM_ENTITY_STRENGTH" not in props or "POM_ENTITY_STRENGTH" not in slider_options_line:
+    errors.append("POM_ENTITY_STRENGTH must be exposed as an Iris Quality slider")
+if "POM_ENTITY_STRENGTH:0" not in props or "POM_ENTITY_STRENGTH:20" not in props:
+    errors.append("Entity POM must remain disabled in low-end profiles and opt-in for Ultra/HDR")
+if "option.POM_ENTITY_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("Entity POM strength requires a user-facing tooltip")
+
 for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     for token in ("#define GENERATED_NORMAL_STRENGTH 25",
@@ -497,12 +522,12 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
                   "outEmissionData = vec4("):
         if token not in source:
             errors.append(f"{name} is missing resource-pack PBR specular support: {token}")
-    specular_sample = "textureGrad(specular, materialUv, uvDx, uvDy)" if name == "gbuffers_block.fsh" else "texture(specular, vTexCoord)"
+    specular_sample = "textureGrad(specular, materialUv, uvDx, uvDy)" if name in ("gbuffers_block.fsh", "gbuffers_entities.fsh") else "texture(specular, vTexCoord)"
     if specular_sample not in source:
         errors.append(f"{name} must sample specular data at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(fragment_name, "")
-    normal_sample = "textureGrad(normals, materialUv, uvDx, uvDy)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh") else "texture(normals, vTexCoord)"
+    normal_sample = "textureGrad(normals, materialUv, uvDx, uvDy)" if fragment_name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh") else "texture(normals, vTexCoord)"
     if normal_sample not in source:
         errors.append(f"{fragment_name} must sample its PBR normal map at the active material UV")
 for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
@@ -529,7 +554,7 @@ for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers
             errors.append(f"{fragment_name} is missing opaque PBR normal-map component: {token}")
 if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal)" not in sources.get("gbuffers_terrain.fsh", ""):
     errors.append("Terrain must apply resource-pack tangent-space normal maps")
-if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialAO)" not in sources.get("gbuffers_entities.fsh", ""):
+if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO)" not in sources.get("gbuffers_entities.fsh", ""):
     errors.append("Entities must apply resource-pack tangent-space normal maps")
 if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal)" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")

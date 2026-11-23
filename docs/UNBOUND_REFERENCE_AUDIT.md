@@ -267,3 +267,10 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 - Run #1058 (45109244596) passed all nine stages for generated normals. Run #1060 (45109448675) passed all nine stages for coated textures and the corrected uniform declarations.
 - Source-level validation only: visual material response, atlas seams, oldPBR/LabPBR pack compatibility and Intel HD 5500 GPU cost still require Minecraft 26.3 + Iris runtime testing.
 - Remaining reference gaps include generic entity/held-item POM, POM self-shadowing, slope-normal reconstruction and runtime calibration.
+
+
+## Entity-model POM extension — 2026-11-23
+- Added opt-in LabPBR/oldPBR height mapping to the opaque entity G-buffer. The entity vertex stage now forwards Iris mc_midTexCoord atlas bounds and at_tangent-derived view direction.
+- Entity POM uses the same bounded 4/6/8-step intersection, 32-block maximum fade, 0.20 UV displacement cap and cutout-alpha fallback as terrain/block entities. Item frames and glow item frames are excluded through explicit entity.properties mappings (50128 and 50132).
+- POM_ENTITY_STRENGTH defaults to 0 and is disabled in Ultra-Light/Smooth; Ultra/HDR opt in at 20 to protect low-end performance. Generic translucent entities and held items are not covered.
+- CI #1065 (45110274115) compiled and linked all shader variants but failed structural validation because the validator still expected pre-POM implicit normal/specular sampling and the old normal-function signature. The source compiled; the validator has now been updated to recognise explicit textureGrad sampling and entity POM exclusions. Re-run CI before marking this extension validated.

@@ -768,3 +768,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - This source change aims for better Unbound-style surface detail while keeping three texture reads per water fragment. Runtime water appearance, texture filtering and Intel HD 5500 cost remain to be checked in Minecraft 26.3 + Iris.
 
 - Water-normal refinement: the multi-scale wave slope is now added to the existing resource-pack PBR normal instead of replacing it. Setting WATER_WAVE_SCALE to 0 disables the custom normal field cleanly. CI's first failure on this feature was only an overly strict validator token split across GLSL lines; shader compilation and linking had already passed.
+
+
+## Entity-model POM extension — 2026-11-23
+- Added opt-in LabPBR/oldPBR height mapping to the opaque entity G-buffer. The entity vertex stage now forwards Iris mc_midTexCoord atlas bounds and at_tangent-derived view direction.
+- Entity POM uses the same bounded 4/6/8-step intersection, 32-block maximum fade, 0.20 UV displacement cap and cutout-alpha fallback as terrain/block entities. Item frames and glow item frames are excluded through explicit entity.properties mappings (50128 and 50132).
+- POM_ENTITY_STRENGTH defaults to 0 and is disabled in Ultra-Light/Smooth; Ultra/HDR opt in at 20 to protect low-end performance. Generic translucent entities and held items are not covered.
+- CI #1065 (45110274115) compiled and linked all shader variants but failed structural validation because the validator still expected pre-POM implicit normal/specular sampling and the old normal-function signature. The source compiled; the validator has now been updated to recognise explicit textureGrad sampling and entity POM exclusions. Re-run CI before marking this extension validated.
