@@ -140,3 +140,6 @@ option.ENTITY_GN_AND_CT.comment = Enables albedo-derived normal detail and stabl
 
 option.WATER_WAVE_DETAIL = Very Large Water Wave Detail
 option.WATER_WAVE_DETAIL.comment = Adds Unbound-style very-large-scale normal detail with one extra texture sample. Disabled in Ultra-Light and Smooth to protect low-end GPUs.
+
+option.HAND_PBR_STRENGTH = Held Item PBR Strength
+option.HAND_PBR_STRENGTH.comment = Enables tangent-space normal maps, material reflectance and item-specific highlights on first-person held items. Set to 0 to skip the two extra PBR texture reads; Ultra-Light disables this path.

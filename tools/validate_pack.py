@@ -8,7 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SHADERS = ROOT / "shaders"
 REQUIRED = (
-    "shaders.properties", "block.properties", "entity.properties",
+    "shaders.properties", "block.properties", "entity.properties", "item.properties",
     "gbuffers_terrain.vsh", "gbuffers_terrain.fsh",
     "gbuffers_entities.vsh", "gbuffers_entities.fsh",
     "gbuffers_block.vsh", "gbuffers_block.fsh",
@@ -1223,6 +1223,33 @@ for option in ("GENERATED_NORMAL_STRENGTH", "COATED_TEXTURE_STRENGTH"):
                            if line.startswith(f"#define {option} "))
     if len(set(definitions)) != 1:
         errors.append(f"{option} must be defined identically in terrain, block and entity shaders")
+
+
+if "compile_labpbr_pair hand shaders/gbuffers_hand.vsh shaders/gbuffers_hand.fsh" not in workflow_text:
+    errors.append("CI must compile the first-person hand PBR path with LabPBR enabled")
+item_properties = (SHADERS / "item.properties").read_text(encoding="utf-8") if (SHADERS / "item.properties").is_file() else ""
+for token in ("item.45012=iron_shovel", "item.45016=golden_shovel", "item.45020=diamond_shovel",
+              "item.45024=netherite_shovel", "item.44094=glowstone_dust", "item.44096=nether_star"):
+    if token not in item_properties:
+        errors.append(f"Missing Iris held-item ID mapping: {token}")
+hand_shader = sources.get("gbuffers_hand.fsh", "")
+for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemId",
+              "uniform sampler2D normals", "uniform sampler2D specular", "uniform vec3 shadowLightPosition",
+              "textureGrad(normals", "textureGrad(specular", "MC_TEXTURE_FORMAT_LAB_PBR",
+              "currentRenderedItemId == 45012", "currentRenderedItemId == 44094",
+              "outColor = albedo"):
+    if token not in hand_shader:
+        errors.append(f"Hand PBR path is missing component: {token}")
+hand_props = (SHADERS / "shaders.properties").read_text(encoding="utf-8")
+hand_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
+if "HAND_PBR_STRENGTH" not in hand_props.split("sliders =", 1)[-1]:
+    errors.append("Held-item PBR strength must be exposed as a slider")
+if "option.HAND_PBR_STRENGTH.comment =" not in hand_lang:
+    errors.append("Held-item PBR strength requires a user-facing tooltip")
+for profile, value in (("Ultra-Light", "0"), ("Smooth", "50"), ("Ultra", "100")):
+    line = next((line for line in hand_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"HAND_PBR_STRENGTH:{value}" not in line:
+        errors.append(f"{profile} has incorrect held-item PBR strength")
 
 if errors:
     print("Serene Ultra structural validation FAILED:")

@@ -891,3 +891,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - The coating pass remains blocked by explicit PBR emission and high reflectance/metal response, but no longer disappears merely because a non-emissive PBR specular map exists.
 - Gold-bell and copper base-colour response remains material-specific; their fallback smoothness/F0 values are only applied when no explicit specular map exists.
 - CI now guards the per-material factors and verifies that the coating gate does not require the absence of a PBR map. Runtime visuals and performance remain pending.
+
+
+## First-person held-item PBR — 2026-11-23
+- Added the Iris item.properties IDs from the supplied Complementary reference and a forward-rendered PBR path in gbuffers_hand. Iris docs confirm currentRenderedItemId reads item.properties in gbuffers programs, and at_tangent is valid in gbuffers vertex shaders.
+- The hand path preserves vanilla colored-lightmap diffuse, then adds tangent-space oldPBR/LabPBR normal mapping, specular decoding and a low-cost GGX-style direct highlight. Item-ID fallbacks cover tool/armor material groups, ender pearls, clocks/compasses, amethyst and selected emissive items.
+- HAND_PBR_STRENGTH is an explicit Quality slider: Ultra-Light=0 (skips the two additional material texture reads), Smooth=50, Ultra/HDR=100. No G-buffer targets are written by gbuffers_hand; it remains a forward pass.
+- CI now links the hand program in the LabPBR branch in addition to compiling the default oldPBR branch. Runtime lighting, held-item tint, and target-GPU performance remain unverified.

@@ -106,6 +106,7 @@ jobs:
           compile_labpbr_pair water shaders/gbuffers_water.vsh shaders/gbuffers_water.fsh
           compile_labpbr_pair entities shaders/gbuffers_entities.vsh shaders/gbuffers_entities.fsh
           compile_labpbr_pair block_entities shaders/gbuffers_block.vsh shaders/gbuffers_block.fsh
+          compile_labpbr_pair hand shaders/gbuffers_hand.vsh shaders/gbuffers_hand.fsh
           compile_labpbr_pair deferred shaders/deferred.vsh shaders/deferred.fsh
       - name: Compile opt-in entity POM branches
         shell: bash
