@@ -1786,3 +1786,9 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Added reference-guided material IDs and albedo-derived smoothness/coating response for blackstone, netherrack, end stone, snow/powder snow and coral blocks. Snow is excluded from puddle accumulation.
 - Extended the terrain porosity fallback table for these IDs so any applicable wetness response remains coherent across mapped vanilla material families; Nether/End/snow/coral weather gating still comes from Iris biome precipitation and water state.
 - Structural checks now cover the additional fallback IDs and porosity values. Runtime appearance and dimension-specific calibration remain pending.
+
+
+### Vanilla/oldPBR wetness fallback CI confirmation — 2026-11-23
+- GitHub Actions run `45237391733` on commit `3032a7be631bf70c5370d8841cd301a74115a3ee` passed all stages after the porosity fallback and validator updates: base GLSL compilation, Iris render-stage branches, LabPBR, entity POM, Unbound water detail, Ultra-Light reflection branches, water alpha-height inspection, program linking and structural validation.
+- The terrain wetness fallback now covers the mapped stone/deepslate/cobble/dirt/obsidian/wood/sand groups plus blackstone, netherrack, end stone, snow and coral. Entity/block-entity wetness remains LabPBR-driven; that limitation is still documented in the feature matrix.
+- This is source/CI validation only. In-game rain, wetness, puddle behavior and target-GPU performance remain unverified.
