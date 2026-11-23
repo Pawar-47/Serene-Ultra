@@ -117,6 +117,9 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
             continue;
         }
 
+        vec4 sampleNormalData = texture(colortex2, sampleUV);
+        if (sampleNormalData.a < 0.5) continue;
+
         vec3 sampleNdc = vec3(sampleUV, sampleDepth) * 2.0 - 1.0;
         vec3 sampleViewPosition = projectAndDivide(gbufferProjectionInverse, sampleNdc);
         vec3 delta = sampleViewPosition - viewPosition;
@@ -127,11 +130,20 @@ float sampleContactAO(vec3 viewPosition, vec3 viewNormal) {
         }
 
         vec3 sampleDirection = delta / distanceToSample;
+        vec3 sampleViewNormal = normalize(
+            mat3(gbufferModelView) * (sampleNormalData.rgb * 2.0 - 1.0)
+        );
+        // Avoid spreading contact darkening across unrelated surfaces at
+        // depth/normal discontinuities while retaining partial corner AO.
+        float normalAlignment = dot(viewNormal, sampleViewNormal);
+        float normalWeight = mix(
+            0.30, 1.0, smoothstep(-0.25, 0.85, normalAlignment)
+        );
         float facing = max(dot(viewNormal, sampleDirection), 0.0);
         float nearerSurface = step(viewPosition.z + 0.015, sampleViewPosition.z);
         float distanceWeight = 1.0 - smoothstep(AO_RADIUS * 0.35, AO_RADIUS, distanceToSample);
 
-        occlusion += facing * nearerSurface * distanceWeight;
+        occlusion += facing * nearerSurface * distanceWeight * normalWeight;
         validSamples += 1.0;
     }
 
