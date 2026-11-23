@@ -1254,6 +1254,14 @@ for line_number, raw_line in enumerate(item_properties.splitlines(), 1):
             errors.append(f"Item identifier {normalized} is assigned to IDs {previous[0]} and {numeric_id}")
         else:
             mapped_items[normalized] = (numeric_id, line_number)
+
+entity_shader = sources.get("gbuffers_entities.fsh", "")
+for token in ("uniform int currentRenderedItemId", "bool hasMaterialSpecularMap",
+              "currentRenderedItemId == 45000", "currentRenderedItemId == 45012",
+              "currentRenderedItemId == 45116", "currentRenderedItemId == 44094",
+              "currentRenderedItemId == 44040", "if (pbrEmission < 0.01)"):
+    if token not in entity_shader:
+        errors.append(f"Entity item-material fallback is missing component: {token}")
 hand_shader = sources.get("gbuffers_hand.fsh", "")
 for token in ("#define HAND_PBR_STRENGTH 100", "uniform int currentRenderedItemId",
               "uniform sampler2D normals", "uniform sampler2D specular", "uniform vec3 shadowLightPosition",

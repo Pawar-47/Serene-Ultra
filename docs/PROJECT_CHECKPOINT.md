@@ -945,3 +945,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Corrected the water-colour coordinate comment to document the actual 2560-block wrap (80 repeats at 1/32 scale), and made CI assert that the comment cannot drift from the stable-world period.
 - The custom normal's alpha is constant 255, so it is not a verified height map. Water POM remains deferred; richer cloud/world-space reflections and runtime calibration remain outstanding.
 - CI #1092 passed after held-item material fallback coverage was expanded. This does not substitute for Minecraft/Iris runtime testing.
+
+
+## Entity item/armor material classification — 2026-11-23
+- Extended Iris currentRenderedItemId handling into gbuffers_entities so dropped item models and worn armor use the same item.properties material groups as first-person held items.
+- Resource-pack specular maps retain priority for smoothness, reflectance and emission. When no specular map exists, item IDs provide material fallbacks for armor trims, wood/stone/iron/gold/diamond/netherite/copper tools and armor, buckets, amethyst, shields, turtle shells, ender pearls, clocks/compasses, totems and tridents.
+- Item emission fallbacks are applied only when the resource-pack specular map does not encode emission. LabPBR metals use the metal F0 code path; oldPBR items use deferred metalness. The entity pass reuses its existing specular sample and adds no texture fetches.
+- CI must validate both oldPBR and LabPBR branches. Runtime dropped-item/armor appearance remains unverified.

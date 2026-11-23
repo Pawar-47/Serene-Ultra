@@ -10,6 +10,7 @@ uniform vec3 cameraPositionFract;
 uniform float alphaTestRef;
 uniform vec4 entityColor;
 uniform int entityId;
+uniform int currentRenderedItemId;
 
 in vec2 vTexCoord;
 in vec2 vLightmapCoord;
@@ -285,6 +286,8 @@ void main() {
 #endif
 #endif
     vec4 pbrSpecular = textureGrad(specular, materialUv, uvDx, uvDy);
+    float specularMapMagnitude = max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a));
+    bool hasMaterialSpecularMap = specularMapMagnitude > 0.0001;
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
     float materialReflectance = 0.0;
     float pbrEmission = 0.0;
@@ -292,12 +295,11 @@ void main() {
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     materialSurfaceData = clamp(pbrSpecular.b, 0.0, 1.0);
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
-    float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
-    if (pbrMapPresent < 0.5) {
-        materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
+    if (!hasMaterialSpecularMap) {
+        materialReflectance = 0.04;
     } else if (labF0Code >= 230.0) {
         materialReflectance = 1.0;
-        materialSurfaceData = 0.0; // LabPBR reserves blue for future use on metals.
+        materialSurfaceData = 0.0;
     } else {
         materialReflectance = labF0Code / 255.0;
     }
@@ -307,6 +309,137 @@ void main() {
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0);
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
+
+    // The deferred buffer interprets LabPBR reflectance as F0 and oldPBR as metalness.
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+    float itemIronReflectance = 1.0;
+    float itemGoldReflectance = 1.0;
+    float itemDiamondReflectance = 1.0;
+    float itemNetheriteReflectance = 1.0;
+    float itemCopperReflectance = 1.0;
+    float itemClockReflectance = 1.0;
+#else
+    float itemIronReflectance = 0.75;
+    float itemGoldReflectance = 0.9;
+    float itemDiamondReflectance = 0.55;
+    float itemNetheriteReflectance = 0.85;
+    float itemCopperReflectance = 0.65;
+    float itemClockReflectance = 0.75;
+#endif
+    if (!hasMaterialSpecularMap) {
+        if (currentRenderedItemId == 45000) { // Armor trims
+            materialSmoothness = 0.5;
+            materialReflectance = 0.2;
+        } else if (currentRenderedItemId == 45004) { // Wooden tools and bows
+            float woodGloss = dot(albedo.rgb, vec3(0.3));
+            materialSmoothness = clamp(woodGloss * woodGloss, 0.0, 0.4);
+        } else if (currentRenderedItemId == 45008) { // Stone tools
+            materialSmoothness = clamp(pow(albedo.g, 4.0) * 2.0, 0.0, 1.0);
+        } else if (currentRenderedItemId == 45012 || currentRenderedItemId == 45013) {
+            materialSmoothness = clamp(pow(albedo.r, 2.0), 0.0, 1.0);
+            materialReflectance = itemIronReflectance;
+        } else if (currentRenderedItemId == 45016 || currentRenderedItemId == 45017 || currentRenderedItemId == 45108) {
+            float goldGreenFourth = pow(albedo.g, 4.0);
+            materialSmoothness = clamp(max(albedo.g, 0.8) - goldGreenFourth * 0.5, 0.0, 1.0);
+            materialReflectance = itemGoldReflectance;
+        } else if (currentRenderedItemId == 45020 || currentRenderedItemId == 45021) {
+            materialSmoothness = clamp(max(albedo.g, 0.8) - pow(albedo.g, 4.0) * 0.4, 0.0, 1.0);
+            materialReflectance = itemDiamondReflectance;
+        } else if (currentRenderedItemId == 45024 || currentRenderedItemId == 45025 || currentRenderedItemId == 45026) {
+            materialSmoothness = clamp(albedo.b * 1.65, 0.0, 1.0);
+            materialReflectance = itemNetheriteReflectance;
+        } else if (currentRenderedItemId == 45036) {
+            float colorDifference = max(max(abs(albedo.r - albedo.g), abs(albedo.g - albedo.b)), abs(albedo.r - albedo.b));
+            materialSmoothness = colorDifference < 0.01
+                ? clamp(pow(albedo.r, 2.0), 0.0, 1.0)
+                : clamp(albedo.b, 0.0, 1.0);
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = colorDifference < 0.01 ? 1.0 : 0.04;
+#else
+            materialReflectance = colorDifference < 0.01 ? 0.75 : 0.1;
+#endif
+        } else if (currentRenderedItemId == 45056) {
+            materialSmoothness = clamp(0.8 - pow(albedo.r, 2.0) * 0.3, 0.0, 1.0);
+            materialReflectance = 0.15;
+        } else if (currentRenderedItemId == 45060) {
+            materialSmoothness = clamp(min(albedo.r * albedo.g * albedo.b * 4.0, 0.7) * 0.7, 0.0, 1.0);
+        } else if (currentRenderedItemId == 45064) {
+            materialSmoothness = clamp(albedo.g * 0.7, 0.0, 1.0);
+        } else if (currentRenderedItemId == 45068) {
+            materialSmoothness = 1.0;
+        } else if (currentRenderedItemId == 45076 || currentRenderedItemId == 45108) {
+            float goldGreenFourth = pow(albedo.g, 4.0);
+            materialSmoothness = clamp(max(albedo.g, 0.8) - goldGreenFourth * 0.5, 0.0, 1.0);
+            materialReflectance = itemClockReflectance;
+        } else if (currentRenderedItemId == 45080 || currentRenderedItemId == 45084) {
+            materialSmoothness = clamp(pow(albedo.r, 2.0), 0.0, 1.0);
+            materialReflectance = itemIronReflectance;
+        } else if (currentRenderedItemId == 44013 && albedo.r + albedo.g <= albedo.b * 2.0) {
+            materialSmoothness = clamp(pow(albedo.r, 2.0), 0.0, 1.0);
+            materialReflectance = itemIronReflectance;
+        } else if (currentRenderedItemId == 44085) {
+            materialSmoothness = clamp(albedo.g, 0.0, 1.0);
+#ifdef MC_TEXTURE_FORMAT_LAB_PBR
+            materialReflectance = 1.0;
+#else
+            materialReflectance = 0.65;
+#endif
+        } else if (currentRenderedItemId == 45116 || currentRenderedItemId == 45117) {
+            float copperSmoothness = pow(albedo.r, 4.0)
+                + pow(max(albedo.g - albedo.r * 0.5, 0.0), 2.0) * 0.3;
+            materialSmoothness = clamp(copperSmoothness, 0.0, 1.0);
+            materialReflectance = itemCopperReflectance;
+        }
+    }
+
+    if (pbrEmission < 0.01) {
+        if (currentRenderedItemId == 44090) {
+            if (!hasMaterialSpecularMap) materialSmoothness = 1.0;
+            pbrEmission = max(albedo.g - albedo.b * 0.25, 0.0);
+        } else if (currentRenderedItemId == 44013) {
+            if (albedo.r + albedo.g > albedo.b * 2.0) {
+                pbrEmission = max(albedo.r + albedo.g - albedo.b * 1.5, 0.0) * 1.8;
+                albedo.rg += albedo.b * vec2(0.4, 0.15);
+                albedo.b *= 0.8;
+            }
+        } else if (currentRenderedItemId == 44040) {
+            pbrEmission = 1.0;
+        } else if (currentRenderedItemId == 44053) {
+            if (albedo.g < albedo.r) pbrEmission = 3.0;
+        } else if (currentRenderedItemId == 44085) {
+            float tridentFactor = min(dot(albedo.rgb, albedo.rgb), 2.5);
+            pbrEmission = min(max(tridentFactor - 1.0, 0.0) * 6.0, 1.0);
+        } else if (currentRenderedItemId == 44086) {
+            pbrEmission = albedo.b * 2.0;
+        } else if (currentRenderedItemId == 44092) {
+            pbrEmission = albedo.b * 2.0;
+        } else if (currentRenderedItemId == 44093) {
+            pbrEmission = albedo.g;
+        } else if (currentRenderedItemId == 44094) {
+            pbrEmission = dot(albedo.rgb, albedo.rgb) * 0.5 + 1.0;
+        } else if (currentRenderedItemId == 44095) {
+            pbrEmission = pow(max(albedo.r, 0.0), 1.5) * 2.5 + 0.2;
+        } else if (currentRenderedItemId == 44096) {
+            pbrEmission = pow(max(albedo.r + albedo.g, 0.0), 2.0) * 0.5;
+        } else if (currentRenderedItemId == 45048) {
+            pbrEmission = max(albedo.r + albedo.g - albedo.b * 0.5, 0.0);
+        } else if (currentRenderedItemId == 45052) {
+            pbrEmission = max(albedo.b * 2.0 - albedo.r, 0.0) * 1.5;
+        } else if (currentRenderedItemId == 45084) {
+            pbrEmission = max(albedo.b + albedo.g - albedo.r * 2.0, 0.0);
+        } else if (currentRenderedItemId == 45112) {
+            pbrEmission = abs(albedo.r - albedo.b) * 3.0;
+        } else if (currentRenderedItemId == 44002 || currentRenderedItemId == 44003 ||
+                   currentRenderedItemId == 44007 || currentRenderedItemId == 44008 ||
+                   currentRenderedItemId == 44009 || currentRenderedItemId == 44010 ||
+                   currentRenderedItemId == 44011 || currentRenderedItemId == 44012 ||
+                   currentRenderedItemId == 44015 || currentRenderedItemId == 44018 ||
+                   currentRenderedItemId == 44019 || currentRenderedItemId == 44028 ||
+                   currentRenderedItemId == 44029 || currentRenderedItemId == 44030 ||
+                   currentRenderedItemId == 44035 || currentRenderedItemId == 44084) {
+            pbrEmission = max(max(albedo.r, albedo.g), albedo.b) * 0.5;
+        }
+    }
 #ifdef ENTITY_GN_AND_CT
 #if COATED_TEXTURE_STRENGTH > 0
     if (entityId != 50128 && entityId != 50132 && albedo.a >= 0.999 &&
