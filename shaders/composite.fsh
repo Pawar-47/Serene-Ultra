@@ -20,6 +20,7 @@ uniform float rainStrength;
 uniform vec3 shadowLightPosition;
 uniform float sunAngle;
 uniform bool hasSkylight;
+uniform bool hasCeiling;
 
 in vec2 vTexCoord;
 
@@ -220,7 +221,7 @@ vec3 sampleOpaqueEnvironmentReflection(vec3 viewReflectionDirection) {
 
 vec3 applySereneHeightFog(vec3 sceneLinear, float sceneDepth, vec2 uv) {
 #if FOG_HEIGHT_STRENGTH > 0
-    if (!hasSkylight || sceneDepth >= 0.999999) return sceneLinear;
+    if ((!hasSkylight && !hasCeiling) || sceneDepth >= 0.999999) return sceneLinear;
 
     vec3 ndc = vec3(uv, sceneDepth) * 2.0 - 1.0;
     vec4 viewPosition4 = gbufferProjectionInverse * vec4(ndc, 1.0);
@@ -229,11 +230,24 @@ vec3 applySereneHeightFog(vec3 sceneLinear, float sceneDepth, vec2 uv) {
 
     float cameraWorldY = float(cameraPositionInt.y) + cameraPositionFract.y;
     float averageWorldY = cameraWorldY + playerPosition.y * 0.5;
-    float altitudeFalloff = exp(-max(averageWorldY - 64.0, 0.0) * 0.012);
     float weatherDensity = 1.0 + clamp(rainStrength, 0.0, 1.0) * 1.25;
     float strength = float(FOG_HEIGHT_STRENGTH) * 0.01;
-    float opticalDepth = length(viewPosition) * 0.00055
-        * altitudeFalloff * weatherDensity * strength;
+    float opticalDepth;
+
+    if (hasCeiling) {
+        // Ceiling dimensions such as the Nether use a denser, lower-altitude
+        // haze while retaining Iris' native dimension fog colour.
+        float netherAltitude = exp(-abs(averageWorldY - 48.0) * 0.0045);
+        float netherDensity = 1.0 + netherAltitude * 1.8;
+        opticalDepth = length(viewPosition) * 0.00022
+            * netherDensity * weatherDensity * strength;
+    } else {
+        // Open-sky dimensions retain the high-altitude atmospheric falloff.
+        float altitudeFalloff = exp(-max(averageWorldY - 64.0, 0.0) * 0.012);
+        opticalDepth = length(viewPosition) * 0.00055
+            * altitudeFalloff * weatherDensity * strength;
+    }
+
     float heightFog = clamp(1.0 - exp(-opticalDepth), 0.0, 0.90);
     vec3 fogLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
     return mix(sceneLinear, fogLinear, heightFog);
