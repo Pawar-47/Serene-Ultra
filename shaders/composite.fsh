@@ -28,6 +28,7 @@ layout(location = 0) out vec4 outColor;
 #define LIGHT_SHAFT_STRENGTH 45 // [0 10 20 30 40 50 60 70 80 90 100] Screen-space sunlight scattering strength
 #define LIGHT_SHAFT_QUALITY 8 // [0 4 8 12] Radial light-shaft samples
 #define SCREEN_GI_STRENGTH 25 // [0 5 10 15 20 25 30 35 40 45 50] Screen-space local colour bounce
+#define SCREEN_GI_QUALITY 8 // [0 4 8 12] Number of depth-aware colour-bounce samples
 
 #if LIGHT_SHAFT_QUALITY > 0
 vec3 sampleScreenSpaceLightShafts(vec2 uv) {
@@ -73,18 +74,25 @@ vec3 sampleScreenSpaceColorBleed(
     vec3 centerNormal,
     float normalValidity
 ) {
-#if SCREEN_GI_STRENGTH > 0
+#if SCREEN_GI_STRENGTH > 0 && SCREEN_GI_QUALITY > 0
     if (centerDepth >= 0.999999 || normalValidity < 0.49) return vec3(0.0);
 
     vec2 texel = 1.0 / vec2(textureSize(depthtex2, 0));
-    const vec2 offsets[4] = vec2[4](
+    const vec2 offsets[12] = vec2[12](
+        // Base cardinal ring: used by Smooth and every higher profile.
         vec2(-2.0, 0.0), vec2(2.0, 0.0),
-        vec2(0.0, -2.0), vec2(0.0, 2.0)
+        vec2(0.0, -2.0), vec2(0.0, 2.0),
+        // Diagonal ring: adds corner coverage for Ultra and HDR.
+        vec2(-1.414, -1.414), vec2(1.414, -1.414),
+        vec2(-1.414, 1.414), vec2(1.414, 1.414),
+        // Wider cardinal taps: reserved for the highest quality profile.
+        vec2(-3.5, 0.0), vec2(3.5, 0.0),
+        vec2(0.0, -3.5), vec2(0.0, 3.5)
     );
     vec3 bouncedLight = vec3(0.0);
     float totalWeight = 0.0;
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < SCREEN_GI_QUALITY; ++i) {
         vec2 sampleUv = uv + offsets[i] * texel;
         if (sampleUv.x <= 0.0 || sampleUv.x >= 1.0 ||
             sampleUv.y <= 0.0 || sampleUv.y >= 1.0) continue;
