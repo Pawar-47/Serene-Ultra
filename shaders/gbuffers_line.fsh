@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 130
 
 uniform int renderStage;
 uniform vec3 fogColor;
@@ -12,8 +12,8 @@ in vec4 vVertexColor;
 in vec3 vViewPosition;
 
 /* RENDERTARGETS: 0,2 */
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outDeferredValidity;
+out vec4 outColor0;
+out vec4 outColor1;
 
 float calculateLineFog(float distanceToCamera) {
     if (fogMode == 9729) {
@@ -48,7 +48,7 @@ void main() {
         colorLinear = mix(colorLinear, fogColorLinear, fogFactor);
     }
 
-    outColor = vec4(pow(max(colorLinear, vec3(0.0)), vec3(1.0 / 2.2)), vVertexColor.a);
+    outColor0 = vec4(pow(max(colorLinear, vec3(0.0)), vec3(1.0 / 2.2)), vVertexColor.a);
     // Lines and outlines are overlays; never reuse the terrain normal beneath.
-    outDeferredValidity = vec4(0.0);
+    outColor1 = vec4(0.0);
 }
