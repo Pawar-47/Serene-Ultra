@@ -765,6 +765,8 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "weatherColor.a < max(0.1, alphaTestRef)", "isEyeInWater == 3"):
     if token not in weather:
         errors.append(f"Forward weather shader is missing Iris fog/light component: {token}")
+if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in weather:
+    errors.append("Weather cylindrical fog must match the vanilla cylinder distance metric")
 hand_water = sources.get("gbuffers_hand_water.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "texture(lightmap",
               "fogColor", "fogDensity", "calculateHandWaterFog"):

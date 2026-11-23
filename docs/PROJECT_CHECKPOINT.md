@@ -1169,3 +1169,9 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 ### First-person hand-water fog consistency — 2026-11-23
 - Applied the same vanilla cylindrical fog distance to `gbuffers_hand_water.fsh` as the world-water pass: `max(length(vViewPosition.xz), abs(vViewPosition.y))`.
 - Extended structural validation to prevent the first-person water pass from regressing independently.
+
+
+### Forward weather cylindrical-fog consistency — 2026-11-23
+- Corrected `gbuffers_weather.fsh` to use `max(length(vViewPosition.xz), abs(vViewPosition.y))` when Iris reports cylindrical fog.
+- World water, first-person hand-water and weather now share the stock Minecraft cylinder distance; spherical mode remains unchanged.
+- Added a weather-specific structural regression guard.

@@ -55,7 +55,7 @@ void main() {
     vec3 weatherLinear = pow(max(weatherColor.rgb, vec3(0.0)), vec3(2.2)) * lightmapLinear;
 
     float fogDistance = (fogShape == 1)
-        ? length(vViewPosition.xz)
+        ? max(length(vViewPosition.xz), abs(vViewPosition.y))
         : length(vViewPosition);
     float fogFactor = calculateWeatherFog(fogDistance);
     vec3 fogColorLinear = pow(max(fogColor, vec3(0.0)), vec3(2.2));
