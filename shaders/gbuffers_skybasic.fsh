@@ -24,8 +24,17 @@ vec3 reconstructPlayerDirection() {
     vec2 screenUV = gl_FragCoord.xy / vec2(viewWidth, viewHeight);
     vec4 clipPosition = vec4(screenUV * 2.0 - 1.0, gl_FragCoord.z * 2.0 - 1.0, 1.0);
     vec4 viewPosition = gbufferProjectionInverse * clipPosition;
-    viewPosition.xyz /= viewPosition.w;
-    return normalize(mat3(gbufferModelViewInverse) * viewPosition.xyz);
+
+    // A sky ray can map to a homogeneous direction at infinity (w ~= 0).
+    // In that case xyz is already the ray direction; never divide by zero.
+    vec3 viewRay = abs(viewPosition.w) > 0.00001
+        ? viewPosition.xyz / viewPosition.w
+        : viewPosition.xyz;
+    vec3 playerRay = mat3(gbufferModelViewInverse) * viewRay;
+    float rayLength = length(playerRay);
+    return rayLength > 0.00001
+        ? playerRay / rayLength
+        : vec3(0.0, 1.0, 0.0);
 }
 
 #define SKY_ATMOSPHERE_STRENGTH 100 // [0 25 50 75 100 125 150] Atmospheric scattering intensity
@@ -160,9 +169,11 @@ void main() {
 
         // Low-cost active-celestial glare, adapted from Complementary's
         // low-quality sky path. shadowLightPosition is Iris view space.
-        if (hasSkylight) {
+        float lightLength = length(shadowLightPosition);
+        if (hasSkylight && lightLength > 0.0001) {
+            vec3 lightDirection = shadowLightPosition / lightLength;
             float celestialAlignment = max(
-                dot(viewDirection, normalize(shadowLightPosition)),
+                dot(viewDirection, lightDirection),
                 0.0
             );
             float glareScatter = 3.0 * (2.0 - clamp(celestialAlignment * 1000.0, 0.0, 1.0));
