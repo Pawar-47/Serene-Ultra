@@ -329,7 +329,7 @@ for token in ("in vec2 mc_midTexCoord", "flat out vec4 vTexCoordAM",
               "vec4(mc_midTexCoord, 0.0, 1.0)"):
     if token not in terrain_vertex_source:
         errors.append(f"Terrain vertex stage is missing Iris sprite-safe POM input: {token}")
-for token in ("#include \"/lib/materials/parallax.glsl\"", "flat in vec4 vTexCoordAM",
+for token in ("flat in vec4 vTexCoordAM",
               "in vec3 vTangentView", "calculateParallaxUv(",
               "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
               "parallaxAlbedo.a >= alphaTestRef",
@@ -345,7 +345,7 @@ if "option.POM_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read
     errors.append("POM strength requires a user-facing tooltip")
 
 terrain_fragment = sources.get("gbuffers_terrain.fsh", "")
-for token in ("uniform sampler2D specular", "texture(specular, vTexCoord)",
+for token in ("uniform sampler2D specular", "textureGrad(specular, materialUv, uvDx, uvDy)",
               "MC_TEXTURE_FORMAT_LAB_PBR", "pbrSpecular.r", "pbrSpecular.g",
               "pbrSpecular.a", "pbrSpecular.b", "materialSmoothness"):
     if token not in terrain_fragment:
