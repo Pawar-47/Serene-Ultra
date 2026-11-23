@@ -1456,3 +1456,8 @@ The two post-processing batches are source changes only. No Minecraft/Iris runti
 Added a camera-motion blur path to `shaders/final.fsh` using Iris-documented `gbufferPreviousModelView`, `gbufferPreviousProjection`, `gbufferProjectionInverse`, `gbufferModelViewInverse`, `cameraPosition` and `previousCameraPosition`. Static world positions are reprojected into the previous camera, then the resulting screen-space vector drives a depth-rejected 4/6/8-tap gather. The Quality menu, slider list, English labels/tooltips and all five profile budgets were updated. Ultra-Light disables it; Smooth/Ultra/HDR/Ultra-HDR use progressively higher budgets.
 
 **Scope limit:** this is camera-motion blur only. Independently moving entities/blocks do not have per-object velocity vectors in this implementation and are not claimed to receive correct object-motion blur. No runtime validation has occurred. Iris uniform names were checked against the current Iris documentation; this confirms the documented interfaces, not actual Minecraft rendering behavior.
+
+
+## Profile option-value consistency correction — 2026-11-23
+
+After adding the DOF and lens/motion controls, the profile values were reconciled against each option's declared Iris value list. DOF now uses only supported values (Ultra-Light 0, Smooth 20, Ultra/HDR 40, Ultra-HDR 50); chromatic aberration, vignette and film grain presets likewise use values present in their declared lists. This is a settings-integrity correction within the feature implementation batch, not a new validation cycle.
