@@ -1278,6 +1278,7 @@ for token in ("uniform float alphaTestRef", "vec4 cloudColor = vVertexColor;",
               "cloudColor.a < alphaTestRef", "outDeferredValidity = vec4(0.0)",
               "uniform vec3 shadowLightPosition", "uniform float sunAngle",
               "solarElevation", "silverLining", "CLOUD_SCATTERING_STRENGTH",
+              "hasSkylight && lightLength > 0.0001", "vec3 lightingTint = hasSkylight",
               "cloudLinear *= mix("):
     if token not in clouds:
         errors.append(f"Cloud shader is missing Iris/reference component: {token}")

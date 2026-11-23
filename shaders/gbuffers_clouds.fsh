@@ -61,7 +61,7 @@ void main() {
     float lightLength = length(shadowLightPosition);
     vec3 lightDirection = lightLength > 0.0001
         ? shadowLightPosition / lightLength
-        : vec3(0.0, 1.0, 0.0);
+        : vec3(0.0);
     float viewLength = length(vViewPosition);
     vec3 viewDirection = viewLength > 0.0001
         ? -vViewPosition / viewLength
@@ -70,7 +70,9 @@ void main() {
     // Daylight fill changes cloud colour temperature, while forward scattering
     // adds a restrained silver lining toward the active sun/moon direction.
     float towardLight = max(dot(viewDirection, lightDirection), 0.0);
-    float silverLining = pow(towardLight, 6.0);
+    float silverLining = (hasSkylight && lightLength > 0.0001)
+        ? pow(towardLight, 6.0)
+        : 0.0;
     float cloudQuality = float(CLOUD_SCATTERING_STRENGTH) * 0.01;
     vec3 dayTint = vec3(1.0, 0.97, 0.90);
     vec3 nightTint = vec3(0.42, 0.50, 0.72);
@@ -79,7 +81,9 @@ void main() {
         vec3(0.72, 0.78, 0.88),
         rainStrength * 0.65 * cloudQuality
     );
-    vec3 lightingTint = mix(nightTint, dayTint, solarElevation);
+    vec3 lightingTint = hasSkylight
+        ? mix(nightTint, dayTint, solarElevation)
+        : vec3(1.0);
     cloudLinear *= mix(vec3(1.0), lightingTint, cloudQuality);
     cloudLinear *= weatherTint;
     cloudLinear += cloudLinear * silverLining
