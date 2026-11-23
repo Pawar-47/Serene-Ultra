@@ -42,3 +42,14 @@ Additional runtime checks:
 - Check all sign types (standing, wall and hanging) for correct text brightness, color and fog at distance.
 - Check End portal and End gateway surfaces for the intended emissive contribution and ensure the mapping does not affect unrelated block entities.
 - Verify opaque block entities still receive normal/lightmap/shadow/AO and translucent block entities use `gbuffers_block_translucent` after deferred.
+
+
+## Iris 26.1 program-routing regression checks
+- [ ] Confirm no `Failed to parse buffer blend! index = -1` popup on pack load; retain `logs/latest.log` if it occurs.
+- [ ] Confirm dropped items use the `gbuffers_item` → `gbuffers_textured_lit` fallback and receive the expected lightmap/PBR response.
+- [ ] Confirm glowing entities use the `gbuffers_entities_glowing` → `gbuffers_entities` fallback and preserve emissive/outline behavior.
+- [ ] Confirm shadow solid/cutout/water/entity/block/lightning variants resolve through their documented Iris fallback programs without missing shader errors.
+- [ ] Verify translucent entity and block-entity sorting with `separateEntityDraws=true`; do not assume the directive guarantees post-deferred routing on every Iris build.
+- [ ] Verify terrain solid/cutout paths resolve through `gbuffers_terrain` and preserve alpha-tested foliage and block materials.
+- [ ] Verify held item, dropped item, armor glint, spider eyes, beacon beam, lightning and clouds independently; shared fallback coverage is not visual parity.
+- [ ] Re-test the same scene after shader reload and after a full game restart to distinguish stale shaderpack cache from source behavior.
