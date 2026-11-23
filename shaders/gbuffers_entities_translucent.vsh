@@ -7,8 +7,8 @@ uniform mat4 gbufferModelViewInverse;
 in vec2 mc_midTexCoord;
 
 out vec2 vTexCoord;
-out vec2 vMidTexCoord;
-out vec2 vTexHalfSize;
+flat out vec2 vMidTexCoord;
+flat out vec2 vTexHalfSize;
 out vec2 vLightmapCoord;
 out vec4 vVertexColor;
 out vec3 vPlayerNormal;
