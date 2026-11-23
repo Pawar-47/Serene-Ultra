@@ -861,6 +861,8 @@ for token in ("block.30008=minecraft:tinted_glass", "block.30020=minecraft:nethe
         errors.append(f"Missing Iris translucent material ID mapping: {token}")
 if "uniform int isEyeInWater;" not in water:
     errors.append("Water pass must declare Iris isEyeInWater as int")
+if "reflectionLinear = sampleEnvironmentReflection(reflectionDirection);" not in water:
+    errors.append("Water must retain environment-only reflections when SSR quality is zero")
 if not (ROOT / "tools" / "expand_glsl_includes.py").is_file():
     errors.append("GLSL include expander helper is missing")
 environment_reflection = SHADERS / "lib" / "lighting" / "environment_reflection.glsl"
@@ -954,7 +956,8 @@ ultra_light_profile = next((line for line in props.splitlines() if line.startswi
 smooth_profile = next((line for line in props.splitlines() if line.startswith("profile.Smooth =")), "")
 ultra_profile = next((line for line in props.splitlines() if line.startswith("profile.Ultra =")), "")
 for token in ("WATER_WAVE_STRENGTH:25", "WATER_WAVE_DETAIL:0", "WATER_CAUSTICS_STRENGTH:25",
-              "WATER_FOAM_STRENGTH:25", "PBR_REFLECTION_STRENGTH:25", "PBR_REFLECTION_QUALITY:4",
+              "WATER_FOAM_STRENGTH:25", "PBR_REFLECTION_STRENGTH:25", "PBR_REFLECTION_QUALITY:0",
+              "WATER_REFLECTION_QUALITY:0",
               "AO_STRENGTH:0.40", "MATERIAL_SSS_STRENGTH:25"):
     if token not in ultra_light_profile:
         errors.append(f"Ultra-Light profile is missing low-cost setting: {token}")

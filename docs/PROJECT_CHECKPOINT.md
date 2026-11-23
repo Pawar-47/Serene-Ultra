@@ -1042,3 +1042,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Corrected a source-splicing error in the first shared-include commit by rebuilding deferred.fsh from its intact parent revision and replacing the entire held-light function block at a verified boundary.
 - Restored the water-wave-detail tooltip to the WATER_WAVE_DETAIL define and gave HELD_LIGHTING_STRENGTH its own correct slider annotation.
 - Added a validator assertion for the early return when both held light values are zero. The shared opaque/translucent path remains pending the fresh CI result.
+
+
+## Ultra-Light reflection quality path — 2026-11-23
+- Changed Ultra-Light opaque and water SSR quality to 0 while retaining reflection strength. Opaque composite already falls back to the shared Iris environment reflection when SSR quality is zero.
+- Added the matching water quality-zero branch: Fresnel reflections still use the shared sky/horizon and sun/moon environment approximation, but skip water SSR depth/color ray samples.
+- Smooth remains at 6 steps and Ultra/HDR remain at 8 steps. Higher profiles retain screen-space reflections.
+- Added validator checks for the environment-only water branch and the Ultra-Light zero-step profile. This is a quality/performance preset change; actual FPS and visual balance require in-game testing.

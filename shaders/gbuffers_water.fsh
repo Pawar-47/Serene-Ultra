@@ -732,37 +732,39 @@ void main() {
         // The scene copy is already fogged by deferred; do not fog it twice.
         litLinear = mix(litLinear, refractedSceneLinear, refractionMix);
 
-        // Fresnel-weighted screen-space reflections use depthtex2 (opaque
-        // world depth without first-person hand/translucent depth) and the
-        // separate colortex4 scene snapshot. Quality controls ray-march steps.
-        #if WATER_REFLECTION_QUALITY > 0
-        // Reuse the already camera-oriented, wave-perturbed view normal.
+        // Fresnel reflections always retain the cheap Iris sky/horizon and
+        // sun/moon fallback. The quality control only enables screen-space rays.
         vec3 reflectionViewNormal = viewNormal;
         float nDotV = clamp(dot(reflectionViewNormal, normalize(-vViewPosition)), 0.0, 1.0);
         float fresnel = 0.02 + 0.98 * pow(1.0 - nDotV, 5.0);
+        vec3 reflectionDirection = normalize(
+            reflect(normalize(vViewPosition), reflectionViewNormal)
+        );
+        vec3 reflectionLinear;
+        #if WATER_REFLECTION_QUALITY > 0
+        // Screen-space reflections use opaque depth and the half-resolution
+        // colortex4 snapshot. Quality controls the bounded ray-march steps.
         float reflectionConfidence = 0.0;
         vec3 reflectionColor = sampleTranslucentScreenReflection(
             vViewPosition, reflectionViewNormal, reflectionConfidence
-        );
-        vec3 reflectionDirection = normalize(
-            reflect(normalize(vViewPosition), reflectionViewNormal)
         );
         vec3 environmentReflectionLinear = reflectionConfidence < 0.999
             ? sampleEnvironmentReflection(reflectionDirection)
             : vec3(0.0);
         vec3 screenReflectionLinear = pow(max(reflectionColor, vec3(0.0)), vec3(2.2));
-        // Blend valid SSR hits over the sky/horizon fallback. Missing or
-        // off-screen rays retain a plausible environment reflection.
-        vec3 reflectionLinear = mix(
+        reflectionLinear = mix(
             environmentReflectionLinear, screenReflectionLinear, reflectionConfidence
         );
+        #else
+        // Ultra-Light retains environment reflections without SSR depth/color samples.
+        reflectionLinear = sampleEnvironmentReflection(reflectionDirection);
+        #endif
         float reflectionWeight = clamp(
             min(fresnel * 2.5, 0.85) * WATER_REFLECTION_STRENGTH
             * (1.0 - waterFoam) * (cameraUnderwater ? 0.5 : 1.0),
             0.0, 0.95
         );
         litLinear = mix(litLinear, reflectionLinear, reflectionWeight);
-        #endif
     }
 
     vec3 litColor = pow(max(litLinear, vec3(0.0)), vec3(1.0 / 2.2));
