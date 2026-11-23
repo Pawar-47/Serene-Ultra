@@ -289,3 +289,11 @@ Terrain, entities and block entities now sample Iris' `specular` atlas and `norm
 The opaque terrain, entity and block-entity G-buffers now decode the LabPBR normal-map blue channel as linear material AO and store it in `colortex3.b`; deferred applies it once to indirect/block-light ambient, leaving direct celestial illumination unchanged. `PBR_AO_STRENGTH` controls map influence and `MATERIAL_AO_STRENGTH` controls lighting impact. LabPBR specular blue values 65–255 are decoded as SSS in `colortex3.a` and add low-cost backlighting controlled by `MATERIAL_SSS_STRENGTH`; values 0–64 are decoded as porosity for wet darkening and puddle suppression. oldPBR and neutral/missing AO remain unaffected. The existing attachment was upgraded to RGBA8, adding bandwidth versus the RG8 intermediate but no new render target. Runtime and performance validation remain pending.
 
 | Vanilla terrain material fallbacks | Correct material response for common metals, gems and minerals without PBR resource packs | Complementary-guided Iris block IDs, albedo-derived smoothness, LabPBR/oldPBR metal classification and per-material coating factors | Partial; runtime calibration pending |
+
+
+
+## Minecraft 26.3 transparency architecture
+
+The Vanilla-stock archive contains 89 GLSL source files: 72 declare GLSL 330 and 17 are include fragments without a version declaration. Sixteen archive paths contain OIT-related files. The stock `core/terrain.fsh` and OIT includes implement a native multi-phase OIT path.
+
+The inspected Iris source maps translucent terrain to the shaderpack's `gbuffers_water` program, water-mask rendering to `gbuffers_basic`, and translucent particles to `gbuffers_particles_translucent`. It does not expose the stock OIT phase macros as shaderpack stages in the inspected source snapshot. Serene therefore targets Iris' conventional alpha-blended gbuffers path; native Minecraft OIT is an engine reference, not a shaderpack subsystem to copy. This remains subject to the 26.3 runtime regression test described in `docs/TEST_PLAN.md`.
