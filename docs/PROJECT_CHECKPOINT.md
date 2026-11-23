@@ -1123,3 +1123,7 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 
 ### Stained and tinted glass response — 2026-11-23
 Stained glass now receives a low-cost direct specular highlight and reference-aligned reflection multiplier (1.0); tinted glass reflection multiplier is raised to 1.0. Clear glass remains 0.5 and ice 0.7. The stained-glass highlight approximates Unbound's medium-smoothness/1.5 highlight settings with existing lighting vectors and no extra samples. Runtime visual calibration remains pending.
+
+
+### Clear-glass specular distinction — 2026-11-23
+Clear glass now receives a sharper exponent-128 direct highlight with the Unbound reference multiplier 3.5, gated by sampled alpha > 0.001. Stained glass keeps its medium exponent-32 highlight and 1.5 multiplier. The two materials no longer share one direct-highlight response. No additional texture samples or render targets; visual calibration remains pending.

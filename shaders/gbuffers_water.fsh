@@ -687,6 +687,20 @@ void main() {
     // Complementary Unbound derives ice smoothness and highlight strength
     // from the green texture channel. Recreate that compact response with
     // the existing normal/light/view vectors; no additional texture reads.
+    if (isClearGlass && translucentAlbedo.a > 0.001
+        && nDotL > 0.001 && celestialGate > 0.001) {
+        // Unbound clear glass uses its smoothest translucent material response
+        // and a 3.5 direct-highlight multiplier when the sampled alpha is solid.
+        // The existing alpha product is the equivalent min-alpha gate here.
+        vec3 clearGlassLightDirection = normalize(mat3(gbufferModelView) * worldLightDirection);
+        vec3 clearGlassViewDirection = normalize(-vViewPosition);
+        vec3 clearGlassHalfVector = normalize(clearGlassLightDirection + clearGlassViewDirection);
+        float clearGlassSpecular = pow(
+            max(dot(normalize(viewNormal), clearGlassHalfVector), 0.0),
+            128.0
+        ) * 3.5 * nDotL;
+        litLinear += celestialColor * celestialIntensity * shadow * celestialGate * clearGlassSpecular;
+    }
     if (isStainedGlass && nDotL > 0.001 && celestialGate > 0.001) {
         // Unbound assigns stained glass a medium-smooth surface and a 1.5
         // direct-highlight multiplier. Keep this as a cheap arithmetic-only

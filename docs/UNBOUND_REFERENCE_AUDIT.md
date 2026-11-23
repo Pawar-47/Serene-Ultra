@@ -351,3 +351,9 @@ A follow-up review against Unbound's GGX implementation found its direct highlig
 - The supplied Unbound translucent IPBR dispatch assigns stained glass smoothness 0.5, direct-highlight multiplier 1.5, and reflection multiplier 1.0. Tinted glass uses reflection multiplier 1.0. Clear glass retains its distinct 0.5 reflection multiplier; ice uses 0.7.
 - Serene now adds a low-cost medium-sharp direct highlight to stained glass using existing view/geometric normals, celestial direction, shadow and N·L. Reflection weights are adjusted to the reference material multipliers: stained/tinted 1.0, clear 0.5, ice 0.7.
 - This is an arithmetic-only approximation of Unbound's GGX response, not a claim of identical BRDF. No additional texture samples, loops or render targets. Visual tuning and performance profiling remain pending.
+
+
+### Clear-glass direct highlight — 2026-11-23
+- Unbound's clear-glass branch uses smoothness 1.0 and a direct-highlight multiplier of 3.5 when the minimum sampled alpha is above 0.001. Stained glass instead uses smoothness 0.5 and multiplier 1.5.
+- Serene now distinguishes clear glass from stained glass in the forward translucent lighting path. Clear glass receives a sharper exponent-128 Blinn approximation gated by its existing sampled alpha product, celestial visibility and N·L; stained glass retains its medium exponent-32 approximation. Both reuse existing vectors and shadowing, adding no texture samples or render targets.
+- This follows the reference's material split while remaining a low-cost approximation rather than an identical GGX implementation. Runtime visual tuning remains pending.
