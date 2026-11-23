@@ -2146,6 +2146,40 @@ if "#define ANISOTROPIC_FILTER_QUALITY" not in sources.get("gbuffers_terrain.fsh
 if "ANISOTROPIC_FILTER_QUALITY" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
     errors.append("Translucent anisotropic filtering must use the existing Quality control")
 
+anisotropic_helper = (SHADERS / "lib" / "materials" / "anisotropic_sampling.glsl").read_text(encoding="utf-8")
+for token in ("float xx = dot(uvDx, uvDx)", "float xy = dot(uvDx, uvDy)",
+              "float yy = dot(uvDy, uvDy)", "majorEigenvalue", "minorEigenvalue",
+              "majorDirection", "majorFootprint", "spriteBounds.xy + 0.5 * atlasTexel",
+              "textureGrad(sourceTexture, sampleUv, uvDx, uvDy)"):
+    if token not in anisotropic_helper:
+        errors.append(f"Translucent anisotropic sampler is missing principal-axis component: {token}")
+
+for fragment_name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
+                       "gbuffers_block_translucent.fsh"):
+    source = sources.get(fragment_name, "")
+    for token in ('#include "/lib/materials/anisotropic_sampling.glsl"',
+                  "#define ANISOTROPIC_FILTER_QUALITY",
+                  "sampleAnisotropicAtlas("):
+        if token not in source:
+            errors.append(f"{fragment_name} is missing shared translucent atlas filtering: {token}")
+
+for vertex_name in ("gbuffers_water.vsh", "gbuffers_entities_translucent.vsh",
+                    "gbuffers_block_translucent.vsh"):
+    source = sources.get(vertex_name, "")
+    for token in ("in vec2 mc_midTexCoord", "flat out vec2 vMidTexCoord",
+                  "flat out vec2 vTexHalfSize", "vTexHalfSize = abs(vTexCoord - vMidTexCoord)"):
+        if token not in source:
+            errors.append(f"{vertex_name} is missing flat Iris sprite bounds: {token}")
+
+anisotropic_defaults = []
+for fragment_name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
+                       "gbuffers_block_translucent.fsh"):
+    match = re.search(r"^#define ANISOTROPIC_FILTER_QUALITY\\s+(\\d+)", sources.get(fragment_name, ""), re.M)
+    if match:
+        anisotropic_defaults.append(match.group(1))
+if len(anisotropic_defaults) != 3 or len(set(anisotropic_defaults)) != 1:
+    errors.append("Translucent passes must share one ANISOTROPIC_FILTER_QUALITY default")
+
 if errors:
     print("Serene Ultra structural validation FAILED:")
     for error in errors:
