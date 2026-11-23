@@ -967,6 +967,31 @@ if "uniform vec4 entityColor" not in entity_translucent or "mix(albedoLinear, ti
 weather_vertex = sources.get("gbuffers_weather.vsh", "")
 if "#define WAVING_RAIN" not in weather_vertex or "eyeBrightnessSmooth" not in weather_vertex or "rainStrength" not in weather_vertex:
     errors.append("Weather vertex path must implement the Iris-aware waving rain/snow option")
+# Lava surface vertices must use the same world-stable displacement in the G-buffer and shadow map.
+lava_terrain_vertex = sources.get("gbuffers_terrain.vsh", "")
+lava_shadow_vertex = sources.get("shadow.vsh", "")
+for token in ("#define LAVA_WAVE_STRENGTH", "vMaterialId == 32118 || vMaterialId == 32132",
+              "fract(stableWorld.y + 0.005) > 0.06", "mod(stableWorld.xz, vec2(4096.0))",
+              "lavaDisplacement", "vPlayerPosition.y += lavaDisplacement"):
+    if token not in lava_terrain_vertex:
+        errors.append(f"Terrain lava wave path is missing component: {token}")
+for token in ("#define LAVA_WAVE_STRENGTH", "vShadowMaterialId == 32118 || vShadowMaterialId == 32132",
+              "fract(stableWorld.y + 0.005) > 0.06", "mod(stableWorld.xz, vec2(4096.0))",
+              "lavaDisplacement", "vShadowPlayerPosition.y += lavaDisplacement"):
+    if token not in lava_shadow_vertex:
+        errors.append(f"Shadow lava wave path is missing matching displacement: {token}")
+if "block.32118=minecraft:lava" not in (SHADERS / "block.properties").read_text(encoding="utf-8"):
+    errors.append("Lava wave material ID must map to vanilla lava")
+if "LAVA_WAVE_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
+    errors.append("LAVA_WAVE_STRENGTH must be exposed in Quality settings")
+if "option.LAVA_WAVE_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
+    errors.append("Lava wave strength requires a user-facing tooltip")
+for profile, value in (("Ultra-Light", "20"), ("Smooth", "35"), ("Ultra", "50"),
+                       ("HDR", "65"), ("Ultra-HDR", "75")):
+    profile_line = next((line for line in props.splitlines() if line.startswith(f"profile.{profile} =")), "")
+    if f"LAVA_WAVE_STRENGTH:{value}" not in profile_line:
+        errors.append(f"{profile} profile must set lava wave strength to {value}")
+
 weather = sources.get("gbuffers_weather.fsh", "")
 for token in ("/* RENDERTARGETS: 0 */", "sampleAnisotropicAtlas(",
               "gtexture, vTexCoord, materialUvDx, materialUvDy", "texture(lightmap",
