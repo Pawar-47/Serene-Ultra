@@ -1594,3 +1594,11 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Added structural checks for the new functions, menu entries and profile values.
 - Commits: final shader `d1b997dde7a618874f02be764ef545be2d62b1a9`; profile/menu `dda36dee664c33ca0965660df98e0baad01a1cbf`; validator `f830aac6ce58e529cc2dc01c56204e3117579c9d`; feature matrix `1c5dba35e3d83cadfbd4b4810ddba6cdca3a7e91`.
 - Runtime color parity, gamma behavior and HDR display calibration remain unverified; the shader compiler/structural CI run is pending.
+
+
+### Weather lighting integration — 2026-11-23
+- Updated `shaders/gbuffers_weather.fsh` to preserve the vanilla RGB lightmap while adding a subtle solar-elevation-dependent sky tint and the shared animated cloud-shadow field. Cloud attenuation is gated by the interpolated sky-light coordinate so the block-light contribution is not fully suppressed by overhead clouds.
+- The weather pass uses the same stable-world cloud-shadow helper and quality defines as terrain/forward translucent receivers; Iris fog, rain/snow opacity and lightning illumination remain in the existing forward path.
+- Updated `docs/REFERENCE_FEATURE_MATRIX.md` and `tools/validate_pack.py` to record and assert the new weather path.
+- Commits: shader `7f28b010eb9bdc1e707bf9b715898324edbc5505`; matrix `464938e2458e62842e61552e3dbf2c1466459502`; validator `09452035a21eabd9dcf27edd8d78532926eee57a`.
+- The weather-specific change has not yet been confirmed by a completed CI run on a commit containing all three changes. The latest confirmed all-green validation remains run `45228817698` at `8d7f334e`; Minecraft/Iris runtime testing is still outstanding.
