@@ -485,6 +485,10 @@ block_properties = (SHADERS / "block.properties").read_text(encoding="utf-8")
 for token in ("block.30012=minecraft:slime_block", "block.30016=minecraft:honey_block",
               "block.32100=minecraft:glowstone", "block.32118=minecraft:lava",
               "block.5004=minecraft:oak_sign", "block.5025=minecraft:end_portal",
+              "block.5008=minecraft:chest", "block.5012=minecraft:ender_chest",
+              "block.5016=minecraft:shulker_box", "block.5020=minecraft:conduit",
+              "block.5028=minecraft:bell", "block.5032=minecraft:copper_chest",
+              "block.5036=minecraft:white_banner", "block.10548=minecraft:enchanting_table",
               "block.10009=leaves:waterlogged=false", "block.10011=leaves:waterlogged=true",
               "block.10129=farmland:moisture=0", "block.10137=farmland:moisture=7"):
     if token not in block_properties:
@@ -881,6 +885,12 @@ for token in ("/* RENDERTARGETS: 0 */", "texture(gtexture", "alphaTestRef",
 block_shader = sources.get("gbuffers_block.fsh", "")
 for token in ("/* RENDERTARGETS: 0,1,2,3 */", "uniform int blockEntityId",
               "blockEntityId == 5004", "blockEntityId == 5025",
+              "blockEntityId == 5008", "blockEntityId == 5012", "blockEntityId == 5020",
+              "blockEntityId == 5028", "blockEntityId == 5032", "blockEntityId == 5036",
+              "blockEntityId == 10548", "hasMaterialSpecularMap", "skipGeneratedNormals",
+              "materialSmoothness = enderChestFactor * 2.0",
+              "emissionStrength = max(emissionStrength, 5.0)",
+              "albedo.rgb *= vec3(1.0, 0.25, 0.1)",
               "outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, signText ? 0.0 : 0.5 + 0.5 * materialSmoothness)",
               "calculateBlockFog", "outEmissionData"):
     if token not in block_shader:

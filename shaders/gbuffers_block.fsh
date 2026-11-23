@@ -271,7 +271,7 @@ void main() {
 
     float parallaxOffset = 0.0;
 #if POM_STRENGTH > 0
-    bool allowParallax = gl_FrontFacing && !signText && blockEntityId != 5025;
+    bool allowParallax = gl_FrontFacing && !signText && blockEntityId != 5025 && blockEntityId != 5036;
     if (allowParallax) {
         vec2 parallaxUv = calculateParallaxUv(
             vTexCoord, uvDx, uvDy, vTexCoordAM, vTangentView,
@@ -315,12 +315,15 @@ void main() {
     float materialAO = 1.0;
     bool hasExplicitNormal = false;
     if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal);
+bool skipGeneratedNormals = signText || blockEntityId == 5036;
 #if GENERATED_NORMAL_STRENGTH > 0
-    if (!signText && gl_FrontFacing && !hasExplicitNormal && albedo.a >= 0.999 && albedoDetail > 0.002) {
+    if (!skipGeneratedNormals && gl_FrontFacing && !hasExplicitNormal && albedo.a >= 0.999 && albedoDetail > 0.002) {
         surfaceNormal = calculateGeneratedAlbedoNormal(surfaceNormal, materialUv, uvDx, uvDy, uvFootprint, vTexCoordAM);
     }
 #endif
     vec4 pbrSpecular = textureGrad(specular, materialUv, uvDx, uvDy);
+    float specularMapMagnitude = max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a));
+    bool hasMaterialSpecularMap = specularMapMagnitude > 0.0001;
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
     float materialReflectance = 0.0;
     float pbrEmission = 0.0;
@@ -328,7 +331,7 @@ void main() {
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     materialSurfaceData = clamp(pbrSpecular.b, 0.0, 1.0);
     float labF0Code = floor(pbrSpecular.g * 255.0 + 0.5);
-    float pbrMapPresent = step(0.0001, max(max(pbrSpecular.r, pbrSpecular.g), max(pbrSpecular.b, pbrSpecular.a)));
+    float pbrMapPresent = hasMaterialSpecularMap ? 1.0 : 0.0;
     if (pbrMapPresent < 0.5) {
         materialReflectance = 0.04; // Neutral dielectric F0 when no specular map exists
     } else if (labF0Code >= 230.0) {
@@ -343,6 +346,61 @@ void main() {
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0);
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
+// Complementary material-dispatch fallbacks for block entities.
+    // Explicit oldPBR/LabPBR specular maps retain priority for smoothness and reflectance.
+    if (!hasMaterialSpecularMap) {
+        if (blockEntityId == 5008) { // Chest and trapped chest
+            materialSmoothness = pow(albedo.g, 2.0);
+        } else if (blockEntityId == 5012) { // Ender chest
+            float enderChestFactor = min(pow(albedo.g, 2.0), 0.25);
+            materialSmoothness = enderChestFactor * 2.0;
+            if (pbrEmission < 0.01) {
+                float enderChestEmission = 0.35;
+                if (albedo.g > albedo.r || albedo.b > albedo.g) {
+                    enderChestEmission += enderChestFactor * enderChestFactor * 20.0;
+                }
+                emissionStrength = max(emissionStrength, enderChestEmission);
+            }
+        } else if (blockEntityId == 5028) { // Bell: distinguish gold from stone
+            if (albedo.r + albedo.g > albedo.b + 0.5) {
+                float goldGreenSquared = pow(albedo.g, 2.0);
+                float goldGreenFourth = goldGreenSquared * goldGreenSquared;
+                materialSmoothness = max(materialSmoothness,
+                    min(max(albedo.g, 0.8) - goldGreenFourth * 0.5, 1.0));
+                materialReflectance = max(materialReflectance, 0.72);
+                albedo.rgb *= 0.5 + 0.4 * dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+            } else {
+                float stoneSmoothness = pow(albedo.g, 4.0) * 2.0;
+                materialSmoothness = max(materialSmoothness, min(stoneSmoothness, 1.0));
+            }
+        } else if (blockEntityId == 5032) { // Copper chests and copper golem statues
+            float copperSmoothness = pow(albedo.r, 4.0)
+                + pow(max(albedo.g - albedo.r * 0.5, 0.0), 2.0) * 0.3;
+            materialSmoothness = max(materialSmoothness, min(copperSmoothness, 1.0));
+            materialReflectance = max(materialReflectance, 0.58);
+            float copperLuminance = dot(albedo.rgb, vec3(0.2126, 0.7152, 0.0722));
+            albedo.rgb *= clamp(0.6 + 0.7 * copperLuminance, 0.0, 1.0);
+        }
+    }
+
+    // Material-map emission wins; otherwise use the reference's block-entity colour cues.
+    if (pbrEmission < 0.01) {
+        if (blockEntityId == 5020) { // Conduit
+            vanillaLight = texture(lightmap, vec2(0.9, vLightmapCoord.y)).rgb;
+            if (albedo.b > albedo.r) {
+                emissionStrength = max(emissionStrength, min(albedo.r * 16.0, 5.0));
+            } else if (albedo.r > albedo.b * 2.5) {
+                emissionStrength = max(emissionStrength, 5.0);
+                albedo.rgb *= vec3(1.0, 0.25, 0.1);
+            }
+        } else if (blockEntityId == 10548) { // Enchanting-table book
+            materialSmoothness = max(materialSmoothness, pow(albedo.g, 2.0) * 0.35);
+            if (albedo.b < 0.0001 && albedo.r > albedo.g) {
+                emissionStrength = max(emissionStrength, albedo.g * 3.5);
+            }
+        }
+    }
+
 #if COATED_TEXTURE_STRENGTH > 0
     if (!signText && blockEntityId != 5025 && albedo.a >= 0.999 &&
         pbrEmission < 0.01 && emissionStrength < 0.01 &&

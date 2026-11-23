@@ -200,7 +200,7 @@ An RGBA8 `colortex3` material buffer is written by opaque G-buffer programs: red
 |---|---|---|
 | `gbuffers_basic` | Leash and debug chunk-border overlay | Vertex color + Iris fog; clears deferred-validity mask |
 | `gbuffers_damagedblock` | Block-breaking texture | Color-only crack overlay; `alphaTestRef` set to 0.004 |
-| `gbuffers_block` | Block entities and sign text | Four-target G-buffer; sign text fogged and bypasses deferred lighting; portal/gateway emission ID |
+| `gbuffers_block` | Block entities and sign text | Four-target G-buffer; sign text fogged and bypasses deferred lighting; chest/ender-chest smoothness and emission, conduit glow, bell/copper material response, banner normal exclusion, enchanting-book material cues, and portal/gateway emission |
 
 `block.properties` maps sign families to ID 5004 and End portal/gateway to 5025, read through Iris `blockEntityId`.
 

@@ -831,3 +831,11 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - Ultra/HDR retain higher-quality water and material settings and enable the optional fourth very-large water-normal scale. WATER_WAVE_DETAIL is a checkbox with an explicit one-extra-texture-sample tooltip.
 - Water caustics are implemented in the shadow pass through WATER_CAUSTICS_STRENGTH/SCALE and translucent shadow-colour output; these profile values tune that existing path.
 - This is preset-level performance intent, not measured FPS. Target-device profiling on Intel HD 5500 remains required.
+
+
+## Block-entity material dispatch — 2026-11-23
+- Ported Complementary's Iris block-entity ID map for chests/trapped chests (5008), ender chests (5012), shulker boxes/heads/beds (5016), conduits (5020), bells (5028), copper chests/statues (5032), banners (5036), and enchanting-table books (10548). IDs and block names were copied from the supplied working shader's block.properties reference.
+- Added reference-guided chest and ender-chest smoothness/emission fallbacks, conduit color-coded emission and lightmap boost, bell gold/stone classification, copper material smoothness/reflectance, and enchanting-book smoothness/emission cues.
+- Explicit oldPBR/LabPBR specular maps retain priority for material smoothness and reflectance; fallback dispatch is used only when no specular map exists. PBR-map emission retains priority over fallback emissive cues.
+- Banner surfaces skip generated normals and POM to preserve their flat patterned appearance. Other block entities keep existing atlas-safe material paths.
+- Added structural regression checks for all mapped IDs and dispatch branches. Await CI before treating the new material branch as validated; no runtime visuals or Intel HD 5500 performance are claimed.
