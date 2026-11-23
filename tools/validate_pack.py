@@ -522,6 +522,12 @@ entity_properties = (SHADERS / "entity.properties").read_text(encoding="utf-8")
 for token in ("entity.50128=minecraft:item_frame", "entity.50132=minecraft:glow_item_frame"):
     if token not in entity_properties:
         errors.append(f"Entity POM exclusion mapping is missing: {token}")
+if "entity.50156=minecraft:experience_orb" not in entity_properties:
+    errors.append("Experience orb emissive fallback requires an Iris entity ID mapping")
+experience_orb_shader = sources.get("gbuffers_entities.fsh", "")
+for token in ("entityId == 50156", "float orbGreen =", "pbrEmission = clamp(orbGreen * 1.35, 0.0, 0.85)"):
+    if token not in experience_orb_shader:
+        errors.append(f"Experience orb emissive fallback is missing component: {token}")
 for option, names in (
     ("POM_STRENGTH", ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_water.fsh")),
     ("POM_QUALITY", ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh", "gbuffers_water.fsh")),
