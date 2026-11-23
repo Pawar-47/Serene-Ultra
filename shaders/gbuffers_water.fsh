@@ -2,7 +2,6 @@
 
 uniform sampler2D gtexture;
 uniform sampler2D lightmap;
-uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 uniform sampler2D colortex4;
 uniform sampler2D noisetex;
@@ -233,13 +232,13 @@ vec3 projectAndDivide(mat4 projectionMatrix, vec3 position) {
 }
 
 float calculateWaterThickness(out vec3 opaqueViewPosition, out float opaqueDepth) {
-    // depthtex1 is full-resolution; fetch the exact current pixel without
-    // filtering, then normalize only for inverse-projection reconstruction.
-    opaqueDepth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
-    // depthtex1 clears to 1.0. Reconstruct that far-plane sample with the
+    // depthtex2 is full-resolution and excludes both translucent geometry and
+    // first-person hand geometry; fetch the exact opaque-scene pixel.
+    opaqueDepth = texelFetch(depthtex2, ivec2(gl_FragCoord.xy), 0).r;
+    // depthtex2 clears to 1.0. Reconstruct that far-plane sample with the
     // inverse projection instead of using Iris' "far" uniform, which is
     // render distance in blocks rather than the projection far plane.
-    vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
+    vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex2, 0));
     vec3 opaqueNdc = vec3(screenUV, opaqueDepth) * 2.0 - 1.0;
     opaqueViewPosition = projectAndDivide(gbufferProjectionInverse, opaqueNdc);
     float opaqueDistance = length(opaqueViewPosition);
@@ -587,7 +586,7 @@ void main() {
         // This gbuffers pass writes colortex0 but reads colortex4, so it avoids
         // same-attachment feedback and keeps refraction bandwidth bounded.
         if (!cameraUnderwater && WATER_REFRACTION_STRENGTH > 0.001 && opaqueDepth < 0.999999) {
-            vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex1, 0));
+            vec2 screenUV = gl_FragCoord.xy / vec2(textureSize(depthtex2, 0));
             waterRefractionOffset = viewNormal.xy
                 * min(waterThickness * 0.0025, 0.035)
                 * WATER_REFRACTION_STRENGTH;
@@ -595,11 +594,11 @@ void main() {
             vec2 refractedUV = clamp(screenUV + waterRefractionOffset,
                                      halfTexel, vec2(1.0) - halfTexel);
 
-            ivec2 refractedPixel = ivec2(refractedUV * vec2(textureSize(depthtex1, 0)));
-            refractedPixel = clamp(refractedPixel, ivec2(0), textureSize(depthtex1, 0) - ivec2(1));
-            float refractedDepth = texelFetch(depthtex1, refractedPixel, 0).r;
+            ivec2 refractedPixel = ivec2(refractedUV * vec2(textureSize(depthtex2, 0)));
+            refractedPixel = clamp(refractedPixel, ivec2(0), textureSize(depthtex2, 0) - ivec2(1));
+            float refractedDepth = texelFetch(depthtex2, refractedPixel, 0).r;
             vec2 refractedDepthUV = (vec2(refractedPixel) + 0.5)
-                / vec2(textureSize(depthtex1, 0));
+                / vec2(textureSize(depthtex2, 0));
             if (refractedDepth < 0.999999) {
                 vec3 refractedNdc = vec3(refractedDepthUV, refractedDepth) * 2.0 - 1.0;
                 vec3 refractedViewPosition = projectAndDivide(gbufferProjectionInverse, refractedNdc);

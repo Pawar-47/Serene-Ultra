@@ -1138,3 +1138,9 @@ Tinted glass now follows Unbound's default alpha^(1-Fresnel) opacity curve, incr
 - Serene previously applied the above-water depth-opacity curve and screen-space refraction underwater. It now skips depth reconstruction, foam and refraction underwater, and retains the 0.75 alpha reduction without the surface-depth opacity multiplier.
 - Above-water thickness, Beer-Lambert absorption, foam, refraction and SSR/environment reflections remain unchanged. The underwater branch also avoids a full-resolution depth fetch.
 - Validator assertions cover the underwater gates and both alpha branches. In-game underwater/waterline appearance and GPU profiling remain outstanding.
+
+
+### Opaque water depth excludes first-person hand — 2026-11-23
+- Iris' current DepthTex reference specifies `depthtex1` excludes transparent geometry, while `depthtex2` excludes both transparent geometry and hand geometry. Water thickness and refraction need the opaque scene depth, not the first-person hand depth.
+- The water pass previously sampled `depthtex1`, allowing a hand held in front of the water to become the reconstructed opaque intersection and distort thickness/absorption/refraction. These lookups now use `depthtex2`, which is already the opaque depth source used by the water SSR marcher. Both buffers are full resolution, so pixel mapping is unchanged.
+- The change removes the redundant `depthtex1` declaration and updates structural validation. Verify first-person hand-over-water scenes in Iris at runtime; CI validates shader compilation and source structure only.
