@@ -46,3 +46,11 @@ The working Complementary and MakeUp references demonstrate that GLSL 1.30 and 1
 ## Validation status
 
 GitHub Actions validates GLSL syntax, program linking, shaderpack structure, and project-specific invariants. These checks do not replace a real Iris runtime test on the user's Windows/Linux graphics drivers. A successful CI run must not be described as proof that the in-game shader load is fixed.
+
+
+
+## Supplied Vanilla-stock 26.3 evidence
+
+The supplied Minecraft 26.3 stock archive contains 89 shader/include sources: 72 declare `#version 330` (without an explicit compatibility profile) and 17 are include fragments. The working Complementary archive contains 415 shader/include sources: 213 declare GLSL 130, 3 declare GLSL 400 compatibility, and 199 are include fragments without their own version declaration.
+
+These counts reinforce the per-program policy: vanilla core shaders and Iris shaderpack stages are different source interfaces. The stock archive's GLSL 330 core declarations do not justify converting Iris shaderpack stages to GLSL 330 core; the working Iris pack's GLSL 130 declarations do not justify downgrading all stock engine shaders. Keep the line-stage GLSL 130 workaround targeted and audit every other stage against Iris' transform path and its required legacy built-ins.
