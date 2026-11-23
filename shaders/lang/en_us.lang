@@ -154,3 +154,8 @@ option.BLOOM_THRESHOLD.comment = Sets the brightness level where bloom begins. L
 
 option.FXAA_ENABLED = Fast Approximate Anti-Aliasing
 option.FXAA_ENABLED.comment = Applies edge-adaptive spatial anti-aliasing in the final pass without temporal history or an extra render target. Disable it for the lowest GPU cost.
+
+option.LIGHT_SHAFT_STRENGTH = Sunlight Shafts
+option.LIGHT_SHAFT_STRENGTH.comment = Adds a screen-space radial scattering approximation from bright visible sky toward opaque surfaces. It is strongest in clear daylight and uses no extra render target.
+option.LIGHT_SHAFT_QUALITY = Light Shaft Quality
+option.LIGHT_SHAFT_QUALITY.comment = Number of radial sky samples. Higher settings increase composite-pass texture reads; zero disables the effect.
