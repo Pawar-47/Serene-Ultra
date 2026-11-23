@@ -161,4 +161,6 @@ option.LIGHT_SHAFT_QUALITY = Light Shaft Quality
 option.LIGHT_SHAFT_QUALITY.comment = Number of radial sky samples. Higher settings increase composite-pass texture reads; zero disables the effect.
 
 option.SCREEN_GI_STRENGTH = Screen-Space Indirect Light
-option.SCREEN_GI_STRENGTH.comment = Adds subtle depth-aware colour bounce from nearby visible surfaces. This is a low-cost screen-space approximation, not full world-space global illumination; it uses four neighbouring scene/depth samples.
+option.SCREEN_GI_STRENGTH.comment = Adds subtle depth-aware colour bounce from nearby visible surfaces. This is a low-cost screen-space approximation, not full world-space global illumination.
+option.SCREEN_GI_QUALITY = Indirect Light Quality
+option.SCREEN_GI_QUALITY.comment = Selects 0, 4, 8 or 12 depth-aware neighbour samples. Higher settings improve local coverage but increase GPU texture sampling.
