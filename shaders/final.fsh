@@ -10,6 +10,8 @@ uniform sampler2D depthtex0;
 uniform mat4 gbufferProjectionInverse;
 uniform sampler2D noisetex;
 uniform int frameCounter;
+uniform int isEyeInWater;
+uniform float frameTimeCounter;
 uniform float nightVision;
 uniform float blindness;
 uniform float darknessFactor;
@@ -42,6 +44,7 @@ layout(location = 0) out vec4 outColor;
 #define CHROMATIC_ABERRATION 0 // [0 10 20 30 40 50 60 70 80 90 100] Radial lens colour separation
 #define VIGNETTE_STRENGTH 0 // [0 10 20 30 40 50 60 70 80 90 100] Edge darkening strength
 #define FILM_GRAIN_STRENGTH 0 // [0 5 10 15 20 25 30 40 50] Animated fine-grain intensity
+#define UNDERWATER_DISTORTION 55 // [0 10 20 30 40 50 60 70 80 90 100] Animated underwater refraction distortion
 
 // Edge-adaptive FXAA using the final scene buffer. It avoids temporal history
 // and extra render targets, so it remains usable on older integrated GPUs.
@@ -313,34 +316,57 @@ vec3 applyReferenceSaturation(vec3 color) {
     return clamp(color, 0.0, 1.0);
 }
 
+// Screen-space underwater distortion inspired by the reference camera effect.
+// Keep the displacement sub-pixel to a few pixels, and only activate for the
+// player's underwater state (not lava or powder snow).
+vec2 applyUnderwaterDistortion(vec2 uv) {
+#if UNDERWATER_DISTORTION > 0
+    if (isEyeInWater == 1) {
+        float time = frameTimeCounter;
+        float waveX = sin(uv.y * 58.0 + time * 1.7
+            + sin(uv.x * 19.0 - time * 0.55) * 0.8);
+        float waveY = sin(uv.x * 46.0 - time * 1.25
+            + sin(uv.y * 16.0 + time * 0.65) * 0.7);
+        vec2 noiseUv = uv * vec2(2.6, 3.4) + vec2(time * 0.013, -time * 0.009);
+        vec2 noise = texture(noisetex, noiseUv).rg * 2.0 - 1.0;
+        vec2 displacement = vec2(waveX, waveY) * 0.00062 + noise * 0.00032;
+        uv += displacement * (float(UNDERWATER_DISTORTION) * 0.01);
+        vec2 halfTexel = 0.5 / vec2(textureSize(colortex0, 0));
+        uv = clamp(uv, halfTexel, vec2(1.0) - halfTexel);
+    }
+#endif
+    return uv;
+}
+
 void main() {
-    vec4 scene = texture(colortex0, vTexCoord);
+    vec2 sceneUv = applyUnderwaterDistortion(vTexCoord);
+    vec4 scene = texture(colortex0, sceneUv);
     vec2 texelSize = 1.0 / vec2(textureSize(colortex0, 0));
 #if DOF_STRENGTH > 0
-    float focusDepth = getLinearViewDepth(vTexCoord);
-    vec3 dofColor = sampleDepthOfField(vTexCoord, texelSize, focusDepth);
+    float focusDepth = getLinearViewDepth(sceneUv);
+    vec3 dofColor = sampleDepthOfField(sceneUv, texelSize, focusDepth);
 #else
     vec3 dofColor = scene.rgb;
 #endif
 #if FXAA_ENABLED > 0
-    vec3 fxaaColor = max(sampleFxaa(vTexCoord, texelSize), vec3(0.0));
+    vec3 fxaaColor = max(sampleFxaa(sceneUv, texelSize), vec3(0.0));
     vec3 color = mix(fxaaColor, max(dofColor, vec3(0.0)), float(DOF_STRENGTH) * 0.01);
 #else
     vec3 color = max(dofColor, vec3(0.0));
 #endif
 
-    color = applyImageSharpening(color, vTexCoord, texelSize);
+    color = applyImageSharpening(color, sceneUv, texelSize);
 
     // G-buffer/deferred/composite output is display-encoded. Decode once before
     // bloom addition, exposure, grading and tone mapping; re-encode only at output.
     color = pow(max(color, vec3(0.0)), vec3(2.2));
 
 #if BLOOM_STRENGTH > 0
-    vec3 bloom = sampleBloomChain(vTexCoord);
+    vec3 bloom = sampleBloomChain(sceneUv);
     color += bloom * (float(BLOOM_STRENGTH) * 0.01);
 #endif
 
-    color = applyChromaticAberration(color, vTexCoord, texelSize);
+    color = applyChromaticAberration(color, sceneUv, texelSize);
 
     // Exposure is expressed in photographic stops; RGB gains provide white balance.
     color *= exp2(EXPOSURE);
