@@ -44,7 +44,7 @@ The supplied archive is a Complementary Reimagined shaderpack and is used as a t
 | Text rendering | Correct text/UI treatment and compatibility | Preserve vanilla UI/text; no destructive post-processing | Pending |
 | Weather | Rain/snow and weather-dependent material/lighting | Dedicated forward weather path with Iris lightmap/fog; volumetric and wetness effects remain | Partial |
 | Dimension support | Overworld, Nether, End and special dimensions | Iris hasSkylight gating, End-flash shadow source, native ambientLight contribution and hasCeiling-aware cloud-shadow gating in deferred lighting | Partial; per-dimension atmosphere, fog, water and material tuning remain |
-| Night vision/potions | Correct vanilla effect interactions | Explicit effect compatibility tests | Pending |
+| Night vision/potions | Correct vanilla effect interactions | Final pass consumes Iris transition-aware `nightVision`, `blindness`, `darknessFactor` and `darknessLightFactor`; night vision lifts luminance without hue rotation, blindness suppresses scene visibility and Darkness retains its pulsing dim factor | Implemented at source level; exact vanilla fog-radius/overlay parity and runtime effect transitions remain to test |
 | Emissive entities/blocks | Correct emissive response | Dedicated spider/enderman/dragon eye pass bypasses deferred lighting; broader emissive classification remains | Partial |
 | Translucent materials | Glass, foliage, water and particles | Dedicated water/weather/hand-water/translucent-particle forward paths; glass/other translucent entity handling remains | Partial |
 | Foliage | Alpha-tested leaves/grass and wind response if present | Alpha-aware shadow casters are started; material animation and parity remain | Partial |
