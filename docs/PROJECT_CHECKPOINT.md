@@ -1367,3 +1367,21 @@ Inspected Iris source snapshot `IrisShaders/Iris@bff1e69cb6c5519d8745784aa9c8b92
 1. Run the 26.3 transparency regression on the exact Iris/Sodium build.
 2. Continue exact-file comparisons for shadow, terrain, entities, block entities, hand, particles, sky and post-processing against both supplied archives.
 3. Fix source-level gaps found by those comparisons, with validator coverage where the invariant can be checked statically.
+
+
+## Authoritative Iris flip and shadow-buffer correction — 2026-11-23
+
+This section supersedes every earlier checkpoint statement that explicit `flip.*=true` is required to publish an output, that read-only buffers need `flip=false`, or that `shadowcolor0` can be controlled by `flip`.
+
+- Iris 26.1's `CompositeRenderer` automatically flips every colour attachment listed in a composite-style pass's draw buffers after the pass. An explicit `flip.<pass>.<buffer>=false` suppresses that automatic output flip. An explicit `true` is applied as an additional flip after the default output flip, so it can cancel the intended hand-off.
+- A read-only attachment is not in the pass's draw-buffer list and is not automatically flipped. Setting `flip=false` for such a read-only input is therefore a no-op; it is not needed to keep the source stable. Setting `true` explicitly forces a flip and must be used only for a deliberate alternate-buffer algorithm.
+- Iris resolves flip target names through the eight legacy colour aliases (`gcolor`, `gdepth`, `gnormal`, `composite`, `gaux1`–`gaux4`) or numeric `colortexN`. `shadowcolor0` is a separate shadow-colour attachment and is not a valid flip target. The old `flip.shadow.shadowcolor0=false` directive was ineffective/invalid and has been removed. Likewise, `blend.shadow.shadowcolor0=off` is not a valid colortex blend directive and must not be reintroduced.
+- Current Serene source intentionally contains no explicit `flip.*` directives. `deferred`, `deferred1`, `composite`, and the bloom passes rely on Iris' default ping-pong for their declared `RENDERTARGETS`. The `deferred1` output `colortex4` is published by its default flip before the post-deferred water pass samples it.
+- `tools/validate_pack.py` now rejects unsupported flip targets, non-composite flip program names, and explicit flip overrides on a pass's own output attachment. It supports dimension-qualified composite pass names and resolves the exact shader source path.
+
+Iris 26.1 implementation references:
+- `common/src/main/java/net/irisshaders/iris/pipeline/CompositeRenderer.java`
+- `common/src/main/java/net/irisshaders/iris/shaderpack/properties/PackDirectives.java`
+- `common/src/main/java/net/irisshaders/iris/shaderpack/properties/PackRenderTargetDirectives.java`
+
+The cleanup is source/configuration-verified; the latest validator workflow must pass before it is marked CI-verified. Runtime rendering remains unverified.
