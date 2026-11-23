@@ -303,12 +303,23 @@ if "option.PARTICLE_MATERIAL_FEATURES =" not in (SHADERS / "lang" / "en_us.lang"
 
 # Iris shader constants are GLSL declarations, not shaders.properties keys.
 all_glsl = "\n".join(sources.values())
-for declaration in (
-    "const bool shadowHardwareFiltering = true;",
-    "const float shadowIntervalSize = 2.0;",
-):
+for declaration in ("const bool shadowHardwareFiltering = true;",):
     if declaration not in all_glsl:
         errors.append(f"Missing Iris GLSL constant declaration: {declaration}")
+
+shadow_helper = sources.get("soft_shadow.glsl", "")
+for token in (
+    "vec3 sampleSereneSoftShadow(",
+    "float filterRadius = 2.0 * mix(",
+    "for (int i = 0; i < SHADOW_FILTER_QUALITY; ++i)",
+    "float centerShadow0 = texture(shadowtex0",
+    "float centerShadow1 = texture(shadowtex1",
+    "vec4 casterColor = texture(shadowcolor0, shadowPosition.xy)",
+    "vec3 transmission = casterColor.rgb * (1.0 - casterColor.a)",
+    "mix(vec3(visibility), transmission * centerShadow1, 1.0 - visibility)",
+):
+    if token not in shadow_helper:
+        errors.append(f"Shared soft/colored shadow helper is missing component: {token}")
 if "shadowHardwareFiltering=" in props or "shadowIntervalSize=" in props:
     errors.append("Iris GLSL constants must not be declared as shaders.properties directives")
 
@@ -390,14 +401,24 @@ for token in ("shadowTranslucent=true",):
         errors.append(f"Iris translucent shadowcolor configuration is missing: {token}")
 
 deferred_options = sources.get("deferred.fsh", "")
-
+if '#include "/lib/lighting/soft_shadow.glsl"' not in deferred_options:
+    errors.append("Deferred lighting must include the shared soft/colored shadow helper")
+if "sampleSereneSoftShadow(playerPosition, normal, worldLightDirection)" not in deferred_options:
+    errors.append("Deferred lighting must use the shared soft/colored shadow helper")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
-              "float centerShadow0 = texture(shadowtex0", "float centerShadow1 = texture(shadowtex1",
-              "vec4 casterColor = texture(shadowcolor0, shadowPosition.xy)",
-              "vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a)",
-              "return clamp(", "vec3 shadow = vec3(1.0)"):
+              "vec3 shadow = vec3(1.0)"):
     if token not in deferred_options:
-        errors.append(f"Deferred translucent shadow transmission is missing component: {token}")
+        errors.append(f"Deferred shadow interface is missing component: {token}")
+
+for name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
+             "gbuffers_block_translucent.fsh", "gbuffers_particles_translucent.fsh"):
+    source = sources.get(name, "")
+    if '#include "/lib/lighting/soft_shadow.glsl"' not in source or "sampleSereneSoftShadow(" not in source:
+        errors.append(f"{name} must use the shared soft/colored shadow helper")
+    for token in ("uniform sampler2DShadow shadowtex0", "uniform sampler2DShadow shadowtex1",
+                  "uniform sampler2D shadowcolor0", "#define SHADOW_FILTER_QUALITY"):
+        if token not in source:
+            errors.append(f"{name} is missing shared shadow input/quality component: {token}")
 
 if "/* RENDERTARGETS: 0 */" not in deferred_options or "outOpaqueReflectionScene" in deferred_options:
     errors.append("Full-resolution deferred must write only colortex0; the half-resolution water copy belongs in deferred1")
@@ -876,7 +897,7 @@ if "max(length(vViewPosition.xz), abs(vViewPosition.y))" not in hand_water:
 water = sources.get("gbuffers_water.fsh", "")
 water_vertex = (SHADERS / "gbuffers_water.vsh").read_text(encoding="utf-8")
 for token in ("/* RENDERTARGETS: 0 */", "sampler2DShadow shadowtex0",
-              "shadowModelView", "shadowProjection", "sampleTranslucentShadow",
+              "shadowModelView", "shadowProjection", "sampleSereneSoftShadow",
               "uniform vec3 fogColor", "uniform float fogDensity", "calculateTranslucentFog",
               "texture(gtexture", "texture(lightmap", "depthtex2", "calculateWaterThickness",
               "uniform sampler2D depthtex2", "uniform sampler2D colortex4", "texture(colortex4", "WATER_REFRACTION_STRENGTH",
@@ -946,9 +967,9 @@ if "gtexture" in cloud_fragment or "texture(gtexture" in cloud_fragment:
 if "vec4 cloudColor = vVertexColor;" not in cloud_fragment:
     errors.append("gbuffers_clouds must preserve the CloudColor/face shading carried by POSITION_COLOR")
 for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
-              "vec3 sampleTranslucentShadow(", "float centerShadow0 = texture(shadowtex0",
-              "float centerShadow1 = texture(shadowtex1",
-              "vec4 casterColor = texture(shadowcolor0, shadowPosition.xy)",
+              '#include "/lib/lighting/soft_shadow.glsl"',
+              "vec3 shadowNormal = normal;",
+              "sampleSereneSoftShadow(vPlayerPosition, shadowNormal, worldLightDirection)",
               "vec3 shadow = vec3(1.0)"):
     if token not in water:
         errors.append(f"Forward translucent colored-shadow path is missing component: {token}")
@@ -1145,7 +1166,7 @@ if "cross(geometricNormal, tangent)" in water:
     errors.append("Water tangent basis must follow Iris at_tangent handedness: cross(tangent, normal)")
 if "uniform vec3 cameraPosition;" in water:
     errors.append("Water waves must avoid Iris cameraPosition's 30,000-block wrap")
-if "vec3 shadowNormal = normal;" not in water or "sampleTranslucentShadow(vPlayerPosition, shadowNormal, worldLightDirection)" not in water:
+if "vec3 shadowNormal = normal;" not in water or "sampleSereneSoftShadow(vPlayerPosition, shadowNormal, worldLightDirection)" not in water:
     errors.append("Water wave perturbation must not alter geometric shadow-map bias")
 if "vec3 reflectionViewNormal = viewNormal;" not in water:
     errors.append("Water SSR must reuse the wave-perturbed view-space normal")
@@ -1321,21 +1342,15 @@ if "if (!gl_FrontFacing) {" not in water or "normal = -normal;" not in water or 
     errors.append("Translucent terrain must flip both player-space and view-space back-face normals before forward lighting")
 
 deferred = sources.get("deferred.fsh", "")
-for token in ("uniform sampler2DShadow shadowtex1", "uniform sampler2D shadowcolor0",
-              "float centerShadow0 = texture(shadowtex0", "float centerShadow1 = texture(shadowtex1",
-              "vec4 casterColor = texture(shadowcolor0, shadowPosition.xy)",
-              "vec3 translucentTransmission = casterColor.rgb * (1.0 - casterColor.a)",
-              "mix(opaqueVisibility, translucentVisibility, 1.0 - visibility)",
-              "return clamp("):
-    if token not in deferred:
-        errors.append(f"Deferred translucent shadow transmission is missing component: {token}")
+if '#include "/lib/lighting/soft_shadow.glsl"' not in deferred or "sampleSereneSoftShadow(" not in deferred:
+    errors.append("Deferred lighting must use the shared soft/colored shadow implementation")
 
 for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2", "sampler2D colortex3",
               "texture(colortex3, vTexCoord)", "emissionData.r * 5.0",
               "sampler2D depthtex0", "sampler2D depthtex2", "sampler2DShadow shadowtex0",
               "gbufferProjectionInverse", "shadowModelView", "shadowProjection",
-              "sampleShadow", "vanillaAmbient", "lightData.a",
+              "sampleSereneSoftShadow", "vanillaAmbient", "lightData.a",
               "uniform bool hasSkylight", "uniform float endFlashIntensity", "celestialGate",
               "uniform vec3 fogColor", "uniform float fogDensity", "fogMode", "fogShape", "calculateFogFactor",
               "sampleContactAO", "AO_STRENGTH", "AO_RADIUS",
