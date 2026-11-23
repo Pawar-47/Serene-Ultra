@@ -1819,7 +1819,9 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
 final_shader = sources.get("final.fsh", "")
 for token in ("#define BLOOM_STRENGTH", "#define FXAA_ENABLED",
               "vec3 sampleFxaa(", "float lumaMin", "vec3 sampleBloomLevel(",
-              "vec3 sampleBloomChain(", "textureSize(colortex0, 0)", "color += bloom *"):
+              "vec3 sampleBloomChain(", "textureSize(colortex0, 0)",
+              "color = pow(max(color, vec3(0.0)), vec3(2.2))",
+              "1.0 / (2.2 * GAMMA)", "color += bloom *"):
     if token not in final_shader:
         errors.append(f"Final-pass bloom is missing implementation component: {token}")
 color_screen = next((line for line in held_props.splitlines() if line.startswith("screen.COLOR =")), "")
