@@ -1318,3 +1318,11 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - Structural validation now derives every program's draw buffers from its own `RENDERTARGETS` line and rejects any `flip.<program>.colortexN=true` where that program writes colortex N, so this class of error cannot return.
 - Confirmed supporting facts from the same documentation pass: program order is gbuffers opaque → deferred → gbuffers translucent → composite → final (so the bloom chain sits correctly between composite and final); colortex buffers default to `RGBA8` and are cleared every frame; a buffer whose size is changed cannot be written by a gbuffers program, and a single program may only render to identically sized buffers — the bloom stages each write exactly one sized buffer, so both rules hold.
 - Still runtime-unverified. The expected visible result is that water refraction/reflections and the composite-stage effects appear at all.
+
+
+## Clouds celestial lighting and manual alpha trigger — 2026-11-23
+- `gbuffers_clouds.fsh` previously applied only texture, vertex alpha and fog, so the cloud layer read as flat paint. It now applies a bounded day/night exposure from `sunAngle`, and a forward-scattering silver-lining term from the view direction and `shadowLightPosition`. Both use uniforms already in Iris' contract and used by other gbuffers programs. Normalisation is guarded so a dimension without a celestial body cannot produce NaN.
+- Scope: this is a low-cost forward approximation, not volumetric or self-shadowed clouds, and it does not cast cloud shadows. Those remain pending.
+- `alpha-release.yml` gained a `workflow_dispatch` trigger with a `publish` input, so a testable build can be produced on demand. Automatic publishing on every validated push remains gated by `ENABLE_ALPHA_PUBLISH=true` and is still off.
+- Structural validation now checks the new cloud terms.
+- Status: source and CI compile/structure only. No Minecraft/Iris runtime run has occurred for any change in this session.
