@@ -1741,3 +1741,12 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Existing `MATERIAL_SSS_STRENGTH`, shadow-transmission visibility and cloud-shadow attenuation remain in control. LabPBR materials continue to use their authored SSS code; non-SSS materials write zero.
 - Commits: deferred decode `af2677751189028d376323eb238f3069e94ab9a1`; terrain fallbacks `467ecc4650156c1182ce0b98ab21883bd03e9d6e`; validator `1759304555586deb5b6db6f96a79bc985ecdaf64`; matrix `25abfc483c069e51dfb68e72b1e0859dd7c896d8`.
 - Source-level implementation; material strength and visual calibration remain pending runtime testing.
+
+
+### Foliage wind periodicity and shared shadow field — 2026-11-23
+- Replaced the duplicated terrain/shadow foliage wind math with `lib/animation/foliage_wind.glsl`. Both visible and shadow vertices now call the same function and compute the world origin using integer camera modulo before float conversion.
+- The 4096-block spatial period uses integer cycle counts (46/35 and -74/63); the one-hour Iris timer uses 487 and 728 full temporal cycles. This removes the phase jump at the timer wrap and the subtle spatial seam from approximate frequency constants.
+- Terrain updates both player-space position and view-space position after wind displacement, keeping later tangent-view calculations aligned with the displaced geometry. The shadow pass uses the same resulting wind vector.
+- Added validator coverage for the shared helper and the existing Ultra-Light/Smooth/Ultra/HDR/Ultra-HDR strength budgets.
+- Commits: helper `86f0801aaa3033678a8e0e066942715192c9f40a`; terrain `4eaf6bbd9d5d91971e7a76354d6520959729c1c9`, view-space follow-up `54b57d014ce8c0523dd0d45530c8eecd043b6976`; shadow `1b1dd7f971b1651d3f401c06f1bf0f76d88ea0f1`; validator `f8bcfb2df06007e48cc8e9d08dd0090d67046522`; matrix `81858dbc24bb0d7a3522816b39a9c5e57584b387`.
+- Runtime wind continuity, plant-species motion, shadow matching and performance still require Minecraft/Iris testing.
