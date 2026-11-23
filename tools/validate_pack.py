@@ -1648,21 +1648,25 @@ for stage_name, buffer in bloom_read_only:
     if f"flip.{stage_name}.{buffer}=true" in props:
         errors.append(f"{stage_name} only reads {buffer} and must not flip it")
 
-# Generalise the same rule to every composite pass: derive its draw buffers from
-# RENDERTARGETS and reject an explicit true on one of them. CompositeRenderer flips
-# draw buffers once by default and again for an explicit true, so such a directive
-# cancels the default flip and the following pass reads the unwritten texture.
-for pass_name in ("composite", "composite1", "composite2", "composite3", "composite4"):
-    pass_source = sources.get(f"{pass_name}.fsh", "")
-    targets = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", pass_source)
-    if not targets:
+# Generalise the rule to the whole pack: derive each program's draw buffers from its
+# own RENDERTARGETS line and reject an explicit flip.<program>.<buffer>=true on one of
+# them. Iris flips written buffers once by default; an explicit true flips again and
+# cancels the swap, so the next program reads the texture that was never written.
+for flip_line in props.splitlines():
+    flip_match = re.match(r"\s*flip\.([^.\s=]+)\.colortex(\d+)\s*=\s*true\s*$", flip_line)
+    if not flip_match:
         continue
-    for index in {int(value) for value in re.findall(r"\d+", targets.group(1))}:
-        if f"flip.{pass_name}.colortex{index}=true" in props:
-            errors.append(
-                f"flip.{pass_name}.colortex{index}=true double-flips a buffer {pass_name} writes, "
-                "cancelling Iris' default flip so the next pass reads stale contents"
-            )
+    flip_program, flip_buffer = flip_match.group(1), int(flip_match.group(2))
+    flip_source = sources.get(f"{flip_program}.fsh", "")
+    flip_targets = re.search(r"/\*\s*RENDERTARGETS:\s*([0-9,\s]+)\s*\*/", flip_source)
+    if not flip_targets:
+        continue
+    written = {int(value) for value in re.findall(r"\d+", flip_targets.group(1))}
+    if flip_buffer in written:
+        errors.append(
+            f"flip.{flip_program}.colortex{flip_buffer}=true double-flips a buffer {flip_program} "
+            "writes, cancelling Iris' default flip so the next program reads stale contents"
+        )
 if "uniform sampler2D colortex5" not in final_shader or "uniform sampler2D colortex7" not in final_shader:
     errors.append("Final pass must combine both bloom levels")
 
