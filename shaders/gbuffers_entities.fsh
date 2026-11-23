@@ -4,6 +4,9 @@ uniform sampler2D gtexture;
 uniform sampler2D lightmap;
 uniform sampler2D normals;
 uniform sampler2D specular;
+uniform sampler2D noisetex;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
 uniform float alphaTestRef;
 uniform vec4 entityColor;
 uniform int entityId;
@@ -16,6 +19,7 @@ in vec3 vPlayerTangent;
 flat in float vTangentHandedness;
 in vec3 vTangentView;
 flat in vec4 vTexCoordAM;
+in vec3 vPlayerPosition;
 
 /* RENDERTARGETS: 0,1,2,3 */
 layout(location = 0) out vec4 outColor;
@@ -28,6 +32,8 @@ layout(location = 3) out vec4 outEmissionData;
 #define POM_ENTITY_STRENGTH 0 // [0 10 20 35 50] Entity-model POM
 #define POM_QUALITY 4 // [4 6 8] Bounded POM samples; higher values cost more
 #define POM_DISTANCE 32 // [12 16 24 32 48 64] Fade POM to zero at this view distance
+#define GENERATED_NORMAL_STRENGTH 25 // [0 10 20 35 50 75 100] Albedo-derived normal detail when no normal map is present
+#define COATED_TEXTURE_STRENGTH 20 // [0 10 20 35 50 75 100] Stable subtle noise coating on opaque material colour
 
 vec2 calculateParallaxUv(
     vec2 baseUv,
@@ -102,8 +108,9 @@ vec2 calculateParallaxUv(
 }
 
 
-vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, vec2 uvDy, out float materialAO) {
+vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, vec2 uvDy, out float materialAO, out bool hasExplicitNormal) {
     vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy);
+    hasExplicitNormal = any(greaterThan(abs(normalTexel.rg - vec2(0.5)), vec2(0.01)));
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     // LabPBR blue stores material AO; XY are the DirectX Y- tangent normal.
@@ -136,11 +143,108 @@ vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, 
 }
 
 
+
+
+vec3 calculateGeneratedAlbedoNormal(
+    vec3 geometricNormal,
+    vec2 materialUv,
+    vec2 uvDx,
+    vec2 uvDy,
+    vec2 uvFootprint,
+    vec4 spriteBounds
+) {
+#if GENERATED_NORMAL_STRENGTH > 0
+    vec2 atlasTexel = 1.0 / vec2(textureSize(gtexture, 0));
+    vec2 sampleOffset = max(uvFootprint, atlasTexel);
+    vec2 tileSize = max(spriteBounds.zw, vec2(1e-7));
+    vec2 lowerBound = spriteBounds.xy + 0.5 * atlasTexel;
+    vec2 upperBound = spriteBounds.xy + tileSize - 0.5 * atlasTexel;
+
+    vec2 rightUv = clamp(materialUv + vec2(sampleOffset.x, 0.0), lowerBound, upperBound);
+    vec2 leftUv  = clamp(materialUv - vec2(sampleOffset.x, 0.0), lowerBound, upperBound);
+    vec2 upUv    = clamp(materialUv + vec2(0.0, sampleOffset.y), lowerBound, upperBound);
+    vec2 downUv  = clamp(materialUv - vec2(0.0, sampleOffset.y), lowerBound, upperBound);
+
+    vec4 rightSample = textureGrad(gtexture, rightUv, uvDx, uvDy) * vVertexColor;
+    vec4 leftSample  = textureGrad(gtexture, leftUv, uvDx, uvDy) * vVertexColor;
+    vec4 upSample    = textureGrad(gtexture, upUv, uvDx, uvDy) * vVertexColor;
+    vec4 downSample  = textureGrad(gtexture, downUv, uvDx, uvDy) * vVertexColor;
+
+    // Avoid synthesizing slopes across cutout holes or partial-alpha edges.
+    if (min(min(rightSample.a, leftSample.a), min(upSample.a, downSample.a)) < 0.999) {
+        return geometricNormal;
+    }
+
+    const vec3 luminanceWeights = vec3(0.2126, 0.7152, 0.0722);
+    float rightHeight = dot(rightSample.rgb, luminanceWeights);
+    float leftHeight = dot(leftSample.rgb, luminanceWeights);
+    float upHeight = dot(upSample.rgb, luminanceWeights);
+    float downHeight = dot(downSample.rgb, luminanceWeights);
+
+    float deltaX = rightHeight - leftHeight;
+    float deltaY = upHeight - downHeight;
+    if (abs(deltaX) < 0.05) deltaX = 0.0;
+    if (abs(deltaY) < 0.05) deltaY = 0.0;
+    deltaX = clamp(deltaX, -0.2, 0.2);
+    deltaY = clamp(deltaY, -0.2, 0.2);
+    if (deltaX == 0.0 && deltaY == 0.0) return geometricNormal;
+
+    vec3 tangentNormal = normalize(vec3(-deltaX, -deltaY, 1.0));
+    tangentNormal.xy *= float(GENERATED_NORMAL_STRENGTH) * 0.025;
+    tangentNormal = normalize(tangentNormal);
+
+    vec3 tangentCandidate = vPlayerTangent - geometricNormal * dot(vPlayerTangent, geometricNormal);
+    float tangentLengthSquared = dot(tangentCandidate, tangentCandidate);
+    if (tangentLengthSquared < 0.000001) return geometricNormal;
+
+    vec3 tangent = tangentCandidate * inversesqrt(tangentLengthSquared);
+    vec3 bitangent = normalize(cross(tangent, geometricNormal)) * vTangentHandedness;
+    return normalize(
+        tangent * tangentNormal.x +
+        bitangent * tangentNormal.y +
+        geometricNormal * tangentNormal.z
+    );
+#else
+    return geometricNormal;
+#endif
+}
+
+
+vec3 applyCoatedTexture(
+    vec3 color,
+    vec2 uvDx,
+    vec2 uvDy,
+    vec4 spriteBounds,
+    vec3 playerPosition
+) {
+#if COATED_TEXTURE_STRENGTH > 0
+    vec2 atlasSize = vec2(textureSize(gtexture, 0));
+    vec2 spriteCenter = spriteBounds.xy + spriteBounds.zw * 0.5;
+    vec2 noiseCoord = floor(spriteCenter * atlasSize / 16.0 * 64.0) / 64.0 / 3.0;
+
+    vec3 worldPosition = vec3(cameraPositionInt) + cameraPositionFract + playerPosition;
+    vec3 floorWorldPosition = floor(worldPosition + vec3(0.001));
+    noiseCoord += 0.84 * (floorWorldPosition.xz + vec2(floorWorldPosition.y));
+
+    float noiseValue = textureLod(noisetex, noiseCoord, 0.0).r + 0.6;
+    float colorBrightness = dot(color, color) * 0.3;
+    float texelFootprint = max(length(uvDx * atlasSize), length(uvDy * atlasSize));
+    float mipLevel = max(0.0, log2(max(texelFootprint, 1.0)));
+    float noiseFactor = float(COATED_TEXTURE_STRENGTH) * 0.0027
+        * max(1.0 - colorBrightness, 0.0);
+    noiseFactor *= max(1.0 - mipLevel * 0.25, 0.0);
+    color *= pow(max(noiseValue, 0.01), noiseFactor);
+#endif
+    return color;
+}
+
 void main() {
     vec2 uvDx = dFdx(vTexCoord);
     vec2 uvDy = dFdy(vTexCoord);
+    vec2 uvFootprint = max(fwidth(vTexCoord), 1.0 / vec2(textureSize(gtexture, 0)));
     vec2 materialUv = vTexCoord;
     vec4 albedo = texture(gtexture, materialUv) * vVertexColor;
+    float albedoDetail = length(fwidth(albedo.rgb));
     if (albedo.a < alphaTestRef) discard;
     float parallaxOffset = 0.0;
 #if POM_ENTITY_STRENGTH > 0
@@ -164,13 +268,19 @@ void main() {
     albedo.rgb = pow(max(mix(entityAlbedoLinear, entityTintLinear, entityColor.a), vec3(0.0)), vec3(1.0 / 2.2));
 
     vec3 vanillaLight = texture(lightmap, vLightmapCoord).rgb;
-    outColor = albedo;
     float skyLight = clamp(vLightmapCoord.y / (30.0 / 32.0) - (1.0 / 32.0), 0.0, 1.0);
     outLightmapData = vec4(vanillaLight, skyLight);
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     float materialAO = 1.0;
-    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO);
+    bool hasExplicitNormal = false;
+    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal);
+#if GENERATED_NORMAL_STRENGTH > 0
+    if (gl_FrontFacing && !hasExplicitNormal && albedo.a >= 0.999 && albedoDetail > 0.002 &&
+        entityId != 50128 && entityId != 50132) {
+        surfaceNormal = calculateGeneratedAlbedoNormal(surfaceNormal, materialUv, uvDx, uvDy, uvFootprint, vTexCoordAM);
+    }
+#endif
     vec4 pbrSpecular = textureGrad(specular, materialUv, uvDx, uvDy);
     float materialSmoothness = clamp(pbrSpecular.r, 0.0, 1.0);
     float materialReflectance = 0.0;
@@ -194,6 +304,13 @@ void main() {
     materialReflectance = clamp(pbrSpecular.g, 0.0, 1.0);
     pbrEmission = clamp(pbrSpecular.b, 0.0, 1.0);
 #endif
+#if COATED_TEXTURE_STRENGTH > 0
+    if (entityId != 50128 && entityId != 50132 && albedo.a >= 0.999 &&
+        pbrEmission < 0.01 && materialReflectance < 0.8 && materialSmoothness < 0.85) {
+        albedo.rgb = applyCoatedTexture(albedo.rgb, uvDx, uvDy, vTexCoordAM, vPlayerPosition);
+    }
+#endif
+    outColor = albedo;
     outEncodedNormal = vec4(surfaceNormal * 0.5 + 0.5, 0.5 + 0.5 * materialSmoothness);
     outEmissionData = vec4(pbrEmission, materialReflectance, materialAO, materialSurfaceData);
 }

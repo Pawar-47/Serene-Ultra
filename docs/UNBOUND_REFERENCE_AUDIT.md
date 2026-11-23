@@ -277,3 +277,10 @@ The shaderLABS LabPBR 1.3 specification reserves specular-blue values for porosi
 
 
 - Iris option compatibility: POM_QUALITY and POM_DISTANCE are shared options across terrain, block and entity shaders and must have identical definitions in each file. The entity shader's option comment/value declaration is aligned with the terrain/block definitions and guarded by a validator regression check.
+
+
+## Entity-model generated normals + coated textures — 2026-11-23
+- Extended the optional generated-normal and coated-texture paths to opaque entity models. The entity G-buffer now forwards player-relative position for stable world-cell noise and reuses mc_midTexCoord sprite bounds and the at_tangent basis.
+- Generated normals run only when no explicit normal-map XY detail exists, on opaque texels with visible albedo contrast. Coated texture noise skips item frames/glow item frames, transparent texels, emissive materials and high-F0/high-smoothness surfaces.
+- POM_ENTITY_STRENGTH remains separately opt-in; entity POM is disabled in Ultra-Light/Smooth and enabled only in Ultra/HDR. Generic translucent entities and held items remain outside this pass.
+- This extends source coverage; runtime resource-pack compatibility, entity-specific visual checks and GPU cost remain unverified.

@@ -781,3 +781,10 @@ Known limits: this is a screen-space/terrain-G-buffer approximation rather than 
 - CI run #1066 (45110449563) passed all nine stages after updating structural checks for the entity path's displaced-UV specular/normal samples and POM normal-function signature.
 - A final Iris-options audit found the POM_QUALITY option comment differed between entity and terrain/block shader files. Iris requires an option to be defined identically in every file where it is used; the entity definition and validator now enforce identical POM_QUALITY/POM_DISTANCE definitions.
 - Await the new CI run after this options-consistency correction. Runtime entity rendering and target-GPU profiling remain pending.
+
+
+## Entity-model generated normals + coated textures — 2026-11-23
+- Extended the optional generated-normal and coated-texture paths to opaque entity models. The entity G-buffer now forwards player-relative position for stable world-cell noise and reuses mc_midTexCoord sprite bounds and the at_tangent basis.
+- Generated normals run only when no explicit normal-map XY detail exists, on opaque texels with visible albedo contrast. Coated texture noise skips item frames/glow item frames, transparent texels, emissive materials and high-F0/high-smoothness surfaces.
+- POM_ENTITY_STRENGTH remains separately opt-in; entity POM is disabled in Ultra-Light/Smooth and enabled only in Ultra/HDR. Generic translucent entities and held items remain outside this pass.
+- This extends source coverage; runtime resource-pack compatibility, entity-specific visual checks and GPU cost remain unverified.

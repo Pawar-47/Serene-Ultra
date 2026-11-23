@@ -372,7 +372,7 @@ if "POM_ENTITY_STRENGTH:0" not in props or "POM_ENTITY_STRENGTH:20" not in props
 if "option.POM_ENTITY_STRENGTH.comment =" not in (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8"):
     errors.append("Entity POM strength requires a user-facing tooltip")
 
-for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
+for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
     source = sources.get(name, "")
     for token in ("#define GENERATED_NORMAL_STRENGTH 25",
                   "hasExplicitNormal = any(greaterThan(abs(normalTexel.rg - vec2(0.5)), vec2(0.01)))",
@@ -386,7 +386,7 @@ for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
                   "min(min(rightSample.a, leftSample.a), min(upSample.a, downSample.a))"):
         if token not in source:
             errors.append(f"{name} is missing atlas-safe generated-normal component: {token}")
-for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
+for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh", "gbuffers_entities.fsh"):
     source = sources.get(name, "")
     for token in ("#define COATED_TEXTURE_STRENGTH 20",
                   "vec3 applyCoatedTexture(", "textureLod(noisetex, noiseCoord, 0.0)",
@@ -405,6 +405,10 @@ if "emissionStrength < 0.01" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity coating must skip fallback emissive surfaces")
 if "out vec3 vPlayerPosition;" not in sources.get("gbuffers_block.vsh", "") or "vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;" not in sources.get("gbuffers_block.vsh", ""):
     errors.append("Block-entity vertex stage must provide stable player-relative position for coated texture noise")
+if "out vec3 vPlayerPosition;" not in sources.get("gbuffers_entities.vsh", "") or "vPlayerPosition = (gbufferModelViewInverse * viewPosition).xyz;" not in sources.get("gbuffers_entities.vsh", ""):
+    errors.append("Entity vertex stage must provide stable player-relative position for coated texture noise")
+if "in vec3 vPlayerPosition;" not in sources.get("gbuffers_entities.fsh", ""):
+    errors.append("Entity fragment stage must receive player-relative position for coated texture noise")
 if "in vec3 vPlayerPosition;" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block-entity fragment stage must receive player-relative position for coated texture noise")
 if "COATED_TEXTURE_STRENGTH" not in props or "COATED_TEXTURE_STRENGTH" not in slider_options_line:
@@ -561,7 +565,7 @@ for fragment_name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers
             errors.append(f"{fragment_name} is missing opaque PBR normal-map component: {token}")
 if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal)" not in sources.get("gbuffers_terrain.fsh", ""):
     errors.append("Terrain must apply resource-pack tangent-space normal maps")
-if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO)" not in sources.get("gbuffers_entities.fsh", ""):
+if "surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal)" not in sources.get("gbuffers_entities.fsh", ""):
     errors.append("Entities must apply resource-pack tangent-space normal maps")
 if "if (!signText) surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO, hasExplicitNormal)" not in sources.get("gbuffers_block.fsh", ""):
     errors.append("Block entities must apply resource-pack normal maps without perturbing sign text")
