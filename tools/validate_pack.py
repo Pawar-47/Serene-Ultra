@@ -270,7 +270,7 @@ if props_path.is_file():
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
                    "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
         if option not in props:
-            errors.append(f"{option} is not exposed in the Quality menu")
+            errors.append(f"{option} is not exposed in the shader settings menu")
     slider_options_line = next((line for line in props.splitlines() if line.startswith("sliders = ")), "")
     for option in ("WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH"):
         if option not in slider_options_line:
@@ -303,7 +303,7 @@ if props_path.is_file():
     if "alphaTest.gbuffers_water=GREATER 0.0001" not in props:
         errors.append("Translucent water must use the reference-matched low alphaTestRef")
     if "WATER_FOG_MULT" not in props:
-        errors.append("Water depth-opacity control must be exposed in the Quality menu")
+        errors.append("Water depth-opacity control must be exposed in the Water menu")
 water_fog_option = "#define WATER_FOG_MULT 125 // [25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 110 120 125 130 140 150 160 165 170 180 190 200 220 240 260 280 300 325 350 375 400 425 450 475 500 550 600 650 700 750 800 850 900] Water depth opacity"
 if water_fog_option not in sources.get("gbuffers_water.fsh", ""):
     errors.append("WATER_FOG_MULT must use the documented Iris numerical-option value-list syntax")
@@ -1312,11 +1312,11 @@ for program_name in cloud_shadow_programs:
             errors.append(f"{program_name} is missing cloud-shadow input/option: {declaration}")
 
 if "CLOUD_SHADOW_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
-    errors.append("CLOUD_SHADOW_STRENGTH must be exposed in the Iris Quality screen")
+    errors.append("CLOUD_SHADOW_STRENGTH must be exposed in the Iris Clouds screen")
 if "CLOUD_SHADOW_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_SHADOW_STRENGTH must be included in the Iris slider list")
 if "CLOUD_DETAIL_STRENGTH" not in props.split("screen.CLOUDS =", 1)[-1].splitlines()[0]:
-    errors.append("CLOUD_DETAIL_STRENGTH must be exposed in the Iris Quality screen")
+    errors.append("CLOUD_DETAIL_STRENGTH must be exposed in the Iris Clouds screen")
 if "CLOUD_DETAIL_STRENGTH" not in props.split("sliders =", 1)[-1].splitlines()[0]:
     errors.append("CLOUD_DETAIL_STRENGTH must be included in the Iris slider list")
 cloud_lang = (SHADERS / "lang" / "en_us.lang").read_text(encoding="utf-8")
