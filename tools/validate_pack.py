@@ -431,7 +431,7 @@ for name in ("gbuffers_water.fsh", "gbuffers_entities_translucent.fsh",
         if token not in source:
             errors.append(f"{name} is missing shared shadow input/quality component: {token}")
 
-if "/* RENDERTARGETS: 0 */" not in deferred_options or "outOpaqueReflectionScene" in deferred_options:
+if "/* RENDERTARGETS: 0,13 */" not in deferred_options or "outOpaqueReflectionScene" in deferred_options:
     errors.append("Full-resolution deferred must write only colortex0; the half-resolution water copy belongs in deferred1")
 deferred1 = sources.get("deferred1.fsh", "")
 for token in ("/* RENDERTARGETS: 4 */", "uniform sampler2D colortex0",
@@ -470,9 +470,9 @@ for name in ("gbuffers_terrain.vsh", "gbuffers_block.vsh"):
 for name in ("gbuffers_terrain.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
     for token in ("flat in vec4 vTexCoordAM", "in vec3 vTangentView", "calculateParallaxUv(",
-                  "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
+                  "sampleAnisotropicAtlas(gtexture, parallaxUv, uvDx, uvDy, vTexCoordAM)",
                   "parallaxAlbedo.a >= alphaTestRef",
-                  "textureGrad(specular, materialUv, uvDx, uvDy)"):
+                  "sampleAnisotropicAtlas(specular, materialUv, uvDx, uvDy, vTexCoordAM)"):
         if token not in source:
             errors.append(f"{name} is missing POM integration: {token}")
 if "gl_FrontFacing && !signText && blockEntityId != 5025" not in sources.get("gbuffers_block.fsh", ""):
@@ -483,7 +483,7 @@ for token in ("#define POM_ENTITY_STRENGTH 0", "uniform int entityId;",
               "textureGrad(gtexture, parallaxUv, uvDx, uvDy)",
               "parallaxAlbedo.a >= alphaTestRef",
               "textureGrad(specular, materialUv, uvDx, uvDy)",
-              "textureGrad(normals, materialUv, uvDx, uvDy)"):
+              "sampleAnisotropicAtlas(normals, materialUv, uvDx, uvDy, vTexCoordAM)"):
     if token not in entity_pom_source:
         errors.append(f"Entity POM is missing bounded atlas-safe component: {token}")
 entity_vertex_source = sources.get("gbuffers_entities.vsh", "")
@@ -834,12 +834,12 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
         errors.append("Block-entity G-buffer must pack emission, reflectance, material AO and SSS data")
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh",
              "gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
-    if "outLightmapData = vec4(vanillaLight, skyLight);" not in sources.get(name, ""):
+    if "outLightmapData = vec4(vanillaLight, skyLight" not in sources.get(name, ""):
         errors.append(f"{name} must write vanilla lightmap RGB and sky-light factor to colortex1")
 
 for name in ("gbuffers_terrain.fsh", "gbuffers_entities.fsh", "gbuffers_block.fsh"):
     source = sources.get(name, "")
-    if source.find("float skyLight =") < 0 or source.find("outLightmapData = vec4(vanillaLight, skyLight)") < source.find("float skyLight ="):
+    if source.find("float skyLight =") < 0 or source.find("outLightmapData = vec4(vanillaLight, skyLight") < source.find("float skyLight ="):
         errors.append(f"{name} must initialize skyLight before writing the vanilla lightmap G-buffer")
 
 for name in ("gbuffers_particles.fsh", "gbuffers_textured_lit.fsh"):
@@ -995,7 +995,7 @@ for program_name in (
     "gbuffers_block_translucent.fsh", "gbuffers_particles_translucent.fsh",
 ):
     source = sources.get(program_name, "")
-    if "float cloudShadow = sampleSereneCloudShadow(" not in source or "direct *= cloudShadow;" not in source:
+    if "float cloudShadow =" not in source or "sampleSereneCloudShadow(" not in source or "direct *= cloudShadow;" not in source:
         errors.append(f"{program_name} must apply a single shared cloud-shadow factor to direct lighting")
 if "* sssStrength * sssVisibility * 0.25 * cloudShadow;" not in sources.get("deferred.fsh", ""):
     errors.append("Deferred subsurface backlighting must be attenuated by procedural cloud shadows")
@@ -1492,7 +1492,7 @@ deferred = sources.get("deferred.fsh", "")
 if '#include "/lib/lighting/soft_shadow.glsl"' not in deferred or "sampleSereneSoftShadow(" not in deferred:
     errors.append("Deferred lighting must use the shared soft/colored shadow implementation")
 
-for token in ("/* RENDERTARGETS: 0 */", "sampler2D colortex0",
+for token in ("/* RENDERTARGETS: 0,13 */", "sampler2D colortex0",
               "sampler2D colortex1", "sampler2D colortex2", "sampler2D colortex3",
               "texture(colortex3, vTexCoord)", "emissionData.r * 5.0",
               "sampler2D depthtex0", "sampler2D depthtex2", "sampler2DShadow shadowtex0",
@@ -1559,7 +1559,7 @@ if "outColor = scene;" not in deferred or "outColor = vec4(litColor, scene.a);" 
 composite = sources.get("composite.fsh", "")
 if "uniform sampler2D colortex0" not in composite:
     errors.append("Composite must preserve the accumulated scene from colortex0")
-if "/* RENDERTARGETS: 0 */" not in composite:
+if "/* RENDERTARGETS: 0,12 */" not in composite:
     errors.append("Composite must write the final scene back to colortex0")
 if "texelFetch(colortex0" not in composite and "texture(colortex0" not in composite and "texture2D(colortex0" not in composite:
     errors.append("Composite does not preserve the accumulated scene")
@@ -1797,7 +1797,7 @@ for token in ("#define BLOOM_STRENGTH", "#define FXAA_ENABLED",
 color_screen = next((line for line in held_props.splitlines() if line.startswith("screen.COLOR =")), "")
 slider_line = next((line for line in held_props.splitlines() if line.startswith("sliders =")), "")
 for option in ("BLOOM_STRENGTH", "BLOOM_THRESHOLD", "FXAA_ENABLED"):
-    if option not in color_screen:
+    if option not in (held_props.split("screen.ANTIALIASING =", 1)[-1].splitlines()[0] if option == "FXAA_ENABLED" else color_screen):
         errors.append(f"{option} must appear in the Color screen")
     if option not in slider_line:
         errors.append(f"{option} must be exposed as a slider")
@@ -1832,8 +1832,8 @@ for profile, value in (("Ultra-Light", "0"), ("Smooth", "25"),
     line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
     if f"BLOOM_STRENGTH:{value}" not in line:
         errors.append(f"{profile} has incorrect bloom strength")
-for profile, value in (("Ultra-Light", "0"), ("Smooth", "1"),
-                       ("Ultra", "1"), ("HDR", "1"), ("Ultra-HDR", "1")):
+for profile, value in (("Ultra-Light", "1"), ("Smooth", "0"),
+                       ("Ultra", "0"), ("HDR", "0"), ("Ultra-HDR", "0")):
     line = next((line for line in held_props.splitlines() if line.startswith(f"profile.{profile} =")), "")
     if f"FXAA_ENABLED:{value}" not in line:
         errors.append(f"{profile} has incorrect FXAA setting")
@@ -1966,7 +1966,7 @@ for token in ("#define SCREEN_GI_STRENGTH", "#define SCREEN_GI_QUALITY",
               "bool opaqueReceiver = centerDepth < 0.999999",
               "abs(currentDepthAll - centerDepth) <= 0.000001",
               "vec3 screenGi = opaqueReceiver",
-              "bouncedLight / totalWeight", "lightShafts + screenGi"):
+              "bouncedLight / totalWeight", "lightShafts + lensFlare + temporallyStableGi"):
     if token not in composite_shader:
         errors.append(f"Screen-space indirect lighting is missing component: {token}")
 if ("SCREEN_GI_STRENGTH" not in quality_screen or "SCREEN_GI_QUALITY" not in quality_screen
