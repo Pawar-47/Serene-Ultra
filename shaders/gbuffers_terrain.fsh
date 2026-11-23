@@ -115,8 +115,8 @@ layout(location = 3) out vec4 outEmissionData;
 #define RAIN_PUDDLE_STRENGTH 70 // [0 25 50 70 85 100] Unbound-inspired exposed-surface puddle coverage
 #define MATERIAL_WETNESS_STRENGTH 100 // [0 25 50 75 100 125 150] LabPBR porosity-driven wet darkening
 
-vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, out float materialAO) {
-    vec4 normalTexel = texture(normals, materialUv);
+vec3 calculateOpaquePbrNormal(vec3 geometricNormal, vec2 materialUv, vec2 uvDx, vec2 uvDy, out float materialAO) {
+    vec4 normalTexel = textureGrad(normals, materialUv, uvDx, uvDy);
     vec3 tangentNormal;
 #ifdef MC_TEXTURE_FORMAT_LAB_PBR
     // LabPBR blue stores material AO; XY are the DirectX Y- tangent normal.
@@ -182,7 +182,7 @@ void main() {
     vec3 surfaceNormal = normalize(vPlayerNormal);
     if (!gl_FrontFacing) surfaceNormal = -surfaceNormal;
     float materialAO = 1.0;
-    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, materialAO);
+    surfaceNormal = calculateOpaquePbrNormal(surfaceNormal, materialUv, uvDx, uvDy, materialAO);
     // Iris exposes the resource-pack specular atlas for oldPBR and LabPBR.
     // Both formats store smoothness in red; green is metalness (oldPBR) or
     // dielectric F0 / metal code (LabPBR).
