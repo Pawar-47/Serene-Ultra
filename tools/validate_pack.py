@@ -241,6 +241,31 @@ if props_path.is_file():
     for screen in ("screen = <profile>", "screen.QUALITY =", "screen.COLOR ="):
         if screen not in props:
             errors.append(f"Missing menu configuration: {screen}")
+    for screen in ("screen.WATER =", "screen.SUN =", "screen.SKY =", "screen.CLOUDS ="):
+        if screen not in props:
+            errors.append(f"Missing dedicated subsystem menu: {screen}")
+    menu_lines = {
+        name: next((line for line in props.splitlines() if line.startswith(f"screen.{name} =")), "")
+        for name in ("WATER", "SUN", "SKY", "CLOUDS")
+    }
+    for name, options in {
+        "WATER": ("WATER_FOG_MULT", "WATER_ABSORPTION_STRENGTH", "WATER_WAVE_STRENGTH", "WATER_REFLECTION_STRENGTH"),
+        "SUN": ("SUN_SIZE", "SUN_INTENSITY", "SUN_GLOW_STRENGTH"),
+        "SKY": ("SKY_ATMOSPHERE_STRENGTH", "SKY_TWILIGHT_STRENGTH"),
+        "CLOUDS": ("CLOUD_SHAPE", "CLOUD_SIZE", "CLOUD_COVERAGE", "CLOUD_DENSITY"),
+    }.items():
+        for option in options:
+            if option not in menu_lines[name]:
+                errors.append(f"{name} screen is missing {option}")
+    sky_source = sources.get("gbuffers_skybasic.fsh", "")
+    for token in ("uniform vec3 sunPosition;", "float cloudHash(", "float cloudFbm(",
+                  "float sunDisk = smoothstep(", "CLOUD_SHAPE == 1", "CLOUD_SHAPE == 2"):
+        if token not in sky_source:
+            errors.append(f"Sky renderer is missing procedural sun/cloud component: {token}")
+    if "if (hasSkylight && isSun) discard;" not in sources.get("gbuffers_skytextured.fsh", ""):
+        errors.append("Vanilla square sun sprite must be discarded when the procedural sun is active")
+    if "clouds=off" not in props:
+        errors.append("Native cloud geometry must be disabled while Serene volumetric clouds are active")
     for option in ("SHADOW_ALPHA_CUTOFF", "AO_STRENGTH", "AO_RADIUS",
                    "WATER_REFRACTION_STRENGTH", "WATER_REFLECTION_STRENGTH",
                    "WATER_ABSORPTION_STRENGTH", "PORTAL_DISTORTION_STRENGTH", "OPAQUE_NORMAL_MAP_STRENGTH", "PBR_AO_STRENGTH", "MATERIAL_AO_STRENGTH", "MATERIAL_SSS_STRENGTH", "RAIN_PUDDLE_STRENGTH", "MATERIAL_WETNESS_STRENGTH", "PBR_REFLECTION_STRENGTH", "PBR_REFLECTION_QUALITY"):
