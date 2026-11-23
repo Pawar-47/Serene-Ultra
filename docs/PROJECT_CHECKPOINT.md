@@ -1734,3 +1734,10 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - The existing `WATER_WAVE_STRENGTH` option now controls both animated normal detail and the small vertex displacement. Water fluid geometry is gated by Iris material ID 32000 and `mc_Entity.y`; the shadow pass applies the same displacement to the same fluid vertices.
 - Updated the tooltip, feature matrix and structural validator to check shared helper use, material gating, and matching visible/shadow position updates.
 - GLSL compilation and runtime visual calibration are pending for this addition. Validate for water edge cracks, flowing-water geometry, cauldron interactions and shadow alignment in Minecraft 26.3 + Iris.
+
+
+### Non-LabPBR subsurface fallback — 2026-11-23
+- Extended the existing deferred SSS path beyond LabPBR blue-channel codes. Vanilla/oldPBR terrain now writes conservative material-ID SSS codes for leaves, vegetation/crops/vines, slime blocks and honey blocks; deferred decodes the shared G-buffer alpha channel regardless of texture format.
+- Existing `MATERIAL_SSS_STRENGTH`, shadow-transmission visibility and cloud-shadow attenuation remain in control. LabPBR materials continue to use their authored SSS code; non-SSS materials write zero.
+- Commits: deferred decode `af2677751189028d376323eb238f3069e94ab9a1`; terrain fallbacks `467ecc4650156c1182ce0b98ab21883bd03e9d6e`; validator `1759304555586deb5b6db6f96a79bc985ecdaf64`; matrix `25abfc483c069e51dfb68e72b1e0859dd7c896d8`.
+- Source-level implementation; material strength and visual calibration remain pending runtime testing.
