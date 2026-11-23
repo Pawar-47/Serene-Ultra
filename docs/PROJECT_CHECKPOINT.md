@@ -1756,3 +1756,12 @@ Latest code HEAD before this checkpoint update: `26ccae859ea37b4619cad016c21009d
 - Restricted `WATER_WAVE_SPEED` choices and profile values to multiples of ten. The shared two-frequency wave uses 0.7× and 0.5× phase multipliers; multiples of ten make both components complete integer cycles at Iris' 3600-second `frameTimeCounter` wrap, preventing a visible phase jump.
 - Updated the water fragment, water vertex, shadow fragment and shadow vertex option declarations, and adjusted the Smooth profile from 45 to 50 cycles/hour. Added structural checks for slider choices and every profile.
 - This is a continuity correction for the new water vertex-wave path and the existing water normal/caustic animation; CI confirmation is pending.
+
+
+### Common vanilla terrain material fallbacks — 2026-11-23
+- Compared the supplied Reimagined reference's `terrainIPBR.glsl` and specific-material files for stone, deepslate, cobblestone, dirt and obsidian.
+- Added stable Iris material IDs 32160–32164 for stone/polished stone/tuff families, deepslate, cobblestone, dirt/earth and obsidian. When no resource-pack specular map is present, the terrain G-buffer now applies the corresponding albedo-derived smoothness response; stone also uses the reference's 0.77 coating factor and obsidian receives a modest tinted-F0 response.
+- Resource-pack LabPBR/oldPBR maps retain priority; the fallback branches are gated by `!hasMaterialSpecularMap`. No new render target or additional texture sample was added.
+- Updated `tools/validate_pack.py` to assert each block-ID mapping and material formula; updated the feature matrix.
+- Commits: block IDs `392c73b816db896cc6a8f6822262d8640af298dd`; terrain formulas `22412d34800d8bd7e62ffb18f9cac8fff416ff2d`, coating correction `7c99394c6c3fe08dae463e586fc3a1c5b7b0ad8d`; validator `4845fd759b73f8dbc012500454f23bfea48aa924`; matrix `04ebcfb07f61da84bc1618a16a9216b64622bfcd`.
+- Runtime appearance on stock textures, PBR-map priority and performance still require Minecraft/Iris verification.
