@@ -1,6 +1,9 @@
 #version 130
 
 uniform mat4 shadowModelViewInverse;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
+uniform float frameTimeCounter;
 
 // Iris shader options for the initial shadow-map implementation.
 const int shadowMapResolution = 1024; // [512 768 1024 1536 2048] Shadow-map resolution
@@ -15,6 +18,8 @@ flat out float vShadowFluidRenderType;
 
 in vec2 mc_Entity;
 
+#define WAVING_FOLIAGE_STRENGTH 50 // [0 10 20 35 50 65 80 100] Wind-driven foliage motion
+
 void main() {
     // Preserve the original block/entity texture coordinates so cutout
     // geometry (leaves, grass, fences and similar materials) casts shaped
@@ -26,5 +31,21 @@ void main() {
     vShadowMaterialId = int(mc_Entity.x + 0.5);
     if (vShadowMaterialId == 10049) vShadowMaterialId = 32001; // Water cauldron
     vShadowFluidRenderType = mc_Entity.y;
+
+#if WAVING_FOLIAGE_STRENGTH > 0
+    // Apply the identical world-space wind field used by gbuffers_terrain so
+    // animated foliage does not detach from its shadow silhouette.
+    if (vShadowMaterialId == 10009 || vShadowMaterialId == 10011 || vShadowMaterialId == 32130) {
+        vec3 stableWorld = vec3(cameraPositionInt) + cameraPositionFract + vShadowPlayerPosition;
+        vec2 windPosition = mod(stableWorld.xz, vec2(4096.0));
+        float windStrength = float(WAVING_FOLIAGE_STRENGTH) * 0.00045;
+        float broadWave = sin(dot(windPosition, vec2(0.071, 0.053)) + frameTimeCounter * 0.85);
+        float detailWave = sin(dot(windPosition, vec2(-0.113, 0.097)) - frameTimeCounter * 1.27);
+        vec2 wind = vec2(broadWave + detailWave * 0.28, detailWave + broadWave * 0.22)
+            * windStrength;
+        vShadowPlayerPosition.xz += wind;
+        shadowViewPosition = gl_ModelViewMatrix * vec4(vShadowPlayerPosition, 1.0);
+    }
+#endif
     gl_Position = gl_ProjectionMatrix * shadowViewPosition;
 }
