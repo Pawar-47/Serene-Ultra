@@ -3,15 +3,25 @@ name: Shaderpack structural and GLSL validation
 on:
   push:
     branches: [main]
+    paths:
+      - 'shaders/**'
+      - 'tools/**'
+      - 'pack.json'
+      - '.github/workflows/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'shaders/**'
+      - 'tools/**'
+      - 'pack.json'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 # Keep only the newest validation run for a branch. Rapid source commits
 # should not leave dozens of obsolete full-pack checks running concurrently.
 concurrency:
   group: shader-validation-v2-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
