@@ -215,9 +215,15 @@ void main() {
     vec4 centerView4 = gbufferProjectionInverse * vec4(centerNdc, 1.0);
     vec3 centerViewPosition = centerView4.xyz / max(centerView4.w, 0.0001);
     vec3 centerNormal = normalize(mat3(gbufferModelView) * (normalData.rgb * 2.0 - 1.0));
-    vec3 screenGi = sampleScreenSpaceColorBleed(
-        vTexCoord, centerDepth, centerViewPosition, centerNormal, normalData.a
-    );
+    float currentDepthAll = texelFetch(depthtex0, pixel, 0).r;
+    bool opaqueReceiver = centerDepth < 0.999999
+        && abs(currentDepthAll - centerDepth) <= 0.000001
+        && normalData.a >= 0.5;
+    vec3 screenGi = opaqueReceiver
+        ? sampleScreenSpaceColorBleed(
+            vTexCoord, centerDepth, centerViewPosition, centerNormal, normalData.a
+        )
+        : vec3(0.0);
 
     // The alpha channel below 0.525 is sky/unlit geometry or a surface without
     // a meaningful PBR smoothness value. Avoid all reflection work for it.
