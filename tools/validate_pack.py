@@ -724,6 +724,9 @@ for token in ("float sereneVanillaMaterialPorosity(int materialId)",
               "if (materialId == 32162) return 0.30", "if (materialId == 32163) return 0.88",
               "if (materialId == 32164) return 0.03", "if (materialId == 32165) return 0.62",
               "if (materialId == 32166) return 0.82",
+              "if (materialId == 32167) return 0.12", "if (materialId == 32168) return 0.72",
+              "if (materialId == 32169) return 0.22", "if (materialId == 32170) return 0.98",
+              "if (materialId == 32171) return 0.72",
               "materialPorosity = sereneVanillaMaterialPorosity(vMaterialId)"):
     if token not in sources.get("gbuffers_terrain.fsh", ""):
         errors.append(f"Terrain vanilla porosity fallback is missing component: {token}")
