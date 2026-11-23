@@ -1320,14 +1320,14 @@ for token in ("#define EMISSIVE_BOUNCE_STRENGTH", "sampleEmissiveColorBounce",
               "texture(colortex0, sampleUv)"):
     if token not in deferred_shader:
         errors.append(f"Deferred emissive bounce is missing required component: {token}")
-if "EMISSIVE_BOUNCE_STRENGTH" not in properties:
+if "EMISSIVE_BOUNCE_STRENGTH" not in props.split("screen.QUALITY =", 1)[-1].splitlines()[0]:
     errors.append("Emissive bounce must be exposed in the shader Quality menu")
 for profile, expected in (("Ultra-Light", "EMISSIVE_BOUNCE_STRENGTH:0"),
                           ("Smooth", "EMISSIVE_BOUNCE_STRENGTH:20"),
                           ("Ultra", "EMISSIVE_BOUNCE_STRENGTH:45"),
                           ("HDR", "EMISSIVE_BOUNCE_STRENGTH:55"),
                           ("Ultra-HDR", "EMISSIVE_BOUNCE_STRENGTH:65")):
-    if expected not in properties:
+    if expected not in props:
         errors.append(f"{profile} profile is missing emissive bounce budget: {expected}")
 
 if block_shader.index("outLightmapData = vec4(vanillaLight") < block_shader.index("if (blockEntityId == 5020)"):
