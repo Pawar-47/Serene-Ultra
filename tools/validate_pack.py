@@ -2025,7 +2025,7 @@ for name in ("gbuffers_entities.fsh", "gbuffers_block.fsh"):
                   "uniform int biome_precipitation", "MATERIAL_WETNESS_STRENGTH 100",
                   '#include "/lib/materials/porosity_wetness.glsl"',
                   "float materialPorosity = 0.0;", "labF0Code < 65.0",
-                  "materialPorosity = labSurfaceCode < 65.0",
+                  "materialPorosity = clamp(labSurfaceCode / 64.0, 0.0, 1.0)",
                   "applyPorosityWetness("):
         if token not in source:
             errors.append(f"{name} is missing LabPBR porosity wetness handling: {token}")
