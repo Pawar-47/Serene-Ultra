@@ -51,6 +51,9 @@ vec3 reconstructPlayerDirection() {
 #define CLOUD_SPEED 100 // [0 25 50 75 100 125 150] Cloud wind speed
 #define CLOUD_SCATTERING_STRENGTH 100 // [0 25 50 75 100 125 150] Cloud lighting and silver-lining response
 #define CLOUD_DETAIL_STRENGTH 35 // [0 15 25 35 50 65 80 100] Multi-scale cloud detail
+#define AURORA_STRENGTH 45 // [0 10 25 40 55 70 85 100] Procedural night aurora
+#define NEBULA_STRENGTH 35 // [0 10 20 35 50 65 80 100] Procedural night-sky nebulae
+#define RAINBOW_STRENGTH 45 // [0 10 25 40 55 70 85 100] Atmospheric rainbow arc
 
 vec3 calculateAtmosphericScattering(
     vec3 viewDirection,
@@ -294,6 +297,84 @@ vec4 calculateVolumetricClouds(vec3 rayDirection, float solarElevation, float ra
 #endif
 }
 
+
+vec3 calculateNightSkyEffects(vec3 playerDirection, float solarElevation, float rain) {
+    float nightFactor = 1.0 - smoothstep(-0.10, 0.18, solarElevation);
+    float skyFade = smoothstep(0.02, 0.22, playerDirection.y);
+    float azimuth = atan(playerDirection.z, playerDirection.x);
+    float elevation = asin(clamp(playerDirection.y, -1.0, 1.0));
+    vec2 skyUv = vec2(azimuth * 0.15915494 + 0.5, elevation * 0.31830989 + 0.5);
+
+    vec3 result = vec3(0.0);
+#if NEBULA_STRENGTH > 0
+    vec2 nebulaUv = skyUv * vec2(4.0, 7.0)
+        + vec2(frameTimeCounter * 0.00035, -frameTimeCounter * 0.00012);
+    float nebulaBroad = textureLod(noisetex, nebulaUv, 0.0).r;
+    float nebulaFine = textureLod(
+        noisetex, nebulaUv * 2.71 + vec2(0.31, 0.63), 0.0
+    ).g;
+    float nebulaCloud = smoothstep(
+        0.48, 0.78, nebulaBroad * 0.68 + nebulaFine * 0.32
+    );
+    vec3 nebulaColor = mix(
+        vec3(0.10, 0.035, 0.24),
+        vec3(0.035, 0.22, 0.32),
+        smoothstep(0.28, 0.78, nebulaFine)
+    );
+    result += nebulaColor * nebulaCloud * skyFade * nightFactor
+        * (1.0 - rain * 0.75) * (float(NEBULA_STRENGTH) * 0.0018);
+#endif
+
+#if AURORA_STRENGTH > 0
+    vec2 auroraUv = vec2(
+        azimuth * 1.7 + frameTimeCounter * 0.0012,
+        elevation * 2.6
+    );
+    float auroraBroad = textureLod(noisetex, auroraUv, 0.0).r;
+    float auroraDetail = textureLod(
+        noisetex, auroraUv * 3.3 + vec2(0.17, 0.41), 0.0
+    ).g;
+    float curtainWave = sin(azimuth * 18.0 + auroraBroad * 8.0
+        + frameTimeCounter * 0.16);
+    float curtainMask = smoothstep(0.32, 0.72, auroraDetail)
+        * smoothstep(0.10, 0.24, playerDirection.y)
+        * (1.0 - smoothstep(0.58, 0.78, playerDirection.y));
+    float auroraRays = pow(max(0.5 + 0.5 * curtainWave, 0.0), 3.0);
+    vec3 auroraColor = mix(
+        vec3(0.10, 0.95, 0.42),
+        vec3(0.20, 0.38, 1.0),
+        smoothstep(0.35, 0.85, auroraBroad)
+    );
+    result += auroraColor * curtainMask * auroraRays * nightFactor
+        * (1.0 - rain * 0.82) * (float(AURORA_STRENGTH) * 0.004);
+#endif
+    return result;
+}
+
+vec3 calculateRainbow(vec3 viewDirection, float solarElevation, float rain) {
+#if RAINBOW_STRENGTH > 0
+    if (!hasSkylight || solarElevation < 0.08 || rain < 0.15) return vec3(0.0);
+    float lightLength = length(shadowLightPosition);
+    if (lightLength < 0.0001) return vec3(0.0);
+    vec3 antiSolarDirection = -shadowLightPosition / lightLength;
+    float angularDistance = acos(clamp(dot(viewDirection, antiSolarDirection), -1.0, 1.0));
+    float arc = exp(-pow((angularDistance - 0.735) / 0.012, 2.0));
+    float spectrum = clamp((angularDistance - 0.714) / 0.042, 0.0, 1.0);
+    vec3 rainbowColor = mix(vec3(1.0, 0.12, 0.06), vec3(1.0, 0.52, 0.06), smoothstep(0.0, 0.2, spectrum));
+    rainbowColor = mix(rainbowColor, vec3(0.95, 0.9, 0.12), smoothstep(0.16, 0.38, spectrum));
+    rainbowColor = mix(rainbowColor, vec3(0.12, 0.82, 0.28), smoothstep(0.34, 0.58, spectrum));
+    rainbowColor = mix(rainbowColor, vec3(0.10, 0.42, 1.0), smoothstep(0.54, 0.78, spectrum));
+    rainbowColor = mix(rainbowColor, vec3(0.48, 0.16, 0.88), smoothstep(0.74, 1.0, spectrum));
+    float visibility = smoothstep(0.10, 0.35, solarElevation)
+        * smoothstep(0.15, 0.55, rain)
+        * (1.0 - rain * 0.35);
+    return rainbowColor * arc * visibility
+        * (float(RAINBOW_STRENGTH) * 0.0018);
+#else
+    return vec3(0.0);
+#endif
+}
+
 void main() {
     vec3 colorLinear = vVertexColorLinear;
     float alpha = vVertexAlpha;
@@ -352,6 +433,12 @@ void main() {
             colorLinear = mix(colorLinear, twilightColor, horizonBand * twilight * 0.18);
         }
         colorLinear = mix(colorLinear, vFogLinear, 0.35 * rainStrength);
+        colorLinear += calculateNightSkyEffects(
+            playerDirection, solarElevation, rainStrength
+        );
+        colorLinear += calculateRainbow(
+            viewDirection, solarElevation, rainStrength
+        );
 
         // Volumetric clouds are integrated into the sky pass so they use the
         // exact same sky ray, fog, celestial direction and depth ordering.
