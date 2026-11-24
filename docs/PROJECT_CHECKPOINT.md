@@ -1354,3 +1354,22 @@ Sodium reports the workarounds `INTEL_FRAMEBUFFER_BLIT_CRASH_WHEN_UNFOCUSED` and
 
 ### Honest status
 The loading build was `6ae4a78`, which predates this session's fixes (the composite/deferred flip corrections and the two-scale bloom chain). Current `main` therefore still needs a fresh in-game run. No visual claim is made for anything, and no screenshot comparison exists yet.
+
+
+## Screenshot triage: sky seam, boxy sun, pink cloud band — 2026-11-23
+A dusk screenshot from the loaded build shows a hard horizontal band across the whole frame, a magenta sky, blue-violet terrain, and a square sun.
+
+### Fixed in source
+- **Hard seam.** `gbuffers_skybasic.fsh` wrote `vec3(0.0)` for the `MC_RENDER_STAGE_VOID` stage, i.e. pure black below the horizon, while the fogged terrain above it blended to `fogColor`. Vanilla fills the void with the fog colour; the void branch now uses `vFogLinear`.
+- **Sky reaching full colour too fast.** The horizon blend was `smoothstep(-0.12, 0.48, upDot)`, which is already ~90% sky well before the zenith and changes quickly near the horizon. It is now `smoothstep(-0.06, 0.75, upDot)`, keeping the lower sky close to the fog colour that the terrain side converges to.
+- **Boxy sun.** The sun and moon were the vanilla textured quads. `sun` and `moon` are now `false` in `shaders.properties`, and `gbuffers_skybasic.fsh` draws a round procedural disc from the view-space `shadowLightPosition` direction, warm by day and cool by night, attenuated by rain. Both the disc and the existing glare now share one guarded direction, because `normalize()` of an empty `shadowLightPosition` would have injected NaN into the sky in dimensions without a celestial body.
+
+### Attributed to a mod, not this pack
+- The magenta band across the middle of the frame is almost certainly **BetterClouds'** cloud plane. The logs show `Missing program betterclouds:blaze_3d_renderer in override list`, Iris stating this "could lead to weird rendering", and BetterClouds rendering through its own pipeline rather than ours — so our fog and cloud lighting never touch it. Test with BetterClouds disabled before judging our cloud pass.
+
+### Not addressed in this change, and why
+- **Water too transparent / weak reflections**, **poor overall lighting**, and **sun reflections only at one angle** are calibration problems, not demonstrable defects. Adjusting them blind risks making the image worse, so they are queued behind a fresh screenshot with BetterClouds off and a stated profile.
+- Terrain reading blue-violet at dusk is consistent with `celestialIntensity` falling to 0.10 and `celestialColor` going to `vec3(0.36, 0.44, 0.68)` as `dayFactor` approaches 0. That is a tuning decision about how dark and how blue dusk should be, so it needs a deliberate look rather than a guess.
+
+### Status
+Source only. Nothing here is verified in game, and the branch is not CI-verified until a pull request runs the validation workflow.

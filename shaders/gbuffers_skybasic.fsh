@@ -62,11 +62,16 @@ void main() {
         vec3 playerDirection = reconstructPlayerDirection();
         viewDirection = normalize(mat3(gbufferModelView) * playerDirection);
         upDot = clamp(playerDirection.y, -1.0, 1.0);
-        horizonBlend = smoothstep(-0.12, 0.48, upDot);
+        // Keep the lower sky near the fog colour so it meets the fogged terrain and
+        // the void plane without a boundary, then ease into skyColor higher up.
+        horizonBlend = smoothstep(-0.06, 0.75, upDot);
     }
 
     if (isVoid) {
-        colorLinear = vec3(0.0);
+        // Vanilla fills the below-horizon void with the fog colour. Writing black
+        // here put a hard seam where the sky dome, the fogged terrain and the void
+        // plane met on screen.
+        colorLinear = vFogLinear;
         alpha = 1.0;
     } else if (isStars) {
         float nightFactor = 1.0 - smoothstep(-0.15, 0.20, solarElevation);
@@ -86,10 +91,16 @@ void main() {
         // Low-cost active-celestial glare, adapted from Complementary's
         // low-quality sky path. shadowLightPosition is Iris view space.
         if (hasSkylight) {
-            float celestialAlignment = max(
-                dot(viewDirection, normalize(shadowLightPosition)),
-                0.0
-            );
+            // One guarded direction feeds both the glare and the disc. Normalising an
+            // empty shadowLightPosition would put NaN into the sky colour.
+            float celestialLength = length(shadowLightPosition);
+            float celestialAlignment = 0.0;
+            if (celestialLength > 0.0001) {
+                celestialAlignment = max(
+                    dot(viewDirection, shadowLightPosition / celestialLength),
+                    0.0
+                );
+            }
             float glareScatter = 3.0 * (2.0 - clamp(celestialAlignment * 1000.0, 0.0, 1.0));
             float glarePower = pow(celestialAlignment, glareScatter);
             const float glareVisibility = 0.075;
@@ -105,6 +116,17 @@ void main() {
                 + vec3(0.0, 0.5, 0.5) * noonFactor;
             vec3 glareColor = mix(nightGlareColor, dayGlareColor, dayFactor);
             colorLinear += glareColor * celestialGlare;
+
+            // Procedural round celestial disc. Vanilla draws the sun and moon as
+            // textured quads, which read as squares, so sun/moon are disabled in
+            // shaders.properties and the disc is drawn here instead from the same
+            // guarded direction as the glare.
+            float discCore = smoothstep(0.99965, 0.99992, celestialAlignment);
+            float discDayFactor = smoothstep(-0.05, 0.25, solarElevation);
+            vec3 discColor = mix(
+                vec3(0.55, 0.60, 0.72), vec3(4.0, 3.1, 2.2), discDayFactor
+            );
+            colorLinear += discColor * discCore * (1.0 - 0.85 * rainStrength);
         }
         alpha = 1.0;
     }
