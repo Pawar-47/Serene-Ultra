@@ -1681,6 +1681,64 @@ for flip_line in props.splitlines():
             f"flip.{flip_program}.colortex{flip_buffer}=true double-flips a buffer {flip_program} "
             "writes, cancelling Iris' default flip so the next program reads stale contents"
         )
+
+# Iris parses shaders.properties values verbatim, so a trailing comment after a
+# boolean makes the key unparseable. A logged release produced
+# 'Unexpected value for boolean key vignette ... got false  <comment>'.
+for boolean_key in ("oldHandLight", "dynamicHandLight", "oldLighting", "shadowTerrain",
+                    "shadowTranslucent", "shadowEntities", "shadowPlayer", "shadowBlockEntities",
+                    "shadowLightBlockEntities", "underwaterOverlay", "sun", "moon", "stars", "sky",
+                    "vignette", "separateAo", "endFlashShadows", "separateEntityDraws",
+                    "rain.depth", "backFace.solid", "backFace.cutout", "backFace.translucent"):
+    boolean_match = re.search(rf"^\s*{re.escape(boolean_key)}\s*=\s*(.*)$", props, re.MULTILINE)
+    if boolean_match and boolean_match.group(1).strip() not in ("true", "false"):
+        errors.append(
+            f"shaders.properties value for {boolean_key} must be exactly true or false, "
+            f"got: {boolean_match.group(1).strip()}"
+        )
+
+# Every menu element must resolve to a real option or constant, otherwise Iris
+# logs 'Unable to resolve shader pack option menu element <name>' and shows a dead
+# control. Options may be a live #define, a commented-out #define (Iris still lists
+# those) or a const declaration such as shadowMapResolution.
+option_names = set()
+for option_source in sources.values():
+    for option_define in re.finditer(
+        r"^[ \t]*(?://)?[ \t]*#define[ \t]+([A-Za-z_][A-Za-z0-9_]*)", option_source, re.MULTILINE
+    ):
+        option_names.add(option_define.group(1))
+    for option_const in re.finditer(
+        r"^[ \t]*(?://|/\*)?[ \t]*const[ \t]+\w+[ \t]+([A-Za-z_][A-Za-z0-9_]*)[ \t]*=",
+        option_source, re.MULTILINE
+    ):
+        option_names.add(option_const.group(1))
+
+menu_elements = []
+for menu_line in props.splitlines():
+    stripped = menu_line.strip()
+    if not stripped or stripped.startswith("#"):
+        continue
+    sliders_match = re.match(r"^sliders\s*=\s*(.*)$", stripped)
+    if sliders_match:
+        menu_elements.extend(sliders_match.group(1).split())
+        continue
+    sub_screen_match = re.match(r"^screen\.([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$", stripped)
+    if sub_screen_match:
+        if sub_screen_match.group(1) == "columns":
+            continue
+        menu_elements.extend(sub_screen_match.group(2).split())
+        continue
+    main_screen_match = re.match(r"^screen\s*=\s*(.*)$", stripped)
+    if main_screen_match:
+        menu_elements.extend(main_screen_match.group(1).split())
+
+for element in menu_elements:
+    if element.startswith("<") or element.startswith("[") or element == "*":
+        continue
+    if element not in option_names:
+        errors.append(
+            f"shaders.properties menu element {element} matches no shader option or constant"
+        )
 if "uniform sampler2D colortex5" not in final_shader or "uniform sampler2D colortex7" not in final_shader:
     errors.append("Final pass must combine both bloom levels")
 

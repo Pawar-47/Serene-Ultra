@@ -1326,3 +1326,31 @@ The half-resolution `colortex4` scene snapshot now integrates the exact full-res
 - `alpha-release.yml` gained a `workflow_dispatch` trigger with a `publish` input, so a testable build can be produced on demand. Automatic publishing on every validated push remains gated by `ENABLE_ALPHA_PUBLISH=true` and is still off.
 - Structural validation now checks the new cloud terms.
 - Status: source and CI compile/structure only. No Minecraft/Iris runtime run has occurred for any change in this session.
+
+
+## First runtime logs: Minecraft 26.3 / Iris 1.11.7 / Intel HD 5500 — 2026-11-23
+Three client logs were supplied. Environment is fixed and now known: Minecraft 26.3, Fabric Loader 0.20.1, **Iris 1.11.7+mc26.3**, Intel HD Graphics 5500 on driver 20.19.15.4835 exposing **OpenGL 3.3.0**, Java 25, 150 mods including Sodium 0.9.2, BetterClouds 1.15.0, Continuity, ETF/EMF, LambDynamicLights.
+
+### What the logs establish
+- **The pack loads.** In the last session Iris printed `Using shaderpack: Serene-Ultra-alpha-6ae4a78.zip` followed by `Creating pipeline for dimension minecraft:overworld` with **no** `could not be loaded` message, **no** fallback warning and **no** shader compile error. Iris logs compilation failures loudly, so absence is meaningful evidence that the programs compiled and the pipeline was built.
+- **An earlier build did not load.** `Serene-Ultra-alpha-37b8e34.zip` produced `Pack ... is not valid! Can't load it` in two sessions, and loaded in a third. The likely cause was the invalid buffer-blend target (`blend.shadow.shadowcolor0`), which Iris rejects with a thrown exception during pack parsing; that has since been removed. This is inference from Iris source, not proven by the log text.
+- **Two menu warnings came from that older build and are already fixed in current source.** `Unable to resolve shader pack option menu element "NETHER_STORM_STRENGTH"` and `... "END_NEBULA_STRENGTH"`. Neither string appears anywhere in the current `shaders/` tree, so those controls are gone rather than silently dead.
+- **One real properties bug of the same build is also gone.** `Unexpected value for boolean key vignette ... got false  Serene applies its own adjustable final-pass vignette` shows a comment written on the same line as a value; Iris parses the whole remainder as the value. The current file has a bare `vignette=true`, and no property line carries a trailing comment.
+
+### Not our defects
+- `Missing program betterclouds:blaze_3d_renderer in override list` — BetterClouds' own pipeline is not registered as a shader override. Iris itself calls it "not a critical problem". Our pack cannot fix it from the shader side; it is a mod-compatibility note. Practical effect: BetterClouds' cloud renderer runs outside the shaderpipeline, so our `gbuffers_clouds` lighting does not apply to BetterClouds' clouds.
+- `OpenGL debug message: ... GL_INVALID_OPERATION (1282)` appears immediately around the BetterClouds messages at pack load, not during our passes.
+- Realms `SignedJWT` auth failures, `minecraft:end_of_frame` post-effect, and `Can't keep up!` server lag are unrelated to the shaderpack.
+
+### Hardware finding that does matter
+Sodium reports the workarounds `INTEL_FRAMEBUFFER_BLIT_CRASH_WHEN_UNFOCUSED` and **`INTEL_DEPTH_BUFFER_COMPARISON_UNRELIABLE`** for this adapter. Our `deferred.fsh` declares `const bool shadowHardwareFiltering = true;`, i.e. it requests hardware-filtered shadow comparison. On a driver flagged as unreliable for depth comparison, expect shadow filtering anomalies (acne, peter-panning, or silently degraded PCF). This is now a targeted runtime check rather than a generic one: compare shadow edges with `shadowHardwareFiltering` declared `true` and `false`.
+
+### Guards added instead of trusting the log
+- Every boolean pipeline key is now asserted to be exactly `true` or `false`, which is precisely the `vignette` failure mode above.
+- Every element of `screen`, `screen.<SUBSREEN>` and `sliders` is resolved against the `#define`, commented `#define` and `const` names actually present in the shaders, so a dead control cannot ship again.
+
+### Deliberately not changed
+`flip.shadow.shadowcolor0=false` remains. The Iris documentation describes `flip.<program>.<buffer>` for colortex sampler names, and shadow programs read and write main rather than alt, so the directive looks inert. But nothing in these logs implicates it, and structural validation currently requires it. Changing pipeline semantics on inference alone is exactly what the handover forbids; it stays flagged until a log or a shadow-side test justifies removal.
+
+### Honest status
+The loading build was `6ae4a78`, which predates this session's fixes (the composite/deferred flip corrections and the two-scale bloom chain). Current `main` therefore still needs a fresh in-game run. No visual claim is made for anything, and no screenshot comparison exists yet.
